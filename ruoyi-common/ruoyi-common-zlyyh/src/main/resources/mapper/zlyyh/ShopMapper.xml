@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.zlyyh.mapper.ShopMapper">
+
+    <resultMap type="com.ruoyi.zlyyh.domain.Shop" id="ShopResult">
+        <result property="shopId" column="shop_id"/>
+        <result property="commercialTenantId" column="commercial_tenant_id"/>
+        <result property="shopName" column="shop_name"/>
+        <result property="shopTel" column="shop_tel"/>
+        <result property="businessHours" column="business_hours"/>
+        <result property="address" column="address"/>
+        <result property="status" column="status"/>
+        <result property="formattedAddress" column="formatted_address"/>
+        <result property="province" column="province"/>
+        <result property="city" column="city"/>
+        <result property="district" column="district"/>
+        <result property="procode" column="procode"/>
+        <result property="citycode" column="citycode"/>
+        <result property="adcode" column="adcode"/>
+        <result property="longitude" column="longitude"/>
+        <result property="latitude" column="latitude"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="platformKey" column="platform_key"/>
+    </resultMap>
+
+
+    <resultMap type="com.ruoyi.zlyyh.domain.vo.ShopVo" id="ShopVo">
+        <result property="shopId" column="shop_id"/>
+        <result property="commercialTenantId" column="commercial_tenant_id"/>
+        <result property="shopName" column="shop_name"/>
+        <result property="shopTel" column="shop_tel"/>
+        <result property="businessHours" column="business_hours"/>
+        <result property="address" column="address"/>
+        <result property="status" column="status"/>
+        <result property="formattedAddress" column="formatted_address"/>
+        <result property="citycode" column="citycode"/>
+        <result property="longitude" column="longitude"/>
+        <result property="latitude" column="latitude"/>
+        <result property="distance" column="distance"/>
+    </resultMap>
+
+    <sql id="selectShop">
+        SELECT s.*, ACOS(
+        COS(RADIANS(#{bo.latitude})) *
+        COS(RADIANS(latitude)) *
+        COS(RADIANS(longitude) - RADIANS(#{bo.longitude})) +
+        SIN(RADIANS(#{bo.latitude})) *
+        SIN(RADIANS(latitude))
+        ) * 6378 AS distance
+        FROM t_shop s
+        left join t_commercial_tenant ct on s.commercial_tenant_id = ct.commercial_tenant_id
+        WHERE s.STATUS = '0'
+        AND s.commercial_tenant_id IS NOT NULL
+        and ct.`status` = '0'
+    </sql>
+
+    <sql id="selectShopByProductId">
+        SELECT s.*, ACOS(
+                                COS(RADIANS(#{bo.latitude})) *
+                                COS(RADIANS(latitude)) *
+                                COS(RADIANS(longitude) - RADIANS(#{bo.longitude})) +
+                                SIN(RADIANS(#{bo.latitude})) *
+                                SIN(RADIANS(latitude))
+                        ) * 6378 AS distance
+        FROM t_shop s left join t_shop_product sp on s.shop_id = sp.shop_id
+        WHERE s.STATUS = '0'
+    </sql>
+
+    <select id="selectShopListByProductId" resultMap="ShopVo">
+        <include refid="selectShopByProductId"></include>
+        and sp.product_id = #{bo.productId}
+        <if test="bo.citycode != null and bo.citycode != ''">AND s.citycode =
+            #{bo.citycode}
+        </if>
+        <if test="bo.shopName != null and bo.shopName != ''">
+            AND (s.shop_name like concat('%', #{bo.shopName}, '%')
+            or s.address like concat('%', #{bo.shopName}, '%')
+            or s.formatted_address like concat('%', #{bo.shopName}, '%'))
+        </if>
+        ORDER BY distance
+    </select>
+
+    <select id="selectShopList" resultMap="ShopVo">
+        <include refid="selectShop"></include>
+        <if test="bo.commercialTenantId != null and bo.commercialTenantId != ''">AND s.commercial_tenant_id =
+            #{bo.commercialTenantId}
+        </if>
+        <if test="bo.citycode != null and bo.citycode != ''">AND s.citycode =
+            #{bo.citycode}
+        </if>
+        <if test="bo.shopName != null and bo.shopName != ''">
+            AND (s.shop_name like concat('%', #{bo.shopName}, '%')
+            or s.address like concat('%', #{bo.shopName}, '%')
+            or s.formatted_address like concat('%', #{bo.shopName}, '%'))
+        </if>
+        ORDER BY distance
+    </select>
+
+    <select id="selectShopListByCommercialTenantId" resultMap="ShopVo">
+        <include refid="selectShop"></include>
+        <if test="bo.commercialTenantIds != null">
+            AND s.commercial_tenant_id in
+            <foreach collection="bo.commercialTenantIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="bo.citycode != null and bo.citycode != ''">
+            AND s.citycode = #{bo.citycode}
+        </if>
+        ORDER BY distance
+    </select>
+</mapper>

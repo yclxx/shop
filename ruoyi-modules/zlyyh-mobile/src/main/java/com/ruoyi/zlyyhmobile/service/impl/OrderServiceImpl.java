@@ -1,0 +1,2182 @@
+package com.ruoyi.zlyyhmobile.service.impl;
+
+import cn.hutool.core.codec.Base64;
+import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.DateUnit;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.thread.ThreadUtil;
+import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.http.HttpStatus;
+import cn.hutool.http.HttpUtil;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.baomidou.lock.LockInfo;
+import com.baomidou.lock.LockTemplate;
+import com.baomidou.lock.executor.RedissonLockExecutor;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ruoyi.common.core.domain.R;
+import com.ruoyi.common.core.exception.ServiceException;
+import com.ruoyi.common.core.exception.user.UserException;
+import com.ruoyi.common.core.utils.*;
+import com.ruoyi.common.mybatis.core.page.PageQuery;
+import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.common.redis.utils.RedisUtils;
+import com.ruoyi.zlyyh.constant.ZlyyhConstants;
+import com.ruoyi.zlyyh.domain.*;
+import com.ruoyi.zlyyh.domain.bo.OrderBo;
+import com.ruoyi.zlyyh.domain.bo.ProductAmountBo;
+import com.ruoyi.zlyyh.domain.vo.*;
+import com.ruoyi.zlyyh.enumd.DateType;
+import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayBizMethod;
+import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayParams;
+import com.ruoyi.zlyyh.mapper.*;
+import com.ruoyi.zlyyh.properties.YsfFoodProperties;
+import com.ruoyi.zlyyh.properties.utils.YsfDistributionPropertiesUtils;
+import com.ruoyi.zlyyh.service.YsfConfigService;
+import com.ruoyi.zlyyh.utils.*;
+import com.ruoyi.zlyyh.utils.sdk.LogUtil;
+import com.ruoyi.zlyyh.utils.sdk.PayUtils;
+import com.ruoyi.zlyyh.utils.sdk.UnionPayDistributionUtil;
+import com.ruoyi.zlyyhmobile.domain.bo.CreateOrderBo;
+import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
+import com.ruoyi.zlyyhmobile.event.SendCouponEvent;
+import com.ruoyi.zlyyhmobile.service.*;
+import com.ruoyi.zlyyhmobile.utils.AliasMethod;
+import com.ruoyi.zlyyhmobile.utils.ProductUtils;
+import com.ruoyi.zlyyhmobile.utils.redis.OrderCacheUtils;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * 订单Service业务处理层
+ *
+ * @author yzgnet
+ * @date 2023-03-21
+ */
+@Slf4j
+@RequiredArgsConstructor
+@Service
+public class OrderServiceImpl implements IOrderService {
+    private static final YsfFoodProperties YSF_FOOD_PROPERTIES = SpringUtils.getBean(YsfFoodProperties.class);
+
+    private final YsfConfigService ysfConfigService;
+    private final OrderMapper baseMapper;
+    private final IPlatformService platformService;
+    private final IProductService productService;
+    private final IUserService userService;
+    private final OrderInfoMapper orderInfoMapper;
+    private final OrderFoodInfoMapper orderFoodInfoMapper;
+    private final OrderPushInfoMapper orderPushInfoMapper;
+    private final OrderUnionPayMapper orderUnionPayMapper;
+    private final OrderUnionSendService orderUnionSendService;
+    private final IMerchantService merchantService;
+    private final ICityMerchantService cityMerchantService;
+    private final IProductInfoService productInfoService;
+    private final IOrderCardService orderCardService;
+    private final IProductPackageService productPackageService;
+    private final IProductAmountService productAmountService;
+    private final IProductUnionPayService productUnionPayService;
+    private final HistoryOrderMapper historyOrderMapper;
+    private final OrderBackTransMapper orderBackTransMapper;
+    private final RefundMapper refundMapper;
+
+    @Autowired
+    private LockTemplate lockTemplate;
+
+    /**
+     * 保存订单至数据库
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void saveOrderToMySql(Long number) {
+        Order order = OrderCacheUtils.getOrderCache(number);
+        if (null == order) {
+            String key = "del" + number;
+            long l = RedisUtils.incrAtomicValue(key);
+            if (l > 10) {
+                // 超过10次订单不存在，删除订单相关缓存
+                OrderCacheUtils.delOrderCache(number, null);
+                RedisUtils.deleteObject(key);
+            }
+            return;
+        }
+        // 24小时以上的订单，直接保存至数据库中
+        if (DateUtils.getDatePoorHour(order.getCreateTime(), new Date()) < 24) {
+            if ("0".equals(order.getStatus()) || "1".equals(order.getStatus())) {
+                // 判断订单是否有效
+                if (DateUtils.compare(order.getExpireDate()) > 0) {
+                    return;
+                }
+            } else if ("2".equals(order.getStatus())) {
+                if ("0".equals(order.getSendStatus())) {
+                    // 未发放 发券
+                    sendCoupon(order.getNumber());
+                    return;
+                } else if ("1".equals(order.getSendStatus())) {
+                    // 查询订单发放记录
+                    List<String> orderPushListCache = OrderCacheUtils.getOrderPushListCache(order.getNumber());
+                    if (ObjectUtil.isNotEmpty(orderPushListCache)) {
+                        for (String s : orderPushListCache) {
+                            // 发放中
+                            queryOrderSendStatus(s);
+                        }
+                    } else {
+                        // 一个发券记录都没有，设置成发券中
+                        order.setSendStatus("0");
+                        OrderCacheUtils.setOrderCache(order);
+                    }
+                    return;
+                }
+            }
+        }
+        // 保存订单
+        int insert = baseMapper.insert(order);
+        if (insert <= 0) {
+            log.error("订单保存失败，订单信息：{}", order);
+            throw new ServiceException("订单新增失败");
+        }
+        OrderInfo orderInfoCache = OrderCacheUtils.getOrderInfoCache(number);
+        if (null != orderInfoCache) {
+            int insert1 = orderInfoMapper.insert(orderInfoCache);
+            if (insert1 <= 0) {
+                log.error("订单扩展信息保存失败，订单扩展信息：{}", orderInfoCache);
+                throw new ServiceException("订单扩展信息新增失败");
+            }
+        }
+        List<String> orderPushListCache = OrderCacheUtils.getOrderPushListCache(number);
+        if (ObjectUtil.isNotEmpty(orderPushListCache)) {
+            List<OrderPushInfo> orderPushInfos = new ArrayList<>(orderPushListCache.size());
+            for (String pushNumber : orderPushListCache) {
+                OrderPushInfo orderPushCache = OrderCacheUtils.getOrderPushCache(pushNumber);
+                if (null != orderPushCache) {
+                    orderPushInfos.add(orderPushCache);
+                }
+            }
+            orderPushInfoMapper.insertBatch(orderPushInfos);
+        }
+        // 删除订单缓存
+        OrderCacheUtils.delOrderCache(order.getNumber(), order.getUserId());
+    }
+
+    /**
+     * 订单发券
+     *
+     * @param number 订单号
+     */
+    @Override
+    public void sendCoupon(Long number) {
+        if (null == number || number < 1) {
+            log.error("订单发券,订单号错误：{}", number);
+            return;
+        }
+        String key = "sendOrderCoupon:" + number;
+        final LockInfo lockInfo = lockTemplate.lock(key, 30000L, 5000L, RedissonLockExecutor.class);
+        if (null == lockInfo) {
+            return;
+        }
+        String lockKey = "sendCouponNumbers:" + number;
+        // 获取锁成功，处理业务
+        try {
+            String cacheObject = RedisUtils.getCacheObject(lockKey);
+            if (StringUtils.isNotBlank(cacheObject)) {
+                return;
+            }
+            RedisUtils.setCacheObject(lockKey, DateUtil.now(), Duration.ofHours(12));
+            Order order = OrderCacheUtils.getOrderCache(number);
+            boolean cache = true;
+            if (null == order) {
+                cache = false;
+                order = baseMapper.selectById(number);
+            }
+            if (null == order || !"2".equals(order.getStatus())) {
+                log.error("订单发券,订单不存在或未支付：{}", number);
+                return;
+            }
+            if (!"0".equals(order.getSendStatus()) && !"3".equals(order.getSendStatus())) {
+                log.error("订单发券中：{}", number);
+                return;
+            }
+            List<OrderPushInfo> orderPushInfos = orderPushInfoMapper.selectList(new LambdaQueryWrapper<OrderPushInfo>().eq(OrderPushInfo::getNumber, order.getNumber()).ne(OrderPushInfo::getStatus, "2"));
+            if (ObjectUtil.isNotEmpty(orderPushInfos)) {
+                for (OrderPushInfo orderPushInfo : orderPushInfos) {
+                    if ("1".equals(orderPushInfo.getStatus())) {
+                        order.setPushNumber(orderPushInfo.getPushNumber());
+                        order.setSendStatus("2");
+                        if (cache) {
+                            // 重新缓存
+                            OrderCacheUtils.setOrderCache(order);
+                        } else {
+                            // 修改订单信息
+                            baseMapper.updateById(order);
+                        }
+                        break;
+                    }
+                }
+                log.info("订单发券中或发放成功number：{}", number);
+                return;
+            }
+            // 新增发券记录
+            OrderPushInfo orderPushInfo = new OrderPushInfo();
+            orderPushInfo.setNumber(order.getNumber());
+            orderPushInfo.setPushNumber(IdUtil.getSnowflakeNextIdStr());
+            orderPushInfo.setExternalProductId(order.getExternalProductId());
+            orderPushInfo.setStatus("0");
+            orderPushInfo.setExternalProductSendValue(order.getExternalProductSendValue());
+
+            // 修改订单状态发券中
+            order.setSendStatus("1");
+            order.setSendTime(new Date());
+            order.setPushNumber(orderPushInfo.getPushNumber());
+            String sendAccountType = "0";
+            ProductVo productVo = productService.queryById(order.getProductId());
+            UserVo userVo = userService.queryById(order.getUserId());
+            if (null != productVo && null != userVo) {
+                sendAccountType = productVo.getSendAccountType();
+                if ("0".equals(productVo.getSendAccountType()) && StringUtils.isNotBlank(userVo.getMobile())) {
+                    order.setAccount(userVo.getMobile());
+                } else if ("1".equals(productVo.getSendAccountType()) && StringUtils.isNotBlank(userVo.getOpenId())) {
+                    order.setAccount(userVo.getOpenId());
+                }
+            }
+            if (cache) {
+                // 缓存发券订单信息
+                OrderCacheUtils.setOrderPushCache(orderPushInfo);
+                // 重新缓存
+                OrderCacheUtils.setOrderCache(order);
+            } else {
+                orderPushInfoMapper.insert(orderPushInfo);
+                // 修改订单信息
+                baseMapper.updateById(order);
+                order = baseMapper.selectById(number);
+            }
+            if (StringUtils.isBlank(order.getExternalProductId()) || (("3".equals(order.getOrderType()) || "10".equals(order.getOrderType()) || "4".equals(order.getOrderType())) && null == order.getExternalProductSendValue())) {
+                if (null == productVo || (!"9".equals(productVo.getProductType()) && StringUtils.isBlank(productVo.getExternalProductId()))) {
+                    log.error("订单发券错误，缺少供应商产品ID：{}", number);
+                    // 处理结果
+                    sendResult(R.fail("缺少供应商产品ID"), orderPushInfo, order, cache, false);
+                    return;
+                }
+                if (("3".equals(order.getOrderType()) || "10".equals(order.getOrderType()) || "4".equals(order.getOrderType())) && null == order.getExternalProductSendValue() && null == productVo.getExternalProductSendValue()) {
+                    log.error("订单发券错误，缺少发放金额：{}", number);
+                    sendResult(R.fail("缺少发放金额"), orderPushInfo, order, cache, false);
+                    return;
+                }
+                order.setExternalProductId(productVo.getExternalProductId());
+                order.setExternalProductSendValue(productVo.getExternalProductSendValue());
+                orderPushInfo.setExternalProductId(order.getExternalProductId());
+                orderPushInfo.setExternalProductSendValue(order.getExternalProductSendValue());
+            }
+            if ("0".equals(order.getOrderType())) {
+                // 请求接口发券
+                R<JSONObject> result = YsfUtils.sendCoupon(order.getNumber(), orderPushInfo.getPushNumber(), orderPushInfo.getExternalProductId(), order.getAccount(), order.getCount(), sendAccountType, order.getPlatformKey());
+                // 处理结果
+                sendResult(result, orderPushInfo, order, cache, true);
+            } else if ("1".equals(order.getOrderType()) || "5".equals(order.getOrderType())) {
+                //如果是美食套餐订单重新走支付接口
+                payFoodOrder(order.getExternalOrderNumber());
+            } else if ("3".equals(order.getOrderType()) || "10".equals(order.getOrderType())) {
+                // 1云闪付红包
+                R<Void> result = YsfUtils.sendAcquire(order.getNumber(), orderPushInfo.getPushNumber(), order.getAccount(), sendAccountType, orderPushInfo.getExternalProductId(), orderPushInfo.getExternalProductSendValue(), order.getProductName(), order.getProductId(), order.getPlatformKey());
+                sendResult(result, orderPushInfo, order, cache, false);
+            } else if ("4".equals(order.getOrderType())) {
+                // 2云闪付积点
+                R<Void> result = YsfUtils.memberPointAcquire(order.getNumber(), orderPushInfo.getPushNumber(), orderPushInfo.getExternalProductId(), orderPushInfo.getExternalProductSendValue().longValue(), "0", order.getProductName(), order.getAccount(), sendAccountType, order.getPlatformKey());
+                sendResult(result, orderPushInfo, order, cache, false);
+            } else if ("6".equals(order.getOrderType()) || "7".equals(order.getOrderType()) || "8".equals(order.getOrderType())) {
+                R<Void> result = CloudRechargeUtils.doPostCreateOrder(order.getNumber(), orderPushInfo.getExternalProductId(), order.getAccount(), 1, orderPushInfo.getPushNumber());
+                sendResult(result, orderPushInfo, order, cache, false);
+            } else if ("9".equals(order.getOrderType())) {
+                // 券包
+                R<Void> result = productPackageHandle(order.getNumber(), order.getProductId(), order.getUserId(), order.getOrderCityCode(), order.getOrderCityName(), order.getPlatformKey());
+                sendResult(result, orderPushInfo, order, cache, false);
+            } else if ("11".equals(order.getOrderType())) {
+                // 代销（银联分销）
+                String sendStr = UnionPayDistributionUtil.send(order.getNumber(), orderPushInfo.getExternalProductId(), "1", "0", order.getAccount(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJCAppId(order.getPlatformKey()), YsfDistributionPropertiesUtils.getCertPathJC(order.getPlatformKey()));
+                sendResult(R.ok(sendStr), orderPushInfo, order, cache, false);
+            } else if ("12".equals(order.getOrderType())) {
+                List<OrderUnionSendVo> orderUnionSendVos = orderUnionSendService.queryListByNumber(order.getNumber());
+                // 未发券，执行订单发券操作
+                if (orderUnionSendVos.isEmpty()) {
+                    // 直销（银联分销）
+                    String orderSendStr = UnionPayDistributionUtil.orderSend(order.getNumber(), orderPushInfo.getExternalProductId(), order.getExternalOrderNumber(), "0", order.getAccount(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), YsfDistributionPropertiesUtils.getCertPathJD(order.getPlatformKey()));
+                    JSONObject orderSend = JSONObject.parseObject(orderSendStr);
+                    OrderUnionPay orderUnionPay = orderUnionPayMapper.selectById(order.getNumber());
+                    this.orderUnionPaySendHand(orderPushInfo.getExternalProductId(), order, orderUnionPay, orderSend);
+                    baseMapper.updateById(order);
+                }
+            } else {
+                sendResult(R.fail("订单类型无处理方式，请联系技术人员"), orderPushInfo, order, cache, false);
+            }
+        } finally {
+            //释放锁
+            lockTemplate.releaseLock(lockInfo);
+            RedisUtils.decrAtomicValue(ZlyyhConstants.SEND_COUPON_NUMBER);
+            RedisUtils.deleteObject(lockKey);
+        }
+    }
+
+    @Override
+    public void queryOrderSendStatus(String pushNumber) {
+        if (StringUtils.isBlank(pushNumber)) {
+            return;
+        }
+        OrderPushInfo orderPushCache = OrderCacheUtils.getOrderPushCache(pushNumber);
+        boolean cache = true;
+        if (null == orderPushCache) {
+            cache = false;
+            orderPushCache = orderPushInfoMapper.selectOne(new LambdaQueryWrapper<OrderPushInfo>().eq(OrderPushInfo::getPushNumber, pushNumber));
+        }
+        if (null == orderPushCache) {
+            log.error("发券订单号{}，不存在发券订单", pushNumber);
+            return;
+        }
+        Order order;
+        if (cache) {
+            order = OrderCacheUtils.getOrderCache(orderPushCache.getNumber());
+        } else {
+            order = baseMapper.selectById(orderPushCache.getNumber());
+        }
+        if (null == order) {
+            log.error("发券订单号{}，不存在订单", pushNumber);
+            return;
+        }
+        if (!"0".equals(orderPushCache.getStatus())) {
+            log.error("发券订单号{}，订单已有最终状态，不做查询处理", pushNumber);
+            return;
+        }
+        if ("0".equals(order.getOrderType())) {
+            R<JSONObject> result = YsfUtils.queryCoupon(orderPushCache.getNumber(), orderPushCache.getPushNumber(), orderPushCache.getCreateTime(), order.getPlatformKey());
+            // 处理结果
+            sendResult(result, orderPushCache, order, cache, false);
+        } else if ("6".equals(order.getOrderType()) || "7".equals(order.getOrderType()) || "8".equals(order.getOrderType())) {
+            R<JSONObject> result = CloudRechargeUtils.doPostQueryOrder(order.getNumber(), orderPushCache.getPushNumber());
+            sendResult(result, orderPushCache, order, cache, false);
+        } else if ("9".equals(order.getOrderType())) {
+            R<Void> result = queryProductPackageHandle(order.getNumber(), order.getProductId());
+            sendResult(result, orderPushCache, order, cache, false);
+        } else if ("11".equals(order.getOrderType()) || "12".equals(order.getOrderType())) {
+            JSONObject data = queryProductUnionSendHandle(order.getNumber());
+            if (data != null) {
+                rechargeUnionResult(data, orderPushCache, order);
+                orderPushInfoMapper.updateById(orderPushCache);
+                baseMapper.updateById(order);
+            }
+        }
+    }
+
+    private void sendResult(R result, OrderPushInfo orderPushCache, Order order, boolean cache, boolean warnQueryCoupon) {
+        if (R.isSuccess(result)) {
+            if ("6".equals(order.getOrderType()) || "7".equals(order.getOrderType()) || "8".equals(order.getOrderType())) {
+                JSONObject data = (JSONObject) result.getData();
+                rechargeResult(data, orderPushCache, order);
+            } else if ("11".equals(order.getOrderType()) || "12".equals(order.getOrderType())) {
+                JSONObject send = JSONObject.parseObject(result.getMsg());
+                if (send.getString("code").equals(UnionPayParams.CodeSuccess.getStr())) {
+                    ProductVo productVo = productService.queryById(order.getProductId());
+                    OrderUnionPay orderUnionPay = orderUnionPayMapper.selectById(order.getNumber());
+                    this.orderUnionPaySendHand(productVo.getExternalProductId(), order, orderUnionPay, send);
+                    rechargeUnionResult(send, orderPushCache, order);
+                } else {
+                    order.setSendStatus("3");
+                    log.info("银联分销支付异常。{}", send.getString("msg"));
+                    log.info("银联分销支付异常详情。{}", send.getString("subMsg"));
+                }
+            } else {
+                // 发放成功
+                orderPushCache.setStatus("1");
+                order.setSendStatus("2");
+                if (null != result.getData()) {
+                    orderPushCache.setRemark(JSONObject.toJSONString(result.getData()));
+                } else {
+                    orderPushCache.setRemark(result.getMsg());
+                }
+                if (StringUtils.isNotBlank(orderPushCache.getRemark()) && orderPushCache.getRemark().length() >= 5000) {
+                    orderPushCache.setRemark(orderPushCache.getRemark().substring(0, 4900));
+                }
+            }
+        } else {
+            OrderVo orderVo = baseMapper.selectVoById(order.getNumber());
+            if (null == orderVo || "2".equals(orderVo.getSendStatus())) {
+                return;
+            }
+            if (R.FAIL == result.getCode()) {
+                // 发放失败
+                orderPushCache.setStatus("2");
+                orderPushCache.setRemark(result.getMsg());
+                if (StringUtils.isNotBlank(orderPushCache.getRemark()) && orderPushCache.getRemark().length() >= 5000) {
+                    orderPushCache.setRemark(orderPushCache.getRemark().substring(0, 4900));
+                }
+                try {
+                    // 设置发送失败次数,到达上限发送云闪付服务消息.
+                    if (orderPushCache.getNumber() != null) {
+                        Object cacheObject = RedisUtils.getCacheObject(ZlyyhConstants.ysfOrderErrorNum);
+                        if (cacheObject != null) {
+                            String errorCouponNumber = ysfConfigService.queryValueByKey(order.getPlatformKey(), "errorCouponNumber");
+                            Integer num = Integer.parseInt(errorCouponNumber);
+                            int number = Integer.parseInt(cacheObject.toString());
+                            // 满足条件,发送云闪付服务消息.
+                            if (number >= num) {
+                                PlatformVo platformVo = platformService.queryById(order.getPlatformKey());
+                                if (null != platformVo) {
+                                    String backendToken = YsfUtils.getBackendToken(platformVo.getAppId(), platformVo.getSecret(), false, platformVo.getPlatformKey());
+                                    this.ysfForewarningMessage(order.getPlatformKey(), backendToken, "errorDescDetails", "errorTemplateValue");
+                                }
+                            }
+                            long timeToLive = RedisUtils.getTimeToLive(ZlyyhConstants.ysfOrderErrorNum);
+                            RedisUtils.setCacheObject(ZlyyhConstants.ysfOrderErrorNum, Integer.valueOf(number + 1).toString(), Duration.ofMillis(timeToLive));
+                        } else {
+                            RedisUtils.setCacheObject(ZlyyhConstants.ysfOrderErrorNum, "1", Duration.ofMinutes(30));
+                        }
+                    }
+                } catch (Exception e) {
+                    log.info("推送订单失败信息至云闪付异常：", e);
+                }
+                order.setSendStatus("3");
+                order.setFailReason(orderPushCache.getRemark());
+            } else {
+                // 请求接口查询发放状态
+                if (warnQueryCoupon) {
+                    queryOrderSendStatus(orderPushCache.getPushNumber());
+                }
+                return;
+            }
+        }
+        if (cache) {
+            // 缓存发券订单信息
+            OrderCacheUtils.setOrderPushCache(orderPushCache);
+            // 重新缓存
+            OrderCacheUtils.setOrderCache(order);
+        } else {
+            orderPushInfoMapper.updateById(orderPushCache);
+            // 修改订单信息
+            baseMapper.updateById(order);
+        }
+    }
+
+    /**
+     * 创建订单
+     *
+     * @return 返回结果
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public CreateOrderResult createOrder(CreateOrderBo bo, boolean system) {
+        PlatformVo platformVo = platformService.queryById(bo.getPlatformKey());
+        if (null == platformVo) {
+            throw new ServiceException("请求失败，请退出重试");
+        }
+        // 校验城市
+        if (StringUtils.isBlank(bo.getCityCode())) {
+            throw new ServiceException("未获取到您的位置信息,请确认是否开启定位服务");
+        }
+        if (StringUtils.isNotBlank(platformVo.getPlatformCity()) && !"ALL".equalsIgnoreCase(platformVo.getPlatformCity()) && !platformVo.getPlatformCity().contains(bo.getCityCode())) {
+            throw new ServiceException("您当前所在位置不在活动参与范围!");
+        }
+        // 校验是否有订单，有订单直接返回
+        String cacheObject = RedisUtils.getCacheObject(OrderCacheUtils.getUsreOrderOneCacheKey(platformVo.getPlatformKey(), bo.getUserId(), bo.getProductId()));
+        if (StringUtils.isNotBlank(cacheObject)) {
+            Order order = RedisUtils.getCacheObject(cacheObject);
+            if (null != order && "0".equals(order.getStatus())) {
+                return new CreateOrderResult(order.getNumber(), "1");
+            }
+        }
+        UserVo userVo = userService.queryById(bo.getUserId());
+        if (null == userVo || "0".equals(userVo.getReloadUser()) || StringUtils.isBlank(userVo.getMobile())) {
+            throw new ServiceException("登录超时，请退出重试[user]", HttpStatus.HTTP_UNAUTHORIZED);
+        }
+        if (!platformVo.getPlatformKey().equals(userVo.getPlatformKey())) {
+            throw new ServiceException("登录超时，请退出重试[platform]", HttpStatus.HTTP_UNAUTHORIZED);
+        }
+        if ("1".equals(userVo.getStatus())) {
+            throw new UserException("user.blocked", userVo.getMobile());
+        }
+        // 查询商品信息
+        ProductVo productVo = productService.queryById(bo.getProductId());
+        if (null == productVo || !"0".equals(productVo.getStatus())) {
+            throw new ServiceException("商品不存在或已下架!");
+        }
+        if (!platformVo.getPlatformKey().equals(productVo.getPlatformKey())) {
+            throw new ServiceException("商品错误!");
+        }
+        if ("1".equals(productVo.getProductAffiliation())) {
+            throw new ServiceException("商品不可购买");
+        }
+        if (!system && !"0".equals(productVo.getSearch())) {
+            throw new ServiceException("商品不可购买[请求校验不通过]");
+        }
+        // 生成订单
+        Order order = new Order();
+        order.setNumber(IdUtil.getSnowflakeNextId());
+        order.setProductId(productVo.getProductId());
+        order.setCusRefund(productVo.getCusRefund());
+        order.setUserId(bo.getUserId());
+        order.setProductName(productVo.getProductName());
+        order.setProductImg(productVo.getProductImg());
+        order.setPickupMethod(productVo.getPickupMethod());
+        order.setExpireDate(DateUtil.offsetMinute(new Date(), 15).toJdkDate());
+        if (null != bo.getPayCount() && bo.getPayCount() > 0) {
+            if (bo.getPayCount() > 10) {
+                throw new ServiceException("单次购买数量不能超过10");
+            }
+            order.setCount(bo.getPayCount());
+        } else {
+            order.setCount(1L);
+        }
+        order.setStatus("0");
+        if ("1".equals(productVo.getSendAccountType())) {
+            order.setAccount(userVo.getOpenId());
+        } else {
+            order.setAccount(userVo.getMobile());
+        }
+        order.setExternalProductId(productVo.getExternalProductId());
+        order.setOrderCityCode(bo.getAdcode());
+        order.setOrderCityName(bo.getCityName());
+        order.setPlatformKey(platformVo.getPlatformKey());
+        order.setExternalProductSendValue(productVo.getExternalProductSendValue());
+        order.setOrderType(productVo.getProductType());
+        order.setParentNumber(bo.getParentNumber());
+
+        OrderInfo orderInfo = new OrderInfo();
+        orderInfo.setNumber(order.getNumber());
+        orderInfo.setCommodityJson(JsonUtils.toJsonString(productVo));
+        // 查询是否是62会员 先查缓存
+        boolean vipCache = !"8".equals(productVo.getProductType());
+        MemberVipBalanceVo user62VipInfo = userService.getUser62VipInfo(vipCache, userVo.getUserId());
+        if (null != user62VipInfo) {
+            if ("01".equals(user62VipInfo.getStatus()) || "03".equals(user62VipInfo.getStatus())) {
+                if ("8".equals(productVo.getProductType())) {
+                    Date endDate = DateUtil.parse(user62VipInfo.getEndTime());
+                    if (null != endDate && DateUtil.between(new Date(), endDate, DateUnit.DAY) > 365) {
+                        throw new ServiceException("已达续费上限");
+                    }
+                }
+            } else {
+                if ("1".equals(productVo.getPayUser())) {
+                    // 不是会员，再次查询，防止用户开通之后，我方缓存未更新问题
+                    user62VipInfo = userService.getUser62VipInfo(false, userVo.getUserId());
+                    if (!"01".equals(user62VipInfo.getStatus()) && !"03".equals(user62VipInfo.getStatus())) {
+                        throw new ServiceException("请先开通62会员");
+                    }
+                }
+            }
+            orderInfo.setVip62Status(user62VipInfo.getStatus());
+            orderInfo.setVip62MemberType(user62VipInfo.getMemberType());
+            orderInfo.setVip62BeginTime(user62VipInfo.getBeginTime());
+            orderInfo.setVip62EndTime(user62VipInfo.getEndTime());
+        } else {
+            if ("1".equals(productVo.getPayUser()) || "8".equals(productVo.getProductType())) {
+                throw new ServiceException("查询62会员状态失败,请重新授权手机号重试");
+            }
+        }
+        //美食订单在这里处理
+        if ("5".equals(productVo.getProductType())) {
+            //先查出美食商品详情
+            ProductInfoVo productInfoVo = productInfoService.queryById(productVo.getProductId());
+            if (ObjectUtil.isEmpty(productInfoVo)) {
+                throw new ServiceException("商品异常");
+            }
+            OrderFoodInfo orderFoodInfo = new OrderFoodInfo();
+            orderFoodInfo.setNumber(order.getNumber());
+            //调用美食商城预下单接口获取三方number
+            foodCreateOrder(order, orderFoodInfo, userVo.getMobile(), productVo.getExternalProductId(), productInfoVo.getItemId());
+            // 保存订单 后续如需改动成缓存订单，需注释
+            orderFoodInfo.setItemId(productVo.getExternalProductId());
+            orderFoodInfo.setUserName("匿名");
+            orderFoodInfoMapper.insert(orderFoodInfo);
+        }
+        // 校验产品状态 名额
+        R<ProductVo> checkProductCountResult = ProductUtils.checkProduct(productVo, bo.getCityCode());
+        if (R.isError(checkProductCountResult)) {
+            throw new ServiceException(checkProductCountResult.getMsg());
+        }
+        // 校验用户是否达到参与上限
+        ProductUtils.checkUserCount(productVo, userVo.getUserId());
+        // 设置领取缓存
+        this.setOrderCountCache(platformVo.getPlatformKey(), bo.getUserId(), productVo.getProductId(), productVo.getSellEndDate());
+        try {
+            if ("0".equals(productVo.getPickupMethod())) {
+                order.setStatus("2");
+                order.setPayTime(new Date());
+                // 保存订单 后续如需改动成缓存订单，需注释
+                baseMapper.insert(order);
+                orderInfoMapper.insert(orderInfo);
+                // 缓存订单 暂时先不用 需要改动地方太多
+                //            OrderCacheUtils.setOrderCache(order);
+                //            OrderCacheUtils.setOrderInfoCache(orderInfo);
+                // 发券
+                //发券之前判断是否为发放金额为随机的商品
+                if (order.getOrderType().equals("10")) {
+                    checkRandomProduct(order);
+                }
+                order = baseMapper.selectById(order.getNumber());
+                SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
+//                orderStreamProducer.streamOrderMsg(order.getNumber().toString());
+                return new CreateOrderResult(order.getNumber(), "0");
+            }
+            // 需支付
+            BigDecimal amount = productVo.getSellAmount();
+            BigDecimal reducedPrice = new BigDecimal("0");
+            // 62会员
+            if (null != user62VipInfo) {
+                if ("01".equals(user62VipInfo.getStatus()) || "03".equals(user62VipInfo.getStatus())) {
+                    if (null != productVo.getVipUpAmount() && productVo.getVipUpAmount().signum() > 0) {
+                        reducedPrice = amount.subtract(productVo.getVipUpAmount());
+                    }
+                }
+            }
+            // 权益会员
+            if ("1".equals(userVo.getVipUser())) {
+                if (null != productVo.getVipAmount() && productVo.getVipAmount().signum() > 0) {
+                    reducedPrice = amount.subtract(productVo.getVipAmount());
+                }
+            }
+            order.setTotalAmount(amount.multiply(new BigDecimal(order.getCount())));
+            order.setReducedPrice(reducedPrice.multiply(new BigDecimal(order.getCount())));
+            order.setWantAmount(order.getTotalAmount().subtract(order.getReducedPrice()));
+            if ("12".equals(productVo.getProductType())) {
+                // 银联分销订单处理
+                ProductUnionPay productUnionPay = productUnionPayService.selectProductById(productVo.getProductId());
+                // 元转分
+                String orderAmt = BigDecimalUtils.toMinute(order.getWantAmount()).toString();
+                String createOrder = UnionPayDistributionUtil.createOrder(order.getNumber(), productUnionPay.getExternalProductId(), order.getCount(), orderAmt, orderAmt, order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), YsfDistributionPropertiesUtils.getCertPathJD(order.getPlatformKey()));
+                JSONObject unionPayOrder = JSONObject.parseObject(createOrder);
+                if (unionPayOrder.getString("code").equals(UnionPayParams.CodeSuccess.getStr())) {
+                    OrderUnionPay orderUnionPay = new OrderUnionPay();
+                    orderUnionPay.setNumber(order.getNumber());
+                    orderUnionPay.setOrderId(unionPayOrder.getString("orderId"));
+                    orderUnionPay.setProdTn(unionPayOrder.getString("prodTn"));
+                    orderUnionPay.setTxnTime(unionPayOrder.getString("txnTime"));
+                    orderUnionPay.setUsrPayAmt(orderAmt);
+                    orderUnionPayMapper.insert(orderUnionPay);
+                    order.setExternalOrderNumber(orderUnionPay.getProdTn());
+                } else {
+                    throw new ServiceException(unionPayOrder.getString("subMsg"));
+                }
+            }
+            // 保存订单 后续如需改动成缓存订单，需注释
+            baseMapper.insert(order);
+            orderInfoMapper.insert(orderInfo);
+            // 缓存订单 暂时先不用 需要改动地方太多
+//            OrderCacheUtils.setOrderCache(order);
+//            OrderCacheUtils.setOrderInfoCache(orderInfo);
+            cacheOrder(order);
+            return new CreateOrderResult(order.getNumber(), "1");
+        } catch (Exception e) {
+            // 如果发生异常 回退名额
+            callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), null);
+            throw e;
+        }
+    }
+
+    /**
+     * 支付成功 删除用户未支付订单缓存
+     *
+     * @param number 订单号
+     */
+    private void delCacheOrder(Long number) {
+        String orderCacheKey = getOrderCacheKey(number);
+        Order order = RedisUtils.getCacheObject(orderCacheKey);
+        if (null == order) {
+            return;
+        }
+        String userOrderCacheKey = OrderCacheUtils.getUsreOrderOneCacheKey(order.getPlatformKey(), order.getUserId(), order.getProductId());
+        RedisUtils.deleteObject(userOrderCacheKey);
+        RedisUtils.deleteObject(orderCacheKey);
+    }
+
+    /**
+     * 请求美食商城接口
+     */
+    private void foodCreateOrder(Order order, OrderFoodInfo orderFoodInfo, String mobile, String commodityId, String productId) {
+        String appId = YSF_FOOD_PROPERTIES.getAppId();
+        String rsaPrivateKey = YSF_FOOD_PROPERTIES.getRsaPrivateKey();
+        String insertOrderUrl = YSF_FOOD_PROPERTIES.getInsertOrderUrl();
+        String orderFood = YsfFoodUtils.createOrder(appId, commodityId, productId, mobile, rsaPrivateKey, insertOrderUrl);
+        if (ObjectUtil.isNotEmpty(orderFood)) {
+            //请求成功
+            JSONObject jsonObject = JSONObject.parseObject(orderFood);
+            String number = jsonObject.getString("number");
+            if (ObjectUtil.isNotEmpty(number)) {
+                //保存三方订单号
+                order.setExternalOrderNumber(number);
+                orderFoodInfo.setBizOrderId(number);
+            } else {
+                throw new ServiceException("创建订单失败");
+            }
+
+        }
+    }
+
+    /**
+     * 口碑 订单进行处理
+     *
+     * @param order 订单信息
+     */
+    private void orderFoodProcessed(OrderVo order) {
+        OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(order.getNumber());
+        if (ObjectUtil.isNotEmpty(orderFoodInfoVo)) {
+            //如果没有电子码
+            if (("2".equals(order.getStatus()) || "4".equals(order.getStatus()) || "5".equals(order.getStatus())) && StringUtils.isEmpty(orderFoodInfoVo.getTicketCode())) {
+                // 查询口碑订单
+                queryFoodOrder(order.getExternalOrderNumber());
+                //防止重复加密再查询一遍
+                orderFoodInfoVo = orderFoodInfoMapper.selectVoById(order.getNumber());
+            }
+        }
+        order.setOrderFoodInfoVo(orderFoodInfoVo);
+    }
+
+    /**
+     * 查询美食订单接口
+     */
+    private void queryFoodOrder(String externalOrderNumber) {
+        String appId = YSF_FOOD_PROPERTIES.getAppId();
+        String rsaPrivateKey = YSF_FOOD_PROPERTIES.getRsaPrivateKey();
+        String queryOrderUrl = YSF_FOOD_PROPERTIES.getQueryOrderUrl();
+        Order order = baseMapper.selectOne(new LambdaQueryWrapper<Order>().eq(Order::getExternalOrderNumber, externalOrderNumber));
+        if (ObjectUtil.isEmpty(order)) {
+            return;
+        }
+        OrderPushInfo orderPushInfo = orderPushInfoMapper.selectOne(new LambdaQueryWrapper<OrderPushInfo>().eq(OrderPushInfo::getNumber, order.getNumber()));
+        OrderFoodInfo orderFoodInfo = orderFoodInfoMapper.selectById(order.getNumber());
+        String orderQuery = YsfFoodUtils.queryOrder(appId, externalOrderNumber, rsaPrivateKey, queryOrderUrl);
+        if (ObjectUtil.isNotEmpty(orderQuery)) {
+            JSONObject orderObject = JSONObject.parseObject(orderQuery);
+            //同步订单状态
+            JSONObject orderKbProduct = orderObject.getJSONObject("orderKbProduct");
+            order.setExternalOrderNumber(orderKbProduct.getString("number"));
+            String ticketCode = orderKbProduct.getString("ticketCode");
+            String voucherId = orderKbProduct.getString("voucherId");
+            String voucherStatus = orderKbProduct.getString("voucherStatus");
+            String effectTime = orderKbProduct.getString("effectTime");
+            String expireTime = orderKbProduct.getString("expireTime");
+            Integer totalAmount = orderKbProduct.getInteger("totalAmount");
+            Integer usedAmount = orderKbProduct.getInteger("usedAmount");
+            Integer refundAmount = orderKbProduct.getInteger("refundAmount");
+            String orderStatus = orderKbProduct.getString("orderStatus");
+            BigDecimal officialPrice = orderKbProduct.getBigDecimal("officialPrice");
+            BigDecimal sellingPrice = orderKbProduct.getBigDecimal("sellingPrice");
+            if (ObjectUtil.isNotEmpty(ticketCode)) {
+                order.setSendStatus("2");
+                if (ObjectUtil.isNotEmpty(orderPushInfo)) {
+                    orderPushInfo.setStatus("1");
+                    orderPushInfoMapper.updateById(orderPushInfo);
+                }
+            }
+            orderFoodInfo.setVoucherId(voucherId);
+            orderFoodInfo.setTicketCode(ticketCode);
+            orderFoodInfo.setVoucherStatus(voucherStatus);
+            orderFoodInfo.setEffectTime(effectTime);
+            orderFoodInfo.setExpireTime(expireTime);
+            orderFoodInfo.setTotalAmount(totalAmount);
+            orderFoodInfo.setUsedAmount(usedAmount);
+            orderFoodInfo.setRefundAmount(refundAmount);
+            orderFoodInfo.setOrderStatus(orderStatus);
+            orderFoodInfo.setOfficialPrice(officialPrice);
+            orderFoodInfo.setSellingPrice(sellingPrice);
+            baseMapper.updateById(order);
+            orderFoodInfoMapper.updateById(orderFoodInfo);
+        }
+
+    }
+
+    /**
+     * 支付美食订单接口
+     * *
+     */
+    private void payFoodOrder(String externalOrderNumber) {
+        String appId = YSF_FOOD_PROPERTIES.getAppId();
+        String rsaPrivateKey = YSF_FOOD_PROPERTIES.getRsaPrivateKey();
+        String payOrderUrl = YSF_FOOD_PROPERTIES.getPayOrderUrl();
+        Order order = baseMapper.selectOne(new LambdaQueryWrapper<Order>().eq(Order::getExternalOrderNumber, externalOrderNumber));
+        if (ObjectUtil.isEmpty(order)) {
+            return;
+        }
+        OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(order.getNumber());
+        if (ObjectUtil.isEmpty(orderFoodInfoVo)) {
+            return;
+        }
+        //调用美食支付接口
+        String s = YsfFoodUtils.payOrder(appId, externalOrderNumber, rsaPrivateKey, payOrderUrl);
+        //支付完成后调用查询美食订单接口获取电子凭证
+        if (ObjectUtil.isEmpty(s)) {
+            queryFoodOrder(externalOrderNumber);
+        }
+    }
+
+    /**
+     * 缓存用户未支付订单
+     *
+     * @param order 订单信息
+     */
+    private void cacheOrder(Order order) {
+        String orderCacheKey = getOrderCacheKey(order.getNumber());
+        long datePoorMinutes = 30;
+        if (null != order.getExpireDate()) {
+            datePoorMinutes = DateUtils.getDatePoorMinutes(order.getExpireDate(), new Date());
+            datePoorMinutes = datePoorMinutes + 20;
+        }
+        Duration duration = Duration.ofMinutes(datePoorMinutes);
+        RedisUtils.setCacheObject(orderCacheKey, order, duration);
+        String userOrderCacheKey = OrderCacheUtils.getUsreOrderOneCacheKey(order.getPlatformKey(), order.getUserId(), order.getProductId());
+        RedisUtils.setCacheObject(userOrderCacheKey, orderCacheKey, duration);
+    }
+
+    /**
+     * 获取订单缓存redis key
+     *
+     * @param number 订单号
+     * @return 结果
+     */
+    private String getOrderCacheKey(Long number) {
+        return "orders:" + number;
+    }
+
+    /**
+     * 设置商品购买数量缓存
+     *
+     * @param platformKey 平台标识
+     * @param userId      用户ID
+     * @param productId   产品ID
+     */
+    private void setOrderCountCache(Long platformKey, Long userId, Long productId, Date cacheTime) {
+        Duration duration = null;
+        if (null != cacheTime) {
+            long datePoorHour = DateUtils.getDatePoorDay(cacheTime, new Date());
+            if (datePoorHour > 0) {
+                duration = Duration.ofDays(datePoorHour + 7);
+            }
+        }
+        DateType[] values = DateType.values();
+        for (DateType value : values) {
+            String productCacheKey = ProductUtils.countByProductIdRedisKey(platformKey, productId, value);
+            RedisUtils.incrAtomicValue(productCacheKey);
+            String userCacheKey = ProductUtils.countByUserIdAndProductIdRedisKey(platformKey, userId, productId, value);
+            RedisUtils.incrAtomicValue(userCacheKey);
+            if (null != duration) {
+                // 设置失效时间
+                RedisUtils.expire(productCacheKey, duration);
+                RedisUtils.expire(userCacheKey, duration);
+            }
+        }
+    }
+
+    /**
+     * 订单取消 回退用户购买名额
+     *
+     * @param platformKey 平台标识
+     * @param userId      用户ID
+     * @param productId   产品ID
+     */
+    private void callbackOrderCountCache(Long platformKey, Long userId, Long productId, Date createTime) {
+        DateType[] values = DateType.values();
+        for (DateType value : values) {
+            String productCacheKey = ProductUtils.countByProductIdRedisKey(platformKey, productId, value);
+            if (StringUtils.isBlank(productCacheKey)) {
+                // 如果不存在，快速失败，无需再循环
+                return;
+            }
+            if (null != createTime) {
+                // 检查是否当天
+                if (value == DateType.DAY) {
+                    String formatCreateTime = DateUtil.format(createTime, DatePattern.NORM_DATE_PATTERN);
+                    String formatNow = DateUtil.format(new Date(), DatePattern.NORM_DATE_PATTERN);
+                    if (!formatCreateTime.equals(formatNow)) {
+                        // 不是当天跳过
+                        continue;
+                    }
+                }
+                // 检查是否本周
+                if (value == DateType.WEEK) {
+                    int formatCreateTime = DateUtil.weekOfYear(createTime);
+                    int formatNow = DateUtil.weekOfYear(new Date());
+                    if (formatCreateTime != formatNow) {
+                        // 不是本周跳过
+                        continue;
+                    }
+                }
+                // 检查是否当月
+                if (value == DateType.MONTH) {
+                    String formatCreateTime = DateUtil.format(createTime, DatePattern.NORM_MONTH_PATTERN);
+                    String formatNow = DateUtil.format(new Date(), DatePattern.NORM_MONTH_PATTERN);
+                    if (!formatCreateTime.equals(formatNow)) {
+                        // 不是当月跳过
+                        continue;
+                    }
+                }
+            }
+            RedisUtils.decrAtomicValue(productCacheKey);
+            String userCacheKey = ProductUtils.countByUserIdAndProductIdRedisKey(platformKey, userId, productId, value);
+            RedisUtils.decrAtomicValue(userCacheKey);
+        }
+    }
+
+    /**
+     * 查询订单
+     */
+    @Override
+    public OrderVo queryById(Long number) {
+        OrderVo orderVo = baseMapper.selectVoById(number);
+        try {
+            if ("2".equals(orderVo.getStatus()) && "1".equals(orderVo.getSendStatus()) && null != orderVo.getPayTime() && DateUtils.getDatePoorMinutes(new Date(), orderVo.getPayTime()) > 30) {
+                queryOrderSendStatus(orderVo.getPushNumber());
+            }
+        } catch (Exception e) {
+            log.info("查询订单发放状态异常：", e);
+        }
+        //订单为美食订单加上info
+        if ("1".equals(orderVo.getOrderType()) || "5".equals(orderVo.getOrderType())) {
+            //调用接口查询美食订单
+            orderFoodProcessed(orderVo);
+        } else if ("7".equals(orderVo.getOrderType())) {
+            if ("2".equals(orderVo.getStatus())) {
+                List<OrderCardVo> orderCardVos = orderCardService.queryListByNumber(number);
+                orderVo.setOrderCardVos(orderCardVos);
+            }
+        } else if ("11".equals(orderVo.getOrderType()) || "12".equals(orderVo.getOrderType())) {
+            List<OrderUnionSendVo> orderUnionSendVos = orderUnionSendService.queryListByNumber(number);
+            orderVo.setOrderUnionSendVos(orderUnionSendVos);
+        }
+        return orderVo;
+    }
+
+    /**
+     * 查询订单列表
+     */
+    @Override
+    public TableDataInfo<OrderVo> queryPageList(OrderBo bo, PageQuery pageQuery) {
+        LambdaQueryWrapper<Order> lqw = buildQueryWrapper(bo);
+        Page<OrderVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+        return TableDataInfo.build(result);
+    }
+
+    /**
+     * 订单支付未支付数量
+     */
+    @Override
+    public long queryUserOrderCount(Long userId) {
+        LambdaQueryWrapper<Order> lqw = Wrappers.lambdaQuery();
+        lqw.eq(Order::getUserId, userId);
+        lqw.in(Order::getStatus, "0", "1");
+        return baseMapper.selectCount(lqw);
+    }
+
+    @Override
+    public Boolean deleteWithValidByIds(Collection<String> ids, Long userId, Boolean isValid) {
+        // 查询订单
+        LambdaQueryWrapper<Order> lqw = Wrappers.lambdaQuery();
+        lqw.eq(Order::getUserId, userId);
+        lqw.in(Order::getNumber, ids);
+        List<OrderVo> orderVos = baseMapper.selectVoList(lqw);
+        if (ObjectUtil.isEmpty(orderVos)) {
+            return false;
+        }
+        for (OrderVo orderVo : orderVos) {
+            if (!"3".equals(orderVo.getStatus())) {
+                throw new ServiceException("当前订单不可删除!");
+            }
+        }
+        int delete = baseMapper.delete(lqw);
+        return delete > 0;
+    }
+
+    @Override
+    public void cancel(Long number, Long userId) {
+        OrderVo orderVo = baseMapper.selectVoById(number);
+        if (null == orderVo || !orderVo.getUserId().equals(userId)) {
+            throw new ServiceException("登录超时,请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
+        }
+        if ("0".equals(orderVo.getStatus()) || "1".equals(orderVo.getStatus())) {
+            boolean b = updateOrderClose(orderVo);
+            if (!b) {
+                throw new ServiceException("订单不可取消！");
+            }
+        } else {
+            throw new ServiceException("订单不可取消！");
+        }
+    }
+
+    @Override
+    public void orderRefund(Long number, Long userId) {
+        OrderVo orderVo = baseMapper.selectVoById(number);
+        Order order = baseMapper.selectById(orderVo.getNumber());
+        if (!orderVo.getUserId().equals(userId)) {
+            throw new ServiceException("登录超时,请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
+        }
+        //先查该订单是否支持用户侧退款
+        if (ObjectUtil.isEmpty(orderVo.getCusRefund()) || !orderVo.getCusRefund().equals("1")) {
+            throw new ServiceException("该订单暂不支持退款");
+        }
+        if (!"2".equals(orderVo.getStatus())) {
+            throw new ServiceException("订单不可退，如有疑问，请联系客服处理");
+        }
+        Refund refund = new Refund();
+        refund.setNumber(orderVo.getNumber());
+        //退款申请人
+        refund.setRefundApplicant(userId.toString());
+        refund.setRefundAmount(orderVo.getOutAmount());
+        refund.setRefundRemark("用户申请退款");
+        //审核中
+        refund.setStatus("0");
+        String orderType = orderVo.getOrderType();
+        //根据订单类型进行退款
+        if (orderType.equals("5")) {
+            //如果是美食订单 先查询订单
+            queryFoodOrder(orderVo.getExternalOrderNumber());
+            OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(orderVo.getNumber());
+            if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && !orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
+                throw new ServiceException("该订单无法申请退款");
+            }
+            order.setCancelStatus("0");
+            order.setStatus("4");
+            baseMapper.updateById(order);
+            //如果电子券为未使用状态 在这里先走退款接口
+            if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
+                String appId = YSF_FOOD_PROPERTIES.getAppId();
+                String rsaPrivateKey = YSF_FOOD_PROPERTIES.getRsaPrivateKey();
+                String refundUrl = YSF_FOOD_PROPERTIES.getRefundUrl();
+                //请求美食退款订单接口
+                if ("1".equals(orderVo.getCancelStatus())) {
+                    throw new ServiceException("退款已提交,不可重复申请");
+                }
+                YsfFoodUtils.cancelOrder(appId, orderVo.getExternalOrderNumber(), rsaPrivateKey, refundUrl);
+            }
+            refundMapper.insert(refund);
+            return;
+        } else if (orderType.equals("7")) {
+            //如果是电子券卡密订单 等待同意
+            refundMapper.insert(refund);
+            order.setStatus("4");
+            baseMapper.updateById(order);
+            return;
+        } else {
+            //其他订单 只在失败的情况下才能申请退款
+            if (!orderVo.getSendStatus().equals("3")) {
+                throw new ServiceException("该订单无法申请退款");
+            }
+        }
+        //失败订单直接给退钱
+        refund.setStatus("1");
+        refund.setRefundReviewer("系统");
+        refundMapper.insert(refund);
+        MerchantVo merchantVo = null;
+        if (!"2".equals(orderVo.getPickupMethod())) {
+            merchantVo = merchantService.queryById(orderVo.getPayMerchant());
+            if (ObjectUtil.isEmpty(merchantVo)) {
+                throw new ServiceException("商户不存在，请联系客服处理");
+            }
+        }
+        OrderBackTrans orderBackTrans = new OrderBackTrans();
+        orderBackTrans.setRefund(orderVo.getOutAmount());
+        orderBackTrans.setThNumber(IdUtils.getDateUUID("T"));
+        orderBackTrans.setOrderBackTransState("0");
+        orderBackTrans.setNumber(orderVo.getNumber());
+        order.setStatus("4");
+        //1.付费领取
+        if ("1".equals(order.getPickupMethod())) {
+            OrderInfoVo orderInfoVo = orderInfoMapper.selectVoById(orderBackTrans.getNumber());
+            Map<String, String> result = PayUtils.backTransReq(orderInfoVo.getQueryId(), BigDecimalUtils.toMinute(orderBackTrans.getRefund()).toString(), orderBackTrans.getThNumber(), merchantVo.getRefundCallbackUrl(), merchantVo.getMerchantNo(), merchantVo.getMerchantKey(), merchantVo.getCertPath(), orderInfoVo.getIssAddnData());
+            if (ObjectUtil.isEmpty(result)) {
+                throw new ServiceException("请求失败，请联系客服处理");
+            }
+            String respCode = result.get("respCode");
+            String queryId = result.get("queryId");
+            String txnTime = result.get("txnTime");
+            String origQryId = result.get("origQryId");
+            if (("00").equals(respCode)) {
+                orderBackTrans.setQueryId(queryId);
+                orderBackTrans.setOrigQryId(origQryId);
+                orderBackTrans.setTxnTime(txnTime);
+                orderBackTrans.setOrderBackTransState("2");
+                orderBackTrans.setPickupMethod("1");
+                orderBackTrans.setSuccessTime(DateUtils.getNowDate());
+                order.setStatus("5");
+            } else if (("03").equals(respCode) || ("04").equals(respCode) || ("05").equals(respCode)) {
+                //后续需发起交易状态查询交易确定交易状态
+            } else {
+                LogUtil.writeLog("【" + orderBackTrans.getNumber() + "】退款失败，应答信息respCode=" + respCode + ",respMsg=" + result.get("respMsg"));
+                //其他应答码为失败请排查原因
+                orderBackTrans.setOrderBackTransState("1");
+                order.setStatus("6");
+            }
+        } else if ("2".equals(order.getPickupMethod())) {
+            //2.积点兑换
+            UserVo userVo = userService.queryById(order.getUserId());
+            if (ObjectUtil.isEmpty(userVo)) {
+                throw new ServiceException("用户不存在，请联系客服处理");
+            }
+            R<Void> result = YsfUtils.memberPointAcquire(orderVo.getNumber(), Integer.toUnsignedLong(orderBackTrans.getRefund().intValue()), "1", orderVo.getProductName() + "退款", userVo.getOpenId(), "1", orderVo.getPlatformKey());
+            if (result.getCode() == 200) {
+                orderBackTrans.setPickupMethod("2");
+                orderBackTrans.setSuccessTime(DateUtils.getNowDate());
+                orderBackTrans.setOrderBackTransState("2");
+                order.setStatus("5");
+            } else {
+                orderBackTrans.setOrderBackTransState("1");
+                order.setStatus("6");
+            }
+        }
+        baseMapper.updateById(order);
+        if ("9".equals(order.getOrderType())) {
+            Order ob = new Order();
+            ob.setStatus(order.getStatus());
+            baseMapper.update(ob, new LambdaQueryWrapper<Order>().eq(Order::getParentNumber, order.getNumber()));
+        }
+        orderBackTransMapper.insert(orderBackTrans);
+    }
+
+    @Override
+    public void updateOrder(Order order) {
+        baseMapper.updateById(order);
+    }
+
+    /**
+     * 订单支付
+     *
+     * @param number 订单号
+     * @param userId 用户ID
+     * @return 支付tn 成功返回ok
+     */
+    @Override
+    public String payOrder(Long number, Long userId) {
+        Order order = baseMapper.selectById(number);
+        if (null == order) {
+            throw new ServiceException("订单不存在");
+        }
+        if (!order.getUserId().equals(userId)) {
+            throw new ServiceException("登录超时，请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
+        }
+        if ("0".equals(order.getStatus()) || "1".equals(order.getStatus())) {
+            if ("0".equals(order.getPickupMethod())) {
+                throw new ServiceException("订单无需支付");
+            } else if (!"1".equals(order.getPickupMethod()) && !"2".equals(order.getPickupMethod())) {
+                throw new ServiceException("订单异常[PickupMethod]");
+            }
+            if (DateUtils.compare(order.getExpireDate()) <= 0) {
+                try {
+                    cancel(order.getNumber(), order.getUserId());
+                } catch (Exception ignored) {
+                }
+                throw new ServiceException("订单超时已关闭");
+            }
+            // 查询商品信息
+            ProductVo productVo = productService.queryById(order.getProductId());
+            if (null == productVo || !"0".equals(productVo.getStatus())) {
+                throw new ServiceException("商品不存在或已下架[pay]");
+            }
+            if ("1".equals(order.getPickupMethod())) {
+                // 付费订单
+                // 直销走银联支付，代销走原先支付
+                if ("12".equals(productVo.getProductType())) {
+                    // 银联分销订单处理
+                    ProductUnionPay productUnionPay = productUnionPayService.selectProductById(productVo.getProductId());
+                    if (productUnionPay.getCoopMd().equals("3")) { // 直销
+                        OrderUnionPay orderUnionPay = orderUnionPayMapper.selectById(order.getNumber());
+                        String orderPayStr = UnionPayDistributionUtil.orderPay(order.getNumber(), orderUnionPay.getProdTn(), orderUnionPay.getUsrPayAmt(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), YsfDistributionPropertiesUtils.getCertPathJD(order.getPlatformKey()));
+                        JSONObject orderPay = JSONObject.parseObject(orderPayStr);
+                        if (orderPay.getString("code").equals(UnionPayParams.CodeSuccess.getStr())) {
+                            orderUnionPay.setPayTn(orderPay.getString("payTn"));
+                            orderUnionPay.setPayTxnTime(orderPay.getString("txnTime"));
+                            orderUnionPayMapper.updateById(orderUnionPay);
+                            return orderUnionPay.getPayTn();
+                        } else {
+                            throw new ServiceException(orderPay.getString("msg"));
+                        }
+                    }
+                } else {
+                    MerchantVo merchantVo = null;
+                    if (null != productVo.getMerchantId()) {
+                        merchantVo = merchantService.queryById(productVo.getMerchantId());
+                    }
+                    if (null == merchantVo) {
+                        // 查询城市商户
+                        String adcode = ServletUtils.getHeader(ZlyyhConstants.AD_CODE);
+                        if (StringUtils.isNotBlank(adcode)) {
+                            String s = adcode.substring(0, 4) + "00";
+                            CityMerchantVo cityMerchantVo = cityMerchantService.queryOneByCityCode(s, order.getPlatformKey());
+                            if (null != cityMerchantVo) {
+                                merchantVo = merchantService.queryById(cityMerchantVo.getMerchantId());
+                            }
+                        }
+                    }
+                    if (null == merchantVo) {
+                        PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId());
+                        if (null != platformVo && null != platformVo.getMerchantId()) {
+                            merchantVo = merchantService.queryById(platformVo.getMerchantId());
+                        }
+                    }
+                    if (null == merchantVo) {
+                        throw new ServiceException("支付商户配置异常");
+                    }
+                    order.setPayMerchant(merchantVo.getId());
+                    baseMapper.updateById(order);
+                    // 支付金额 乘100，把元转成分
+                    Integer amount = BigDecimalUtils.toMinute(order.getWantAmount());
+                    String tn = PayUtils.pay(order.getNumber().toString(), amount.toString(), merchantVo.getPayCallbackUrl(), merchantVo.getMerchantNo(), merchantVo.getMerchantKey(), merchantVo.getCertPath(), null, order.getExpireDate());
+                    if (StringUtils.isEmpty(tn)) {
+                        throw new ServiceException("支付异常，请稍后重试");
+                    }
+                    return tn;
+                }
+            } else if ("2".equals(order.getPickupMethod())) {
+                PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId());
+                if (null == platformVo) {
+                    throw new ServiceException("系统配置错误[platform]");
+                }
+                // 积点兑换 扣除积点
+                UserVo userVo = userService.queryById(order.getUserId());
+                if (null == userVo || StringUtils.isBlank(userVo.getOpenId())) {
+                    throw new ServiceException("登录超时，请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
+                }
+                R<Void> result = YsfUtils.memberPointDeduct(order.getNumber(), order.getWantAmount().longValue(), order.getProductName(), userVo.getOpenId(), order.getPlatformKey());
+                if (R.isError(result)) {
+                    throw new ServiceException("积点扣除失败[" + result.getMsg() + "]");
+                }
+                // 修改订单为支付成功
+                order.setOutAmount(order.getWantAmount());
+                order.setStatus("2");
+                order.setPayTime(new Date());
+                baseMapper.updateById(order);
+                // 删除待支付订单缓存
+                delCacheOrder(order.getNumber());
+                // 发券
+                //判断是否为随机产品 再发券
+                if (order.getOrderType().equals("10")) {
+                    checkRandomProduct(order);
+                }
+                order = baseMapper.selectById(order.getNumber());
+                SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
+                //orderStreamProducer.streamOrderMsg(order.getNumber().toString());
+                return "ok";
+            }
+        } else if ("3".equals(order.getStatus())) {
+            throw new ServiceException("订单已关闭");
+        }
+        return "ok";
+    }
+
+    /**
+     * 设置订单为取消状态
+     *
+     * @param order 订单信息
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateOrderClose(OrderVo order) {
+        //查询支付是否成功
+        String s = queryOrderPay(order.getNumber(), 1);
+        if ("订单支付成功".equals(s)) {
+            order = baseMapper.selectVoById(order.getNumber());
+            if (!"0".equals(order.getStatus()) && !"1".equals(order.getStatus())) {
+                return false;
+            }
+        }
+        // 修改订单状态为取消(已关闭)
+        Order o = new Order();
+        o.setNumber(order.getNumber());
+        o.setStatus("3");
+        baseMapper.updateById(o);
+        // 删除用户未支付订单
+        delCacheOrder(order.getNumber());
+        // 回退名额
+        callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), order.getCreateTime());
+
+        try {
+            // 银联分销订单（处理）
+            if (order.getOrderType().equals("11") || order.getOrderType().equals("12")) {
+                if (order.getOrderType().equals("11")) {
+                    UnionPayDistributionUtil.orderCancel(order.getNumber(), order.getExternalOrderNumber(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJCAppId(order.getPlatformKey()), YsfDistributionPropertiesUtils.getCertPathJC(order.getPlatformKey()));
+                } else {
+                    UnionPayDistributionUtil.orderCancel(order.getNumber(), order.getExternalOrderNumber(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), YsfDistributionPropertiesUtils.getCertPathJD(order.getPlatformKey()));
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return true;
+    }
+
+    /**
+     * 查询订单支付状态
+     *
+     * @param number 订单号
+     * @return 支付结果
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public String queryOrderPay(Long number, Integer type) {
+        Order order = baseMapper.selectById(number);
+        OrderInfo orderInfo = orderInfoMapper.selectById(number);
+        if (null == order || null == orderInfo) {
+            return "订单不存在";
+        }
+        // 直销商品额外处理
+        if (type.equals(0) && order.getOrderType().equals("12")) {
+            // 查询订单券码状态
+            List<OrderUnionSendVo> orderUnionSendVos = orderUnionSendService.queryListByNumber(order.getNumber());
+            if (!orderUnionSendVos.isEmpty()) return "订单支付成功";
+            // 未发券，执行订单发券操作
+            OrderUnionPay orderUnionPay = orderUnionPayMapper.selectById(order.getNumber());
+            // 查询订单支付状态
+            String certPath = YsfDistributionPropertiesUtils.getCertPathJC(order.getPlatformKey());
+            String orderStatusStr = UnionPayDistributionUtil.orderStatus(order.getNumber(), UnionPayBizMethod.FRONT.getBizMethod(), null, order.getNumber(), orderUnionPay.getTxnTime(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJCAppId(order.getPlatformKey()), certPath);
+            JSONObject orderStatus = JSONObject.parseObject(orderStatusStr);
+            if (orderStatus.getString("code").equals(UnionPayParams.CodeSuccess.getStr())) {
+                String prodOrderSt = orderStatus.getString("prodOrderSt");
+                if (StringUtils.isNotEmpty(prodOrderSt)) {
+                    if (prodOrderSt.equals("00")) {
+                        // 直销（银联分销）
+                        order.setStatus("2");
+                        baseMapper.updateById(order);
+                        this.sendCoupon(number);
+                        return "订单支付成功";
+                    }
+                }
+            }
+            return "订单未支付";
+        } else {
+            if ("3".equals(order.getStatus())) {
+                return "订单已关闭";
+            } else if ("0".equals(order.getStatus()) || "1".equals(order.getStatus())) {
+                if (null == order.getPayMerchant()) {
+                    return "订单未支付";
+                }
+                MerchantVo merchantVo = merchantService.queryById(order.getPayMerchant());
+                if (null == merchantVo) {
+                    return "商户不存在";
+                }
+                Map<String, String> rspData = PayUtils.queryOrder(order.getNumber().toString(), DateUtils.parseDateToStr("yyyyMMddHHmmss", order.getCreateTime()), merchantVo.getMerchantNo(), merchantVo.getMerchantKey(), merchantVo.getCertPath());
+                if (null == rspData) {
+                    return "支付结果查询失败，请稍后重试";
+                }
+                String origRespCode = rspData.get("origRespCode");
+                // 查询订单时的订单号
+                String queryId = rspData.get("queryId");
+                // 交易传输时间
+                String traceTime = rspData.get("traceTime");
+                // 系统跟踪号
+                String traceNo = rspData.get("traceNo");
+                // 交易金额，单位分
+                String txnAmt = rspData.get("txnAmt");
+                // 转换单位为元
+                BigDecimal txnAmount = BigDecimalUtils.toMoney(Integer.valueOf(txnAmt));
+                // 记录订单发送时间	 商户代码merId、商户订单号orderId、订单发送时间txnTime三要素唯一确定一笔交易。
+                String txnTime = rspData.get("txnTime");
+                // 5.1.2issAddnData订单优惠信息（支持单品）
+                String issAddnData = rspData.get("issAddnData");
+                if (StringUtils.isNotBlank(issAddnData)) {
+                    issAddnData = Base64.decodeStr(issAddnData);
+                }
+                if (("00").equals(origRespCode)) {
+                    //交易成功，
+                    handleOrder(order, txnAmount, queryId, traceTime, traceNo, txnTime, issAddnData);
+                    return "订单支付成功";
+                } else {
+                    //其他应答码为交易失败
+                    log.info("交易失败：" + rspData.get("origRespMsg") + "。<br> ");
+                    return "订单未支付";
+                }
+            }
+            return "订单支付成功";
+        }
+    }
+
+    /**
+     * 定时任务取消订单
+     */
+    @Override
+    public void cancelOrder() {
+        List<OrderVo> orderVos = baseMapper.selectVoList(new LambdaQueryWrapper<Order>().in(Order::getStatus, "0", "1").lt(Order::getExpireDate, new Date()));
+        if (CollectionUtils.isNotEmpty(orderVos)) {
+            for (OrderVo orderVo : orderVos) {
+                cancel(orderVo.getNumber(), orderVo.getUserId());
+            }
+        }
+    }
+
+    /**
+     * 定时任务取消订单
+     */
+    @Async
+    @Override
+    public void cancelOrder(Long userId) {
+        List<OrderVo> orderVos = baseMapper.selectVoList(new LambdaQueryWrapper<Order>().in(Order::getStatus, "0", "1").lt(Order::getExpireDate, new Date()).eq(Order::getUserId, userId));
+        if (CollectionUtils.isNotEmpty(orderVos)) {
+            for (OrderVo orderVo : orderVos) {
+                cancel(orderVo.getNumber(), orderVo.getUserId());
+            }
+        }
+    }
+
+    /**
+     * 发放状态
+     */
+    @Override
+    public List<OrderVo> sendStatusOrder() {
+        List<OrderVo> orderVos = baseMapper.selectVoList(new LambdaQueryWrapper<Order>().eq(Order::getStatus, "2").in(Order::getSendStatus, "0", "1", "3").gt(Order::getCreateTime, DateUtil.offsetDay(new Date(), -3).toJdkDate()).last("limit 500"));
+        if (ObjectUtil.isNotEmpty(orderVos)) {
+            List<OrderVo> list = new ArrayList<>(orderVos.size());
+            for (OrderVo orderVo : orderVos) {
+                if ("0".equals(orderVo.getSendStatus()) || "3".equals(orderVo.getSendStatus())) {
+                    list.add(orderVo);
+                } else {
+                    queryOrderSendStatus(orderVo.getPushNumber());
+                    OrderVo order = baseMapper.selectVoById(orderVo.getNumber());
+                    if (null != order && "3".equals(order.getSendStatus())) {
+                        list.add(order);
+                    }
+                }
+            }
+            return list;
+        }
+        return orderVos;
+    }
+
+    /**
+     * 云闪付支付回调
+     *
+     * @param valideData 通知信息
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void payCallBack(Map<String, String> valideData) {
+        log.info("银联支付回调信息：{}", valideData);
+        //获取后台通知的数据，其他字段也可用类似方式获取
+        // 应答码
+        String respCode = valideData.get("respCode");
+        // 商户订单号
+        String orderId = valideData.get("orderId");
+        // 交易金额，单位分
+        String txnAmt = valideData.get("txnAmt");
+        // 转换单位为元
+        BigDecimal txnAmount = BigDecimalUtils.toMoney(Integer.valueOf(txnAmt));
+        // 查询流水号 消费交易的流水号，供后续查询用
+        String queryId = valideData.get("queryId");
+        // 记录订单发送时间	 商户代码merId、商户订单号orderId、订单发送时间txnTime三要素唯一确定一笔交易。
+        String txnTime = valideData.get("txnTime");
+        // 交易传输时间
+        String traceTime = valideData.get("traceTime");
+        // 5.1.2issAddnData订单优惠信息（支持单品）
+        String issAddnData = valideData.get("issAddnData");
+        if (StringUtils.isNotBlank(issAddnData)) {
+            issAddnData = Base64.decodeStr(issAddnData);
+        }
+        // 系统跟踪号
+        String traceNo = valideData.get("traceNo");
+        //判断respCode=00、A6后，对涉及资金类的交易，请再发起查询接口查询，确定交易成功后更新数据库。
+        if ("00".equals(respCode)) {
+            // 00 交易成功
+            log.info("银联支付回调信息：订单号：{}，交易金额：{}元，查询流水号：{}，订单发送时间：{}，交易传输时间：{}，系统跟踪号：{},单品信息：{}", orderId, txnAmount, queryId, txnTime, traceTime, traceNo, issAddnData);
+            // 查询订单信息
+            try {
+                Order order = baseMapper.selectById(Long.parseLong(orderId));
+                if (null == order) {
+                    log.error("银联支付回调订单【{}】不存在,通知内容：{}", orderId, valideData);
+                    return;
+                }
+                handleOrder(order, txnAmount, queryId, traceTime, traceNo, txnTime, issAddnData);
+            } catch (Exception e) {
+                log.error("订单回调通知处理异常：", e);
+            }
+        }
+    }
+
+    /**
+     * 美食订单支付回调
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void foodPayCallBack(JSONObject data) {
+        log.info("美食订单支付回调信息：{}", data);
+        // 美食订单号
+        String exNumber = data.getString("number");
+        //核销码
+        String ticketCode = data.getString("ticketCode");
+        //凭证id
+        String voucherId = data.getString("voucherId");
+        //凭证状态
+        String voucherStatus = data.getString("voucherStatus");
+        //凭证生效时间
+        String effectTime = data.getString("effectTime");
+        //凭证失效时间
+        String expireTime = data.getString("expireTime");
+        //总份数
+        Integer totalAmount = data.getInteger("totalAmount");
+        //已使用份数
+        Integer usedAmount = data.getInteger("usedAmount");
+        //已退款份数
+        Integer refundAmount = data.getInteger("refundAmount");
+        if (ObjectUtil.isEmpty(exNumber)) {
+            log.info("美食订单不存在,通知内容：{}", data);
+            return;
+        }
+        Order order = baseMapper.selectOne(new LambdaQueryWrapper<Order>().eq(Order::getExternalOrderNumber, exNumber));
+        if (ObjectUtil.isEmpty(order)) {
+            log.error("美食订单【{}】不存在,通知内容：{}", exNumber, data);
+            return;
+        }
+        OrderFoodInfo orderFoodInfo = orderFoodInfoMapper.selectById(order.getNumber());
+        if (ObjectUtil.isEmpty(orderFoodInfo)) {
+            log.error("美食订单【{}】不存在,通知内容：{}", exNumber, data);
+            return;
+        }
+        // 删除未支付订单缓存
+        delCacheOrder(order.getNumber());
+        OrderPushInfo orderPushInfo = orderPushInfoMapper.selectOne(new LambdaQueryWrapper<OrderPushInfo>().eq(OrderPushInfo::getNumber, order.getNumber()));
+        if (ObjectUtil.isNotEmpty(ticketCode)) {
+            order.setSendStatus("2");
+            if (ObjectUtil.isNotEmpty(orderPushInfo)) {
+                orderPushInfo.setStatus("1");
+                orderPushInfoMapper.updateById(orderPushInfo);
+            }
+            orderFoodInfo.setTicketCode(ticketCode);
+            orderFoodInfo.setVoucherId(voucherId);
+            orderFoodInfo.setVoucherStatus(voucherStatus);
+            orderFoodInfo.setEffectTime(effectTime);
+            orderFoodInfo.setExpireTime(expireTime);
+            orderFoodInfo.setTotalAmount(totalAmount);
+            orderFoodInfo.setUsedAmount(usedAmount);
+            orderFoodInfo.setRefundAmount(refundAmount);
+            baseMapper.updateById(order);
+            orderFoodInfoMapper.updateById(orderFoodInfo);
+        }
+    }
+
+    /**
+     * 订单支付回调 银联分销（直销）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void unionPayBack(JSONObject data) {
+        // 获取商品订单号
+        String prodTn = data.getString("prodTn");
+        Order order = baseMapper.selectOne(new LambdaQueryWrapper<Order>().eq(Order::getExternalOrderNumber, prodTn));
+        if (order == null) {
+            return;
+        }
+        if (!order.getOrderType().equals("12")) {
+            log.info("非银联分销（直销订单），不能执行发券");
+            return;
+        }
+        // 删除未支付订单缓存
+        delCacheOrder(order.getNumber());
+        if (data.getString("code").equals(UnionPayParams.CodeSuccess.getStr())) {
+            List<OrderUnionSendVo> orderUnionSendVos = orderUnionSendService.queryListByNumber(order.getNumber());
+            OrderUnionPay orderUnionPay = orderUnionPayMapper.selectById(order.getNumber());
+            orderUnionPay.setSettleDt(data.getString("settleDt")); // 清算日期
+            orderUnionPay.setSettleCurrencyCode(data.getString("settleCurrencyCode"));// 清算币中
+            orderUnionPay.setSettleAmt(data.getString("settleAmt"));// 清算金额/单位分
+            orderUnionPay.setSettleKey(data.getString("settleKey"));//清算主键
+            ProductVo productVo = productService.queryById(order.getProductId());
+            if (orderUnionSendVos.isEmpty()) {
+                // 修改订单状态
+                order.setStatus("2");
+                baseMapper.updateById(order);
+                order = baseMapper.selectById(order.getNumber());
+                // 执行订单发券
+                String orderSendStr = UnionPayDistributionUtil.orderSend(order.getNumber(), productVo.getExternalProductId(), orderUnionPay.getProdTn(), "0", order.getAccount(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), YsfDistributionPropertiesUtils.getCertPathJD(order.getPlatformKey()));
+                JSONObject orderSend = JSONObject.parseObject(orderSendStr);
+                this.orderUnionPaySendHand(productVo.getExternalProductId(), order, orderUnionPay, orderSend);
+                baseMapper.updateById(order);
+            } else {
+                orderUnionPayMapper.updateById(orderUnionPay);
+            }
+        } else {
+            log.info("银联分销支付异常。{}", data.getString("msg"));
+            log.info("银联分销支付异常详情。{}", data.getString("subMsg"));
+        }
+    }
+
+    /**
+     * 订单发券与发券接口返回后处理 (银联分销)
+     */
+    private void orderUnionPaySendHand(String externalProductId, Order order, OrderUnionPay orderUnionPay, JSONObject data) {
+        if (data.getString("code").equals(UnionPayParams.CodeSuccess.getStr())) {
+            // 发起订单状态查询，向银联确认发券状态
+            String orderStatusStr;
+            String certPath;
+            if (order.getOrderType().equals("11")) {
+                certPath = YsfDistributionPropertiesUtils.getCertPathJC(order.getPlatformKey());
+                orderStatusStr = UnionPayDistributionUtil.orderStatus(order.getNumber(), UnionPayBizMethod.CHNLPUR.getBizMethod(), externalProductId, order.getNumber(), data.getString("txnTime"), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJCAppId(order.getPlatformKey()), certPath);
+            } else {
+                certPath = YsfDistributionPropertiesUtils.getCertPathJD(order.getPlatformKey());
+                orderStatusStr = UnionPayDistributionUtil.orderStatus(order.getNumber(), UnionPayBizMethod.chnlpur.getBizMethod(), externalProductId, order.getNumber(), orderUnionPay.getTxnTime(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), certPath);
+            }
+            JSONObject orderStatus = JSONObject.parseObject(orderStatusStr);
+            // 查询成功，开始处理。
+            if (orderStatus.getString("code").equals(UnionPayParams.CodeSuccess.getStr())) {
+                // 发放成功
+                if (orderStatus.getString("prodOrderSt").equals("05")) {
+                    String prodTp = data.getString("prodTp");
+                    JSONArray bondLst = data.getJSONArray("bondLst");
+                    if (orderUnionPay != null) {
+                        orderUnionSendService.insertList(order.getNumber(), orderUnionPay.getProdTn(), prodTp, bondLst, certPath, YsfDistributionPropertiesUtils.getCertPwd(order.getPlatformKey()));
+                    } else {
+                        String prodTn = orderStatus.getString("prodTn");
+                        orderUnionSendService.insertList(order.getNumber(), prodTn, prodTp, bondLst, certPath, YsfDistributionPropertiesUtils.getCertPwd(order.getPlatformKey()));
+                        orderUnionPay = new OrderUnionPay();
+                        orderUnionPay.setNumber(order.getNumber());
+                        orderUnionPay.setOrderId(data.getString("orderId"));
+                        orderUnionPay.setProdTn(prodTn);
+                        orderUnionPay.setTxnTime(data.getString("txnTime"));
+                        orderUnionPay.setUsrPayAmt("0");
+                        orderUnionPayMapper.insertOrUpdate(orderUnionPay);
+                        order.setExternalOrderNumber(prodTn);
+                    }
+                    order.setSendStatus("2");
+                    order.setSendTime(DateUtil.date());
+                } else if (orderStatus.getString("prodOrderSt").equals("04")) {
+                    order.setSendStatus("3");
+                } else if (orderStatus.getString("prodOrderSt").equals("02")) {
+                    order.setSendStatus("1");
+                }
+            }
+        } else {
+            order.setSendStatus("3");
+        }
+    }
+
+    /**
+     * 美食订单退款回调
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void foodCancelCallBack(JSONObject data) {
+        log.info("美食订单支付回调信息：{}", data);
+        // 美食订单号
+        String exNumber = data.getString("number");
+        //退款状态
+        String state = data.getString("state");
+        //已退款份数
+        BigDecimal amount = data.getBigDecimal("amount");
+        if (ObjectUtil.isEmpty(exNumber)) {
+            log.info("美食订单不存在,通知内容：{}", data);
+            return;
+        }
+        Order order = baseMapper.selectOne(new LambdaQueryWrapper<Order>().eq(Order::getExternalOrderNumber, exNumber));
+        if (ObjectUtil.isEmpty(order)) {
+            //如果通知订单不存在 先查一下历史订单 都不存在才返回失败
+            HistoryOrder historyOrder = historyOrderMapper.selectOne(new LambdaQueryWrapper<HistoryOrder>().eq(HistoryOrder::getExternalOrderNumber, exNumber));
+            if (ObjectUtil.isEmpty(historyOrder)) {
+                log.error("美食订单【{}】不存在,通知内容：{}", exNumber, data);
+                return;
+            }
+            OrderFoodInfo orderFoodInfo = orderFoodInfoMapper.selectById(historyOrder.getNumber());
+            if (ObjectUtil.isEmpty(orderFoodInfo)) {
+                log.error("美食订单【{}】不存在,通知内容：{}", exNumber, data);
+                return;
+            }
+            if ("8".equals(state)) {
+                //退款成功
+                historyOrder.setCancelStatus("1");
+                historyOrderMapper.updateById(historyOrder);
+            }
+            return;
+        }
+        OrderFoodInfo orderFoodInfo = orderFoodInfoMapper.selectById(order.getNumber());
+        if (ObjectUtil.isEmpty(orderFoodInfo)) {
+            log.error("美食订单【{}】不存在,通知内容：{}", exNumber, data);
+            return;
+        }
+        if ("8".equals(state)) {
+            //退款成功
+            order.setCancelStatus("1");
+            baseMapper.updateById(order);
+        }
+    }
+
+    /**
+     * 查询产品发放额度
+     *
+     * @param productIds 产品ID
+     * @return 发放额度
+     */
+    @Override
+    public BigDecimal sumSendValueByProductIds(List<Long> productIds, Long userId) {
+        if (ObjectUtil.isEmpty(productIds)) {
+            return new BigDecimal("0");
+        }
+        LambdaQueryWrapper<Order> lqw = buildQuery(productIds, userId);
+        lqw.isNotNull(Order::getExternalProductSendValue);
+        return baseMapper.sumSendValue(lqw);
+    }
+
+    /**
+     * 查询产品发放额度
+     *
+     * @param productIds 产品ID
+     * @return 发放额度
+     */
+    @Override
+    public BigDecimal sumOutAmountByProductIds(List<Long> productIds, Long userId) {
+        if (ObjectUtil.isEmpty(productIds)) {
+            return new BigDecimal("0");
+        }
+        LambdaQueryWrapper<Order> lqw = buildQuery(productIds, userId);
+        lqw.isNotNull(Order::getOutAmount);
+        return baseMapper.sumOutAmount(lqw);
+    }
+
+    @Override
+    public void cloudRechargeCallback(CloudRechargeEntity huiguyunEntity) {
+        CloudRechargeUtils.getData(huiguyunEntity);
+        JSONObject data = JSONObject.parseObject(huiguyunEntity.getEncryptedData());
+        // 查询订单是否存在
+        OrderPushInfo orderPushInfo = getOrderPushInfo(data.getString("externalOrderNumber"));
+        if (null == orderPushInfo) {
+            throw new ServiceException("订单不存在");
+        }
+        Order order = baseMapper.selectById(orderPushInfo.getNumber());
+        if (null == order) {
+            throw new ServiceException("订单不存在");
+        }
+        rechargeResult(data, orderPushInfo, order);
+        baseMapper.updateById(order);
+        orderPushInfoMapper.updateById(orderPushInfo);
+    }
+
+    /**
+     * 获取最后购买的产品订单
+     *
+     * @param productIds 产品ID集合 从这里面找
+     * @param userId     用户ID
+     * @return 最后购买的产品订单
+     */
+    @Override
+    public OrderVo getLastOrder(List<Long> productIds, Long userId) {
+        LambdaQueryWrapper<Order> lqw = Wrappers.lambdaQuery();
+        lqw.in(Order::getProductId, productIds);
+        lqw.eq(Order::getUserId, userId);
+        lqw.eq(Order::getStatus, "2");
+        lqw.last("order by create_time desc limit 1");
+        return baseMapper.selectVoOne(lqw);
+    }
+
+    @Override
+    public List<OrderAndUserNumber> queryUserAndOrderNum(Date startTime, Date endTime, Integer indexNum, Integer indexPage) {
+        return baseMapper.queryUserAndOrderNum(startTime, endTime, indexNum, indexPage);
+    }
+
+    /**
+     * 充值中心订单结果处理
+     *
+     * @param data          订单结果
+     * @param orderPushInfo 订单请求信息
+     * @param order         订单信息
+     */
+    private void rechargeResult(JSONObject data, OrderPushInfo orderPushInfo, Order order) {
+        String state = data.getString("state");
+        order.setExternalOrderNumber(data.getString("number"));
+        orderPushInfo.setExternalOrderNumber(order.getExternalOrderNumber());
+        if ("4".equals(state)) {
+            orderPushInfo.setStatus("1");
+            order.setSendStatus("2");
+            // 如果有卡密信息 保存卡密信息
+            orderCardService.save(data.getJSONArray("cards"), order.getNumber(), data.getString("usedType"));
+        } else if ("5".equals(state)) {
+            // 发放失败
+            orderPushInfo.setStatus("2");
+            orderPushInfo.setRemark(data.getString("remark"));
+            order.setSendStatus("3");
+            order.setFailReason(orderPushInfo.getRemark());
+        }
+    }
+
+    /**
+     * 充值中心订单结果处理 （银联分销）
+     *
+     * @param data
+     * @param orderPushInfo
+     * @param order
+     */
+    private void rechargeUnionResult(JSONObject data, OrderPushInfo orderPushInfo, Order order) {
+        if (data.getString("code").equals(UnionPayParams.CodeSuccess.getStr())) {
+            orderPushInfo.setExternalOrderNumber(order.getExternalOrderNumber());
+            orderPushInfo.setStatus("1");
+            order.setSendStatus("2");
+        } else {
+            // 发放失败
+            orderPushInfo.setStatus("2");
+            orderPushInfo.setRemark(data.getString("remark"));
+            order.setSendStatus("3");
+            order.setFailReason(orderPushInfo.getRemark());
+        }
+    }
+
+    /**
+     * 查询请求订单信息
+     *
+     * @param pushNumber 请求订单号
+     * @return 请求订单信息
+     */
+    private OrderPushInfo getOrderPushInfo(String pushNumber) {
+        return orderPushInfoMapper.selectOne(new LambdaQueryWrapper<OrderPushInfo>().eq(OrderPushInfo::getPushNumber, pushNumber));
+    }
+
+    private LambdaQueryWrapper<Order> buildQuery(List<Long> productIds, Long userId) {
+        LambdaQueryWrapper<Order> lqw = Wrappers.lambdaQuery();
+        lqw.in(Order::getProductId, productIds);
+        lqw.eq(userId != null, Order::getUserId, userId);
+        lqw.in(Order::getStatus, "2");
+        return lqw;
+    }
+
+    /**
+     * 订单支付成功处理
+     *
+     * @param order     订单信息
+     * @param txnAmount 回调支付金额
+     * @param queryId   银联查询号
+     * @param traceTime 交易传输时间
+     * @param traceNo   系统跟踪号
+     * @param txnTime   订单发送时间
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void handleOrder(Order order, BigDecimal txnAmount, String queryId, String traceTime, String traceNo, String txnTime, String issAddnData) {
+        // 验证金额是否一致
+        txnAmount = txnAmount.divide(new BigDecimal("1"), 2, RoundingMode.HALF_UP);
+        if (order.getWantAmount().compareTo(txnAmount) != 0) {
+            log.info("订单【{}】支付金额不一致, 订单getWantAmount={}，支付回调amount={}", order.getNumber(), order.getWantAmount(), txnAmount);
+            return;
+        }
+        if (!"0".equals(order.getStatus()) && !"1".equals(order.getStatus())) {
+            // 已经处理成功的，直接返回成功
+            log.info("订单【{}】已处理不重复处理", order.getNumber());
+            return;
+        }
+        OrderInfo orderInfo = new OrderInfo();
+        orderInfo.setNumber(order.getNumber());
+        orderInfo.setQueryId(queryId);
+        orderInfo.setTraceTime(traceTime);
+        orderInfo.setTraceNo(traceNo);
+        orderInfo.setTxnTime(txnTime);
+        orderInfo.setTxnAmt(txnAmount);
+        orderInfo.setIssAddnData(issAddnData);
+        // 修改订单扩展信息
+        orderInfoMapper.updateById(orderInfo);
+
+        // 实际支付金额
+        order.setOutAmount(txnAmount);
+        // 默认交易成功
+        order.setStatus("2");
+        if (null == order.getPayTime()) {
+            order.setPayTime(DateUtils.getNowDate());
+        }
+        baseMapper.updateById(order);
+        // 删除未支付订单缓存
+        delCacheOrder(order.getNumber());
+        // 发券
+        //判断是否为随机产品 再发券
+        if (order.getOrderType().equals("10")) {
+            checkRandomProduct(order);
+        }
+        order = baseMapper.selectById(order.getNumber());
+        SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
+//        orderStreamProducer.streamOrderMsg(order.getNumber().toString());
+    }
+
+    private R<Void> productPackageHandle(Long number, Long productId, Long userId, String adcode, String cityName, Long platformKey) {
+        // 查询券包产品
+        List<ProductPackageVo> productPackageVos = productPackageService.queryListByProductId(productId);
+        if (ObjectUtil.isEmpty(productPackageVos)) {
+            return R.fail("券包内产品未配置");
+        }
+        for (ProductPackageVo productPackageVo : productPackageVos) {
+            // 查询已发订单
+            LambdaQueryWrapper<Order> lqw = Wrappers.lambdaQuery();
+            lqw.eq(Order::getParentNumber, number);
+            lqw.eq(Order::getStatus, "2");
+            lqw.eq(Order::getProductId, productPackageVo.getExtProductId());
+            Long count = baseMapper.selectCount(lqw);
+            if (count > 0) {
+                continue;
+            }
+            CreateOrderBo createOrderBo = new CreateOrderBo();
+            createOrderBo.setProductId(productPackageVo.getExtProductId());
+            createOrderBo.setUserId(userId);
+            createOrderBo.setAdcode(adcode);
+            createOrderBo.setCityName(cityName);
+            createOrderBo.setParentNumber(number);
+            createOrderBo.setPlatformKey(platformKey);
+            createOrderBo.setPayCount(productPackageVo.getSendCount());
+            CreateOrderResult order;
+            try {
+                order = this.createOrder(createOrderBo, true);
+            } catch (Exception e) {
+                return R.fail(e.getMessage());
+            }
+            if (null == order || !"0".equals(order.getStatus())) {
+                return R.fail("发放失败，产品" + productPackageVo.getExtProductId() + "配置有误");
+            }
+            ThreadUtil.sleep(100);
+        }
+        return R.warn("处理成功");
+    }
+
+//    private R<Void> productPackageHandle(Long number, Long productId, Long userId, String adcode, String cityName, Long platformKey) {
+//        // 查询券包产品
+//        List<ProductPackageVo> productPackageVos = productPackageService.queryListByProductId(productId);
+//        if (ObjectUtil.isEmpty(productPackageVos)) {
+//            return R.fail("券包内产品未配置");
+//        }
+//        for (ProductPackageVo productPackageVo : productPackageVos) {
+//            // 查询已发订单
+//            LambdaQueryWrapper<Order> lqw = Wrappers.lambdaQuery();
+//            lqw.eq(Order::getParentNumber, number);
+//            lqw.eq(Order::getStatus, "2");
+//            lqw.eq(Order::getProductId, productPackageVo.getExtProductId());
+//            Long count = baseMapper.selectCount(lqw);
+//            if (count <= 0) {
+//                count = productPackageVo.getSendCount();
+//            } else {
+//                count = productPackageVo.getSendCount() - count;
+//            }
+//            if (count <= 0) {
+//                continue;
+//            }
+//            for (int i = 0; i < count; i++) {
+//                CreateOrderBo createOrderBo = new CreateOrderBo();
+//                createOrderBo.setProductId(productPackageVo.getExtProductId());
+//                createOrderBo.setUserId(userId);
+//                createOrderBo.setAdcode(adcode);
+//                createOrderBo.setCityName(cityName);
+//                createOrderBo.setParentNumber(number);
+//                createOrderBo.setPlatformKey(platformKey);
+//                CreateOrderResult order;
+//                try {
+//                    order = this.createOrder(createOrderBo, true);
+//                } catch (Exception e) {
+//                    return R.fail(e.getMessage());
+//                }
+//                if (null == order || !"0".equals(order.getStatus())) {
+//                    return R.fail("发放失败，产品" + productPackageVo.getExtProductId() + "配置有误");
+//                }
+//                ThreadUtil.sleep(100);
+//            }
+//        }
+//        return R.warn("处理成功");
+//    }
+
+    /**
+     * 处理订单发券状态
+     */
+    private JSONObject queryProductUnionSendHandle(Long number) {
+        OrderUnionPay orderUnionPay = orderUnionPayMapper.selectById(number);
+        if (orderUnionPay != null) {
+            String certPath;
+            Order order = baseMapper.selectById(number);
+            String orderStatusStr;
+            if (order.getOrderType().equals("12")) {
+                // 直销
+                certPath = YsfDistributionPropertiesUtils.getCertPathJD(order.getPlatformKey());
+                orderStatusStr = UnionPayDistributionUtil.orderStatus(order.getNumber(), UnionPayBizMethod.chnlpur.getBizMethod(), order.getExternalProductId(), orderUnionPay.getNumber(), orderUnionPay.getTxnTime(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), certPath);
+            } else { // 代销
+                certPath = YsfDistributionPropertiesUtils.getCertPathJC(order.getPlatformKey());
+                orderStatusStr = UnionPayDistributionUtil.orderStatus(order.getNumber(), UnionPayBizMethod.CHNLPUR.getBizMethod(), order.getExternalProductId(), orderUnionPay.getNumber(), orderUnionPay.getTxnTime(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJCAppId(order.getPlatformKey()), certPath);
+            }
+            JSONObject orderStatus = JSONObject.parseObject(orderStatusStr);
+            // 查询成功，开始处理。
+            if (orderStatus.getString("code").equals(UnionPayParams.CodeSuccess.getStr())) {
+                // 发放成功
+                if (orderStatus.getString("prodOrderSt").equals("05")) {
+                    String prodTp = orderStatus.getString("prodTp");
+                    JSONArray bondLst = orderStatus.getJSONArray("bondLst");
+                    if (orderUnionPay != null) {
+                        orderUnionSendService.insertList(order.getNumber(), orderUnionPay.getProdTn(), prodTp, bondLst, certPath, YsfDistributionPropertiesUtils.getCertPwd(order.getPlatformKey()));
+                    } else {
+                        String prodTn = orderStatus.getString("prodTn");
+                        orderUnionSendService.insertList(order.getNumber(), prodTn, prodTp, bondLst, certPath, YsfDistributionPropertiesUtils.getCertPwd(order.getPlatformKey()));
+                        orderUnionPay = new OrderUnionPay();
+                        orderUnionPay.setNumber(order.getNumber());
+                        orderUnionPay.setOrderId(orderStatus.getString("orderId"));
+                        orderUnionPay.setProdTn(prodTn);
+                        orderUnionPay.setTxnTime(orderStatus.getString("txnTime"));
+                        orderUnionPay.setUsrPayAmt("0");
+                        orderUnionPayMapper.insertOrUpdate(orderUnionPay);
+                        order.setExternalOrderNumber(prodTn);
+                    }
+                    order.setSendStatus("2");
+                    order.setSendTime(DateUtil.date());
+                } else if (orderStatus.getString("prodOrderSt").equals("04")) {
+                    order.setSendStatus("3");
+                } else if (orderStatus.getString("prodOrderSt").equals("02")) {
+                    order.setSendStatus("1");
+                }
+            }
+            return orderStatus;
+        }
+        return null;
+    }
+
+    private R<Void> queryProductPackageHandle(Long number, Long productId) {
+        // 查询券包产品
+        List<ProductPackageVo> productPackageVos = productPackageService.queryListByProductId(productId);
+        if (ObjectUtil.isEmpty(productPackageVos)) {
+            return R.fail("券包内产品未配置");
+        }
+        for (ProductPackageVo productPackageVo : productPackageVos) {
+            // 查询已发订单
+            LambdaQueryWrapper<Order> lqw = Wrappers.lambdaQuery();
+            lqw.eq(Order::getParentNumber, number);
+            lqw.eq(Order::getStatus, "2");
+            lqw.eq(Order::getProductId, productPackageVo.getExtProductId());
+            lqw.eq(Order::getSendStatus, "3");
+            Long count = baseMapper.selectCount(lqw);
+            if (count > 0) {
+                return R.fail("发放失败，具体原因请查询子订单");
+            }
+        }
+        return R.ok("发放成功");
+    }
+
+    private void checkRandomProduct(Order order) {
+        Long productId = order.getProductId();
+        String productName = order.getProductName();
+        ProductVo productVo = productService.queryById(productId);
+        if (productVo.getProductType().equals("10")) {
+            //随机产品订单设置随机发放金额 (查询商品金额表)
+            ProductAmountBo productAmountBo = new ProductAmountBo();
+            productAmountBo.setProductId(productId);
+            List<ProductAmountVo> productAmountVos = productAmountService.queryList(productAmountBo);
+            if (ObjectUtil.isNotEmpty(productAmountVos)) {
+                List<Double> drawProbability = productAmountVos.stream().map(item -> item.getDrawProbability().doubleValue()).collect(Collectors.toList());
+                // 抽奖
+                AliasMethod method = new AliasMethod(drawProbability);
+                int index = method.next();
+                // 奖品
+                ProductAmountVo productAmountVo = productAmountVos.get(index);
+                productName = productName + "(" + productAmountVo.getExternalProductSendValue() + "元)";
+                Order updateOrder = new Order();
+                updateOrder.setNumber(order.getNumber());
+                updateOrder.setProductName(productName);
+                updateOrder.setExternalProductSendValue(productAmountVo.getExternalProductSendValue());
+                baseMapper.updateById(updateOrder);
+            }
+        }
+
+    }
+
+    /**
+     * 查询多少天的订单列表
+     *
+     * @return 订单
+     */
+    @Override
+    public TableDataInfo<Order> queryHistoryPageList(Integer day, PageQuery pageQuery) {
+        LambdaQueryWrapper<Order> lqw = Wrappers.lambdaQuery();
+        lqw.apply("create_time <= DATE_SUB(now(), INTERVAL " + day + " DAY)");
+        Page<Order> result = baseMapper.selectPage(pageQuery.build(), lqw);
+        return TableDataInfo.build(result);
+    }
+
+    private LambdaQueryWrapper<Order> buildQueryWrapper(OrderBo bo) {
+        Map<String, Object> params = bo.getParams();
+        LambdaQueryWrapper<Order> lqw = Wrappers.lambdaQuery();
+        lqw.eq(bo.getProductId() != null, Order::getProductId, bo.getProductId());
+        lqw.eq(bo.getUserId() != null, Order::getUserId, bo.getUserId());
+        lqw.eq(StringUtils.isNotBlank(bo.getPickupMethod()), Order::getPickupMethod, bo.getPickupMethod());
+        if (StringUtils.isNotBlank(bo.getStatus())) {
+            lqw.in(Order::getStatus, bo.getStatus().split(","));
+        }
+        lqw.eq(StringUtils.isNotBlank(bo.getSendStatus()), Order::getSendStatus, bo.getSendStatus());
+        return lqw;
+    }
+
+    /**
+     * 云闪付预警消息
+     */
+    @Override
+    public void ysfForewarningMessage(Long platformId, String backendToken, String desc_Details, String template_Value) {
+        try {
+            String appId = ysfConfigService.queryValueByKey(platformId, "appId");
+            String mpId = ysfConfigService.queryValueByKey(platformId, "mpId");
+            String templateId = ysfConfigService.queryValueByKey(platformId, "templateId");
+            String descDetails = ysfConfigService.queryValueByKey(platformId, desc_Details);
+            String destType = ysfConfigService.queryValueByKey(platformId, "destType");
+            String templateKey = ysfConfigService.queryValueByKey(platformId, "template_key");
+            String templateValue = ysfConfigService.queryValueByKey(platformId, template_Value);
+            String uiType = ysfConfigService.queryValueByKey(platformId, "uiType");
+            String users = ysfConfigService.queryValueByKey(platformId, "users");
+            String url = ysfConfigService.queryValueByKey(platformId, "sendMessageUrl");
+            String[] userList = users.split(",");
+
+            Map<String, Object> contentData = new HashMap<>();
+            // 我方唯一标识
+            contentData.put("appId", appId);
+            // 临时token
+            contentData.put("backendToken", backendToken);
+            // 小程序id
+            contentData.put("mpId", mpId);
+            // 通知模板id
+            contentData.put("templateId", templateId);
+            // 通知详情
+            contentData.put("desc", descDetails);
+            contentData.put("uiType", uiType);
+            // 跳转类型
+            contentData.put("destType", destType);
+            contentData.put("destInfo", contentData.get("mpId"));
+
+            List<Map<String, String>> list = new ArrayList<>();
+            Map<String, String> map = new HashMap<>();
+            map.put("key", templateKey);
+            map.put("value", templateValue);
+            list.add(map);
+            contentData.put("valueList", list);
+            for (String phone : userList) {
+                log.info("用户手机号：{}", phone);
+                String openId = userService.getOpenIdByMobile(platformId, phone);
+                contentData.put("openId", openId);
+                log.info("云闪付预警消息参数：{}", JSONObject.toJSONString(contentData));
+                String s = HttpUtil.post(url, JSONObject.toJSONString(contentData));
+                log.info("云闪付预警消息返回结果：{}", s);
+            }
+        } catch (Exception e) {
+            log.info("云闪付预警异常：", e);
+        }
+    }
+
+    /**
+     * 根据订单状态查询订单数量
+     */
+    @Override
+    public Long queryNumberByUserId(List<Long> userIds, String status, Integer type, Date dateTime) {
+        if (type.equals(1)) {
+            LambdaQueryWrapper<Order> lqw = new LambdaQueryWrapper<>();
+            lqw.in(Order::getUserId, userIds);
+            lqw.eq(Order::getStatus, status);
+            // 昨天时间字段
+            lqw.ge(Order::getCreateTime, DateUtil.beginOfDay(dateTime));
+            lqw.le(Order::getCreateTime, DateUtil.endOfDay(dateTime));
+            lqw.select(Order::getNumber);
+            return baseMapper.selectCount(lqw);
+        } else if (type.equals(2)) {
+            QueryWrapper<Order> lqw = new QueryWrapper<>();
+            lqw.select("DISTINCT user_id").lambda().in(Order::getUserId, userIds).eq(Order::getStatus, status).ge(Order::getCreateTime, DateUtil.beginOfDay(dateTime)).le(Order::getCreateTime, DateUtil.endOfDay(dateTime));
+            return baseMapper.selectCount(lqw);
+        }
+        return 0L;
+    }
+
+    @Override
+    public Long countByUserId(Long userId, Integer day) {
+        LambdaQueryWrapper<Order> lqw = Wrappers.lambdaQuery();
+        lqw.eq(Order::getUserId, userId);
+        if (null != day) {
+            lqw.last("and create_time >= DATE_SUB(CURDATE(), INTERVAL " + day + " DAY)");
+        }
+        return baseMapper.selectCount(lqw);
+    }
+}

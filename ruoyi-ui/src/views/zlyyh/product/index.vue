@@ -1,0 +1,1299 @@
+<template>
+  <div class="app-container">
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+      <el-form-item label="平台" prop="platformKey">
+        <el-select v-model="queryParams.platformKey" placeholder="请选择平台" filterable clearable style="width: 100%;">
+          <el-option v-for="item in platformList" :key="item.id" :value="item.id" :label="item.label"></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="商品编号" prop="productId">
+        <el-input v-model="queryParams.productId" placeholder="请输入商品编号" clearable @keyup.enter.native="handleQuery" />
+      </el-form-item>
+      <el-form-item label="商品名称" prop="productName">
+        <el-input v-model="queryParams.productName" placeholder="请输入商品名称" clearable @keyup.enter.native="handleQuery" />
+      </el-form-item>
+      <el-form-item label="商品类型" prop="productType">
+        <el-select v-model="queryParams.productType" placeholder="请选择商品类型" clearable style="width: 100%;">
+          <el-option v-for="dict in dict.type.t_product_type" :key="dict.value" :label="dict.label"
+            :value="dict.value" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="商品归属" prop="productAffiliation">
+        <el-select v-model="queryParams.productAffiliation" placeholder="请选择商品归属" clearable style="width: 100%;">
+          <el-option v-for="dict in dict.type.t_product_affiliation" :key="dict.value" :label="dict.label"
+            :value="dict.value" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="领取方式" prop="pickupMethod">
+        <el-select v-model="queryParams.pickupMethod" placeholder="请选择领取方式" clearable style="width: 100%;">
+          <el-option v-for="dict in dict.type.t_product_pickup_method" :key="dict.value" :label="dict.label"
+            :value="dict.value" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="状态" prop="status">
+        <el-select v-model="queryParams.status" placeholder="请选择状态" clearable style="width: 100%;">
+          <el-option v-for="dict in dict.type.t_product_status" :key="dict.value" :label="dict.label"
+            :value="dict.value" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="外部产品号" prop="externalProductId" label-width="90px">
+        <el-input v-model="queryParams.externalProductId" placeholder="请输入外部产品号" clearable
+          @keyup.enter.native="handleQuery" />
+      </el-form-item>
+      <el-form-item label="展示开始时间" prop="showStartDate" label-width="120">
+        <el-date-picker clearable v-model="showStartDate" size="small" :picker-options="pickerOptions"
+          value-format="yyyy-MM-dd HH:mm:ss" type="datetimerange" range-separator="-" start-placeholder="开始日期"
+          end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']"></el-date-picker>
+      </el-form-item>
+      <el-form-item label="展示结束时间" prop="showEndDate" label-width="120">
+        <el-date-picker clearable v-model="showEndDate" size="small" :picker-options="pickerOptions"
+          value-format="yyyy-MM-dd HH:mm:ss" type="datetimerange" range-separator="-" start-placeholder="开始日期"
+          end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']"></el-date-picker>
+      </el-form-item>
+      <el-form-item label="展示城市" prop="showCity">
+        <el-select v-model="queryParams.showCity" placeholder="请选择展示城市" clearable>
+          <el-option v-for="item in cityList" :key="item.rightLabel" :label="item.label" :value="item.rightLabel" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="显示首页" prop="showIndex">
+        <el-select v-model="queryParams.showIndex" placeholder="请选择是否显示首页" clearable style="width: 100%;">
+          <el-option v-for="dict in dict.type.t_show_index" :key="dict.value" :label="dict.label" :value="dict.value" />
+        </el-select>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
+        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+      </el-form-item>
+    </el-form>
+
+    <el-row :gutter="10" class="mb8">
+      <el-col :span="1.5">
+        <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
+          v-hasPermi="['zlyyh:product:add']">新增</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
+          v-hasPermi="['zlyyh:product:edit']">修改</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
+          v-hasPermi="['zlyyh:product:remove']">删除</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
+          v-hasPermi="['zlyyh:product:export']">导出</el-button>
+      </el-col>
+      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+    </el-row>
+
+    <el-table v-loading="loading" :data="productList">
+      <el-table-column label="商品编号" align="center" prop="productId" width="170" fixed="left" />
+      <el-table-column label="商品名称" align="center" prop="productName" width="150" :show-overflow-tooltip="true"
+        fixed="left" />
+      <el-table-column label="平台" align="center" prop="platformName" width="100" :formatter="changePlatform" />
+      <el-table-column label="商品归属" align="center" prop="productAffiliation" width="80">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.t_product_affiliation" :value="scope.row.productAffiliation" />
+        </template>
+      </el-table-column>
+      <el-table-column label="商品类型" align="center" prop="productType" width="80">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.t_product_type" :value="scope.row.productType" />
+        </template>
+      </el-table-column>
+      <el-table-column label="领取方式" align="center" prop="pickupMethod" width="80">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.t_product_pickup_method" :value="scope.row.pickupMethod" />
+        </template>
+      </el-table-column>
+      <el-table-column label="市场价格" align="center" prop="originalAmount" width="80" />
+      <el-table-column label="售卖价格" align="center" prop="sellAmount" width="80" />
+      <el-table-column label="62会员价格" align="center" prop="vipUpAmount" width="90" />
+      <el-table-column label="权益会员价格" align="center" prop="vipAmount" width="100" />
+      <el-table-column label="外部产品号" align="center" prop="externalProductId" width="90" />
+      <el-table-column label="状态" align="center" prop="status" fixed="right" width="80">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.t_product_status" :value="scope.row.status" />
+        </template>
+      </el-table-column>
+      <el-table-column label="展示开始时间" align="center" prop="showStartDate" width="170">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.showStartDate) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="展示结束时间" align="center" prop="showEndDate" width="170">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.showEndDate) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right" width="120">
+        <template slot-scope="scope">
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
+            v-hasPermi="['zlyyh:product:edit']">修改</el-button>
+          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
+            v-hasPermi="['zlyyh:product:remove']">删除</el-button>
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdateDayCount(scope.row)"
+            v-hasPermi="['zlyyh:product:edit']">抢购状态</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <pagination v-show="total>0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
+      @pagination="getList" />
+
+    <!-- 添加或修改商品对话框 -->
+    <el-dialog :title="title" :visible.sync="open" width="1200px" append-to-body>
+      <el-tabs v-model="activeName">
+        <el-tab-pane label="基本信息" name="basicCoupon" key="basicCoupon" :style="{height: tableHeight}">
+          <el-form ref=" form" :model="form" :rules="rules" label-width="110px">
+            <el-row>
+              <el-col :span="8">
+                <el-form-item label="商品名称" prop="productName">
+                  <el-input maxlength="64" v-model="form.productName" placeholder="请输入商品名称" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="简称" prop="productAbbreviation">
+                  <el-input maxlength="20" v-model="form.productAbbreviation" placeholder="请输入简称" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="副标题" prop="productSubhead">
+                  <el-input maxlength="64" v-model="form.productSubhead" placeholder="请输入副标题" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="商品归属" prop="productAffiliation">
+                  <el-select v-model="form.productAffiliation" placeholder="请选择商品归属" style="width: 100%;">
+                    <el-option v-for="dict in dict.type.t_product_affiliation" :key="dict.value" :label="dict.label"
+                      :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="商品类型" prop="productType">
+                  <span slot="label">
+                    商品类型
+                    <el-tooltip placement="top">
+                      <div slot="content">
+                        1、优惠券：用户购买后发放的是云闪付优惠券<br />
+                        2、优惠活动：优惠活动，只做宣传展示，非本小程序内购买的商品<br />
+                        3、红包：用户购买后发放的是云闪付红包<br />
+                        4、积点：用户购买后发放的是云闪付积点<br />
+                        5、美食套餐：美食套餐券（口碑）<br />
+                        6、充值中心(直充)：通过充值中心充值的产品，且为直充的产品，例如话费充值等<br />
+                        7、充值中心(卡密)：通过充值中心发放的产品，且为卡密的产品，例如电子券等<br />
+                        8、62会员：用户购买后发放的是62会员<br />
+                        9、券包：用户购买后发放的是券包中的子产品，需要在商品券包中增加子产品<br />
+                      </div>
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-select v-model="form.productType" placeholder="请选择商品类型" style="width: 100%;">
+                    <el-option v-for="dict in dict.type.t_product_type" :key="dict.value" :label="dict.label"
+                      :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="账号类型" prop="sendAccountType">
+                  <span slot="label">
+                    账号类型
+                    <el-tooltip placement="top">
+                      <div slot="content">
+                        发券账号类型，请根据产品选择对应的发放账号，如不清楚产品支持哪种账号类型请联系开发人员确认。<br />
+                        1、手机号：发放至用户在小程序登录手机号<br />
+                        2、openId：发放至云闪付openId对应账户中（优惠券，红包，积点建议选择openId）
+                      </div>
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-select v-model="form.sendAccountType" placeholder="请选择发券账号类型" style="width: 100%;">
+                    <el-option v-for="dict in dict.type.t_product_send_account_type" :key="dict.value"
+                      :label="dict.label" :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="领取方式" prop="pickupMethod">
+                  <el-select v-model="form.pickupMethod" placeholder="请选择领取方式" style="width: 100%;">
+                    <el-option v-for="dict in dict.type.t_product_pickup_method" :key="dict.value" :label="dict.label"
+                      :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8" v-if="form.pickupMethod && form.pickupMethod != '0'">
+                <el-form-item label="显示市场价格" prop="showOriginalAmount">
+                  <el-select v-model="form.showOriginalAmount" placeholder="请选择是否显示市场价格" style="width: 100%;">
+                    <el-option v-for="dict in dict.type.t_product_show_original_amount" :key="dict.value"
+                      :label="dict.label" :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8" v-if="form.pickupMethod && form.pickupMethod != '0' && form.showOriginalAmount == '1'">
+                <el-form-item label="市场价格" prop="originalAmount">
+                  <el-input type="number" :min="0" :max="100000" v-model="form.originalAmount" placeholder="请输入市场价格">
+                    <template v-if="form.pickupMethod == '1'" slot="append">元</template>
+                    <template v-if="form.pickupMethod == '2'" slot="append">积点</template>
+                  </el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8" v-if="form.pickupMethod && form.pickupMethod != '0' ">
+                <el-form-item label="售卖价格" prop="sellAmount">
+                  <el-input type="number" :min="0" :max="100000" v-model="form.sellAmount" placeholder="请输入售卖价格">
+                    <template v-if="form.pickupMethod == '1'" slot="append">元</template>
+                    <template v-if="form.pickupMethod == '2'" slot="append">积点</template>
+                  </el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8" v-if="form.pickupMethod && form.pickupMethod != '0' ">
+                <el-form-item label="62会员价格" prop="vipUpAmount">
+                  <el-input type="number" :min="0" :max="100000" v-model="form.vipUpAmount" placeholder="请输入62会员价格">
+                    <template v-if="form.pickupMethod == '1'" slot="append">元</template>
+                    <template v-if="form.pickupMethod == '2'" slot="append">积点</template>
+                  </el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8" v-if="form.pickupMethod && form.pickupMethod != '0' ">
+                <el-form-item label="权益会员价格" prop="vipAmount">
+                  <el-input type="number" :min="0" :max="100000" v-model="form.vipAmount" placeholder="请输入权益会员价格">
+                    <template v-if="form.pickupMethod == '1'" slot="append">元</template>
+                    <template v-if="form.pickupMethod == '2'" slot="append">积点</template>
+                  </el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="展示开始时间" prop="showStartDate">
+                  <el-date-picker clearable v-model="form.showStartDate" type="datetime" style="width: 100%;"
+                    value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择展示开始时间">
+                  </el-date-picker>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="展示结束时间" prop="showEndDate">
+                  <el-date-picker clearable v-model="form.showEndDate" type="datetime" style="width: 100%;"
+                    value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择展示结束时间" default-time="23:59:59">
+                  </el-date-picker>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="领取开始时间" prop="sellStartDate">
+                  <el-date-picker clearable v-model="form.sellStartDate" type="datetime" style="width: 100%;"
+                    value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择领取开始时间">
+                  </el-date-picker>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="领取结束时间" prop="sellEndDate">
+                  <el-date-picker clearable v-model="form.sellEndDate" type="datetime" style="width: 100%;"
+                    value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择领取结束时间" default-time="23:59:59">
+                  </el-date-picker>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="平台" prop="platformKey">
+                  <el-select v-model="form.platformKey" placeholder="请选择平台" filterable clearable style="width: 100%;">
+                    <el-option v-for="item in platformList" :key="item.id" :value="item.id" :label="item.label">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="支付商户号" prop="merchantId"
+                  v-if="form.productAffiliation == '0' && form.pickupMethod == '1'">
+                  <el-select v-model="form.merchantId" placeholder="请选择支付商户号" clearable filterable style="width: 100%;">
+                    <el-option v-for="item in merchantList" :key="item.id" :label="item.rightLabel" :value="item.id">
+                      <span style="float: left">{{ item.rightLabel }}</span>
+                      <span style="float: right; color: #8492a6; font-size: 13px"
+                        v-if="item.label && item.label.length>0">
+                        {{ item.label }}
+                      </span>
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="外部产品号" prop="externalProductId">
+                  <el-input v-model="form.externalProductId" placeholder="请输入外部产品号" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8" v-if="form.productType == '3'">
+                <el-form-item label="发放金额" prop="externalProductSendValue">
+                  <el-input v-model="form.externalProductSendValue" placeholder="请输入发放金额">
+                    <template slot="append">元</template>
+                  </el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8" v-if="form.productType == '4'">
+                <el-form-item label="发放数量" prop="externalProductSendValue">
+                  <el-input v-model="form.externalProductSendValue" placeholder="请输入发放数量">
+                    <template slot="append">积点</template>
+                  </el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="状态" prop="status">
+                  <el-select v-model="form.status" placeholder="请选择状态" style="width: 100%;">
+                    <el-option v-for="dict in dict.type.t_product_status" :key="dict.value" :label="dict.label"
+                      :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="商品范围" prop="search">
+                  <span slot="label">
+                    商品范围
+                    <el-tooltip placement="top">
+                      <div slot="content">
+                        1、全局：商品没有特殊要求<br />
+                        2、局部：局部商品，不可被搜索，不可被直接购买，主要针对部分活动商品需设置
+                      </div>
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-select v-model="form.search" placeholder="请选择商品范围" style="width: 100%;">
+                    <el-option v-for="dict in dict.type.t_product_search" :key="dict.value" :label="dict.label"
+                      :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="是否搜索" prop="searchStatus">
+                  <span slot="label">
+                    是否搜索
+                    <el-tooltip placement="top">
+                      <div slot="content">
+                        1、可以搜索：商品没有特殊要求<br />
+                        2、无法搜索：一般是搜索彩蛋商品，没有关键字无法在搜索列表中展示
+                      </div>
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-select v-model="form.searchStatus" placeholder="请选择是否搜索" style="width: 100%;">
+                    <el-option v-for="dict in dict.type.t_search_status" :key="dict.value" :label="dict.label"
+                      :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="用户退款" prop="cusRefund">
+                  <span slot="label">
+                    用户退款
+                    <el-tooltip placement="top">
+                      <div slot="content">
+                        1、不支持：用户侧无法进行申请退款<br />
+                        2、支持：一般是电子券、美食商品支持用户侧退款
+                      </div>
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-select v-model="form.cusRefund" placeholder="请选择是否支持用户侧退款" style="width: 100%;">
+                    <el-option v-for="dict in dict.type.t_cus_refund" :key="dict.value" :label="dict.label"
+                      :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="可购用户" prop="payUser">
+                  <span slot="label">
+                    可购用户
+                    <el-tooltip placement="top">
+                      <div slot="content">
+                        1、所有用户：不限制购买用户，在活动区域的所有人都可以购买<br />
+                        2、62VIP用户：只允许活动区域的62VIP用户可以购买
+                      </div>
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-select v-model="form.payUser" placeholder="请选择商品范围" style="width: 100%;">
+                    <el-option v-for="dict in dict.type.t_product_pay_user" :key="dict.value" :label="dict.label"
+                      :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="显示首页" prop="showIndex">
+                  <el-radio-group v-model="form.showIndex">
+                    <el-radio v-for="dict in dict.type.t_show_index" :key="dict.value" :label="dict.value">
+                      {{dict.label}}
+                    </el-radio>
+                  </el-radio-group>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="排序" prop="sort">
+                  <el-input v-model="form.sort" placeholder="请输入排序：从小到大" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="8">
+                <el-form-item label="商品图片" prop="productImg">
+                  <image-upload v-model="form.productImg" :limit="1" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="16">
+                <el-form-item label="商品详情">
+                  <editor v-model="form.description" :min-height="192" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="8">
+                <el-form-item label="展示城市" prop="showCity">
+                  <el-checkbox v-model="cityNodeAll" @change="selectAll">全部</el-checkbox>
+                  <el-tree @check="handleNodeClick" class="tree-border" :data="cityOptions" show-checkbox
+                    default-expand-all ref="city" node-key="id" empty-text="加载中,请稍后" :props="defaultProps"></el-tree>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-form>
+        </el-tab-pane>
+        <el-tab-pane label="商品规则" name="couponCount" key="couponCount" :style="{height: tableHeight}">
+          <el-form ref="form" :model="form" :rules="rules" label-width="120px">
+            <el-row>
+              <el-col :span="8">
+                <el-form-item label="领取区间" prop="sellTime">
+                  <el-time-picker is-range v-model="form.sellTime" range-separator="-" start-placeholder="开始时间"
+                    end-placeholder="结束时间" placeholder="选择时间范围" style="width: 100%;" value-format="HH:mm:ss">
+                  </el-time-picker>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="指定周几" prop="assignDate">
+                  <el-select v-model="form.assignDate" placeholder="请选择指定周几" style="width: 100%;">
+                    <el-option v-for="dict in dict.type.t_product_assign_date" :key="dict.value" :label="dict.label"
+                      :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <!-- v-if="form.assignDate == '1'" -->
+                <el-form-item label="周几能领" prop="weekDate" v-if="form.assignDate == '1'">
+                  <el-select v-model="form.weekDate" placeholder="请选择星期" style="width: 100%;" multiple clearable>
+                    <el-option v-for="dict in dict.type.t_grad_period_date_list" :key="dict.value" :label="dict.label"
+                      :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="总数量" prop="totalCount">
+                  <span slot="label">
+                    总数量
+                    <el-tooltip content="总数量为-1代表不限制" placement="top">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input v-model="form.totalCount" placeholder="请输入总数量" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="每月数量" prop="monthCount">
+                  <span slot="label">
+                    每月数量
+                    <el-tooltip content="每月数量为-1代表不限制" placement="top">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input v-model="form.monthCount" placeholder="请输入每月数量" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="每周数量" prop="weekCount">
+                  <span slot="label">
+                    每周数量
+                    <el-tooltip content="每周数量为-1代表不限制" placement="top">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input v-model="form.weekCount" placeholder="请输入每周数量" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="每日数量" prop="dayCount">
+                  <span slot="label">
+                    每日数量
+                    <el-tooltip content="每日数量为-1代表不限制" placement="top">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input v-model="form.dayCount" placeholder="请输入每日数量" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="每日用户限领" prop="dayUserCount">
+                  <span slot="label">
+                    每日用户限领
+                    <el-tooltip content="每日同一用户限领数量，0为不限制" placement="top">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input v-model="form.dayUserCount" placeholder="请输入每日用户限领" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="每周用户限领" prop="weekUserCount">
+                  <span slot="label">
+                    每周用户限领
+                    <el-tooltip content="请输入每周同一用户限领数量，0为不限制" placement="top">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input v-model="form.weekUserCount" placeholder="请输入每周用户限领" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="每月用户限领" prop="monthUserCount">
+                  <span slot="label">
+                    每月用户限领
+                    <el-tooltip content="请输入当月同一用户限领数量，0为不限制" placement="top">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input v-model="form.monthUserCount" placeholder="请输入每月用户限领" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="活动用户限领" prop="totalUserCount">
+                  <span slot="label">
+                    活动用户限领
+                    <el-tooltip content="请输入活动周期同一用户限领数量，0为不限制" placement="top">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input v-model="form.totalUserCount" placeholder="请输入活动用户限领" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-form>
+        </el-tab-pane>
+        <el-tab-pane label="扩展信息" name="expand" key="expand" :style="{height: tableHeight}">
+          <el-form ref="form" :model="form" :rules="rules" label-width="110px">
+            <el-row>
+              <el-col :span="8">
+                <el-form-item label="门店组" prop="shopGroupId">
+                  <el-select v-model="form.shopGroupId" placeholder="请选择门店组" filterable clearable style="width: 100%;">
+                    <el-option v-for="item in shopGroupList" :key="item.id" :value="item.id" :label="item.label">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="商户" prop="commercialTenantId">
+                  <el-select v-model="form.commercialTenantId" placeholder="请选择商户" filterable clearable multiple
+                    style="width: 100%;">
+                    <el-option v-for="item in commercialTenantList" :key="item.id" :value="item.id" :label="item.label">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="栏目" prop="categoryId">
+                  <el-select v-model="form.categoryId" placeholder="请选择栏目" filterable clearable multiple
+                    style="width: 100%;">
+                    <el-option v-for="item in categoryList" :key="item.id" :value="item.id" :label="item.label">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="跳转类型" prop="toType">
+                  <el-select v-model="form.toType" placeholder="请选择跳转类型" style="width: 100%;">
+                    <el-option v-for="dict in dict.type.t_product_to_type" :key="dict.value" :label="dict.label"
+                      :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8" v-if="form.toType == '3'">
+                <el-form-item label="小程序ID" prop="appId">
+                  <el-input v-model="form.appId" placeholder="请输入小程序ID" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8" v-if="form.toType != '4' && form.toType != '0'">
+                <el-form-item label="页面地址" prop="url">
+                  <el-input v-model="form.url" placeholder="请输入页面地址" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="提供方名称" prop="providerName">
+                  <el-input v-model="form.providerName" placeholder="请输入活动提供方名称" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="标签" prop="tags">
+                  <el-input v-model="form.tags" placeholder="请输入内容" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="按钮名称" prop="btnText">
+                  <el-input v-model="form.btnText" placeholder="请输入按钮名称" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="分享标题" prop="shareTitle">
+                  <el-input v-model="form.shareTitle" placeholder="请输入分享标题" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="分享描述" prop="shareName">
+                  <el-input v-model="form.shareName" type="textarea" placeholder="请输入内容" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="8">
+                <el-form-item label="分享图片" prop="shareImage">
+                  <image-upload v-model="form.shareImage" :limit="1" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="提供方logo" prop="providerLogo">
+                  <image-upload v-model="form.providerLogo" :limit="1" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8" v-if="form.toType == '4'">
+                <el-form-item label="页面地址" prop="url">
+                  <image-upload v-model="form.url" :limit="1" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-form>
+        </el-tab-pane>
+      </el-tabs>
+      <el-form label-width="100px">
+        <el-form-item style="text-align: center;margin-left:-100px;margin-top:10px;">
+          <el-button v-if="activeName != tabNameList[0]" @click="lastTab()">上一步</el-button>
+          <el-button v-if="activeName != tabNameList[tabNameList.length -1]" type="primary" @click="nextTab()">下一步
+          </el-button>
+          <el-button :loading="buttonLoading" style="float: right;"
+            v-if="activeName == tabNameList[tabNameList.length -1] || isUpdate" type="primary" @click="submitForm()">提交
+          </el-button>
+        </el-form-item>
+      </el-form>
+      <!-- <el-form ref="form" :model="form" :rules="rules" label-width="110px">
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
+        <el-button @click="cancel">取 消</el-button>
+      </div> -->
+    </el-dialog>
+    <el-dialog title="设置商品抢购状态" :visible.sync="openDayCount" width="400px" append-to-body>
+      <el-form>
+        <el-form-item label="今日抢购状态">
+          <el-radio v-model="dayCount" label="0" border>正常</el-radio>
+          <el-radio v-model="dayCount" label="1" border>已抢完</el-radio>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button :loading="buttonLoading" type="primary" @click="dayCountSubmitForm">确 定</el-button>
+        <el-button @click="dayCountCancel">取 消</el-button>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+  import {
+    listProduct,
+    getProduct,
+    delProduct,
+    addProduct,
+    updateProduct,
+    setProductDayCount
+  } from "@/api/zlyyh/product";
+  import {
+    selectListPlatform
+  } from "@/api/zlyyh/platform"
+  import {
+    listSelectMerchant
+  } from "@/api/zlyyh/merchant"
+  import {
+    selectListShopGroup
+  } from "@/api/zlyyh/shopGroup"
+  import {
+    selectListMerchant
+  } from "@/api/zlyyh/commercialTenant"
+  import {
+    selectListCategory
+  } from "@/api/zlyyh/category"
+  import {
+    treeselect as cityTreeselect,
+    productShowCityTreeSelect,
+    selectCityList
+  } from "@/api/zlyyh/area"
+
+  export default {
+    name: "Product",
+    dicts: ['t_product_to_type', 't_product_status', 't_product_affiliation', 't_product_assign_date', 't_product_type',
+      't_product_show_original_amount', 't_product_pickup_method', 't_grad_period_date_list', 't_product_search',
+      't_search_status',
+      't_product_pay_user', 't_show_index', 't_product_send_account_type', 't_cus_refund'
+    ],
+    data() {
+      return {
+        tableHeight: document.documentElement.scrollHeight - 245 + "px",
+        activeName: "basicCoupon",
+        tabNameList: ["basicCoupon", "couponCount", "expand"],
+        // 按钮loading
+        buttonLoading: false,
+        // 遮罩层
+        loading: true,
+        // 选中数组
+        ids: [],
+        // 非单个禁用
+        single: true,
+        // 非多个禁用
+        multiple: true,
+        // 显示搜索条件
+        showSearch: true,
+        // 总条数
+        total: 0,
+        // 商品表格数据
+        productList: [],
+        platformList: [],
+        merchantList: [],
+        shopGroupList: [],
+        commercialTenantList: [],
+        cityList: [],
+        categoryList: [],
+        cityNodeAll: false,
+        defaultProps: {
+          children: "children",
+          label: "label"
+        },
+        showStartDate: [],
+        showEndDate: [],
+        pickerOptions: {
+          shortcuts: [{
+            text: '最近一周',
+            onClick(picker) {
+              const end = new Date();
+              const start = new Date();
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+              picker.$emit('pick', [start, end]);
+            }
+          }, {
+            text: '最近一个月',
+            onClick(picker) {
+              const end = new Date();
+              const start = new Date();
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+              picker.$emit('pick', [start, end]);
+            }
+          }, {
+            text: '最近三个月',
+            onClick(picker) {
+              const end = new Date();
+              const start = new Date();
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+              picker.$emit('pick', [start, end]);
+            }
+          }]
+        },
+        //城市列表
+        cityOptions: [],
+        // 弹出层标题
+        title: "",
+        // 是否显示弹出层
+        open: false,
+        openDayCount: false,
+        dayCount: '',
+        // 查询参数
+        queryParams: {
+          pageNum: 1,
+          pageSize: 10,
+          externalProductId: undefined,
+          productId: undefined,
+          productName: undefined,
+          productAbbreviation: undefined,
+          productSubhead: undefined,
+          productImg: undefined,
+          productAffiliation: undefined,
+          productType: undefined,
+          pickupMethod: undefined,
+          showOriginalAmount: undefined,
+          originalAmount: undefined,
+          sellAmount: undefined,
+          vipUpAmount: undefined,
+          vipAmount: undefined,
+          toType: undefined,
+          appId: undefined,
+          url: undefined,
+          showIndex: undefined,
+          status: undefined,
+          showStartDate: undefined,
+          showEndDate: undefined,
+          sellStartDate: undefined,
+          sellEndDate: undefined,
+          assignDate: undefined,
+          weekDate: undefined,
+          sellTime: undefined,
+          totalCount: undefined,
+          monthCount: undefined,
+          weekCount: undefined,
+          dayCount: undefined,
+          dayUserCount: undefined,
+          weekUserCount: undefined,
+          monthUserCount: undefined,
+          totalUserCount: undefined,
+          description: undefined,
+          providerLogo: undefined,
+          providerName: undefined,
+          tags: undefined,
+          showCity: undefined,
+          merchantId: undefined,
+          shopGroupId: undefined,
+          btnText: undefined,
+          shareTitle: undefined,
+          shareName: undefined,
+          shareImage: undefined,
+          platformKey: undefined,
+          sort: undefined,
+          orderByColumn: "product_id",
+          isAsc: 'desc'
+        },
+        // 表单参数
+        form: {},
+        // 表单校验
+        rules: {
+          productId: [{
+            required: true,
+            message: "ID不能为空",
+            trigger: "blur"
+          }],
+          productAbbreviation: [{
+            required: true,
+            message: "商品简称不能为空",
+            trigger: "blur"
+          }],
+          productName: [{
+            required: true,
+            message: "商品名称不能为空",
+            trigger: "blur"
+          }],
+          productAffiliation: [{
+            required: true,
+            message: "商品归属不能为空",
+            trigger: "change"
+          }],
+          productType: [{
+            required: true,
+            message: "商品类型不能为空",
+            trigger: "change"
+          }],
+          sendAccountType: [{
+            required: true,
+            message: "发券账号类型不能为空",
+            trigger: "change"
+          }],
+          pickupMethod: [{
+            required: true,
+            message: "领取方式不能为空",
+            trigger: "change"
+          }],
+          showOriginalAmount: [{
+            required: true,
+            message: "是否显示市场价格不能为空",
+            trigger: "change"
+          }],
+          originalAmount: [{
+            required: true,
+            message: "市场价格不能为空",
+            trigger: "blur"
+          }],
+          sellAmount: [{
+            required: true,
+            message: "售卖价格不能为空",
+            trigger: "blur"
+          }],
+          toType: [{
+            required: true,
+            message: "跳转类型不能为空",
+            trigger: "change"
+          }],
+          appId: [{
+            required: true,
+            message: "小程序ID不能为空",
+            trigger: "blur"
+          }],
+          status: [{
+            required: true,
+            message: "状态不能为空",
+            trigger: "change"
+          }],
+          assignDate: [{
+            required: true,
+            message: "指定周几不能为空",
+            trigger: "change"
+          }],
+          weekDate: [{
+            required: true,
+            message: "周几能领不能为空",
+            trigger: "blur"
+          }],
+          platformKey: [{
+            required: true,
+            message: "平台不能为空",
+            trigger: "blur"
+          }],
+          externalProductSendValue: [{
+            required: true,
+            message: "发放金额不能为空",
+            trigger: "blur"
+          }],
+          search: [{
+            required: true,
+            message: "商品范围不能为空",
+            trigger: "blur"
+          }],
+          searchStatus: [{
+            required: true,
+            message: "是否搜索不能为空",
+            trigger: "blur"
+          }],
+          cusRefund: [{
+            required: true,
+            message: "是否支持用户退款不能为空",
+            trigger: "blur"
+          }],
+          payUser: [{
+            required: true,
+            message: "商品范围不能为空",
+            trigger: "blur"
+          }],
+        },
+        isUpdate: false,
+      };
+    },
+    created() {
+      this.getList();
+      this.getCitySelectList();
+      selectListPlatform({}).then(res => {
+        this.platformList = res.data;
+      })
+      listSelectMerchant({}).then(res => {
+        this.merchantList = res.data;
+      })
+      let shopParams = {
+        status: "0"
+      }
+      selectListShopGroup(shopParams).then(res => {
+        this.shopGroupList = res.data;
+      })
+      let merchantParams = {
+        status: "0"
+      }
+      selectListMerchant(merchantParams).then(res => {
+        this.commercialTenantList = res.data;
+      })
+      let categoryParams = {
+        categoryListType: "0",
+        status: "0"
+      }
+      selectListCategory(categoryParams).then(res => {
+        this.categoryList = res.data;
+      })
+    },
+    methods: {
+      selectAll(val) {
+        if (this.cityNodeAll) {
+          // 	设置目前勾选的节点，使用此方法必须设置 node-key 属性
+          this.$refs.city.setCheckedNodes([])
+        } else {
+          // 全部不选中
+          this.$refs.city.setCheckedNodes([])
+        }
+      },
+      //city下拉列表
+      getCitySelectList() {
+        let cityForm = {
+          level: "city"
+        }
+        selectCityList(cityForm).then(response => {
+          this.cityList = response.data;
+        })
+      },
+      changePlatform(row) {
+        let platformName = ''
+        this.platformList.forEach(item => {
+          if (row.platformKey == item.id) {
+            platformName = item.label;
+          }
+        })
+        if (platformName && platformName.length > 0) {
+          row.platformName = platformName;
+          return platformName;
+        }
+        return row.platformKey;
+      },
+      handleNodeClick(data) {
+        this.cityNodeAll = false;
+      },
+      lastTab() {
+        let index = this.tabNameList.indexOf(this.activeName);
+        if (index > 0) {
+          this.activeName = this.tabNameList[index - 1]
+        }
+      },
+      nextTab() {
+        let index = this.tabNameList.indexOf(this.activeName);
+        if (index < this.tabNameList.length - 1) {
+          this.activeName = this.tabNameList[index + 1]
+        }
+      },
+      /** 查询商品列表 */
+      getList() {
+        this.loading = true;
+        this.queryParams.params = {};
+        if (null != this.showStartDate && '' != this.showStartDate) {
+          this.queryParams.params["beginStartDate"] = this.showStartDate[0];
+          this.queryParams.params["endStartDate"] = this.showStartDate[1];
+        }
+        if (null != this.showEndDate && '' != this.showEndDate) {
+          this.queryParams.params["beginEndDate"] = this.showEndDate[0];
+          this.queryParams.params["endEndDate"] = this.showEndDate[1];
+        }
+        listProduct(this.queryParams).then(response => {
+          this.productList = response.rows;
+          this.total = response.total;
+          this.loading = false;
+        });
+      },
+      // 取消按钮
+      cancel() {
+        this.open = false;
+        this.reset();
+      },
+      dayCountCancel() {
+        this.openDayCount = false;
+        this.dayCount = '';
+        this.reset();
+      },
+      dayCountSubmitForm() {
+        this.buttonLoading = true;
+        setProductDayCount(this.dayCount, this.form).then(response => {
+          this.$modal.msgSuccess("操作成功");
+          this.openDayCount = false;
+        }).finally(() => {
+          this.buttonLoading = false;
+        });
+      },
+      // 表单重置
+      reset() {
+        this.form = {
+          productId: undefined,
+          externalProductId: undefined,
+          productName: undefined,
+          productAbbreviation: undefined,
+          productSubhead: undefined,
+          productImg: undefined,
+          productAffiliation: undefined,
+          productType: undefined,
+          pickupMethod: undefined,
+          showOriginalAmount: "0",
+          originalAmount: undefined,
+          sellAmount: undefined,
+          vipUpAmount: undefined,
+          vipAmount: undefined,
+          toType: "0",
+          showIndex: '0',
+          appId: undefined,
+          url: undefined,
+          status: "0",
+          search: undefined,
+          showStartDate: undefined,
+          showEndDate: undefined,
+          sellStartDate: undefined,
+          sellEndDate: undefined,
+          assignDate: "0",
+          weekDate: undefined,
+          sellTime: undefined,
+          totalCount: undefined,
+          monthCount: undefined,
+          weekCount: undefined,
+          dayCount: undefined,
+          dayUserCount: undefined,
+          weekUserCount: undefined,
+          monthUserCount: undefined,
+          totalUserCount: undefined,
+          description: undefined,
+          providerLogo: undefined,
+          providerName: undefined,
+          tags: undefined,
+          showCity: undefined,
+          merchantId: undefined,
+          shopGroupId: undefined,
+          commercialTenantId: undefined,
+          categoryId: undefined,
+          btnText: undefined,
+          shareTitle: undefined,
+          shareName: undefined,
+          shareImage: undefined,
+          createBy: undefined,
+          createTime: undefined,
+          updateBy: undefined,
+          updateTime: undefined,
+          delFlag: undefined,
+          platformKey: undefined,
+          sort: undefined
+        };
+        this.resetForm("form");
+      },
+      /** 搜索按钮操作 */
+      handleQuery() {
+        this.queryParams.pageNum = 1;
+        this.getList();
+      },
+      /** 重置按钮操作 */
+      resetQuery() {
+        this.resetForm("queryForm");
+        this.handleQuery();
+      },
+      // 多选框选中数据
+      handleSelectionChange(selection) {
+        this.ids = selection.map(item => item.productId)
+        this.single = selection.length !== 1
+        this.multiple = !selection.length
+      },
+      /** 新增按钮操作 */
+      handleAdd() {
+        this.reset();
+        this.open = true;
+        this.title = "添加商品";
+        this.cityNodeAll = true;
+        this.isUpdate = false;
+        this.getCityTreeselect();
+      },
+      getCityTreeselect() {
+        cityTreeselect().then(response => {
+          this.cityOptions = response.data;
+        });
+      },
+      getShowCityTreeselect(productId) {
+        return productShowCityTreeSelect(productId).then(response => {
+          this.cityOptions = response.data.citys;
+          return response;
+        });
+      },
+      /** 修改按钮操作 */
+      handleUpdate(row) {
+        this.loading = true;
+        this.reset();
+        const productId = row.productId || this.ids
+        const showCity = this.getShowCityTreeselect(productId);
+        this.isUpdate = true;
+        getProduct(productId).then(response => {
+          this.loading = false;
+          this.form = response.data;
+          this.open = true;
+          this.title = "修改商品";
+          if (this.form && this.form.weekDate) {
+            this.form.weekDate = this.form.weekDate.split(",");
+          }
+          if (this.form && this.form.sellTime) {
+            this.form.sellTime = this.form.sellTime.split("-")
+          }
+          if (this.form && this.form.categoryId) {
+            this.form.categoryId = this.form.categoryId.split(",")
+          }
+          if (this.form && this.form.commercialTenantId) {
+            this.form.commercialTenantId = this.form.commercialTenantId.split(",")
+          }
+          this.cityNodeAll = false;
+          this.$nextTick(() => {
+            showCity.then(res => {
+              let checkedKeys = res.data.checkedKeys;
+              checkedKeys.forEach((v) => {
+                if (v == 99) {
+                  this.cityNodeAll = true;
+                } else {
+                  this.$nextTick(() => {
+                    this.$refs.city.setChecked(v, true, false);
+                  })
+                }
+              })
+            })
+          })
+        });
+      },
+      handleUpdateDayCount(row) {
+        this.reset();
+        this.dayCount = '';
+        this.form.productId = row.productId
+        this.openDayCount = true;
+      },
+      //所有菜单节点数据
+      getCityAllCheckedKeys() {
+        //目前被选中的城市节点
+        let checkedKeys = this.$refs.city.getCheckedKeys();
+        //半选中的城市节点
+        let halfCheckedKeys = this.$refs.city.getHalfCheckedKeys();
+        checkedKeys.unshift.apply(checkedKeys, halfCheckedKeys);
+        return checkedKeys;
+      },
+      /** 提交按钮 */
+      submitForm() {
+        this.$refs["form"].validate(valid => {
+          if (valid) {
+            this.buttonLoading = true;
+            if (this.cityNodeAll) {
+              this.form.showCity = "ALL";
+            } else {
+              this.form.showCity = this.getCityAllCheckedKeys().toString();
+            }
+            if (this.form.weekDate) {
+              this.form.weekDate = this.form.weekDate.toString();
+            }
+            if (this.form.sellTime) {
+              this.form.sellTime = this.form.sellTime[0] + "-" + this.form.sellTime[1];
+            }
+            if (this.form.categoryId) {
+              this.form.categoryId = this.form.categoryId.toString();
+            }
+            if (this.form.commercialTenantId) {
+              this.form.commercialTenantId = this.form.commercialTenantId.toString();
+            }
+            if (this.form.productId != null) {
+              updateProduct(this.form).then(response => {
+                this.$modal.msgSuccess("修改成功");
+                this.open = false;
+                this.getList();
+              }).finally(() => {
+                this.buttonLoading = false;
+              });
+            } else {
+              addProduct(this.form).then(response => {
+                this.$modal.msgSuccess("新增成功");
+                this.open = false;
+                this.getList();
+              }).finally(() => {
+                this.buttonLoading = false;
+              });
+            }
+
+          }
+        });
+      },
+      /** 删除按钮操作 */
+      handleDelete(row) {
+        const productIds = row.productId || this.ids;
+        this.$modal.confirm('是否确认删除商品编号为"' + productIds + '"的数据项？').then(() => {
+          this.loading = true;
+          return delProduct(productIds);
+        }).then(() => {
+          this.loading = false;
+          this.getList();
+          this.$modal.msgSuccess("删除成功");
+        }).catch(() => {}).finally(() => {
+          this.loading = false;
+        });
+      },
+      /** 导出按钮操作 */
+      handleExport() {
+        this.download('zlyyh-admin/product/export', {
+          ...this.queryParams
+        }, `product_${new Date().getTime()}.xlsx`)
+      }
+    }
+  };
+</script>

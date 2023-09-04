@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.zlyyh.mapper.OrderMapper">
+
+    <resultMap type="com.ruoyi.zlyyh.domain.Order" id="OrderResult">
+        <result property="number" column="number"/>
+        <result property="productId" column="product_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="productName" column="product_name"/>
+        <result property="productImg" column="product_img"/>
+        <result property="pickupMethod" column="pickup_method"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="reducedPrice" column="reduced_price"/>
+        <result property="wantAmount" column="want_amount"/>
+        <result property="outAmount" column="out_amount"/>
+        <result property="payTime" column="pay_time"/>
+        <result property="expireDate" column="expire_date"/>
+        <result property="count" column="count"/>
+        <result property="status" column="status"/>
+        <result property="cusRefund" column="cus_refund"/>
+        <result property="account" column="account"/>
+        <result property="sendStatus" column="send_status"/>
+        <result property="sendTime" column="send_time"/>
+        <result property="externalProductId" column="external_product_id"/>
+        <result property="externalOrderNumber" column="external_order_number"/>
+        <result property="pushNumber" column="push_number"/>
+        <result property="failReason" column="fail_reason"/>
+        <result property="orderCityName" column="order_city_name"/>
+        <result property="orderCityCode" column="order_city_code"/>
+        <result property="platformKey" column="platform_key"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="payMerchant" column="pay_merchant"/>
+        <result property="externalProductSendValue" column="external_product_send_value"/>
+        <result property="orderType" column="order_type"/>
+        <result property="cancelStatus" column="cancel_status"/>
+        <result property="parentNumber" column="parent_number"/>
+
+    </resultMap>
+    <select id="sumSendValue" resultType="java.math.BigDecimal">
+        SELECT COALESCE(CAST(sum(external_product_send_value) AS DECIMAL(10, 2)), 0.00) AS external_product_send_value
+        FROM `t_order` ${ew.customSqlSegment}
+    </select>
+
+    <select id="sumOutAmount" resultType="java.math.BigDecimal">
+        SELECT COALESCE(CAST(sum(out_amount) AS DECIMAL(10, 2)), 0.00) AS out_amount
+        FROM `t_order` ${ew.customSqlSegment}
+    </select>
+
+
+    <delete id="deleteByNumber" parameterType="java.lang.String">
+        delete from t_order where number = #{number}
+    </delete>
+
+
+
+    <select id="queryUserAndOrderNum" resultType="com.ruoyi.zlyyh.domain.vo.OrderAndUserNumber">
+        SELECT
+        product_id AS productId,
+        count(DISTINCT user_id) AS userNumber,
+        count(number) AS orderNumber,
+        sum(external_product_send_value) AS money,
+        order_city_code AS cityCode,
+        order_city_name AS cityName
+        FROM
+        t_order
+        WHERE
+        STATUS = 2
+        AND create_time <![CDATA[>=]]> #{startDateTime}
+        AND create_time <![CDATA[<=]]> #{endDateTime}
+        GROUP BY
+        product_id,
+        order_city_code,
+        order_city_name
+        LIMIT #{indexNum},
+        #{indexPage}
+    </select>
+    <delete id="deleteByNumber" parameterType="java.lang.String">
+        delete from t_order where number = #{number}
+    </delete>
+
+</mapper>

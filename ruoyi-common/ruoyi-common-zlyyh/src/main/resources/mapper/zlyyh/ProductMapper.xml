@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.zlyyh.mapper.ProductMapper">
+
+    <resultMap type="com.ruoyi.zlyyh.domain.Product" id="ProductResult">
+        <result property="productId" column="product_id"/>
+        <result property="externalProductId" column="external_product_id"/>
+        <result property="productName" column="product_name"/>
+        <result property="productAbbreviation" column="product_abbreviation"/>
+        <result property="productSubhead" column="product_subhead"/>
+        <result property="productImg" column="product_img"/>
+        <result property="productAffiliation" column="product_affiliation"/>
+        <result property="productType" column="product_type"/>
+        <result property="pickupMethod" column="pickup_method"/>
+        <result property="showOriginalAmount" column="show_original_amount"/>
+        <result property="originalAmount" column="original_amount"/>
+        <result property="sellAmount" column="sell_amount"/>
+        <result property="vipUpAmount" column="vip_up_amount"/>
+        <result property="vipAmount" column="vip_amount"/>
+        <result property="toType" column="to_type"/>
+        <result property="appId" column="app_id"/>
+        <result property="url" column="url"/>
+        <result property="status" column="status"/>
+        <result property="cusRefund" column="cus_refund"/>
+        <result property="searchStatus" column="search_status"/>
+        <result property="showStartDate" column="show_start_date"/>
+        <result property="showEndDate" column="show_end_date"/>
+        <result property="sellStartDate" column="sell_start_date"/>
+        <result property="sellEndDate" column="sell_end_date"/>
+        <result property="assignDate" column="assign_date"/>
+        <result property="weekDate" column="week_date"/>
+        <result property="sellTime" column="sell_time"/>
+        <result property="totalCount" column="total_count"/>
+        <result property="monthCount" column="month_count"/>
+        <result property="weekCount" column="week_count"/>
+        <result property="dayCount" column="day_count"/>
+        <result property="dayUserCount" column="day_user_count"/>
+        <result property="weekUserCount" column="week_user_count"/>
+        <result property="monthUserCount" column="month_user_count"/>
+        <result property="totalUserCount" column="total_user_count"/>
+        <result property="description" column="description"/>
+        <result property="providerLogo" column="provider_logo"/>
+        <result property="providerName" column="provider_name"/>
+        <result property="tags" column="tags"/>
+        <result property="showCity" column="show_city"/>
+        <result property="merchantId" column="merchant_id"/>
+        <result property="shopGroupId" column="shop_group_id"/>
+        <result property="btnText" column="btn_text"/>
+        <result property="shareTitle" column="share_title"/>
+        <result property="shareName" column="share_name"/>
+        <result property="shareImage" column="share_image"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="platformKey" column="platform_key"/>
+        <result property="sort" column="sort"/>
+        <result property="externalProductSendValue" column="external_product_send_value"/>
+        <result property="search" column="search"/>
+        <result property="payUser" column="pay_user"/>
+        <result property="showIndex" column="show_index"/>
+        <result property="sendAccountType" column="send_account_type"/>
+    </resultMap>
+
+
+</mapper>
