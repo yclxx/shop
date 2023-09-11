@@ -43,10 +43,7 @@ import java.security.Signature;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.Duration;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * 云闪付相关接口帮助类
@@ -750,7 +747,27 @@ public class YsfUtils {
     }
 
     public static void main(String[] args) {
-
+        String appId = "e60611309c5d4e77b15baf6b4e48292c";
+        String secret = "151e06ec873747fcbd024c54d263b27f";
+        String openId = "bsrhPJ+6nhRkdQI+OmzWoMDcy8Pjkm21YW/1p3dHJoLF9WyPWB/LrsqAW6k0zQ9R";
+        String activityId = "HD2023082800258";
+        List<String> missionIdList = new ArrayList<>();
+        missionIdList.add("JYRW2023082800433");
+        HashMap<String, Object> param = new HashMap<>();
+        param.put("appId", appId);
+        param.put("backendToken", getBackendTokenTest(appId, secret, "https://open.95516.com/open/access/1.0/backendToken"));
+        param.put("openId", openId);
+        param.put("activityId", activityId);
+        param.put("missionIdList", missionIdList);
+        param.put("logId", IdUtil.getSnowflakeNextIdStr());
+        String result = HttpUtil.post("https://open.95516.com/open/access/1.0/searchProgress", JSONObject.toJSONString(param));
+        log.info("用户任务进度查询返回结果：{}", result);
+        JSONObject jsonObject = JSONObject.parseObject(result);
+        JSONObject params = jsonObject.getJSONObject("params");
+        String missionProcessMap = params.getString("missionProcessMap");
+        DESede desede = SecureUtil.desede(HexUtil.decodeHex("d015eafe2fc74fa4a1c12f02454cf4c1d015eafe2fc74fa4"));
+        missionProcessMap = desede.decryptStr(missionProcessMap);
+        log.info("解密后：{}", missionProcessMap);
 //        Map<String, Object> contentData = new HashMap<>();
 //        contentData.put("appId", "868f070bed8942f3bef25f8fae5bd285");
 //        contentData.put("openId", "7Y9bOE9PmeifDRDi9FljAOFAznfEs0hMmBWlfQ6SRB7IAsGUu30hAZzgCBNxGni0");
@@ -773,55 +790,55 @@ public class YsfUtils {
 
 //        System.out.println(YsfUtils.getBackendTokenTest("2ba457e4a0e944b0b495347dbb22f27e", "7209ef4d04694d9a9ff48db7b21651ab", "https://open.95516.com/open/access/1.0/backendToken"));
 
-        String appId = "fa83ef42f3874697a05f5670c62999c5";
-        String secret = "664a7c84048f4559a0a159b0733dee61";
-        String queryCouponUrl = "https://open.95516.com/open/access/1.0/point.acquire";
-
-        String transTs = DateUtils.getDate("yyyyMMdd");
-        String nonceStr = IdUtil.fastSimpleUUID().substring(0, 12);
-        String timestamp = DateUtils.createTimestampStr(true);
-        Map<String, String> params = new HashMap<>();
-        params.put("appId", appId);
-        params.put("insAcctId", "P230327162125724");
-        params.put("transTs", transTs);
-        params.put("transSeqId", IdUtil.getSnowflakeNextIdStr());
-        params.put("mobile", "13095658720");
-//        params.put("acctEntityTp", YSF_PROPERTIES.getAcctEntityTp());
-        params.put("acctEntityTp", "01");
-        // 活动编号
-        params.put("pointId", "4120060413537864");
-        // 发放金额
-        params.put("pointAt", "1");
-
-        JSONObject busiInfo = new JSONObject();
-        busiInfo.put("campaignId", "12355");
-        busiInfo.put("campaignName", "测试");
-        params.put("busiInfo", busiInfo.toJSONString());
-        params.put("transDigest", "测试");
-        params.put("nonceStr", nonceStr);
-        params.put("timestamp", timestamp);
-        String str = MapUtil.sortJoin(params, "&", "=", true);
-        //通过SHA256进行签名
-        String signature;
-        try {
-            signature = YsfUtils.sign(str, "MIICeQIBADANBgkqhkiG9w0BAQEFAASCAmMwggJfAgEAAoGBAKeJfobd84HmjBkYFGjvAVdYeLg1zS+XOTuCuPqGuuGTsYaorog2zRnBWSUQ0yuMteJnSIC3vxivR46Cd2IyV9bD7H1/SuRiFtMgdABAyNykLMGRV61V3lzPqnDxBkqgK0R5QYsvs0OS0gbdZUNPSxuFOfnptdq2GCxJOD9DCxMZAgMBAAECgYEApo7YzTfnGKOdcG0yDUhfavi3u1sxjDipW3KQd/Bt5kkw2pDkQuNIcGx6NZFOfyM6x8Sqnd0PDHlliFZIXcVy8Jszf4eCLIEbykptDtujjrBV01PqtKYVB3WgJP9o/baLftZsRCFTPb6psqczwli5kD83pCHNkklA7l5rZG/WcQECQQD6rNZFuckAta6rTkuFSeTlxPT3IBu90gsE9xxkiTI5uD+0B8+q7mo8bZrRY0hRV7slpkGqQbXCu/2f+q7Ie6iJAkEAqxiOJyXrbIl/RnKsTDZ/RsC9qCxcTb3DBwO55CfsLu74WMTKd3unC3EjtSn7IazGDIPjRjaG6rgSJ1n8B9FSEQJBAPAWdA9KFqMQX+AA2EIr+Qi8cGb0oL1YnGdACjicUreHqbPTO2oaeTOxQnPDpHMMFNnFd+UKlHyTsyHzZk3sagkCQQCVRqBIAaqMkM4tzcEL4YRcW69dOg7yePzect7N9BL5w9+Du3aWlpjgv76SwmTsNYy5wJwbV1mREjYshTMCMxuxAkEAiHYaeYsitAgFhiLWO63uED3HjL8OPNrL8myJwbbAD0N1tR+EqQt9HYhSbjzFbqmW7EqnEFM44yOvEoIqUYUUfg==");
-        } catch (Exception e) {
-            log.error("签名异常：", e);
-            return;
-        }
-        //密钥无需请求
-        params.put("signature", signature);
-        DESede desede = SecureUtil.desede(HexUtil.decodeHex("e3df37c73bc7e9f4583d3ecb8a7ad6c2e3df37c73bc7e9f4"));
-        params.put("mobile", desede.encryptBase64(params.get("mobile")));
-
-        String result;
-        try {
-            result = HttpUtil.post(queryCouponUrl, JSONObject.toJSONString(params));
-        } catch (Exception e) {
-            log.error("云闪付红包赠送异常：", e);
-            return;
-        }
-        log.info("请求参数：{}，返回结果：{}", params, result);
+//        String appId = "fa83ef42f3874697a05f5670c62999c5";
+//        String secret = "664a7c84048f4559a0a159b0733dee61";
+//        String queryCouponUrl = "https://open.95516.com/open/access/1.0/point.acquire";
+//
+//        String transTs = DateUtils.getDate("yyyyMMdd");
+//        String nonceStr = IdUtil.fastSimpleUUID().substring(0, 12);
+//        String timestamp = DateUtils.createTimestampStr(true);
+//        Map<String, String> params = new HashMap<>();
+//        params.put("appId", appId);
+//        params.put("insAcctId", "P230327162125724");
+//        params.put("transTs", transTs);
+//        params.put("transSeqId", IdUtil.getSnowflakeNextIdStr());
+//        params.put("mobile", "13095658720");
+////        params.put("acctEntityTp", YSF_PROPERTIES.getAcctEntityTp());
+//        params.put("acctEntityTp", "01");
+//        // 活动编号
+//        params.put("pointId", "4120060413537864");
+//        // 发放金额
+//        params.put("pointAt", "1");
+//
+//        JSONObject busiInfo = new JSONObject();
+//        busiInfo.put("campaignId", "12355");
+//        busiInfo.put("campaignName", "测试");
+//        params.put("busiInfo", busiInfo.toJSONString());
+//        params.put("transDigest", "测试");
+//        params.put("nonceStr", nonceStr);
+//        params.put("timestamp", timestamp);
+//        String str = MapUtil.sortJoin(params, "&", "=", true);
+//        //通过SHA256进行签名
+//        String signature;
+//        try {
+//            signature = YsfUtils.sign(str, "MIICeQIBADANBgkqhkiG9w0BAQEFAASCAmMwggJfAgEAAoGBAKeJfobd84HmjBkYFGjvAVdYeLg1zS+XOTuCuPqGuuGTsYaorog2zRnBWSUQ0yuMteJnSIC3vxivR46Cd2IyV9bD7H1/SuRiFtMgdABAyNykLMGRV61V3lzPqnDxBkqgK0R5QYsvs0OS0gbdZUNPSxuFOfnptdq2GCxJOD9DCxMZAgMBAAECgYEApo7YzTfnGKOdcG0yDUhfavi3u1sxjDipW3KQd/Bt5kkw2pDkQuNIcGx6NZFOfyM6x8Sqnd0PDHlliFZIXcVy8Jszf4eCLIEbykptDtujjrBV01PqtKYVB3WgJP9o/baLftZsRCFTPb6psqczwli5kD83pCHNkklA7l5rZG/WcQECQQD6rNZFuckAta6rTkuFSeTlxPT3IBu90gsE9xxkiTI5uD+0B8+q7mo8bZrRY0hRV7slpkGqQbXCu/2f+q7Ie6iJAkEAqxiOJyXrbIl/RnKsTDZ/RsC9qCxcTb3DBwO55CfsLu74WMTKd3unC3EjtSn7IazGDIPjRjaG6rgSJ1n8B9FSEQJBAPAWdA9KFqMQX+AA2EIr+Qi8cGb0oL1YnGdACjicUreHqbPTO2oaeTOxQnPDpHMMFNnFd+UKlHyTsyHzZk3sagkCQQCVRqBIAaqMkM4tzcEL4YRcW69dOg7yePzect7N9BL5w9+Du3aWlpjgv76SwmTsNYy5wJwbV1mREjYshTMCMxuxAkEAiHYaeYsitAgFhiLWO63uED3HjL8OPNrL8myJwbbAD0N1tR+EqQt9HYhSbjzFbqmW7EqnEFM44yOvEoIqUYUUfg==");
+//        } catch (Exception e) {
+//            log.error("签名异常：", e);
+//            return;
+//        }
+//        //密钥无需请求
+//        params.put("signature", signature);
+//        DESede desede = SecureUtil.desede(HexUtil.decodeHex("e3df37c73bc7e9f4583d3ecb8a7ad6c2e3df37c73bc7e9f4"));
+//        params.put("mobile", desede.encryptBase64(params.get("mobile")));
+//
+//        String result;
+//        try {
+//            result = HttpUtil.post(queryCouponUrl, JSONObject.toJSONString(params));
+//        } catch (Exception e) {
+//            log.error("云闪付红包赠送异常：", e);
+//            return;
+//        }
+//        log.info("请求参数：{}，返回结果：{}", params, result);
 
 //        Map<String, String> params = new HashMap<>();
 //        params.put("appId", appId);

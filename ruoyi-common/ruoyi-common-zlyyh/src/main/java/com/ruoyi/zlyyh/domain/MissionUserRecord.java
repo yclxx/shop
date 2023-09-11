@@ -72,7 +72,7 @@ public class MissionUserRecord extends BaseEntity {
     /**
      * 发放账号
      */
-    @EncryptField(algorithm = AlgorithmType.SM4HSM)
+    @EncryptField()
     private String sendAccount;
     /**
      * 取码(充值)订单号

@@ -94,7 +94,7 @@ public class Order extends BaseEntity {
     /**
      * 发放账号
      */
-    @EncryptField(algorithm = AlgorithmType.SM4HSM)
+    @EncryptField()
     private String account;
     /**
      * 发放状态 0-未发放 1-发放中 2-发放成功 3-发放失败

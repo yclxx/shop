@@ -1,2 +1,1 @@
 com.ruoyi.common.encrypt.config.EncryptorAutoConfiguration
-com.ruoyi.common.encrypt.jasypt.MyGenerator

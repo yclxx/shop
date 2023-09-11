@@ -116,7 +116,8 @@ public class MybatisEncryptInterceptor implements Interceptor {
         encryptContext.setHsmIp(StringUtils.isBlank(encryptField.hsmIp()) ? defaultProperties.getHsmIp() : encryptField.hsmIp());
         encryptContext.setHsmPort(StringUtils.isBlank(encryptField.hsmPort()) ? defaultProperties.getHsmPort() : encryptField.hsmPort());
         encryptContext.setKeyType(StringUtils.isBlank(encryptField.keyType()) ? defaultProperties.getKeyType() : encryptField.keyType());
-        encryptContext.setKey(encryptField.key() == -99 ? defaultProperties.getKey() : encryptField.key());
+        encryptContext.setKey((encryptField.key() == -99 && null != defaultProperties.getKey()) ? defaultProperties.getKey() : encryptField.key());
+        encryptContext.setLinkNum(StringUtils.isBlank(defaultProperties.getLinkNum()) ? "-10" : defaultProperties.getLinkNum());
         return this.encryptorManager.encrypt(value, encryptContext);
     }
 

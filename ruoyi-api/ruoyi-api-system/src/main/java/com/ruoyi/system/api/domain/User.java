@@ -40,7 +40,7 @@ public class User extends BaseEntity {
     /**
      * 手机号
      */
-    @EncryptField(algorithm = AlgorithmType.SM4HSM)
+    @EncryptField()
     private String mobile;
     /**
      * openId，第三方平台联登唯一标识

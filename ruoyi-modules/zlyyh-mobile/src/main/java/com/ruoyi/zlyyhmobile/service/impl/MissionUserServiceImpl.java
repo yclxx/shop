@@ -78,6 +78,19 @@ public class MissionUserServiceImpl implements IMissionUserService {
         if (null == userVo || StringUtils.isEmpty(userVo.getOpenId())) {
             throw new ServiceException("登录超时，请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
         }
+        // 查询是否在活动城市
+        MissionGroupVo missionGroupVo = missionGroupMapper.selectVoById(bo.getMissionGroupId());
+        if (null == missionGroupVo || !"0".equals(missionGroupVo.getStatus())) {
+            throw new ServiceException("任务不存在或已结束");
+        }
+        if (null != missionGroupVo.getEndDate() && DateUtils.compare(missionGroupVo.getEndDate()) < 0) {
+            throw new ServiceException("任务已结束");
+        }
+        ZlyyhUtils.checkCity(missionGroupVo.getShowCity(), platformService.queryById(missionGroupVo.getPlatformKey()));
+        boolean flag = baseMapper.insert(add) > 0;
+        if (flag) {
+            bo.setMissionUserId(add.getMissionUserId());
+        }
         // 校验是否已经报名过了
         MissionUserVo missionUserVo = this.queryByUserIdAndGroupId(bo.getMissionGroupId(), bo.getUserId(), bo.getPlatformKey());
         if (null != missionUserVo) {
@@ -92,19 +105,6 @@ public class MissionUserServiceImpl implements IMissionUserService {
                 throw new ServiceException("报名失败[" + r.getMsg() + "]");
             }
             return true;
-        }
-        // 查询是否在活动城市
-        MissionGroupVo missionGroupVo = missionGroupMapper.selectVoById(bo.getMissionGroupId());
-        if (null == missionGroupVo || !"0".equals(missionGroupVo.getStatus())) {
-            throw new ServiceException("任务不存在或已结束");
-        }
-        if (null != missionGroupVo.getEndDate() && DateUtils.compare(missionGroupVo.getEndDate()) < 0) {
-            throw new ServiceException("任务已结束");
-        }
-        ZlyyhUtils.checkCity(missionGroupVo.getShowCity(), platformService.queryById(missionGroupVo.getPlatformKey()));
-        boolean flag = baseMapper.insert(add) > 0;
-        if (flag) {
-            bo.setMissionUserId(add.getMissionUserId());
         }
         return flag;
     }
