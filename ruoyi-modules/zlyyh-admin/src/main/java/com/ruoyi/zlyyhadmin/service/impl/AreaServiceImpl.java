@@ -156,14 +156,16 @@ public class AreaServiceImpl implements IAreaService {
     @Override
     public List<Long> selectPlatformCityByPlatform(Long platformId) {
         Platform platform = platformMapper.selectById(platformId);
-        if (null != platform && null != platform.getPlatformCity()) {
+        if (null != platform && StringUtils.isNotBlank(platform.getPlatformCity())) {
             List<Long> list = new ArrayList<>();
             if (platform.getPlatformCity().equals("ALL")) {
                 list.add(99L);
             } else {
                 String[] split = platform.getPlatformCity().split(",");
                 for (String s : split) {
-                    list.add(Long.parseLong(s));
+                    if(StringUtils.isNotBlank(s)){
+                        list.add(Long.parseLong(s));
+                    }
                 }
             }
             return list;
@@ -189,6 +191,7 @@ public class AreaServiceImpl implements IAreaService {
         return null;
     }
 
+    @Override
     public List<Long> selectPlatformCityByNewsId(Long newsId) {
         HotNews hotNews = hotNewsMapper.selectById(newsId);
         if (null != hotNews && null != hotNews.getShowCity()) {
