@@ -38,7 +38,7 @@
     </el-row>
 
     <el-table v-loading="loading" :data="platformList">
-      <el-table-column label="平台标识" width="100" align="center" prop="platformKey" v-if="true" />
+      <el-table-column label="平台标识" width="190" align="center" prop="platformKey" v-if="true" />
       <el-table-column label="平台名称" align="center" prop="platformName" />
       <el-table-column label="状态" width="66" align="center" prop="status">
         <template slot-scope="scope">
@@ -47,7 +47,7 @@
       </el-table-column>
       <el-table-column label="appId" align="center" prop="appId" />
       <el-table-column label="小程序ID" width="150" align="center" prop="encryptAppId" />
-      <el-table-column label="支付商户号" align="center" prop="merchantNo" />
+      <el-table-column label="支付商户号" width="200" align="center" prop="merchantNo" />
       <el-table-column label="操作" width="120" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
@@ -114,10 +114,15 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="状态" prop="status">
-              <el-select v-model="form.status" placeholder="请选择状态">
+              <el-select v-model="form.status" style="width: 100%;" placeholder="请选择状态">
                 <el-option v-for="dict in dict.type.t_platform_status" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
               </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="归属部门" prop="sysDeptId">
+              <treeselect v-model="form.sysDeptId" :options="deptOptions" :show-count="true" placeholder="请选择归属部门" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -177,10 +182,18 @@
     treeselect as cityTreeselect,
     platformCityTreeselect
   } from "@/api/zlyyh/area"
+  import {
+    deptTreeSelect
+  } from "@/api/system/user";
+  import Treeselect from "@riophae/vue-treeselect";
+  import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
   export default {
     name: "Platform",
     dicts: ['t_platform_status'],
+    components: {
+      Treeselect
+    },
     data() {
       return {
         // 按钮loading
@@ -197,6 +210,8 @@
         cityNodeAll: false,
         // 显示搜索条件
         showSearch: true,
+        // 部门树选项
+        deptOptions: undefined,
         // 总条数
         total: 0,
         // 平台信息表格数据
@@ -281,8 +296,15 @@
     },
     created() {
       this.getList();
+      this.getDeptTree();
     },
     methods: {
+      /** 查询部门下拉树结构 */
+      getDeptTree() {
+        deptTreeSelect().then(response => {
+          this.deptOptions = response.data;
+        });
+      },
       /** 查询平台信息列表 */
       getList() {
         this.loading = true;
@@ -324,7 +346,8 @@
           createTime: undefined,
           updateBy: undefined,
           updateTime: undefined,
-          delFlag: undefined
+          delFlag: undefined,
+          sysDeptId: undefined,
         };
         this.resetForm("form");
       },

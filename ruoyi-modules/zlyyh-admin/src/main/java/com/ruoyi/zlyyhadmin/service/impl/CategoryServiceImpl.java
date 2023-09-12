@@ -13,6 +13,8 @@ import com.ruoyi.zlyyh.domain.bo.CategoryProductBo;
 import com.ruoyi.zlyyh.domain.vo.CategoryProductVo;
 import com.ruoyi.zlyyh.domain.vo.CategoryVo;
 import com.ruoyi.zlyyh.mapper.CategoryMapper;
+import com.ruoyi.zlyyh.mapper.PlatformMapper;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.ICategoryProductService;
 import com.ruoyi.zlyyhadmin.service.ICategoryService;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,7 @@ import java.util.List;
 public class CategoryServiceImpl implements ICategoryService {
 
     private final CategoryMapper baseMapper;
+    private final PlatformMapper platformMapper;
     private final ICategoryProductService categoryProductService;
 
     /**
@@ -81,6 +84,7 @@ public class CategoryServiceImpl implements ICategoryService {
     @Override
     public Boolean insertByBo(CategoryBo bo) {
         Category add = BeanUtil.toBean(bo, Category.class);
+        validEntityBeforeSave(add);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setCategoryId(add.getCategoryId());
@@ -96,8 +100,16 @@ public class CategoryServiceImpl implements ICategoryService {
     @Override
     public Boolean updateByBo(CategoryBo bo) {
         Category update = BeanUtil.toBean(bo, Category.class);
+        validEntityBeforeSave(update);
         cateGoryProduct(bo, true);
         return baseMapper.updateById(update) > 0;
+    }
+
+    /**
+     * 保存前的数据校验
+     */
+    private void validEntityBeforeSave(Category entity) {
+        PermissionUtils.setPlatformDeptIdAndUserId(entity,entity.getPlatformKey());
     }
 
     /**

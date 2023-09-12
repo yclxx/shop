@@ -3,6 +3,7 @@ package com.ruoyi.zlyyhmobile.dubbo;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.crypto.SecureUtil;
 import cn.hutool.crypto.symmetric.DESede;
 import cn.hutool.http.HttpRequest;
@@ -140,7 +141,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
                 // 修改原來的用戶openId
                 User user = new User();
                 user.setUserId(openIdUser.getUserId());
-                user.setOpenId(openIdUser.getOpenId() + "_del");
+                user.setOpenId(openIdUser.getOpenId() + "_del" + RandomUtil.randomNumbers(2));
                 userMapper.updateById(user);
             }
             userVo.setOpenId(openId);

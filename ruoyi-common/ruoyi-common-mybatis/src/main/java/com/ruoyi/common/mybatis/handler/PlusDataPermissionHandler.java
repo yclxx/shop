@@ -66,7 +66,6 @@ public class PlusDataPermissionHandler {
      */
     private final BeanResolver beanResolver = new BeanFactoryResolver(SpringUtils.getBeanFactory());
 
-
     public Expression getSqlSegment(Expression where, String mappedStatementId, boolean isSelect) {
         DataColumn[] dataColumns = findAnnotation(mappedStatementId);
         if (ArrayUtil.isEmpty(dataColumns)) {
@@ -75,11 +74,15 @@ public class PlusDataPermissionHandler {
         }
         LoginUser currentUser = DataPermissionHelper.getVariable("user");
         if (ObjectUtil.isNull(currentUser)) {
-            currentUser = LoginHelper.getLoginUser();
+            try {
+                currentUser = LoginHelper.getLoginUser();
+            } catch (Exception ignored) {
+                // 未登录用户会报错，主要针对手机端部分接口无需登录即可访问
+            }
             DataPermissionHelper.setVariable("user", currentUser);
         }
         // 如果是超级管理员，则不过滤数据
-        if (ObjectUtil.isNull(currentUser) || LoginHelper.isAdmin(currentUser.getUserId())) {
+        if (ObjectUtil.isNull(currentUser) || LoginHelper.isAdmin(currentUser.getUserId()) || "app_user".equals(currentUser.getUserType())) {
             return where;
         }
         String dataFilterSql = buildDataFilter(dataColumns, isSelect);

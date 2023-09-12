@@ -92,4 +92,14 @@ public class CategoryVo {
      * 是否显示在首页
      */
     private String showIndex;
+
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 }

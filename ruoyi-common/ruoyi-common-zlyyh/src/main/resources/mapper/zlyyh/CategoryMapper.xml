@@ -23,6 +23,8 @@
         <result property="assignDate" column="assign_date"/>
         <result property="weekDate" column="week_date"/>
         <result property="showIndex" column="show_index"/>
+        <result property="sysDeptId" column="sys_dept_id"/>
+        <result property="sysUserId" column="sys_user_id"/>
     </resultMap>
 
 

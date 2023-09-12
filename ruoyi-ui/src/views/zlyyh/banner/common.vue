@@ -12,11 +12,6 @@
       <el-form-item v-else label="名称" prop="bannerName">
         <el-input v-model="queryParams.bannerName" placeholder="请输入名称" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="显示页面" prop="pagePath">
-        <el-select v-model="queryParams.pagePath" placeholder="请选择显示页面" clearable>
-          <el-option v-for="item in pageList" :key="item.rightLabel" :label="item.label" :value="item.rightLabel" />
-        </el-select>
-      </el-form-item>
       <el-form-item label="跳转类型" prop="toType">
         <el-select v-model="queryParams.toType" placeholder="请选择跳转类型" clearable>
           <el-option v-for="dict in dict.type.t_banner_to_type" :key="dict.value" :label="dict.label"

@@ -111,7 +111,18 @@ public class PlatformVo {
     private String merchantNo;
 
     /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
+
+    /**
      * 活动城市
      */
     List<AreaVo> platformCityList;
+
 }

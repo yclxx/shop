@@ -24,6 +24,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <result property="updateBy" column="update_by"/>
     <result property="updateTime" column="update_time"/>
     <result property="delFlag" column="del_flag"/>
+    <result property="sysDeptId" column="sys_dept_id"/>
+    <result property="sysUserId" column="sys_user_id"/>
     </resultMap>
 
 

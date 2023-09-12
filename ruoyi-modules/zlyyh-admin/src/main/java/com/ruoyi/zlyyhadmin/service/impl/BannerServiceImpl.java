@@ -13,6 +13,7 @@ import com.ruoyi.zlyyh.domain.Banner;
 import com.ruoyi.zlyyh.domain.bo.BannerBo;
 import com.ruoyi.zlyyh.domain.vo.BannerVo;
 import com.ruoyi.zlyyh.mapper.BannerMapper;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.IBannerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -116,7 +117,8 @@ public class BannerServiceImpl implements IBannerService {
      * 保存前的数据校验
      */
     private void validEntityBeforeSave(Banner entity) {
-        if (!entity.getBannerType().equals("10")) {
+        PermissionUtils.setPlatformDeptIdAndUserId(entity,entity.getPlatformKey());
+        if (!"10".equals(entity.getBannerType())) {
             if (StringUtils.isEmpty(entity.getBannerImage())) {
                 throw new ServiceException("banner图不能为空");
             }

@@ -132,4 +132,14 @@ public class BannerVo {
      */
     @ExcelProperty(value = "周几显示")
     private String weekDate;
+
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 }
