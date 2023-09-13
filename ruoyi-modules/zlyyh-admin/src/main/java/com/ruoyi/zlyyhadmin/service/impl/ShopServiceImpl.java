@@ -25,12 +25,11 @@ import com.ruoyi.zlyyh.domain.bo.ShopImportBo;
 import com.ruoyi.zlyyh.domain.bo.ShopMerchantBo;
 import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
 import com.ruoyi.zlyyh.domain.vo.ShopMerchantVo;
-import com.ruoyi.zlyyh.domain.vo.ShopProductVo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
 import com.ruoyi.zlyyh.mapper.CommercialTenantProductMapper;
 import com.ruoyi.zlyyh.mapper.ShopMapper;
-import com.ruoyi.zlyyh.mapper.ShopProductMapper;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.domain.bo.ShopImportDataBo;
 import com.ruoyi.zlyyhadmin.service.IShopMerchantService;
 import com.ruoyi.zlyyhadmin.service.IShopProductService;
@@ -184,6 +183,7 @@ public class ShopServiceImpl implements IShopService {
     public Boolean insertByBo(ShopBo bo) {
         getAddressCode(bo);
         Shop add = BeanUtil.toBean(bo, Shop.class);
+        PermissionUtils.setShopDeptIdAndUserId(add);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setShopId(add.getShopId());
@@ -198,6 +198,7 @@ public class ShopServiceImpl implements IShopService {
     @Override
     public Boolean insertShop(ShopBo bo) {
         Shop add = BeanUtil.toBean(bo, Shop.class);
+        PermissionUtils.setShopDeptIdAndUserId(add);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setShopId(add.getShopId());
@@ -245,6 +246,7 @@ public class ShopServiceImpl implements IShopService {
                         commercialTenant = new CommercialTenant();
                         commercialTenant.setCommercialTenantName(shopImportBo.getCommercialTenantName().trim());
                         commercialTenant.setPlatformKey(shopImportDataBo.getPlatformKey());
+                        PermissionUtils.setPlatformDeptIdAndUserId(commercialTenant, commercialTenant.getPlatformKey(), true);
                         commercialTenantMapper.insert(commercialTenant);
                     }
                     commercialTenantId = commercialTenant.getCommercialTenantId();
@@ -314,7 +316,7 @@ public class ShopServiceImpl implements IShopService {
     }
 
     private void delShopProduct(Long shopId) {
-       shopProductService.deleteWithValidByShopId(shopId);
+        shopProductService.deleteWithValidByShopId(shopId);
     }
 
     private void saveMerchant(String str, String merchantType, Long shopId) {
@@ -386,7 +388,7 @@ public class ShopServiceImpl implements IShopService {
     }
 
     @Override
-    public ShopVo queryByNameAndCommercialTenantId(String name,Long commercialTenantId) {
+    public ShopVo queryByNameAndCommercialTenantId(String name, Long commercialTenantId) {
         LambdaQueryWrapper<Shop> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(Shop::getCommercialTenantId, commercialTenantId);
         queryWrapper.eq(Shop::getShopName, name);

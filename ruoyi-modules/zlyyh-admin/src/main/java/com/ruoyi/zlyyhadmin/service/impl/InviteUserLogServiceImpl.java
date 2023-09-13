@@ -11,6 +11,7 @@ import com.ruoyi.zlyyh.domain.InviteUserLog;
 import com.ruoyi.zlyyh.domain.bo.InviteUserLogBo;
 import com.ruoyi.zlyyh.domain.vo.InviteUserLogVo;
 import com.ruoyi.zlyyh.mapper.InviteUserLogMapper;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.IInviteUserLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -98,7 +99,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
      * 保存前的数据校验
      */
     private void validEntityBeforeSave(InviteUserLog entity){
-        //TODO 做一些数据校验,如唯一约束
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getId());
     }
 
     /**

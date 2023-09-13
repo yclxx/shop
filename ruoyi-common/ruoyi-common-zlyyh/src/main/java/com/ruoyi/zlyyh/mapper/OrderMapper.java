@@ -3,6 +3,8 @@ package com.ruoyi.zlyyh.mapper;
 import com.baomidou.mybatisplus.annotation.InterceptorIgnore;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
+import com.ruoyi.common.mybatis.annotation.DataColumn;
+import com.ruoyi.common.mybatis.annotation.DataPermission;
 import com.ruoyi.common.mybatis.core.mapper.BaseMapperPlus;
 import com.ruoyi.zlyyh.domain.Order;
 import com.ruoyi.zlyyh.domain.vo.OrderAndUserNumber;
@@ -18,6 +20,10 @@ import java.util.List;
  *
  * @author yzgnet
  */
+@DataPermission({
+    @DataColumn(key = "deptName", value = "sys_dept_id"),
+    @DataColumn(key = "userName", value = "sys_user_id")
+})
 public interface OrderMapper extends BaseMapperPlus<OrderMapper, Order, OrderVo> {
 
     BigDecimal sumSendValue(@Param(Constants.WRAPPER) Wrapper<Order> wrapper);

@@ -14,6 +14,7 @@ import com.ruoyi.zlyyh.domain.MissionUser;
 import com.ruoyi.zlyyh.domain.bo.MissionUserBo;
 import com.ruoyi.zlyyh.domain.vo.MissionUserVo;
 import com.ruoyi.zlyyh.mapper.MissionUserMapper;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.IMissionUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -114,6 +115,7 @@ public class MissionUserServiceImpl implements IMissionUserService {
                 throw new ServiceException("该用户已报名，不可重复报名");
             }
         }
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getMissionUserId());
     }
 
     /**

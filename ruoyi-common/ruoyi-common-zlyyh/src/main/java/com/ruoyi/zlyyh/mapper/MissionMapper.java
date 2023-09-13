@@ -1,5 +1,7 @@
 package com.ruoyi.zlyyh.mapper;
 
+import com.ruoyi.common.mybatis.annotation.DataColumn;
+import com.ruoyi.common.mybatis.annotation.DataPermission;
 import com.ruoyi.common.mybatis.core.mapper.BaseMapperPlus;
 import com.ruoyi.zlyyh.domain.Mission;
 import com.ruoyi.zlyyh.domain.vo.MissionVo;
@@ -10,6 +12,10 @@ import com.ruoyi.zlyyh.domain.vo.MissionVo;
  * @author yzg
  * @date 2023-05-10
  */
+@DataPermission({
+    @DataColumn(key = "deptName", value = "sys_dept_id"),
+    @DataColumn(key = "userName", value = "sys_user_id")
+})
 public interface MissionMapper extends BaseMapperPlus<MissionMapper, Mission, MissionVo> {
 
 }

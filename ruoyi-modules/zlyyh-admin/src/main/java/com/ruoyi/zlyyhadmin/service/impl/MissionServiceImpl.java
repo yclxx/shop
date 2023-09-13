@@ -13,6 +13,7 @@ import com.ruoyi.zlyyh.domain.Mission;
 import com.ruoyi.zlyyh.domain.bo.MissionBo;
 import com.ruoyi.zlyyh.domain.vo.MissionVo;
 import com.ruoyi.zlyyh.mapper.MissionMapper;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.IMissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -79,6 +80,7 @@ public class MissionServiceImpl implements IMissionService {
     @Override
     public Boolean insertByBo(MissionBo bo) {
         Mission add = BeanUtil.toBean(bo, Mission.class);
+        PermissionUtils.setPlatformDeptIdAndUserId(add, add.getPlatformKey(), true);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setMissionId(add.getMissionId());
@@ -93,6 +95,7 @@ public class MissionServiceImpl implements IMissionService {
     @Override
     public Boolean updateByBo(MissionBo bo) {
         Mission update = BeanUtil.toBean(bo, Mission.class);
+        PermissionUtils.setPlatformDeptIdAndUserId(update, update.getPlatformKey(), false);
         CacheUtils.evict(CacheNames.MISSION, bo.getMissionId());
         return baseMapper.updateById(update) > 0;
     }

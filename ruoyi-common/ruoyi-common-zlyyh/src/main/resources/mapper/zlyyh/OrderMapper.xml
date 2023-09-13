@@ -40,7 +40,8 @@
         <result property="orderType" column="order_type"/>
         <result property="cancelStatus" column="cancel_status"/>
         <result property="parentNumber" column="parent_number"/>
-
+        <result property="sysDeptId" column="sys_dept_id"/>
+        <result property="sysUserId" column="sys_user_id"/>
     </resultMap>
     <select id="sumSendValue" resultType="java.math.BigDecimal">
         SELECT COALESCE(CAST(sum(external_product_send_value) AS DECIMAL(10, 2)), 0.00) AS external_product_send_value
@@ -54,34 +55,32 @@
 
 
     <delete id="deleteByNumber" parameterType="java.lang.String">
-        delete from t_order where number = #{number}
+        delete
+        from t_order
+        where number = #{number}
     </delete>
 
 
-
     <select id="queryUserAndOrderNum" resultType="com.ruoyi.zlyyh.domain.vo.OrderAndUserNumber">
-        SELECT
-        product_id AS productId,
-        count(DISTINCT user_id) AS userNumber,
-        count(number) AS orderNumber,
-        sum(external_product_send_value) AS money,
-        order_city_code AS cityCode,
-        order_city_name AS cityName
-        FROM
-        t_order
-        WHERE
-        STATUS = 2
-        AND create_time <![CDATA[>=]]> #{startDateTime}
-        AND create_time <![CDATA[<=]]> #{endDateTime}
-        GROUP BY
-        product_id,
-        order_city_code,
-        order_city_name
-        LIMIT #{indexNum},
-        #{indexPage}
+        SELECT product_id                       AS productId,
+               count(DISTINCT user_id)          AS userNumber,
+               count(number)                    AS orderNumber,
+               sum(external_product_send_value) AS money,
+               order_city_code                  AS cityCode,
+               order_city_name                  AS cityName
+        FROM t_order
+        WHERE STATUS = 2
+          AND create_time <![CDATA[>=]]> #{startDateTime}
+          AND create_time <![CDATA[<=]]> #{endDateTime}
+        GROUP BY product_id,
+                 order_city_code,
+                 order_city_name
+        LIMIT #{indexNum}, #{indexPage}
     </select>
     <delete id="deleteByNumber" parameterType="java.lang.String">
-        delete from t_order where number = #{number}
+        delete
+        from t_order
+        where number = #{number}
     </delete>
 
 </mapper>

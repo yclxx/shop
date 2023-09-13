@@ -21,6 +21,7 @@ import com.ruoyi.zlyyh.mapper.HistoryOrderMapper;
 import com.ruoyi.zlyyh.mapper.OrderBackTransMapper;
 import com.ruoyi.zlyyh.mapper.OrderMapper;
 import com.ruoyi.zlyyh.utils.BigDecimalUtils;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyh.utils.YsfUtils;
 import com.ruoyi.zlyyh.utils.sdk.LogUtil;
 import com.ruoyi.zlyyh.utils.sdk.PayUtils;
@@ -177,6 +178,7 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
             orderMapper.update(ob, new LambdaQueryWrapper<Order>().eq(Order::getParentNumber, order.getNumber()));
         }
         OrderBackTrans add = BeanUtil.toBean(bo, OrderBackTrans.class);
+        PermissionUtils.setDeptIdAndUserId(add, order.getSysDeptId(), order.getSysUserId());
         return baseMapper.insert(add) > 0;
     }
 
@@ -250,6 +252,7 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
         }
         orderMapper.updateById(order);
         OrderBackTrans add = BeanUtil.toBean(bo, OrderBackTrans.class);
+        PermissionUtils.setDeptIdAndUserId(add, order.getSysDeptId(), order.getSysUserId());
         return baseMapper.insert(add) > 0;
     }
 
@@ -329,6 +332,7 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
             historyOrderMapper.update(ob, new LambdaQueryWrapper<HistoryOrder>().eq(HistoryOrder::getParentNumber, order.getNumber()));
         }
         OrderBackTrans add = BeanUtil.toBean(bo, OrderBackTrans.class);
+        PermissionUtils.setDeptIdAndUserId(add, order.getSysDeptId(), order.getSysUserId());
         return baseMapper.insert(add) > 0;
     }
 
@@ -402,6 +406,7 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
         }
         historyOrderMapper.updateById(order);
         OrderBackTrans add = BeanUtil.toBean(bo, OrderBackTrans.class);
+        PermissionUtils.setDeptIdAndUserId(add, order.getSysDeptId(), order.getSysUserId());
         return baseMapper.insert(add) > 0;
     }
 

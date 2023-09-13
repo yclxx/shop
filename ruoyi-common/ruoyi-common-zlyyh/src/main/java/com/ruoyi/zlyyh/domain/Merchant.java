@@ -1,14 +1,11 @@
 package com.ruoyi.zlyyh.domain;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import java.io.Serializable;
-import java.util.Date;
-import java.math.BigDecimal;
-
-import com.ruoyi.common.core.web.domain.BaseEntity;
 
 /**
  * 商户号对象 t_merchant
@@ -62,4 +59,13 @@ public class Merchant extends BaseEntity {
     @TableLogic
     private Long delFlag;
 
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 }

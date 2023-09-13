@@ -12,6 +12,7 @@ import com.ruoyi.zlyyh.domain.HotNews;
 import com.ruoyi.zlyyh.domain.bo.HotNewsBo;
 import com.ruoyi.zlyyh.domain.vo.HotNewsVo;
 import com.ruoyi.zlyyh.mapper.HotNewsMapper;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.IHotNewsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -103,7 +104,7 @@ public class HotNewsServiceImpl implements IHotNewsService {
      * 保存前的数据校验
      */
     private void validEntityBeforeSave(HotNews entity) {
-        //TODO 做一些数据校验,如唯一约束
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getNewsId());
     }
 
     /**

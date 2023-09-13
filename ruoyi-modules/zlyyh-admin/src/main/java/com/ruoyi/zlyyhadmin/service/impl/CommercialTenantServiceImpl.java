@@ -20,6 +20,7 @@ import com.ruoyi.zlyyh.domain.vo.CategoryProductVo;
 import com.ruoyi.zlyyh.domain.vo.CommercialTenantProductVo;
 import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.ICategoryProductService;
 import com.ruoyi.zlyyhadmin.service.ICommercialTenantProductService;
 import com.ruoyi.zlyyhadmin.service.ICommercialTenantService;
@@ -76,6 +77,7 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
         wrapper.last("Limit 1");
         return baseMapper.selectVoOne(wrapper);
     }
+
     @Override
     public CommercialTenantVo queryByYlBrandId(String ylBrandId) {
         LambdaQueryWrapper<CommercialTenant> wrapper = Wrappers.lambdaQuery();
@@ -128,6 +130,7 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
     @Override
     public Boolean insertByBo(CommercialTenantBo bo) {
         CommercialTenant add = BeanUtil.toBean(bo, CommercialTenant.class);
+        PermissionUtils.setPlatformDeptIdAndUserId(add, add.getPlatformKey(), true);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setCommercialTenantId(add.getCommercialTenantId());
@@ -169,6 +172,7 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
     @Override
     public Boolean updateByBo(CommercialTenantBo bo) {
         CommercialTenant update = BeanUtil.toBean(bo, CommercialTenant.class);
+        PermissionUtils.setPlatformDeptIdAndUserId(update, update.getPlatformKey(), false);
         boolean flag = baseMapper.updateById(update) > 0;
         if (flag) {
             processCategory(bo, true);

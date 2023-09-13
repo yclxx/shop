@@ -44,6 +44,8 @@
         <result property="sort" column="sort"/>
         <result property="missionType" column="mission_type"/>
         <result property="missionAffiliation" column="mission_affiliation"/>
+        <result property="sysDeptId" column="sys_dept_id"/>
+        <result property="sysUserId" column="sys_user_id"/>
     </resultMap>
 
 

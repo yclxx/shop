@@ -12,6 +12,7 @@ import com.baomidou.lock.LockTemplate;
 import com.baomidou.lock.executor.RedissonLockExecutor;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.common.core.enums.UserStatus;
+import com.ruoyi.common.core.enums.UserType;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.exception.user.UserException;
 import com.ruoyi.common.core.utils.BeanCopyUtils;
@@ -30,6 +31,7 @@ import com.ruoyi.zlyyh.domain.vo.UserVo;
 import com.ruoyi.zlyyh.mapper.RecordLogMapper;
 import com.ruoyi.zlyyh.mapper.UserMapper;
 import com.ruoyi.zlyyh.properties.utils.YsfPropertiesUtils;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyh.utils.YsfUtils;
 import com.ruoyi.zlyyhmobile.domain.bo.UserRecordLog;
 import com.ruoyi.zlyyhmobile.service.IOrderService;
@@ -216,6 +218,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
                     user.setPlatformKey(ysfEntity.getPlatformKey());
                     user.setRegisterCityName(cityName);
                     user.setRegisterCityCode(cityCode);
+                    PermissionUtils.setPlatformDeptIdAndUserId(user, user.getPlatformKey(), true);
                     // 新增用户
                     userMapper.insert(user);
                 } else {
@@ -264,7 +267,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
             loginUser.setUserId(userVo.getUserId());
             loginUser.setUsername(userVo.getUserId().toString());
         }
-        loginUser.setUserType("app_user");
+        loginUser.setUserType(UserType.APP_USER.getUserType());
         loginUser.setOpenid(userVo.getOpenId());
         loginUser.setReloadUser(userVo.getReloadUser());
         loginUser.setCreateTime(userVo.getCreateTime());

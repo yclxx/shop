@@ -36,11 +36,6 @@ public interface IOrderService {
     /**
      * 修改订单
      */
-    Boolean insertByBo(OrderBo bo);
-
-    /**
-     * 修改订单
-     */
     Boolean updateByBo(OrderBo bo);
 
     /**

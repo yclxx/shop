@@ -21,6 +21,8 @@
         <result property="delFlag" column="del_flag"/>
         <result property="showCity" column="show_city"/>
         <result property="convertValue" column="convert_value"/>
+        <result property="sysDeptId" column="sys_dept_id"/>
+        <result property="sysUserId" column="sys_user_id"/>
     </resultMap>
 
 

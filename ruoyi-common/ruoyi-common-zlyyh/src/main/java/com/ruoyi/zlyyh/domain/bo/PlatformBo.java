@@ -98,14 +98,4 @@ public class PlatformBo extends BaseEntity {
      */
     @NotNull(message = "默认支付商户不能为空", groups = { AddGroup.class, EditGroup.class })
     private Long merchantId;
-
-    /**
-     * 部门id
-     */
-    private Long sysDeptId;
-
-    /**
-     * 用户id
-     */
-    private Long sysUserId;
 }

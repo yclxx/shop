@@ -109,7 +109,7 @@ public class CategoryServiceImpl implements ICategoryService {
      * 保存前的数据校验
      */
     private void validEntityBeforeSave(Category entity) {
-        PermissionUtils.setPlatformDeptIdAndUserId(entity,entity.getPlatformKey());
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getCategoryId());
     }
 
     /**

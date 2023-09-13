@@ -1,15 +1,12 @@
 package com.ruoyi.zlyyh.domain;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import java.io.Serializable;
-import java.util.Date;
-import java.math.BigDecimal;
 
 import java.util.Date;
-import com.ruoyi.common.core.web.domain.BaseEntity;
 
 /**
  * 搜索彩蛋配置对象 t_search_group
@@ -78,4 +75,13 @@ public class SearchGroup extends BaseEntity {
      */
     private Long platformKey;
 
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 }

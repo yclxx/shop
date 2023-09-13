@@ -12,6 +12,7 @@ import com.ruoyi.zlyyh.domain.PlatformCityIndex;
 import com.ruoyi.zlyyh.domain.bo.PlatformCityIndexBo;
 import com.ruoyi.zlyyh.domain.vo.PlatformCityIndexVo;
 import com.ruoyi.zlyyh.mapper.PlatformCityIndexMapper;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.IPlatformCityIndexService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -100,7 +101,7 @@ public class PlatformCityIndexServiceImpl implements IPlatformCityIndexService {
      * 保存前的数据校验
      */
     private void validEntityBeforeSave(PlatformCityIndex entity) {
-        //TODO 做一些数据校验,如唯一约束
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getId());
     }
 
     /**

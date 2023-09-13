@@ -131,20 +131,6 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     /**
-     * 新增订单
-     */
-    @Override
-    public Boolean insertByBo(OrderBo bo) {
-        Order add = BeanUtil.toBean(bo, Order.class);
-        validEntityBeforeSave(add);
-        boolean flag = baseMapper.insert(add) > 0;
-        if (flag) {
-            bo.setNumber(add.getNumber());
-        }
-        return flag;
-    }
-
-    /**
      * 修改订单
      */
     @Override

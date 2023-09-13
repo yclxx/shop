@@ -99,6 +99,40 @@ public class OrderServiceImpl implements IOrderService {
     private LockTemplate lockTemplate;
 
     /**
+     * 新增订单 新增完成之后重新查询一次，解决二次加密问题
+     *
+     * @param order 订单信息
+     */
+    public void insertOrder(Order order) {
+        if (null != order.getProductId()) {
+            ProductVo productVo = productService.queryById(order.getProductId());
+            if (null != productVo) {
+                order.setSysDeptId(productVo.getSysDeptId());
+                order.setSysUserId(productVo.getSysUserId());
+            }
+        }
+        int insert = baseMapper.insert(order);
+        if (insert <= 0) {
+            throw new ServiceException("保存订单失败");
+        }
+        order = baseMapper.selectById(order.getNumber());
+    }
+
+    /**
+     * 修改订单 修改完成之后重新查询一次，解决二次加密问题
+     *
+     * @param order 订单信息
+     */
+    @Override
+    public void updateOrder(Order order) {
+        int insert = baseMapper.updateById(order);
+        if (insert <= 0) {
+            throw new ServiceException("更新订单失败");
+        }
+        order = baseMapper.selectById(order.getNumber());
+    }
+
+    /**
      * 保存订单至数据库
      */
     @Transactional(rollbackFor = Exception.class)
@@ -145,11 +179,7 @@ public class OrderServiceImpl implements IOrderService {
             }
         }
         // 保存订单
-        int insert = baseMapper.insert(order);
-        if (insert <= 0) {
-            log.error("订单保存失败，订单信息：{}", order);
-            throw new ServiceException("订单新增失败");
-        }
+        insertOrder(order);
         OrderInfo orderInfoCache = OrderCacheUtils.getOrderInfoCache(number);
         if (null != orderInfoCache) {
             int insert1 = orderInfoMapper.insert(orderInfoCache);
@@ -222,7 +252,7 @@ public class OrderServiceImpl implements IOrderService {
                             OrderCacheUtils.setOrderCache(order);
                         } else {
                             // 修改订单信息
-                            baseMapper.updateById(order);
+                            updateOrder(order);
                         }
                         break;
                     }
@@ -261,8 +291,7 @@ public class OrderServiceImpl implements IOrderService {
             } else {
                 orderPushInfoMapper.insert(orderPushInfo);
                 // 修改订单信息
-                baseMapper.updateById(order);
-                order = baseMapper.selectById(number);
+                updateOrder(order);
             }
             if (StringUtils.isBlank(order.getExternalProductId()) || (("3".equals(order.getOrderType()) || "10".equals(order.getOrderType()) || "4".equals(order.getOrderType())) && null == order.getExternalProductSendValue())) {
                 if (null == productVo || (!"9".equals(productVo.getProductType()) && StringUtils.isBlank(productVo.getExternalProductId()))) {
@@ -317,7 +346,7 @@ public class OrderServiceImpl implements IOrderService {
                     JSONObject orderSend = JSONObject.parseObject(orderSendStr);
                     OrderUnionPay orderUnionPay = orderUnionPayMapper.selectById(order.getNumber());
                     this.orderUnionPaySendHand(orderPushInfo.getExternalProductId(), order, orderUnionPay, orderSend);
-                    baseMapper.updateById(order);
+                    updateOrder(order);
                 }
             } else {
                 sendResult(R.fail("订单类型无处理方式，请联系技术人员"), orderPushInfo, order, cache, false);
@@ -374,7 +403,7 @@ public class OrderServiceImpl implements IOrderService {
             if (data != null) {
                 rechargeUnionResult(data, orderPushCache, order);
                 orderPushInfoMapper.updateById(orderPushCache);
-                baseMapper.updateById(order);
+                updateOrder(order);
             }
         }
     }
@@ -464,7 +493,7 @@ public class OrderServiceImpl implements IOrderService {
         } else {
             orderPushInfoMapper.updateById(orderPushCache);
             // 修改订单信息
-            baseMapper.updateById(order);
+            updateOrder(order);
         }
     }
 
@@ -613,14 +642,14 @@ public class OrderServiceImpl implements IOrderService {
                 order.setStatus("2");
                 order.setPayTime(new Date());
                 // 保存订单 后续如需改动成缓存订单，需注释
-                baseMapper.insert(order);
+                insertOrder(order);
                 orderInfoMapper.insert(orderInfo);
                 // 缓存订单 暂时先不用 需要改动地方太多
                 //            OrderCacheUtils.setOrderCache(order);
                 //            OrderCacheUtils.setOrderInfoCache(orderInfo);
                 // 发券
                 //发券之前判断是否为发放金额为随机的商品
-                if (order.getOrderType().equals("10")) {
+                if ("10".equals(order.getOrderType())) {
                     checkRandomProduct(order);
                 }
                 order = baseMapper.selectById(order.getNumber());
@@ -669,7 +698,7 @@ public class OrderServiceImpl implements IOrderService {
                 }
             }
             // 保存订单 后续如需改动成缓存订单，需注释
-            baseMapper.insert(order);
+            insertOrder(order);
             orderInfoMapper.insert(orderInfo);
             // 缓存订单 暂时先不用 需要改动地方太多
 //            OrderCacheUtils.setOrderCache(order);
@@ -789,7 +818,7 @@ public class OrderServiceImpl implements IOrderService {
             orderFoodInfo.setOrderStatus(orderStatus);
             orderFoodInfo.setOfficialPrice(officialPrice);
             orderFoodInfo.setSellingPrice(sellingPrice);
-            baseMapper.updateById(order);
+            updateOrder(order);
             orderFoodInfoMapper.updateById(orderFoodInfo);
         }
 
@@ -1019,7 +1048,7 @@ public class OrderServiceImpl implements IOrderService {
             throw new ServiceException("登录超时,请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
         }
         //先查该订单是否支持用户侧退款
-        if (ObjectUtil.isEmpty(orderVo.getCusRefund()) || !orderVo.getCusRefund().equals("1")) {
+        if (ObjectUtil.isEmpty(orderVo.getCusRefund()) || !"1".equals(orderVo.getCusRefund())) {
             throw new ServiceException("该订单暂不支持退款");
         }
         if (!"2".equals(orderVo.getStatus())) {
@@ -1034,8 +1063,9 @@ public class OrderServiceImpl implements IOrderService {
         //审核中
         refund.setStatus("0");
         String orderType = orderVo.getOrderType();
+        PermissionUtils.setDeptIdAndUserId(refund, order.getSysDeptId(), order.getSysUserId());
         //根据订单类型进行退款
-        if (orderType.equals("5")) {
+        if ("5".equals(orderType)) {
             //如果是美食订单 先查询订单
             queryFoodOrder(orderVo.getExternalOrderNumber());
             OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(orderVo.getNumber());
@@ -1044,7 +1074,7 @@ public class OrderServiceImpl implements IOrderService {
             }
             order.setCancelStatus("0");
             order.setStatus("4");
-            baseMapper.updateById(order);
+            updateOrder(order);
             //如果电子券为未使用状态 在这里先走退款接口
             if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
                 String appId = YSF_FOOD_PROPERTIES.getAppId();
@@ -1058,15 +1088,15 @@ public class OrderServiceImpl implements IOrderService {
             }
             refundMapper.insert(refund);
             return;
-        } else if (orderType.equals("7")) {
+        } else if ("7".equals(orderType)) {
             //如果是电子券卡密订单 等待同意
             refundMapper.insert(refund);
             order.setStatus("4");
-            baseMapper.updateById(order);
+            updateOrder(order);
             return;
         } else {
             //其他订单 只在失败的情况下才能申请退款
-            if (!orderVo.getSendStatus().equals("3")) {
+            if (!"3".equals(orderVo.getSendStatus())) {
                 throw new ServiceException("该订单无法申请退款");
             }
         }
@@ -1131,18 +1161,14 @@ public class OrderServiceImpl implements IOrderService {
                 order.setStatus("6");
             }
         }
-        baseMapper.updateById(order);
+        updateOrder(order);
         if ("9".equals(order.getOrderType())) {
             Order ob = new Order();
             ob.setStatus(order.getStatus());
             baseMapper.update(ob, new LambdaQueryWrapper<Order>().eq(Order::getParentNumber, order.getNumber()));
         }
+        PermissionUtils.setDeptIdAndUserId(orderBackTrans, order.getSysDeptId(), order.getSysUserId());
         orderBackTransMapper.insert(orderBackTrans);
-    }
-
-    @Override
-    public void updateOrder(Order order) {
-        baseMapper.updateById(order);
     }
 
     /**
@@ -1185,7 +1211,7 @@ public class OrderServiceImpl implements IOrderService {
                 if ("12".equals(productVo.getProductType())) {
                     // 银联分销订单处理
                     ProductUnionPay productUnionPay = productUnionPayService.selectProductById(productVo.getProductId());
-                    if (productUnionPay.getCoopMd().equals("3")) { // 直销
+                    if ("3".equals(productUnionPay.getCoopMd())) { // 直销
                         OrderUnionPay orderUnionPay = orderUnionPayMapper.selectById(order.getNumber());
                         String orderPayStr = UnionPayDistributionUtil.orderPay(order.getNumber(), orderUnionPay.getProdTn(), orderUnionPay.getUsrPayAmt(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), YsfDistributionPropertiesUtils.getCertPathJD(order.getPlatformKey()));
                         JSONObject orderPay = JSONObject.parseObject(orderPayStr);
@@ -1224,7 +1250,7 @@ public class OrderServiceImpl implements IOrderService {
                         throw new ServiceException("支付商户配置异常");
                     }
                     order.setPayMerchant(merchantVo.getId());
-                    baseMapper.updateById(order);
+                    updateOrder(order);
                     // 支付金额 乘100，把元转成分
                     Integer amount = BigDecimalUtils.toMinute(order.getWantAmount());
                     String tn = PayUtils.pay(order.getNumber().toString(), amount.toString(), merchantVo.getPayCallbackUrl(), merchantVo.getMerchantNo(), merchantVo.getMerchantKey(), merchantVo.getCertPath(), null, order.getExpireDate());
@@ -1251,17 +1277,15 @@ public class OrderServiceImpl implements IOrderService {
                 order.setOutAmount(order.getWantAmount());
                 order.setStatus("2");
                 order.setPayTime(new Date());
-                baseMapper.updateById(order);
+                updateOrder(order);
                 // 删除待支付订单缓存
                 delCacheOrder(order.getNumber());
                 // 发券
                 //判断是否为随机产品 再发券
-                if (order.getOrderType().equals("10")) {
+                if ("10".equals(order.getOrderType())) {
                     checkRandomProduct(order);
                 }
-                order = baseMapper.selectById(order.getNumber());
                 SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
-                //orderStreamProducer.streamOrderMsg(order.getNumber().toString());
                 return "ok";
             }
         } else if ("3".equals(order.getStatus())) {
@@ -1289,7 +1313,7 @@ public class OrderServiceImpl implements IOrderService {
         Order o = new Order();
         o.setNumber(order.getNumber());
         o.setStatus("3");
-        baseMapper.updateById(o);
+        updateOrder(o);
         // 删除用户未支付订单
         delCacheOrder(order.getNumber());
         // 回退名额
@@ -1297,8 +1321,8 @@ public class OrderServiceImpl implements IOrderService {
 
         try {
             // 银联分销订单（处理）
-            if (order.getOrderType().equals("11") || order.getOrderType().equals("12")) {
-                if (order.getOrderType().equals("11")) {
+            if ("11".equals(order.getOrderType()) || "12".equals(order.getOrderType())) {
+                if ("11".equals(order.getOrderType())) {
                     UnionPayDistributionUtil.orderCancel(order.getNumber(), order.getExternalOrderNumber(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJCAppId(order.getPlatformKey()), YsfDistributionPropertiesUtils.getCertPathJC(order.getPlatformKey()));
                 } else {
                     UnionPayDistributionUtil.orderCancel(order.getNumber(), order.getExternalOrderNumber(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), YsfDistributionPropertiesUtils.getCertPathJD(order.getPlatformKey()));
@@ -1324,10 +1348,12 @@ public class OrderServiceImpl implements IOrderService {
             return "订单不存在";
         }
         // 直销商品额外处理
-        if (type.equals(0) && order.getOrderType().equals("12")) {
+        if (type.equals(0) && "12".equals(order.getOrderType())) {
             // 查询订单券码状态
             List<OrderUnionSendVo> orderUnionSendVos = orderUnionSendService.queryListByNumber(order.getNumber());
-            if (!orderUnionSendVos.isEmpty()) return "订单支付成功";
+            if (!orderUnionSendVos.isEmpty()) {
+                return "订单支付成功";
+            }
             // 未发券，执行订单发券操作
             OrderUnionPay orderUnionPay = orderUnionPayMapper.selectById(order.getNumber());
             // 查询订单支付状态
@@ -1337,10 +1363,10 @@ public class OrderServiceImpl implements IOrderService {
             if (orderStatus.getString("code").equals(UnionPayParams.CodeSuccess.getStr())) {
                 String prodOrderSt = orderStatus.getString("prodOrderSt");
                 if (StringUtils.isNotEmpty(prodOrderSt)) {
-                    if (prodOrderSt.equals("00")) {
+                    if ("00".equals(prodOrderSt)) {
                         // 直销（银联分销）
                         order.setStatus("2");
-                        baseMapper.updateById(order);
+                        updateOrder(order);
                         this.sendCoupon(number);
                         return "订单支付成功";
                     }
@@ -1550,7 +1576,7 @@ public class OrderServiceImpl implements IOrderService {
             orderFoodInfo.setTotalAmount(totalAmount);
             orderFoodInfo.setUsedAmount(usedAmount);
             orderFoodInfo.setRefundAmount(refundAmount);
-            baseMapper.updateById(order);
+            updateOrder(order);
             orderFoodInfoMapper.updateById(orderFoodInfo);
         }
     }
@@ -1567,7 +1593,7 @@ public class OrderServiceImpl implements IOrderService {
         if (order == null) {
             return;
         }
-        if (!order.getOrderType().equals("12")) {
+        if (!"12".equals(order.getOrderType())) {
             log.info("非银联分销（直销订单），不能执行发券");
             return;
         }
@@ -1584,13 +1610,12 @@ public class OrderServiceImpl implements IOrderService {
             if (orderUnionSendVos.isEmpty()) {
                 // 修改订单状态
                 order.setStatus("2");
-                baseMapper.updateById(order);
-                order = baseMapper.selectById(order.getNumber());
+                updateOrder(order);
                 // 执行订单发券
                 String orderSendStr = UnionPayDistributionUtil.orderSend(order.getNumber(), productVo.getExternalProductId(), orderUnionPay.getProdTn(), "0", order.getAccount(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), YsfDistributionPropertiesUtils.getCertPathJD(order.getPlatformKey()));
                 JSONObject orderSend = JSONObject.parseObject(orderSendStr);
                 this.orderUnionPaySendHand(productVo.getExternalProductId(), order, orderUnionPay, orderSend);
-                baseMapper.updateById(order);
+                updateOrder(order);
             } else {
                 orderUnionPayMapper.updateById(orderUnionPay);
             }
@@ -1608,7 +1633,7 @@ public class OrderServiceImpl implements IOrderService {
             // 发起订单状态查询，向银联确认发券状态
             String orderStatusStr;
             String certPath;
-            if (order.getOrderType().equals("11")) {
+            if ("11".equals(order.getOrderType())) {
                 certPath = YsfDistributionPropertiesUtils.getCertPathJC(order.getPlatformKey());
                 orderStatusStr = UnionPayDistributionUtil.orderStatus(order.getNumber(), UnionPayBizMethod.CHNLPUR.getBizMethod(), externalProductId, order.getNumber(), data.getString("txnTime"), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJCAppId(order.getPlatformKey()), certPath);
             } else {
@@ -1619,7 +1644,7 @@ public class OrderServiceImpl implements IOrderService {
             // 查询成功，开始处理。
             if (orderStatus.getString("code").equals(UnionPayParams.CodeSuccess.getStr())) {
                 // 发放成功
-                if (orderStatus.getString("prodOrderSt").equals("05")) {
+                if ("05".equals(orderStatus.getString("prodOrderSt"))) {
                     String prodTp = data.getString("prodTp");
                     JSONArray bondLst = data.getJSONArray("bondLst");
                     if (orderUnionPay != null) {
@@ -1638,9 +1663,9 @@ public class OrderServiceImpl implements IOrderService {
                     }
                     order.setSendStatus("2");
                     order.setSendTime(DateUtil.date());
-                } else if (orderStatus.getString("prodOrderSt").equals("04")) {
+                } else if ("04".equals(orderStatus.getString("prodOrderSt"))) {
                     order.setSendStatus("3");
-                } else if (orderStatus.getString("prodOrderSt").equals("02")) {
+                } else if ("02".equals(orderStatus.getString("prodOrderSt"))) {
                     order.setSendStatus("1");
                 }
             }
@@ -1694,7 +1719,7 @@ public class OrderServiceImpl implements IOrderService {
         if ("8".equals(state)) {
             //退款成功
             order.setCancelStatus("1");
-            baseMapper.updateById(order);
+            updateOrder(order);
         }
     }
 
@@ -1744,7 +1769,7 @@ public class OrderServiceImpl implements IOrderService {
             throw new ServiceException("订单不存在");
         }
         rechargeResult(data, orderPushInfo, order);
-        baseMapper.updateById(order);
+        updateOrder(order);
         orderPushInfoMapper.updateById(orderPushInfo);
     }
 
@@ -1797,10 +1822,6 @@ public class OrderServiceImpl implements IOrderService {
 
     /**
      * 充值中心订单结果处理 （银联分销）
-     *
-     * @param data
-     * @param orderPushInfo
-     * @param order
      */
     private void rechargeUnionResult(JSONObject data, OrderPushInfo orderPushInfo, Order order) {
         if (data.getString("code").equals(UnionPayParams.CodeSuccess.getStr())) {
@@ -1875,17 +1896,15 @@ public class OrderServiceImpl implements IOrderService {
         if (null == order.getPayTime()) {
             order.setPayTime(DateUtils.getNowDate());
         }
-        baseMapper.updateById(order);
+        updateOrder(order);
         // 删除未支付订单缓存
         delCacheOrder(order.getNumber());
         // 发券
         //判断是否为随机产品 再发券
-        if (order.getOrderType().equals("10")) {
+        if ("10".equals(order.getOrderType())) {
             checkRandomProduct(order);
         }
-        order = baseMapper.selectById(order.getNumber());
         SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
-//        orderStreamProducer.streamOrderMsg(order.getNumber().toString());
     }
 
     private R<Void> productPackageHandle(Long number, Long productId, Long userId, String adcode, String cityName, Long platformKey) {
@@ -1979,7 +1998,7 @@ public class OrderServiceImpl implements IOrderService {
             String certPath;
             Order order = baseMapper.selectById(number);
             String orderStatusStr;
-            if (order.getOrderType().equals("12")) {
+            if ("12".equals(order.getOrderType())) {
                 // 直销
                 certPath = YsfDistributionPropertiesUtils.getCertPathJD(order.getPlatformKey());
                 orderStatusStr = UnionPayDistributionUtil.orderStatus(order.getNumber(), UnionPayBizMethod.chnlpur.getBizMethod(), order.getExternalProductId(), orderUnionPay.getNumber(), orderUnionPay.getTxnTime(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), certPath);
@@ -1991,28 +2010,24 @@ public class OrderServiceImpl implements IOrderService {
             // 查询成功，开始处理。
             if (orderStatus.getString("code").equals(UnionPayParams.CodeSuccess.getStr())) {
                 // 发放成功
-                if (orderStatus.getString("prodOrderSt").equals("05")) {
+                if ("05".equals(orderStatus.getString("prodOrderSt"))) {
                     String prodTp = orderStatus.getString("prodTp");
                     JSONArray bondLst = orderStatus.getJSONArray("bondLst");
-                    if (orderUnionPay != null) {
-                        orderUnionSendService.insertList(order.getNumber(), orderUnionPay.getProdTn(), prodTp, bondLst, certPath, YsfDistributionPropertiesUtils.getCertPwd(order.getPlatformKey()));
-                    } else {
-                        String prodTn = orderStatus.getString("prodTn");
-                        orderUnionSendService.insertList(order.getNumber(), prodTn, prodTp, bondLst, certPath, YsfDistributionPropertiesUtils.getCertPwd(order.getPlatformKey()));
-                        orderUnionPay = new OrderUnionPay();
-                        orderUnionPay.setNumber(order.getNumber());
-                        orderUnionPay.setOrderId(orderStatus.getString("orderId"));
-                        orderUnionPay.setProdTn(prodTn);
-                        orderUnionPay.setTxnTime(orderStatus.getString("txnTime"));
-                        orderUnionPay.setUsrPayAmt("0");
-                        orderUnionPayMapper.insertOrUpdate(orderUnionPay);
-                        order.setExternalOrderNumber(prodTn);
-                    }
+                    String prodTn = orderStatus.getString("prodTn");
+                    orderUnionSendService.insertList(order.getNumber(), prodTn, prodTp, bondLst, certPath, YsfDistributionPropertiesUtils.getCertPwd(order.getPlatformKey()));
+                    orderUnionPay = new OrderUnionPay();
+                    orderUnionPay.setNumber(order.getNumber());
+                    orderUnionPay.setOrderId(orderStatus.getString("orderId"));
+                    orderUnionPay.setProdTn(prodTn);
+                    orderUnionPay.setTxnTime(orderStatus.getString("txnTime"));
+                    orderUnionPay.setUsrPayAmt("0");
+                    orderUnionPayMapper.insertOrUpdate(orderUnionPay);
+                    order.setExternalOrderNumber(prodTn);
                     order.setSendStatus("2");
                     order.setSendTime(DateUtil.date());
-                } else if (orderStatus.getString("prodOrderSt").equals("04")) {
+                } else if ("04".equals(orderStatus.getString("prodOrderSt"))) {
                     order.setSendStatus("3");
-                } else if (orderStatus.getString("prodOrderSt").equals("02")) {
+                } else if ("02".equals(orderStatus.getString("prodOrderSt"))) {
                     order.setSendStatus("1");
                 }
             }
@@ -2046,7 +2061,7 @@ public class OrderServiceImpl implements IOrderService {
         Long productId = order.getProductId();
         String productName = order.getProductName();
         ProductVo productVo = productService.queryById(productId);
-        if (productVo.getProductType().equals("10")) {
+        if ("10".equals(productVo.getProductType())) {
             //随机产品订单设置随机发放金额 (查询商品金额表)
             ProductAmountBo productAmountBo = new ProductAmountBo();
             productAmountBo.setProductId(productId);
@@ -2063,7 +2078,7 @@ public class OrderServiceImpl implements IOrderService {
                 updateOrder.setNumber(order.getNumber());
                 updateOrder.setProductName(productName);
                 updateOrder.setExternalProductSendValue(productAmountVo.getExternalProductSendValue());
-                baseMapper.updateById(updateOrder);
+                updateOrder(updateOrder);
             }
         }
 

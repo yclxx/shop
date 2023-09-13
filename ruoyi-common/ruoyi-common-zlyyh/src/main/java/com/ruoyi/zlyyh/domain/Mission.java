@@ -169,4 +169,14 @@ public class Mission extends BaseEntity {
     private String missionType;
 
     private String missionAffiliation;
+
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 }

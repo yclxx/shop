@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ruoyi.common.core.web.domain.BaseEntity;
 import com.ruoyi.common.encrypt.annotation.EncryptField;
-import com.ruoyi.common.encrypt.enumd.AlgorithmType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -105,6 +104,16 @@ public class User extends BaseEntity {
      * 上次登录时间
      */
     private Date lastLoginDate;
+
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 
     public User(){
 

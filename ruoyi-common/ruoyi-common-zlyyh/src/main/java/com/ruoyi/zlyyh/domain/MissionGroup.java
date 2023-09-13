@@ -69,4 +69,14 @@ public class MissionGroup extends BaseEntity {
     private Long delFlag;
 
     private String showCity;
+
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 }

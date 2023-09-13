@@ -246,4 +246,14 @@ public class Product extends BaseEntity {
      * 发券账号类型：0-手机号，1-openId
      */
     private String sendAccountType;
+
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 }

@@ -3,9 +3,7 @@ package com.ruoyi.zlyyhadmin.controller;
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.hutool.core.util.DesensitizedUtil;
 import com.ruoyi.common.core.domain.R;
-import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.StringUtils;
-import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
 import com.ruoyi.common.core.web.controller.BaseController;
 import com.ruoyi.common.excel.utils.ExcelUtil;
@@ -111,16 +109,6 @@ public class OrderController extends BaseController {
     }
 
     /**
-     * 新增订单
-     */
-    @SaCheckPermission("zlyyh:order:add")
-    @Log(title = "订单", businessType = BusinessType.INSERT)
-    @PostMapping()
-    public R<Void> add(@Validated(AddGroup.class) @RequestBody OrderBo bo) {
-        return toAjax(iOrderService.insertByBo(bo));
-    }
-
-    /**
      * 修改订单
      */
     @SaCheckPermission("zlyyh:order:edit")
@@ -172,24 +160,6 @@ public class OrderController extends BaseController {
     @GetMapping("/cancelFoodOrder/{number}")
     public void cancelFoodOrder(@PathVariable Long number) {
         appOrderService.cancelFoodOrder(number);
-    }
-
-    /**
-     * 同步订单数据
-     *
-     * @return
-     */
-    @SaCheckPermission("zlyyh:order:refresh")
-    @PostMapping("/syncOrderData")
-    public R<Void> syncOrderData(OrderBo bo) {
-        if (null == bo.getPlatformKey()) {
-            throw new ServiceException("请选择平台");
-        }
-        if (null == bo.getBeginStartDate() || null == bo.getEndStartDate()) {
-            throw new ServiceException("请选择下单时间");
-        }
-        asyncService.syncOrderData(bo.getBeginStartDate(), bo.getEndStartDate(), bo.getPlatformKey());
-        return R.ok();
     }
 
     /**

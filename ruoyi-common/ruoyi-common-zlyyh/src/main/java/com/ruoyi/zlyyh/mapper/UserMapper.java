@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ruoyi.common.mybatis.annotation.DataColumn;
+import com.ruoyi.common.mybatis.annotation.DataPermission;
 import com.ruoyi.common.mybatis.core.mapper.BaseMapperPlus;
 import com.ruoyi.system.api.domain.User;
 import com.ruoyi.zlyyh.domain.vo.UserVo;
@@ -17,6 +19,10 @@ import java.util.List;
  * @author yzgnet
  * @date 2023-03-21
  */
+@DataPermission({
+    @DataColumn(key = "deptName", value = "sys_dept_id"),
+    @DataColumn(key = "userName", value = "sys_user_id")
+})
 public interface UserMapper extends BaseMapperPlus<UserMapper, User, UserVo> {
 
     /**

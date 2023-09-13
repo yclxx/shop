@@ -15,7 +15,7 @@ import com.ruoyi.zlyyh.domain.bo.UserBo;
 import com.ruoyi.zlyyh.domain.vo.UserVo;
 import com.ruoyi.zlyyh.mapper.PlatformMapper;
 import com.ruoyi.zlyyh.mapper.UserMapper;
-import com.ruoyi.zlyyhadmin.service.ICustService;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.IUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,7 +36,6 @@ public class UserServiceImpl implements IUserService {
 
     private final UserMapper baseMapper;
     private final PlatformMapper platformMapper;
-    private final ICustService custService;
 
     /**
      * 查询用户信息
@@ -130,7 +129,7 @@ public class UserServiceImpl implements IUserService {
      * 保存前的数据校验
      */
     private void validEntityBeforeSave(User entity) {
-        //TODO 做一些数据校验,如唯一约束
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getUserId());
     }
 
     /**

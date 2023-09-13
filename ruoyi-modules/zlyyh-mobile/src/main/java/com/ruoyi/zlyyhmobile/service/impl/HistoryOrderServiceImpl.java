@@ -22,6 +22,7 @@ import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.*;
 import com.ruoyi.zlyyh.properties.YsfFoodProperties;
 import com.ruoyi.zlyyh.utils.BigDecimalUtils;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyh.utils.YsfFoodUtils;
 import com.ruoyi.zlyyh.utils.YsfUtils;
 import com.ruoyi.zlyyh.utils.sdk.LogUtil;
@@ -196,6 +197,7 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
         refund.setRefundRemark("用户申请退款");
         //审核中
         refund.setStatus("0");
+        PermissionUtils.setDeptIdAndUserId(refund, order.getSysDeptId(), order.getSysUserId());
         String orderType = orderVo.getOrderType();
         //根据订单类型进行退款
         if (orderType.equals("5")) {
@@ -301,6 +303,7 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
             ob.setStatus(order.getStatus());
             baseMapper.update(ob, new LambdaQueryWrapper<HistoryOrder>().eq(HistoryOrder::getParentNumber, order.getNumber()));
         }
+        PermissionUtils.setDeptIdAndUserId(orderBackTrans, order.getSysDeptId(), order.getSysUserId());
         orderBackTransMapper.insert(orderBackTrans);
     }
 

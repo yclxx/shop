@@ -24,6 +24,7 @@ import com.ruoyi.zlyyh.mapper.MissionMapper;
 import com.ruoyi.zlyyh.mapper.MissionUserMapper;
 import com.ruoyi.zlyyh.mapper.MissionUserRecordMapper;
 import com.ruoyi.zlyyh.mapper.UserMapper;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.IMissionUserRecordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -142,6 +143,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
             }
         }
         add.setExpiryTime(expiryDate);
+        PermissionUtils.setPlatformDeptIdAndUserId(add, missionVo.getPlatformKey(), true);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setMissionUserRecordId(add.getMissionUserRecordId());

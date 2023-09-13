@@ -20,6 +20,7 @@ import com.ruoyi.zlyyh.domain.vo.CategoryProductVo;
 import com.ruoyi.zlyyh.domain.vo.CommercialTenantProductVo;
 import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyh.mapper.ProductMapper;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.ICategoryProductService;
 import com.ruoyi.zlyyhadmin.service.ICommercialTenantProductService;
 import com.ruoyi.zlyyhadmin.service.IProductService;
@@ -208,6 +209,7 @@ public class ProductServiceImpl implements IProductService {
     public Boolean insertByBo(ProductBo bo) {
         Product add = BeanUtil.toBean(bo, Product.class);
         validEntityBeforeSave(add);
+        PermissionUtils.setProductDeptIdAndUserId(add);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setProductId(add.getProductId());

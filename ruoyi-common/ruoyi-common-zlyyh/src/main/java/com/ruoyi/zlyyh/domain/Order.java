@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ruoyi.common.core.web.domain.BaseEntity;
 import com.ruoyi.common.encrypt.annotation.EncryptField;
-import com.ruoyi.common.encrypt.enumd.AlgorithmType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -157,4 +156,14 @@ public class Order extends BaseEntity {
      * 父级订单号（券包的子订单，此字段需要有值）
      */
     private Long parentNumber;
+
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 }

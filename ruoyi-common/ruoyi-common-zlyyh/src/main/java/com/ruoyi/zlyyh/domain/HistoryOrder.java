@@ -1,17 +1,15 @@
 package com.ruoyi.zlyyh.domain;
 
-import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import java.io.Serializable;
-import java.util.Date;
-import java.math.BigDecimal;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import com.ruoyi.common.core.web.domain.BaseEntity;
 
 /**
  * 历史订单对象 t_history_order
@@ -154,13 +152,13 @@ public class HistoryOrder extends BaseEntity {
      */
     private Long parentNumber;
 
-    public static HistoryOrder getHistoryOrder(Order order) {
-        HistoryOrder historyOrder = new HistoryOrder();
-        BeanUtil.copyProperties(order,historyOrder);
-        historyOrder.setCreateTime(order.getCreateTime());
-        historyOrder.setUpdateTime(order.getUpdateTime());
-        historyOrder.setCreateBy(order.getCreateBy());
-        historyOrder.setUpdateBy(order.getUpdateBy());
-        return historyOrder;
-    }
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 }

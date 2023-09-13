@@ -140,4 +140,13 @@ public class Draw extends BaseEntity {
      */
     private Long sort;
 
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 }

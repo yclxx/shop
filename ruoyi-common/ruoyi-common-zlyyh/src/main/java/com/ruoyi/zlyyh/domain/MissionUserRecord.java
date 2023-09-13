@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ruoyi.common.core.web.domain.BaseEntity;
 import com.ruoyi.common.encrypt.annotation.EncryptField;
-import com.ruoyi.common.encrypt.enumd.AlgorithmType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -123,4 +122,13 @@ public class MissionUserRecord extends BaseEntity {
      */
     private String orderCityCode;
 
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 }

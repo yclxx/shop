@@ -20,6 +20,7 @@ import com.ruoyi.zlyyh.domain.vo.PlatformVo;
 import com.ruoyi.zlyyh.domain.vo.UserVo;
 import com.ruoyi.zlyyh.mapper.MissionGroupMapper;
 import com.ruoyi.zlyyh.mapper.MissionUserMapper;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyh.utils.YsfUtils;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.service.IMissionUserService;
@@ -87,6 +88,7 @@ public class MissionUserServiceImpl implements IMissionUserService {
             throw new ServiceException("任务已结束");
         }
         ZlyyhUtils.checkCity(missionGroupVo.getShowCity(), platformService.queryById(missionGroupVo.getPlatformKey()));
+        PermissionUtils.setPlatformDeptIdAndUserId(add, missionGroupVo.getPlatformKey(), true);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setMissionUserId(add.getMissionUserId());

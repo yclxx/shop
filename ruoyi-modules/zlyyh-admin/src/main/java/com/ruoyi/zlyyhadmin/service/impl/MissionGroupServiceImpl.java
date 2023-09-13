@@ -13,6 +13,7 @@ import com.ruoyi.zlyyh.domain.MissionGroup;
 import com.ruoyi.zlyyh.domain.bo.MissionGroupBo;
 import com.ruoyi.zlyyh.domain.vo.MissionGroupVo;
 import com.ruoyi.zlyyh.mapper.MissionGroupMapper;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.IMissionGroupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -99,7 +100,7 @@ public class MissionGroupServiceImpl implements IMissionGroupService {
      * 保存前的数据校验
      */
     private void validEntityBeforeSave(MissionGroup entity) {
-        //TODO 做一些数据校验,如唯一约束
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getMissionGroupId());
     }
 
     /**

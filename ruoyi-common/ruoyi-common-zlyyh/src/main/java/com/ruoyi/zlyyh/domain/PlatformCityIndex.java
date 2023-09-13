@@ -67,4 +67,13 @@ public class PlatformCityIndex extends BaseEntity {
      */
     private String weekDate;
 
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 }

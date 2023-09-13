@@ -26,6 +26,8 @@
         <result property="updateBy" column="update_by"/>
         <result property="updateTime" column="update_time"/>
         <result property="platformKey" column="platform_key"/>
+        <result property="sysDeptId" column="sys_dept_id"/>
+        <result property="sysUserId" column="sys_user_id"/>
     </resultMap>
 
 
@@ -45,29 +47,32 @@
     </resultMap>
 
     <sql id="selectShop">
-        SELECT s.*, ACOS(
-        COS(RADIANS(#{bo.latitude})) *
-        COS(RADIANS(latitude)) *
-        COS(RADIANS(longitude) - RADIANS(#{bo.longitude})) +
-        SIN(RADIANS(#{bo.latitude})) *
-        SIN(RADIANS(latitude))
-        ) * 6378 AS distance
+        SELECT s.*,
+               ACOS(
+                           COS(RADIANS(#{bo.latitude})) *
+                           COS(RADIANS(latitude)) *
+                           COS(RADIANS(longitude) - RADIANS(#{bo.longitude})) +
+                           SIN(RADIANS(#{bo.latitude})) *
+                           SIN(RADIANS(latitude))
+                   ) * 6378 AS distance
         FROM t_shop s
-        left join t_commercial_tenant ct on s.commercial_tenant_id = ct.commercial_tenant_id
+                 left join t_commercial_tenant ct on s.commercial_tenant_id = ct.commercial_tenant_id
         WHERE s.STATUS = '0'
-        AND s.commercial_tenant_id IS NOT NULL
-        and ct.`status` = '0'
+          AND s.commercial_tenant_id IS NOT NULL
+          and ct.`status` = '0'
     </sql>
 
     <sql id="selectShopByProductId">
-        SELECT s.*, ACOS(
-                                COS(RADIANS(#{bo.latitude})) *
-                                COS(RADIANS(latitude)) *
-                                COS(RADIANS(longitude) - RADIANS(#{bo.longitude})) +
-                                SIN(RADIANS(#{bo.latitude})) *
-                                SIN(RADIANS(latitude))
-                        ) * 6378 AS distance
-        FROM t_shop s left join t_shop_product sp on s.shop_id = sp.shop_id
+        SELECT s.*,
+               ACOS(
+                           COS(RADIANS(#{bo.latitude})) *
+                           COS(RADIANS(latitude)) *
+                           COS(RADIANS(longitude) - RADIANS(#{bo.longitude})) +
+                           SIN(RADIANS(#{bo.latitude})) *
+                           SIN(RADIANS(latitude))
+                   ) * 6378 AS distance
+        FROM t_shop s
+                 left join t_shop_product sp on s.shop_id = sp.shop_id
         WHERE s.STATUS = '0'
     </sql>
 

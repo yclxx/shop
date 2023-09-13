@@ -85,4 +85,13 @@ public class OrderBackTrans extends BaseEntity {
      */
     private String refundReason;
 
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 }

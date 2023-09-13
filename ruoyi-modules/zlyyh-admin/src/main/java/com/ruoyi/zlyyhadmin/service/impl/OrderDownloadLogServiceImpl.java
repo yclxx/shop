@@ -11,6 +11,7 @@ import com.ruoyi.zlyyh.domain.OrderDownloadLog;
 import com.ruoyi.zlyyh.domain.bo.OrderDownloadLogBo;
 import com.ruoyi.zlyyh.domain.vo.OrderDownloadLogVo;
 import com.ruoyi.zlyyh.mapper.OrderDownloadLogMapper;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.IOrderDownloadLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,7 +36,7 @@ public class OrderDownloadLogServiceImpl implements IOrderDownloadLogService {
      * 查询订单下载记录
      */
     @Override
-    public OrderDownloadLogVo queryById(Long tOrderDownloadId){
+    public OrderDownloadLogVo queryById(Long tOrderDownloadId) {
         return baseMapper.selectVoById(tOrderDownloadId);
     }
 
@@ -75,6 +76,7 @@ public class OrderDownloadLogServiceImpl implements IOrderDownloadLogService {
     public Boolean insertByBo(OrderDownloadLogBo bo) {
         OrderDownloadLog add = BeanUtil.toBean(bo, OrderDownloadLog.class);
         validEntityBeforeSave(add);
+        PermissionUtils.setLoginDeptIdAndUserId(add);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setTOrderDownloadId(add.getTOrderDownloadId());
@@ -95,8 +97,7 @@ public class OrderDownloadLogServiceImpl implements IOrderDownloadLogService {
     /**
      * 保存前的数据校验
      */
-    private void validEntityBeforeSave(OrderDownloadLog entity){
-        //TODO 做一些数据校验,如唯一约束
+    private void validEntityBeforeSave(OrderDownloadLog entity) {
     }
 
     /**
@@ -104,7 +105,7 @@ public class OrderDownloadLogServiceImpl implements IOrderDownloadLogService {
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
-        if(isValid){
+        if (isValid) {
             //TODO 做一些业务上的校验,判断是否需要校验
         }
         return baseMapper.deleteBatchIds(ids) > 0;

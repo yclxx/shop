@@ -1,24 +1,24 @@
 package com.ruoyi.zlyyhadmin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.ruoyi.zlyyh.domain.SearchGroup;
+import com.ruoyi.zlyyh.domain.bo.SearchGroupBo;
+import com.ruoyi.zlyyh.domain.vo.SearchGroupVo;
+import com.ruoyi.zlyyh.mapper.SearchGroupMapper;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.ISearchGroupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.ruoyi.zlyyh.domain.bo.SearchGroupBo;
-import com.ruoyi.zlyyh.domain.vo.SearchGroupVo;
-import com.ruoyi.zlyyh.domain.SearchGroup;
-import com.ruoyi.zlyyh.mapper.SearchGroupMapper;
 
-
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Collection;
 
 /**
  * 搜索彩蛋配置Service业务层处理
@@ -105,7 +105,7 @@ public class SearchGroupServiceImpl implements ISearchGroupService {
      * 保存前的数据校验
      */
     private void validEntityBeforeSave(SearchGroup entity){
-        //TODO 做一些数据校验,如唯一约束
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getSearchId());
     }
 
     /**

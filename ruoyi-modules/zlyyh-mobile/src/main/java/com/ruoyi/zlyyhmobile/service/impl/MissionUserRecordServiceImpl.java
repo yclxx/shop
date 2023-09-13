@@ -38,6 +38,7 @@ import com.ruoyi.zlyyh.mapper.MissionGroupProductMapper;
 import com.ruoyi.zlyyh.mapper.MissionUserRecordLogMapper;
 import com.ruoyi.zlyyh.mapper.MissionUserRecordMapper;
 import com.ruoyi.zlyyh.utils.DrawRedisCacheUtils;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyh.utils.YsfUtils;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.bo.CreateOrderBo;
@@ -649,6 +650,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
                     }
                 }
                 add.setExpiryTime(expiryDate);
+                PermissionUtils.setPlatformDeptIdAndUserId(add, missionVo.getPlatformKey(), true);
                 boolean flag = baseMapper.insert(add) > 0;
                 if (!flag) {
                     log.error("赠送用户抽奖机会失败，活动用户信息：{}，任务信息：{}", missionUserVo, missionVo);

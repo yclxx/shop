@@ -342,4 +342,14 @@ public class ProductVo implements Serializable {
     private String sendAccountType;
 
     private String cusRefund;
+
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 }

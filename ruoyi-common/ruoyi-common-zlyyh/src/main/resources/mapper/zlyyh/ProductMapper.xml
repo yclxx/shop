@@ -63,6 +63,8 @@
         <result property="payUser" column="pay_user"/>
         <result property="showIndex" column="show_index"/>
         <result property="sendAccountType" column="send_account_type"/>
+        <result property="sysDeptId" column="sys_dept_id"/>
+        <result property="sysUserId" column="sys_user_id"/>
     </resultMap>
 
 

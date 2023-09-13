@@ -14,6 +14,7 @@ import com.ruoyi.zlyyh.domain.bo.DrawBo;
 import com.ruoyi.zlyyh.domain.vo.DrawVo;
 import com.ruoyi.zlyyh.mapper.DrawMapper;
 import com.ruoyi.zlyyh.utils.DrawRedisCacheUtils;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.IDrawService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -107,6 +108,7 @@ public class DrawServiceImpl implements IDrawService {
     private void validEntityBeforeSave(Draw entity) {
         // 删除奖品缓存
         DrawRedisCacheUtils.delDrawList(entity.getPlatformKey(), entity.getMissionGroupId());
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getDrawId());
     }
 
     /**

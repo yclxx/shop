@@ -35,4 +35,13 @@ public class OrderDownloadLog extends BaseEntity {
 
     private String failReason;
 
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 }

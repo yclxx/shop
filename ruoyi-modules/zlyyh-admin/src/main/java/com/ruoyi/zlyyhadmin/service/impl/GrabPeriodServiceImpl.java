@@ -13,6 +13,7 @@ import com.ruoyi.zlyyh.domain.GrabPeriod;
 import com.ruoyi.zlyyh.domain.bo.GrabPeriodBo;
 import com.ruoyi.zlyyh.domain.vo.GrabPeriodVo;
 import com.ruoyi.zlyyh.mapper.GrabPeriodMapper;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.IGrabPeriodService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -116,6 +117,7 @@ public class GrabPeriodServiceImpl implements IGrabPeriodService {
         if (StringUtils.isNotBlank(entity.getSellEndTime()) && entity.getSellEndTime().length() < 7) {
             entity.setSellEndTime(entity.getSellEndTime() + ":00");
         }
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getId());
     }
 
     /**

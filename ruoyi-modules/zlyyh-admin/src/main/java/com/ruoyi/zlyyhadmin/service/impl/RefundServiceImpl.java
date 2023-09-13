@@ -19,6 +19,7 @@ import com.ruoyi.zlyyh.domain.vo.RefundVo;
 import com.ruoyi.zlyyh.mapper.HistoryOrderMapper;
 import com.ruoyi.zlyyh.mapper.OrderMapper;
 import com.ruoyi.zlyyh.mapper.RefundMapper;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.IOrderBackTransService;
 import com.ruoyi.zlyyhadmin.service.IRefundService;
 import lombok.RequiredArgsConstructor;
@@ -91,6 +92,11 @@ public class RefundServiceImpl implements IRefundService {
     public Boolean insertByBo(RefundBo bo) {
         Refund add = BeanUtil.toBean(bo, Refund.class);
         validEntityBeforeSave(add);
+        Order order = orderMapper.selectById(bo.getNumber());
+        if (null == order) {
+            throw new ServiceException("订单不存在");
+        }
+        PermissionUtils.setDeptIdAndUserId(add, order.getSysDeptId(), order.getSysUserId());
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setRefundId(add.getRefundId());

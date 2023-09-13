@@ -117,20 +117,4 @@ public class UserController extends BaseController {
     public R<Void> remove(@NotEmpty(message = "主键不能为空") @PathVariable Long[] userIds) {
         return toAjax(iUserService.deleteWithValidByIds(Arrays.asList(userIds), true));
     }
-
-    /**
-     * 同步用户数据
-     */
-    @SaCheckPermission("zlyyh:user:refresh")
-    @PostMapping("/selectAll")
-    public R<Void> selectAll(UserBo bo) {
-        if (null == bo.getPlatformKey()) {
-            throw new ServiceException("请先选择平台");
-        }
-        if (null == bo.getBeginStartDate() || null == bo.getEndStartDate()) {
-            throw new ServiceException("请选择创建时间");
-        }
-        asyncService.syncUserData(bo.getBeginStartDate(), bo.getEndStartDate(), bo.getPlatformKey());
-        return R.ok();
-    }
 }

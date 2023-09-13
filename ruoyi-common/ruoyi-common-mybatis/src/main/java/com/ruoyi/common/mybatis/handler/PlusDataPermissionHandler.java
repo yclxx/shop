@@ -3,9 +3,12 @@ package com.ruoyi.common.mybatis.handler;
 import cn.hutool.core.annotation.AnnotationUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ConcurrentHashSet;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.TimeInterval;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ClassUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.ruoyi.common.core.enums.UserType;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.SpringUtils;
 import com.ruoyi.common.core.utils.StreamUtils;
@@ -74,15 +77,18 @@ public class PlusDataPermissionHandler {
         }
         LoginUser currentUser = DataPermissionHelper.getVariable("user");
         if (ObjectUtil.isNull(currentUser)) {
+            TimeInterval timer = DateUtil.timer();
+            log.info("获取登录用户开始");
             try {
                 currentUser = LoginHelper.getLoginUser();
             } catch (Exception ignored) {
                 // 未登录用户会报错，主要针对手机端部分接口无需登录即可访问
             }
+            log.info("获取登录用户结束：{}", timer.interval());
             DataPermissionHelper.setVariable("user", currentUser);
         }
         // 如果是超级管理员，则不过滤数据
-        if (ObjectUtil.isNull(currentUser) || LoginHelper.isAdmin(currentUser.getUserId()) || "app_user".equals(currentUser.getUserType())) {
+        if (ObjectUtil.isNull(currentUser) || LoginHelper.isAdmin(currentUser.getUserId()) || UserType.APP_USER.getUserType().equals(currentUser.getUserType())) {
             return where;
         }
         String dataFilterSql = buildDataFilter(dataColumns, isSelect);

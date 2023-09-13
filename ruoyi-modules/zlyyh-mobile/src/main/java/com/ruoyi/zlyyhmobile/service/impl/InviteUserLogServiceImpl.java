@@ -21,6 +21,7 @@ import com.ruoyi.zlyyh.domain.bo.InviteUserLogBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.InviteUserLogMapper;
 import com.ruoyi.zlyyh.service.YsfConfigService;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.bo.CreateOrderBo;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
@@ -229,6 +230,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
         CreateOrderResult order = orderService.createOrder(createOrderBo, true);
         // 回填订单号
         add.setNumber(order.getNumber());
+        PermissionUtils.setPlatformDeptIdAndUserId(add, add.getPlatformKey(), true);
         boolean flag = baseMapper.insert(add) > 0;
         if (!flag) {
             throw new ServiceException("操作失败，请稍后重试");
