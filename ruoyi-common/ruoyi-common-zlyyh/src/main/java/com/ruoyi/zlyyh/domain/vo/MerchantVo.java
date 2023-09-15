@@ -5,7 +5,6 @@ import com.alibaba.excel.annotation.ExcelProperty;
 import com.ruoyi.common.excel.annotation.ExcelDictFormat;
 import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
-import java.util.Date;
 
 
 
@@ -70,5 +69,13 @@ public class MerchantVo {
     @ExcelProperty(value = "退款成功回调通知地址")
     private String refundCallbackUrl;
 
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
 
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 }

@@ -68,5 +68,13 @@ public class MerchantBo extends BaseEntity {
     @NotBlank(message = "退款成功回调通知地址不能为空", groups = { AddGroup.class, EditGroup.class })
     private String refundCallbackUrl;
 
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
 
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 }

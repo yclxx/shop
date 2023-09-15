@@ -68,6 +68,9 @@
     <!-- 添加或修改商户号对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="120px">
+        <el-form-item label="归属部门" prop="sysDeptId">
+          <treeselect v-model="form.sysDeptId" :options="deptOptions" :show-count="true" placeholder="请选择归属部门" />
+        </el-form-item>
         <el-form-item label="商户名称" prop="merchantName">
           <el-input v-model="form.merchantName" placeholder="请输入商户名称" />
         </el-form-item>
@@ -110,10 +113,18 @@
     addMerchant,
     updateMerchant
   } from "@/api/zlyyh/merchant";
+  import {
+    deptTreeSelect
+  } from "@/api/system/user";
+  import Treeselect from "@riophae/vue-treeselect";
+  import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
   export default {
     name: "Merchant",
     dicts: ['t_merchant_status'],
+    components: {
+      Treeselect
+    },
     data() {
       return {
         // 按钮loading
@@ -132,6 +143,8 @@
         total: 0,
         // 商户号表格数据
         merchantList: [],
+        // 部门树选项
+        deptOptions: undefined,
         // 弹出层标题
         title: "",
         // 是否显示弹出层
@@ -200,8 +213,15 @@
     },
     created() {
       this.getList();
+      this.getDeptTree();
     },
     methods: {
+      /** 查询部门下拉树结构 */
+      getDeptTree() {
+        deptTreeSelect().then(response => {
+          this.deptOptions = response.data;
+        });
+      },
       /** 查询商户号列表 */
       getList() {
         this.loading = true;
@@ -224,6 +244,7 @@
           merchantNo: undefined,
           certPath: undefined,
           merchantKey: undefined,
+          sysDeptId: undefined,
           status: "0",
           payCallbackUrl: undefined,
           refundCallbackUrl: undefined,
