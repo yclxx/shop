@@ -138,6 +138,8 @@ public interface IOrderService {
 
     void foodPayCallBack(JSONObject data);
 
+    void ctripOrderCallBack(JSONObject data);
+
     void unionPayBack(JSONObject data);
 
     void foodCancelCallBack(JSONObject data);

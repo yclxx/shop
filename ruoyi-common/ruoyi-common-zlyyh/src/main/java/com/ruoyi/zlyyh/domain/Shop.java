@@ -94,4 +94,9 @@ public class Shop extends BaseEntity {
      */
     private Long platformKey;
 
+    /**
+     * 供应商门店id
+     */
+    private String supplierShopId;
+
 }

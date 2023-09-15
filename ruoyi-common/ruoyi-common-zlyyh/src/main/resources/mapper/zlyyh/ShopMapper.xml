@@ -26,6 +26,7 @@
         <result property="updateBy" column="update_by"/>
         <result property="updateTime" column="update_time"/>
         <result property="platformKey" column="platform_key"/>
+        <result property="supplierShopId" column="supplier_shop_id"/>
     </resultMap>
 
 

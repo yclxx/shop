@@ -263,4 +263,20 @@ public class ProductServiceImpl implements IProductService {
         commercialTenantProductService.remove(new LambdaQueryWrapper<CommercialTenantProduct>().in(CommercialTenantProduct::getProductId, ids));
         return baseMapper.deleteBatchIds(ids) > 0;
     }
+
+    /**
+     * 根据id批量下架商品
+     * @param ids
+     */
+    @Override
+    public void updateProducts(Collection<Long> ids){
+        for (Long id : ids) {
+            ProductBo productBo = new ProductBo();
+            productBo.setProductId(id);
+            productBo.setStatus("1");
+            updateByBo(productBo);
+        }
+
+    }
+
 }

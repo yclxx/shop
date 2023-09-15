@@ -2,6 +2,7 @@ com.ruoyi.zlyyh.properties.YsfProperties
 com.ruoyi.zlyyh.service.impl.YsfConfigServiceImpl
 com.ruoyi.zlyyh.utils.sdk.SDKConfig
 com.ruoyi.zlyyh.properties.YsfFoodProperties
+com.ruoyi.zlyyh.properties.CtripConfig
 com.ruoyi.zlyyh.properties.CloudRechargeConfig
 com.ruoyi.zlyyh.properties.YsfMerchantProperties
 com.ruoyi.zlyyh.properties.YsfDistributionProperties

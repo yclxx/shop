@@ -122,6 +122,12 @@ public class ShopVo implements Serializable {
     private BigDecimal latitude;
 
     /**
+     * 三方门店id
+     */
+    @ExcelProperty(value = "供应商门店id")
+    private String supplierShopId;
+
+    /**
      * 平台标识
      */
     @ExcelProperty(value = "平台标识")
