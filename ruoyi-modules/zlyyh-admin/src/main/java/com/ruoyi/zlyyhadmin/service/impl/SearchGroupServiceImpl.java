@@ -36,7 +36,7 @@ public class SearchGroupServiceImpl implements ISearchGroupService {
      * 查询搜索彩蛋配置
      */
     @Override
-    public SearchGroupVo queryById(Long searchId){
+    public SearchGroupVo queryById(Long searchId) {
         return baseMapper.selectVoById(searchId);
     }
 
@@ -104,8 +104,8 @@ public class SearchGroupServiceImpl implements ISearchGroupService {
     /**
      * 保存前的数据校验
      */
-    private void validEntityBeforeSave(SearchGroup entity){
-        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getSearchId());
+    private void validEntityBeforeSave(SearchGroup entity) {
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getSearchId(), false);
     }
 
     /**
@@ -113,7 +113,7 @@ public class SearchGroupServiceImpl implements ISearchGroupService {
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
-        if(isValid){
+        if (isValid) {
             //TODO 做一些业务上的校验,判断是否需要校验
         }
         return baseMapper.deleteBatchIds(ids) > 0;

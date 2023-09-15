@@ -115,4 +115,18 @@ public class PlatformVo {
      */
     List<AreaVo> platformCityList;
 
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
+
+    /**
+     * 部门id
+     */
+    private Long manangerDeptId;
 }

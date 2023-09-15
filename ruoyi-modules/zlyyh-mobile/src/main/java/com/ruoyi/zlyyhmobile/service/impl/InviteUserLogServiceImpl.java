@@ -230,7 +230,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
         CreateOrderResult order = orderService.createOrder(createOrderBo, true);
         // 回填订单号
         add.setNumber(order.getNumber());
-        PermissionUtils.setPlatformDeptIdAndUserId(add, add.getPlatformKey(), true);
+        PermissionUtils.setPlatformDeptIdAndUserId(add, add.getPlatformKey(), true, false);
         boolean flag = baseMapper.insert(add) > 0;
         if (!flag) {
             throw new ServiceException("操作失败，请稍后重试");

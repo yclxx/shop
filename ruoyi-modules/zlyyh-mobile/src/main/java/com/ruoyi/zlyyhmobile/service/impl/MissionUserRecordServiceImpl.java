@@ -650,7 +650,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
                     }
                 }
                 add.setExpiryTime(expiryDate);
-                PermissionUtils.setPlatformDeptIdAndUserId(add, missionVo.getPlatformKey(), true);
+                PermissionUtils.setPlatformDeptIdAndUserId(add, missionVo.getPlatformKey(), true, false);
                 boolean flag = baseMapper.insert(add) > 0;
                 if (!flag) {
                     log.error("赠送用户抽奖机会失败，活动用户信息：{}，任务信息：{}", missionUserVo, missionVo);

@@ -24,14 +24,18 @@ public class PermissionUtils {
      * @param entity      需要设置的对象
      * @param platformKey 平台key
      */
-    public static void setPlatformDeptIdAndUserId(Object entity, Long platformKey, boolean isAdd) {
+    public static void setPlatformDeptIdAndUserId(Object entity, Long platformKey, boolean isAdd, boolean base) {
         try {
             if (null == entity || null == platformKey) {
                 return;
             }
             Platform platform = PLATFORM_MAPPER.selectById(platformKey);
             if (null != platform) {
-                ReflectUtils.invokeSetter(entity, "sysDeptId", platform.getSysDeptId());
+                if (base) {
+                    ReflectUtils.invokeSetter(entity, "sysDeptId", platform.getSysDeptId());
+                } else {
+                    ReflectUtils.invokeSetter(entity, "sysDeptId", platform.getManangerDeptId());
+                }
                 if (isAdd) {
                     Long userId = null;
                     try {

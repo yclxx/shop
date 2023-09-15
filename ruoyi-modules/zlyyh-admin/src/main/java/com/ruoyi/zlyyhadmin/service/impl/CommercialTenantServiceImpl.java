@@ -130,7 +130,7 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
     @Override
     public Boolean insertByBo(CommercialTenantBo bo) {
         CommercialTenant add = BeanUtil.toBean(bo, CommercialTenant.class);
-        PermissionUtils.setPlatformDeptIdAndUserId(add, add.getPlatformKey(), true);
+        PermissionUtils.setPlatformDeptIdAndUserId(add, add.getPlatformKey(), true, true);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setCommercialTenantId(add.getCommercialTenantId());
@@ -172,7 +172,7 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
     @Override
     public Boolean updateByBo(CommercialTenantBo bo) {
         CommercialTenant update = BeanUtil.toBean(bo, CommercialTenant.class);
-        PermissionUtils.setPlatformDeptIdAndUserId(update, update.getPlatformKey(), false);
+        PermissionUtils.setPlatformDeptIdAndUserId(update, update.getPlatformKey(), false, true);
         boolean flag = baseMapper.updateById(update) > 0;
         if (flag) {
             processCategory(bo, true);

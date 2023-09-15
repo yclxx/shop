@@ -26,6 +26,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <result property="delFlag" column="del_flag"/>
     <result property="sysDeptId" column="sys_dept_id"/>
     <result property="sysUserId" column="sys_user_id"/>
+    <result property="manangerDeptId" column="mananger_dept_id"/>
     </resultMap>
 
 

@@ -101,7 +101,7 @@ public class PlatformCityIndexServiceImpl implements IPlatformCityIndexService {
      * 保存前的数据校验
      */
     private void validEntityBeforeSave(PlatformCityIndex entity) {
-        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getId());
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getId(), false);
     }
 
     /**

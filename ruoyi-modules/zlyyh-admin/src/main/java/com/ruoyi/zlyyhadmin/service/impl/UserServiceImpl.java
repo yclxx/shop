@@ -129,7 +129,7 @@ public class UserServiceImpl implements IUserService {
      * 保存前的数据校验
      */
     private void validEntityBeforeSave(User entity) {
-        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getUserId());
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getUserId(), false);
     }
 
     /**

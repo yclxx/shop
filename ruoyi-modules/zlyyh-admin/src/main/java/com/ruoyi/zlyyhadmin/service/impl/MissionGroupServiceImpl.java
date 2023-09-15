@@ -100,7 +100,7 @@ public class MissionGroupServiceImpl implements IMissionGroupService {
      * 保存前的数据校验
      */
     private void validEntityBeforeSave(MissionGroup entity) {
-        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getMissionGroupId());
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getMissionGroupId(), false);
     }
 
     /**

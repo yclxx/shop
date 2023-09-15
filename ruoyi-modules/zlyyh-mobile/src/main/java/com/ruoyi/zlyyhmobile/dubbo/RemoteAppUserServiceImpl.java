@@ -218,7 +218,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
                     user.setPlatformKey(ysfEntity.getPlatformKey());
                     user.setRegisterCityName(cityName);
                     user.setRegisterCityCode(cityCode);
-                    PermissionUtils.setPlatformDeptIdAndUserId(user, user.getPlatformKey(), true);
+                    PermissionUtils.setPlatformDeptIdAndUserId(user, user.getPlatformKey(), true, false);
                     // 新增用户
                     userMapper.insert(user);
                 } else {

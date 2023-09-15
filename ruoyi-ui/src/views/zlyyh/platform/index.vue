@@ -121,8 +121,14 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="归属部门" prop="sysDeptId">
-              <treeselect v-model="form.sysDeptId" :options="deptOptions" :show-count="true" placeholder="请选择归属部门" />
+            <el-form-item label="公共部门" prop="sysDeptId">
+              <treeselect v-model="form.sysDeptId" :options="deptOptions" :show-count="true" placeholder="请选择公共部门" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="管理部门" prop="manangerDeptId">
+              <treeselect v-model="form.manangerDeptId" :options="deptOptions" :show-count="true"
+                placeholder="请选择管理部门" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -348,6 +354,7 @@
           updateTime: undefined,
           delFlag: undefined,
           sysDeptId: undefined,
+          manangerDeptId: undefined,
         };
         this.resetForm("form");
       },

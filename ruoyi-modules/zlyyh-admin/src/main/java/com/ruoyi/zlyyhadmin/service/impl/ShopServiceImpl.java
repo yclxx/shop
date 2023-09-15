@@ -246,7 +246,7 @@ public class ShopServiceImpl implements IShopService {
                         commercialTenant = new CommercialTenant();
                         commercialTenant.setCommercialTenantName(shopImportBo.getCommercialTenantName().trim());
                         commercialTenant.setPlatformKey(shopImportDataBo.getPlatformKey());
-                        PermissionUtils.setPlatformDeptIdAndUserId(commercialTenant, commercialTenant.getPlatformKey(), true);
+                        PermissionUtils.setPlatformDeptIdAndUserId(commercialTenant, commercialTenant.getPlatformKey(), true, false);
                         commercialTenantMapper.insert(commercialTenant);
                     }
                     commercialTenantId = commercialTenant.getCommercialTenantId();

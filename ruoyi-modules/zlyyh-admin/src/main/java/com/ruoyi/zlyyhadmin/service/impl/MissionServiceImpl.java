@@ -80,7 +80,7 @@ public class MissionServiceImpl implements IMissionService {
     @Override
     public Boolean insertByBo(MissionBo bo) {
         Mission add = BeanUtil.toBean(bo, Mission.class);
-        PermissionUtils.setPlatformDeptIdAndUserId(add, add.getPlatformKey(), true);
+        PermissionUtils.setPlatformDeptIdAndUserId(add, add.getPlatformKey(), true, false);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setMissionId(add.getMissionId());
@@ -95,7 +95,7 @@ public class MissionServiceImpl implements IMissionService {
     @Override
     public Boolean updateByBo(MissionBo bo) {
         Mission update = BeanUtil.toBean(bo, Mission.class);
-        PermissionUtils.setPlatformDeptIdAndUserId(update, update.getPlatformKey(), false);
+        PermissionUtils.setPlatformDeptIdAndUserId(update, update.getPlatformKey(), false, false);
         CacheUtils.evict(CacheNames.MISSION, bo.getMissionId());
         return baseMapper.updateById(update) > 0;
     }

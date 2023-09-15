@@ -143,7 +143,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
             }
         }
         add.setExpiryTime(expiryDate);
-        PermissionUtils.setPlatformDeptIdAndUserId(add, missionVo.getPlatformKey(), true);
+        PermissionUtils.setPlatformDeptIdAndUserId(add, missionVo.getPlatformKey(), true, false);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setMissionUserRecordId(add.getMissionUserRecordId());

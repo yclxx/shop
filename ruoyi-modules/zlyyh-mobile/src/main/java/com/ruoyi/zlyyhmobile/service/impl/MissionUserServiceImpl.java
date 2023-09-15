@@ -88,7 +88,7 @@ public class MissionUserServiceImpl implements IMissionUserService {
             throw new ServiceException("任务已结束");
         }
         ZlyyhUtils.checkCity(missionGroupVo.getShowCity(), platformService.queryById(missionGroupVo.getPlatformKey()));
-        PermissionUtils.setPlatformDeptIdAndUserId(add, missionGroupVo.getPlatformKey(), true);
+        PermissionUtils.setPlatformDeptIdAndUserId(add, missionGroupVo.getPlatformKey(), true, false);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setMissionUserId(add.getMissionUserId());

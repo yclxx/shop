@@ -117,7 +117,7 @@ public class BannerServiceImpl implements IBannerService {
      * 保存前的数据校验
      */
     private void validEntityBeforeSave(Banner entity) {
-        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getBannerId());
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getBannerId(), false);
         if (!"10".equals(entity.getBannerType())) {
             if (StringUtils.isEmpty(entity.getBannerImage())) {
                 throw new ServiceException("banner图不能为空");

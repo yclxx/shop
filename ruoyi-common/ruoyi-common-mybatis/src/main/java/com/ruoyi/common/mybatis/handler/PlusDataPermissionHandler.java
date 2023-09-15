@@ -1,10 +1,9 @@
 package com.ruoyi.common.mybatis.handler;
 
+import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.annotation.AnnotationUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ConcurrentHashSet;
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.date.TimeInterval;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ClassUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -77,14 +76,11 @@ public class PlusDataPermissionHandler {
         }
         LoginUser currentUser = DataPermissionHelper.getVariable("user");
         if (ObjectUtil.isNull(currentUser)) {
-            TimeInterval timer = DateUtil.timer();
-            log.info("获取登录用户开始");
             try {
                 currentUser = LoginHelper.getLoginUser();
             } catch (Exception ignored) {
                 // 未登录用户会报错，主要针对手机端部分接口无需登录即可访问
             }
-            log.info("获取登录用户结束：{}", timer.interval());
             DataPermissionHelper.setVariable("user", currentUser);
         }
         // 如果是超级管理员，则不过滤数据
@@ -113,6 +109,8 @@ public class PlusDataPermissionHandler {
      * 构造数据过滤sql
      */
     private String buildDataFilter(DataColumn[] dataColumns, boolean isSelect) {
+        List<String> permissionList = StpUtil.getPermissionList();
+
         // 更新或删除需满足所有条件
         String joinStr = isSelect ? " OR " : " AND ";
         LoginUser user = DataPermissionHelper.getVariable("user");

@@ -104,7 +104,7 @@ public class HotNewsServiceImpl implements IHotNewsService {
      * 保存前的数据校验
      */
     private void validEntityBeforeSave(HotNews entity) {
-        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getNewsId());
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getNewsId(), false);
     }
 
     /**

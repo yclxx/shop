@@ -108,7 +108,7 @@ public class DrawServiceImpl implements IDrawService {
     private void validEntityBeforeSave(Draw entity) {
         // 删除奖品缓存
         DrawRedisCacheUtils.delDrawList(entity.getPlatformKey(), entity.getMissionGroupId());
-        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getDrawId());
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getDrawId(), false);
     }
 
     /**

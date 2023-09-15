@@ -115,7 +115,7 @@ public class MissionUserServiceImpl implements IMissionUserService {
                 throw new ServiceException("该用户已报名，不可重复报名");
             }
         }
-        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getMissionUserId());
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getMissionUserId(), false);
     }
 
     /**

@@ -92,4 +92,9 @@ public class Platform extends BaseEntity {
      * 用户id
      */
     private Long sysUserId;
+
+    /**
+     * 部门id
+     */
+    private Long manangerDeptId;
 }

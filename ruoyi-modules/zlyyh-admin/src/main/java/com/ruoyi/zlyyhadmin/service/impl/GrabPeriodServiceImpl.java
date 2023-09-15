@@ -117,7 +117,7 @@ public class GrabPeriodServiceImpl implements IGrabPeriodService {
         if (StringUtils.isNotBlank(entity.getSellEndTime()) && entity.getSellEndTime().length() < 7) {
             entity.setSellEndTime(entity.getSellEndTime() + ":00");
         }
-        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getId());
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getId(), false);
     }
 
     /**

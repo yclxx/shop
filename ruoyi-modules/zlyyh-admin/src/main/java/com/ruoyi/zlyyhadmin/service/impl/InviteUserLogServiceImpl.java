@@ -36,7 +36,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
      * 查询邀请记录
      */
     @Override
-    public InviteUserLogVo queryById(Long id){
+    public InviteUserLogVo queryById(Long id) {
         return baseMapper.selectVoById(id);
     }
 
@@ -98,8 +98,8 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
     /**
      * 保存前的数据校验
      */
-    private void validEntityBeforeSave(InviteUserLog entity){
-        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getId());
+    private void validEntityBeforeSave(InviteUserLog entity) {
+        PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getId(), false);
     }
 
     /**
@@ -107,7 +107,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
-        if(isValid){
+        if (isValid) {
             //TODO 做一些业务上的校验,判断是否需要校验
         }
         return baseMapper.deleteBatchIds(ids) > 0;
