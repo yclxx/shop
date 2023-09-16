@@ -48,4 +48,10 @@ public interface IProductService {
      * 校验并批量删除商品信息
      */
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
+
+    /**
+     * 批量下架商品
+     * @param ids
+     */
+    void updateProducts(Collection<Long> ids);
 }

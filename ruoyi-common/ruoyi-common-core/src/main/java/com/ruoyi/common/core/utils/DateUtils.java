@@ -2,9 +2,11 @@ package com.ruoyi.common.core.utils;
 
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.ObjectUtil;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.time.DateFormatUtils;
+import org.springframework.util.StringUtils;
 
 import java.lang.management.ManagementFactory;
 import java.text.ParseException;
@@ -320,5 +322,19 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
             cal.add(Calendar.DATE, 6);
         }
         return cal.getTime();
+    }
+
+    /**
+     * 时间戳转时间
+     *
+     * @param times 时间戳
+     * @return 时间
+     */
+    public static Date TimesToDate(String times) {
+        if (ObjectUtil.isEmpty(times)) {
+            return null;
+        }
+        Long timestamp = Long.valueOf(times);
+        return new Date(timestamp);
     }
 }

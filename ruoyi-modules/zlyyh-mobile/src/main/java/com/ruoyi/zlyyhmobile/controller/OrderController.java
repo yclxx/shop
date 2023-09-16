@@ -155,6 +155,22 @@ public class OrderController {
     }
 
     /**
+     * 订单支付回调 携程订单
+     */
+    @RequestMapping("/ignore/foodPayCallBack")
+    public void ctripOrderCallBack(JSONObject jsonObject) {
+        log.info("携程订单支付回调接收开始");
+        String orderId = jsonObject.getString("orderId");
+        if (ObjectUtil.isEmpty(orderId)) {
+            log.info("美食订单支付回调结果[失败].");
+            return;
+        } else {
+            orderService.ctripOrderCallBack(jsonObject);
+        }
+        log.info("携程订单支付回调结束");
+    }
+
+    /**
      * 退款成功回调 美食套餐
      */
     @RequestMapping("/ignore/cancelCallBack")

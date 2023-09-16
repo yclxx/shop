@@ -35,6 +35,7 @@ import com.ruoyi.zlyyh.enumd.DateType;
 import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayBizMethod;
 import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayParams;
 import com.ruoyi.zlyyh.mapper.*;
+import com.ruoyi.zlyyh.properties.CtripConfig;
 import com.ruoyi.zlyyh.properties.YsfFoodProperties;
 import com.ruoyi.zlyyh.properties.utils.YsfDistributionPropertiesUtils;
 import com.ruoyi.zlyyh.service.YsfConfigService;
@@ -73,11 +74,12 @@ import java.util.stream.Collectors;
 @Service
 public class OrderServiceImpl implements IOrderService {
     private static final YsfFoodProperties YSF_FOOD_PROPERTIES = SpringUtils.getBean(YsfFoodProperties.class);
-
+    private static final CtripConfig CtripConfig = SpringUtils.getBean(CtripConfig.class);
     private final YsfConfigService ysfConfigService;
     private final OrderMapper baseMapper;
     private final IPlatformService platformService;
     private final IProductService productService;
+    private final ProductMapper productMapper;
     private final IUserService userService;
     private final OrderInfoMapper orderInfoMapper;
     private final OrderFoodInfoMapper orderFoodInfoMapper;
@@ -348,6 +350,8 @@ public class OrderServiceImpl implements IOrderService {
                     this.orderUnionPaySendHand(orderPushInfo.getExternalProductId(), order, orderUnionPay, orderSend);
                     updateOrder(order);
                 }
+            } else if ("15".equals(order.getOrderType())){
+                payCtripFoodOrder(order.getExternalOrderNumber());
             } else {
                 sendResult(R.fail("订单类型无处理方式，请联系技术人员"), orderPushInfo, order, cache, false);
             }
@@ -628,6 +632,22 @@ public class OrderServiceImpl implements IOrderService {
             orderFoodInfo.setUserName("匿名");
             orderFoodInfoMapper.insert(orderFoodInfo);
         }
+        //美食订单在这里处理
+        if ("15".equals(productVo.getProductType())) {
+            //先查出美食商品详情
+            ProductInfoVo productInfoVo = productInfoService.queryById(productVo.getProductId());
+            if (ObjectUtil.isEmpty(productInfoVo)) {
+                throw new ServiceException("商品异常");
+            }
+            OrderFoodInfo orderFoodInfo = new OrderFoodInfo();
+            orderFoodInfo.setNumber(order.getNumber());
+            //调用美食商城预下单接口获取三方number
+            ctripFoodCreateOrder(order, orderFoodInfo, userVo.getMobile(), productVo.getExternalProductId());
+            // 保存订单 后续如需改动成缓存订单，需注释
+            orderFoodInfo.setItemId(productVo.getExternalProductId());
+            orderFoodInfo.setUserName("匿名");
+            orderFoodInfoMapper.insert(orderFoodInfo);
+        }
         // 校验产品状态 名额
         R<ProductVo> checkProductCountResult = ProductUtils.checkProduct(productVo, bo.getCityCode());
         if (R.isError(checkProductCountResult)) {
@@ -752,6 +772,41 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     /**
+     * 请求携程预下单接口
+     */
+    private void ctripFoodCreateOrder(Order order, OrderFoodInfo orderFoodInfo, String mobile, String ctripProductId) {
+        String accessToken = CtripUtils.getAccessToken();
+        String url = CtripConfig.getUrl() + "?AID=" + CtripConfig.getAid() + "&SID=" + CtripConfig.getSid() + "&ICODE=" + CtripConfig.getCreateOrderCode() + "&Token=" + accessToken;
+        JSONObject ctripOrder = CtripUtils.createCtripOrder(order,mobile , CtripConfig.getPartnerType(), ctripProductId,url);
+        JSONObject resultJson = ctripOrder.getJSONObject("result");
+        int code = resultJson.getIntValue("code");
+        if (0 != code) {
+            log.error("订单编号：{}，下单失败，失败信息：{}", order.getNumber(), resultJson.getString("message"));
+            // 1004 该券不支持售卖
+            if (code == 1004) {
+                //下架商品
+                Product product = new Product();
+                product.setProductId(order.getProductId());
+                product.setStatus("1");
+                productMapper.updateById(product);
+            }
+            throw new ServiceException("系统繁忙，请稍后重试");
+        }
+        if (ObjectUtil.isNotEmpty(ctripOrder)) {
+            //请求成功
+            String orderId = ctripOrder.getString("orderId");
+            if (ObjectUtil.isNotEmpty(orderId)) {
+                //保存三方订单号
+                order.setExternalOrderNumber(orderId);
+                orderFoodInfo.setBizOrderId(orderId);
+            } else {
+                throw new ServiceException("创建订单失败");
+            }
+
+        }
+    }
+
+    /**
      * 口碑 订单进行处理
      *
      * @param order 订单信息
@@ -760,7 +815,7 @@ public class OrderServiceImpl implements IOrderService {
         OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(order.getNumber());
         if (ObjectUtil.isNotEmpty(orderFoodInfoVo)) {
             //如果没有电子码
-            if (("2".equals(order.getStatus()) || "4".equals(order.getStatus()) || "5".equals(order.getStatus())) && StringUtils.isEmpty(orderFoodInfoVo.getTicketCode())) {
+            if (("2".equals(order.getStatus()) || "4".equals(order.getStatus()) || "5".equals(order.getStatus())) && StringUtils.isEmpty(orderFoodInfoVo.getTicketCode()) && order.getOrderType().equals("5")) {
                 // 查询口碑订单
                 queryFoodOrder(order.getExternalOrderNumber());
                 //防止重复加密再查询一遍
@@ -847,6 +902,54 @@ public class OrderServiceImpl implements IOrderService {
             queryFoodOrder(externalOrderNumber);
         }
     }
+
+    /**
+     * 支付携程订单接口
+     * *
+     */
+    private void payCtripFoodOrder(String externalOrderNumber) {
+        String accessToken = CtripUtils.getAccessToken();
+        String url = CtripConfig.getUrl() + "?AID=" + CtripConfig.getAid() + "&SID=" + CtripConfig.getSid() + "&ICODE=" + CtripConfig.getConfirmOrderCode() + "&Token=" + accessToken;
+        Order order = baseMapper.selectOne(new LambdaQueryWrapper<Order>().eq(Order::getExternalOrderNumber, externalOrderNumber));
+        if (ObjectUtil.isEmpty(order)) {
+            return;
+        }
+        OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(order.getNumber());
+        if (ObjectUtil.isEmpty(orderFoodInfoVo)) {
+            return;
+        }
+        //调用美食支付接口
+        JSONObject jsonObject = CtripUtils.payCtripOrder(externalOrderNumber, CtripConfig.getPartnerType(), url);
+        //支付完成后接入核销数据
+        if (ObjectUtil.isNotEmpty(jsonObject)) {
+            JSONObject resultJson = jsonObject.getJSONObject("result");
+            int code = resultJson.getIntValue("code");
+            if (0 != code) {
+                //修改订单可补领状态
+                String message = resultJson.getString("message");
+                log.error("订单编号：{}，确认订单失败，失败原因：{}", order.getNumber(), message);
+                throw new ServiceException("系统繁忙，请稍后重试！失败原因：" + message);
+            }
+            OrderFoodInfo orderFoodInfo = new OrderFoodInfo();
+            orderFoodInfo.setNumber(order.getNumber());
+            JSONArray codes = jsonObject.getJSONArray("codes");
+            if (!org.springframework.util.CollectionUtils.isEmpty(codes)) {
+                orderFoodInfo.setTicketCode(codes.getJSONObject(0).getString("code"));
+                orderFoodInfo.setVoucherId(codes.getJSONObject(0).getString("couponCodeId"));
+                orderFoodInfo.setVoucherStatus("EFFECTIVE");
+            }
+            String reservationUrl = jsonObject.getString("reservationUrl");
+            if (ObjectUtil.isNotEmpty(reservationUrl)) {
+                orderFoodInfo.setProductName(reservationUrl);
+            }
+            if (ObjectUtil.isNotEmpty(orderFoodInfo.getTicketCode()) || ObjectUtil.isNotEmpty(orderFoodInfo.getVoucherId()) || StringUtils.isNotEmpty(orderFoodInfo.getProductName())) {
+                orderFoodInfoMapper.updateById(orderFoodInfo);
+            }
+
+        }
+    }
+
+
 
     /**
      * 缓存用户未支付订单
@@ -980,6 +1083,10 @@ public class OrderServiceImpl implements IOrderService {
         } else if ("11".equals(orderVo.getOrderType()) || "12".equals(orderVo.getOrderType())) {
             List<OrderUnionSendVo> orderUnionSendVos = orderUnionSendService.queryListByNumber(number);
             orderVo.setOrderUnionSendVos(orderUnionSendVos);
+        }else if ("15".equals(orderVo.getOrderType())) {
+            //塞入携程商品
+            OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(orderVo.getNumber());
+            orderVo.setOrderFoodInfoVo(orderFoodInfoVo);
         }
         return orderVo;
     }
@@ -1085,6 +1192,28 @@ public class OrderServiceImpl implements IOrderService {
                     throw new ServiceException("退款已提交,不可重复申请");
                 }
                 YsfFoodUtils.cancelOrder(appId, orderVo.getExternalOrderNumber(), rsaPrivateKey, refundUrl);
+            }
+            refundMapper.insert(refund);
+            return;
+        }else if (orderType.equals("15")) {
+            //如果是美食订单 先查询订单
+            OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(orderVo.getNumber());
+            if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && !orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
+                throw new ServiceException("该订单无法申请退款");
+            }
+            order.setCancelStatus("0");
+            order.setStatus("4");
+            baseMapper.updateById(order);
+            //如果电子券为未使用状态 在这里先走退款接口
+            if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
+                String accessToken = CtripUtils.getAccessToken();
+                String refundUrl = CtripConfig.getUrl() + "?AID=" + CtripConfig.getAid() + "&SID=" + CtripConfig.getSid() +
+                    "&ICODE=" + CtripConfig.getCancelOrderCode() + "&Token=" + accessToken;
+                //请求美食退款订单接口
+                if ("1".equals(orderVo.getCancelStatus())) {
+                    throw new ServiceException("退款已提交,不可重复申请");
+                }
+                CtripUtils.cancelOrder(order.getExternalOrderNumber(),CtripConfig.getPartnerType(),refundUrl);
             }
             refundMapper.insert(refund);
             return;
@@ -1579,6 +1708,73 @@ public class OrderServiceImpl implements IOrderService {
             updateOrder(order);
             orderFoodInfoMapper.updateById(orderFoodInfo);
         }
+    }
+
+
+    /**
+     * 美食订单支付回调
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void ctripOrderCallBack(JSONObject data) {
+        log.info("携程订单支付回调信息：{}", data);
+        // 美食订单号
+        String exNumber = data.getString("orderId");
+
+        if (ObjectUtil.isEmpty(exNumber)) {
+            log.info("美食订单不存在,通知内容：{}", data);
+            return;
+        }
+        Order order = baseMapper.selectOne(new LambdaQueryWrapper<Order>().eq(Order::getExternalOrderNumber, exNumber));
+        if (ObjectUtil.isEmpty(order)) {
+            log.error("携程订单【{}】不存在,通知内容：{}", exNumber, data);
+            return;
+        }
+        OrderFoodInfo orderFoodInfo = orderFoodInfoMapper.selectById(order.getNumber());
+        if (ObjectUtil.isEmpty(orderFoodInfo)) {
+            log.error("携程订单【{}】不存在,通知内容：{}", exNumber, data);
+            return;
+        }
+        // 删除未支付订单缓存
+        delCacheOrder(order.getNumber());
+        OrderPushInfo orderPushInfo = orderPushInfoMapper.selectOne(new LambdaQueryWrapper<OrderPushInfo>().eq(OrderPushInfo::getNumber, order.getNumber()));
+        String status = data.getString("orderStatus");
+        //根据这里的订单状态 同步美食订单的状态
+        orderFoodInfo.setOrderStatus(status);
+
+
+        JSONArray codes = data.getJSONArray("codes");
+        if(ObjectUtil.isNotEmpty(codes)){
+            JSONObject resultJson = codes.getJSONObject(0);
+            String codeId = resultJson.getString("codeId");
+            String code = resultJson.getString("code");
+            String couponStatus = resultJson.getString("status");
+            order.setSendStatus("2");
+            orderFoodInfo.setTicketCode(code);
+            orderFoodInfo.setVoucherId(codeId);
+            if (resultJson.getString("status").equals("0")){
+                orderFoodInfo.setVoucherStatus("EFFECTIVE");
+
+            } else if (resultJson.getString("status").equals("3")){
+                orderFoodInfo.setVoucherStatus("USED");
+                orderFoodInfo.setUsedAmount(1);
+            } else {
+                orderFoodInfo.setVoucherStatus("CANCELED");
+            }
+
+            if (ObjectUtil.isNotEmpty(orderPushInfo)) {
+                orderPushInfo.setStatus("1");
+                orderPushInfoMapper.updateById(orderPushInfo);
+            }
+
+            orderFoodInfoMapper.updateById(orderFoodInfo);
+        }
+
+        if (status.equals("6")){
+            //如果是退款的推送 订单修改为供应商已退款
+            order.setCancelStatus("1");
+        }
+        baseMapper.updateById(order);
     }
 
     /**

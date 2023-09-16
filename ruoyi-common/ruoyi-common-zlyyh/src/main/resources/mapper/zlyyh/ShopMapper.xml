@@ -28,6 +28,7 @@
         <result property="platformKey" column="platform_key"/>
         <result property="sysDeptId" column="sys_dept_id"/>
         <result property="sysUserId" column="sys_user_id"/>
+        <result property="supplierShopId" column="supplier_shop_id"/>
     </resultMap>
 
 

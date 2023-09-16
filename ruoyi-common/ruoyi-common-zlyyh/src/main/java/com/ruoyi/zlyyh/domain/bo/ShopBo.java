@@ -113,4 +113,6 @@ public class ShopBo extends BaseEntity {
     private List<Long> commercialTenantIds;
 
     private Long productId;
+
+    private String supplierShopId;
 }

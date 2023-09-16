@@ -63,4 +63,6 @@ public interface IShopService {
     List<ShopVo> queryByCommercialTenantId(Long commercialTenantId);
 
     ShopVo queryByNameAndCommercialTenantId(String name,Long commercialTenantId);
+
+    ShopVo queryByNameAndSupplierId(String name,String supplierShopId);
 }

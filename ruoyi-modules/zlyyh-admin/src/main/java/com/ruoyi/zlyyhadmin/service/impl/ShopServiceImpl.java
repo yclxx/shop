@@ -360,13 +360,14 @@ public class ShopServiceImpl implements IShopService {
             bo.setProcode(procode);
             bo.setCitycode(citycode);
             bo.setAdcode(adcode);
-            String location = addressInfo.getString("location");
-            String[] split = location.split(",");
-            String longitude = split[0];
-            String latitude = split[1];
-            bo.setLongitude(new BigDecimal(longitude));
-            bo.setLatitude(new BigDecimal(latitude));
-
+            if (ObjectUtil.isEmpty(bo.getLatitude()) || ObjectUtil.isEmpty(bo.getLongitude())){
+                String location = addressInfo.getString("location");
+                String[] split = location.split(",");
+                String longitude = split[0];
+                String latitude = split[1];
+                bo.setLongitude(new BigDecimal(longitude));
+                bo.setLatitude(new BigDecimal(latitude));
+            }
             RedisUtils.setCacheObject(key, addressInfo, Duration.ofDays(2));
         }
     }
@@ -395,6 +396,16 @@ public class ShopServiceImpl implements IShopService {
         queryWrapper.last("limit 1");
         return baseMapper.selectVoOne(queryWrapper);
     }
+
+    @Override
+    public ShopVo queryByNameAndSupplierId(String name,String supplierShopId) {
+        LambdaQueryWrapper<Shop> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(Shop::getShopName, name);
+        queryWrapper.eq(Shop::getSupplierShopId, supplierShopId);
+        queryWrapper.last("limit 1");
+        return baseMapper.selectVoOne(queryWrapper);
+    }
+
 
 //    private void changeGeoCache(Long shopId) {
 //        Shop shop = baseMapper.selectById(shopId);

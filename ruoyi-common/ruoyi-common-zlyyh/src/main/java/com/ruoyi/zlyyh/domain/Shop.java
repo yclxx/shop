@@ -100,4 +100,9 @@ public class Shop extends BaseEntity {
      * 用户id
      */
     private Long sysUserId;
+    /**
+     * 供应商门店id
+     */
+    private String supplierShopId;
+
 }
