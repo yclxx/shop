@@ -24,6 +24,8 @@ public interface IProductService {
 
     ProductVo queryByExternalProductId(String externalProductId);
 
+    Product queryByExternalProductId(String externalProductId, String productType, Long platformKey);
+
     /**
      * 查询商品列表
      */
@@ -38,6 +40,8 @@ public interface IProductService {
      * 修改商品
      */
     Boolean insertByBo(ProductBo bo);
+
+    Boolean insert(ProductBo bo);
 
     /**
      * 修改商品

@@ -41,6 +41,15 @@ public class CategoryProductServiceImpl implements ICategoryProductService {
         return baseMapper.selectVoById(id);
     }
 
+    @Override
+    public Long queryByCategoryAndProduct(Long categoryId, Long productId) {
+        LambdaQueryWrapper<CategoryProduct> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(CategoryProduct::getCategoryId, categoryId);
+        queryWrapper.eq(CategoryProduct::getProductId, productId);
+        return baseMapper.selectCount(queryWrapper);
+    }
+
+
     /**
      * 查询栏目商品关联列表
      */

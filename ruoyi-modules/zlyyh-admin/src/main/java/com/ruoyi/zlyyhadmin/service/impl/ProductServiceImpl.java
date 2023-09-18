@@ -1,11 +1,13 @@
 package com.ruoyi.zlyyhadmin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.constant.CacheNames;
+import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
@@ -16,14 +18,11 @@ import com.ruoyi.zlyyh.domain.Product;
 import com.ruoyi.zlyyh.domain.bo.CategoryProductBo;
 import com.ruoyi.zlyyh.domain.bo.CommercialTenantProductBo;
 import com.ruoyi.zlyyh.domain.bo.ProductBo;
-import com.ruoyi.zlyyh.domain.vo.CategoryProductVo;
-import com.ruoyi.zlyyh.domain.vo.CommercialTenantProductVo;
-import com.ruoyi.zlyyh.domain.vo.ProductVo;
+import com.ruoyi.zlyyh.domain.bo.ProductTicketSessionBo;
+import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.ProductMapper;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
-import com.ruoyi.zlyyhadmin.service.ICategoryProductService;
-import com.ruoyi.zlyyhadmin.service.ICommercialTenantProductService;
-import com.ruoyi.zlyyhadmin.service.IProductService;
+import com.ruoyi.zlyyhadmin.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
@@ -45,6 +44,9 @@ public class ProductServiceImpl implements IProductService {
     private final ProductMapper baseMapper;
     private final ICategoryProductService categoryProductService;
     private final ICommercialTenantProductService commercialTenantProductService;
+    private final IProductTicketService productTicketService;
+    private final IProductTicketSessionService productTicketSessionService;
+
 
     /**
      * 查询商品
@@ -76,6 +78,16 @@ public class ProductServiceImpl implements IProductService {
                 productVo.setCommercialTenantId(commercialTenantProductId.substring(0, commercialTenantProductId.length() - 1));
             }
         }
+        if (productVo.getProductType().equals("13")) {
+            ProductTicketVo productTicketVo = productTicketService.queryByProductId(productId);
+            if (ObjectUtil.isNotEmpty(productTicketVo)) {
+                productVo.setTicket(productTicketVo);
+            }
+            ProductTicketSessionBo sessionBo = new ProductTicketSessionBo();
+            sessionBo.setProductId(productId);
+            List<ProductTicketSessionVo> ticketSessionVos = productTicketSessionService.queryLists(sessionBo);
+            productVo.setTicketSession(ticketSessionVos);
+        }
         return productVo;
     }
 
@@ -84,6 +96,15 @@ public class ProductServiceImpl implements IProductService {
         LambdaQueryWrapper<Product> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Product::getExternalProductId, externalProductId);
         return baseMapper.selectVoOne(wrapper);
+    }
+
+    @Override
+    public Product queryByExternalProductId(String externalProductId, String productType, Long platformKey) {
+        LambdaQueryWrapper<Product> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Product::getExternalProductId, externalProductId);
+        wrapper.eq(Product::getProductType, productType);
+        wrapper.eq(Product::getPlatformKey, platformKey);
+        return baseMapper.selectOne(wrapper);
     }
 
     /**
@@ -210,6 +231,16 @@ public class ProductServiceImpl implements IProductService {
         Product add = BeanUtil.toBean(bo, Product.class);
         validEntityBeforeSave(add);
         PermissionUtils.setProductDeptIdAndUserId(add);
+        if (null == add.getProductId()) {
+            add.setProductId(IdUtil.getSnowflakeNextId());
+        }
+        if (add.getProductType().equals("13")) {
+            bo.getTicket().setProductId(add.getProductId());
+            bo.getTicket().setTicketId(IdUtil.getSnowflakeNextId());
+            Boolean b = productTicketService.insertByBo(bo.getTicket());
+            if (!b) throw new ServiceException("演出票添加异常。");
+            productTicketSessionService.insertByBoList(bo.getTicketSession(), add.getProductId());
+        }
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setProductId(add.getProductId());
@@ -219,6 +250,27 @@ public class ProductServiceImpl implements IProductService {
         return flag;
     }
 
+    public Boolean insert(ProductBo bo) {
+        Product add = BeanUtil.toBean(bo, Product.class);
+        validEntityBeforeSave(add);
+        if (null == add.getProductId()) {
+            add.setProductId(IdUtil.getSnowflakeNextId());
+        }
+        if (add.getProductType().equals("13")) {
+            bo.getTicket().setProductId(add.getProductId());
+            bo.getTicket().setTicketId(IdUtil.getSnowflakeNextId());
+            Boolean b = productTicketService.insertByBo(bo.getTicket());
+            if (!b) throw new ServiceException("演出票添加异常。");
+            productTicketSessionService.insertByBoList(bo.getTicketSession(), add.getProductId());
+        }
+        boolean flag = baseMapper.insert(add) > 0;
+        if (flag) {
+            bo.setProductId(add.getProductId());
+        }
+        return flag;
+    }
+
+
     /**
      * 修改商品
      */
@@ -227,6 +279,12 @@ public class ProductServiceImpl implements IProductService {
     public Boolean updateByBo(ProductBo bo) {
         Product update = BeanUtil.toBean(bo, Product.class);
         validEntityBeforeSave(update);
+        if (bo.getProductType().equals("13")) {
+            Boolean b = productTicketService.updateByBo(bo.getTicket());
+            if (!b) throw new ServiceException("演出票修改异常。");
+            if (!bo.getTicketSession().isEmpty())
+                productTicketSessionService.updateByBoList(bo.getTicketSession(), bo.getProductId());
+        }
         boolean flag = baseMapper.updateById(update) > 0;
         if (flag) {
             processCategory(bo.getProductId(), bo.getCategoryId(), true);
@@ -271,7 +329,7 @@ public class ProductServiceImpl implements IProductService {
      * @param ids
      */
     @Override
-    public void updateProducts(Collection<Long> ids){
+    public void updateProducts(Collection<Long> ids) {
         for (Long id : ids) {
             ProductBo productBo = new ProductBo();
             productBo.setProductId(id);

@@ -7,7 +7,7 @@ import com.ruoyi.zlyyh.service.YsfConfigService;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 云闪付内容分销（渠道方） 配置书香
+ * 云闪付内容分销（渠道方） 配置
  * @author hyh
  */
 @Slf4j

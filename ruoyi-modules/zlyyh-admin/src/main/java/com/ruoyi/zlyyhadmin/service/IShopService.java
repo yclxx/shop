@@ -8,6 +8,7 @@ import com.ruoyi.zlyyhadmin.domain.bo.ShopImportDataBo;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 
@@ -61,6 +62,8 @@ public interface IShopService {
     ShopVo queryByNameAndAddress(String shopName, String address, Long platformKey);
 
     List<ShopVo> queryByCommercialTenantId(Long commercialTenantId);
+
+    List<ShopVo> queryByCommercialTenantId(Long commercialTenantId, Long platformKey, BigDecimal longitude, BigDecimal latitude);
 
     ShopVo queryByNameAndCommercialTenantId(String name,Long commercialTenantId);
 

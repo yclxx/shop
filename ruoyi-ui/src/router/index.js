@@ -20,24 +20,24 @@ import Layout from '@/layout'
  * roles: ['admin', 'common']       // 访问路由的角色权限
  * permissions: ['a:a:a', 'b:b:b']  // 访问路由的菜单权限
  * meta : {
-    noCache: true                   // 如果设置为true，则不会被 <keep-alive> 缓存(默认 false)
-    title: 'title'                  // 设置该路由在侧边栏和面包屑中展示的名字
-    icon: 'svg-name'                // 设置该路由的图标，对应路径src/assets/icons/svg
-    breadcrumb: false               // 如果设置为false，则不会在breadcrumb面包屑中显示
-    activeMenu: '/system/user'      // 当路由设置了该属性，则会高亮相对应的侧边栏。
-  }
+ noCache: true                   // 如果设置为true，则不会被 <keep-alive> 缓存(默认 false)
+ title: 'title'                  // 设置该路由在侧边栏和面包屑中展示的名字
+ icon: 'svg-name'                // 设置该路由的图标，对应路径src/assets/icons/svg
+ breadcrumb: false               // 如果设置为false，则不会在breadcrumb面包屑中显示
+ activeMenu: '/system/user'      // 当路由设置了该属性，则会高亮相对应的侧边栏。
+ }
  */
 
 // 公共路由
 export const constantRoutes = [{
-    path: '/redirect',
-    component: Layout,
-    hidden: true,
-    children: [{
-      path: '/redirect/:path(.*)',
-      component: () => import('@/views/redirect')
-    }]
-  },
+  path: '/redirect',
+  component: Layout,
+  hidden: true,
+  children: [{
+    path: '/redirect/:path(.*)',
+    component: () => import('@/views/redirect')
+  }]
+},
   {
     path: '/login',
     component: () => import('@/views/login'),
@@ -79,14 +79,14 @@ export const constantRoutes = [{
     hidden: true,
     redirect: 'noredirect',
     children: [{
-        path: 'profile',
-        component: () => import('@/views/system/user/profile/index'),
-        name: 'Profile',
-        meta: {
-          title: '个人中心',
-          icon: 'user'
-        }
-      },
+      path: 'profile',
+      component: () => import('@/views/system/user/profile/index'),
+      name: 'Profile',
+      meta: {
+        title: '个人中心',
+        icon: 'user'
+      }
+    },
       {
         path: 'updatePwd',
         component: () => import('@/views/system/user/updatePwd'),
@@ -102,20 +102,20 @@ export const constantRoutes = [{
 
 // 动态路由，基于用户权限动态去加载
 export const dynamicRoutes = [{
-    path: '/system/user-auth',
-    component: Layout,
-    hidden: true,
-    permissions: ['system:user:edit'],
-    children: [{
-      path: 'role/:userId(\\d+)',
-      component: () => import('@/views/system/user/authRole'),
-      name: 'AuthRole',
-      meta: {
-        title: '分配角色',
-        activeMenu: '/system/user'
-      }
-    }]
-  },
+  path: '/system/user-auth',
+  component: Layout,
+  hidden: true,
+  permissions: ['system:user:edit'],
+  children: [{
+    path: 'role/:userId(\\d+)',
+    component: () => import('@/views/system/user/authRole'),
+    name: 'AuthRole',
+    meta: {
+      title: '分配角色',
+      activeMenu: '/system/user'
+    }
+  }]
+},
   {
     path: '/system/role-auth',
     component: Layout,
@@ -173,6 +173,21 @@ export const dynamicRoutes = [{
       meta: {
         title: '修改生成配置',
         activeMenu: '/tool/gen'
+      }
+    }]
+  },
+  {
+    path: '/zlyyh/productTicketSession',
+    component: Layout,
+    hidden: true,
+    permissions: ['zlyyh:product:ticket'],
+    children: [{
+      path: 'index/:productId(\\d+)',
+      component: () => import('@/views/zlyyh/productTicketSession/index'),
+      name: 'sessionEdit',
+      meta: {
+        title: '场次与票种',
+        activeMenu: '/zlyyh/productTicketSession'
       }
     }]
   }

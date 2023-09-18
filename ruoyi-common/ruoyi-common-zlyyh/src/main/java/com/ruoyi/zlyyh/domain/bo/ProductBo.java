@@ -10,6 +10,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 商品业务对象
@@ -295,4 +296,12 @@ public class ProductBo extends BaseEntity {
     private String sendAccountType;
 
     private String cusRefund;
+
+    /**
+     * 演出票商品信息
+     */
+    private ProductTicketBo ticket;
+
+    /** 场次与票种 */
+    private List<ProductTicketSessionBo> ticketSession;
 }

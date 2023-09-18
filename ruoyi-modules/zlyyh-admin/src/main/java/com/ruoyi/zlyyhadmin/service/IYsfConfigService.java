@@ -16,6 +16,7 @@ import java.util.List;
  */
 public interface IYsfConfigService {
 
+    String queryValueByKey(Long platformId, String key);
     /**
      * 查询云闪付参数配置
      */

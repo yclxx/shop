@@ -9,6 +9,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 商品视图对象
@@ -352,4 +353,9 @@ public class ProductVo implements Serializable {
      * 用户id
      */
     private Long sysUserId;
+
+
+    private ProductTicketVo ticket;
+
+    private List<ProductTicketSessionVo> ticketSession;
 }

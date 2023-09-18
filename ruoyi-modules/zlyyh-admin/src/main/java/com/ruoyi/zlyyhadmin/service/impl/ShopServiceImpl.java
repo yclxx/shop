@@ -389,6 +389,16 @@ public class ShopServiceImpl implements IShopService {
     }
 
     @Override
+    public List<ShopVo> queryByCommercialTenantId(Long commercialTenantId, Long platformKey, BigDecimal longitude, BigDecimal latitude) {
+        LambdaQueryWrapper<Shop> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(Shop::getCommercialTenantId, commercialTenantId);
+        queryWrapper.eq(Shop::getPlatformKey, platformKey);
+        queryWrapper.eq(Shop::getLatitude, longitude);
+        queryWrapper.eq(Shop::getLongitude, latitude);
+        return baseMapper.selectVoList(queryWrapper);
+    }
+
+    @Override
     public ShopVo queryByNameAndCommercialTenantId(String name, Long commercialTenantId) {
         LambdaQueryWrapper<Shop> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(Shop::getCommercialTenantId, commercialTenantId);

@@ -23,6 +23,8 @@ public interface ICategoryProductService {
      */
     CategoryProductVo queryById(Long id);
 
+    Long queryByCategoryAndProduct(Long categoryId,Long productId);
+
     /**
      * 查询栏目商品关联列表
      */
