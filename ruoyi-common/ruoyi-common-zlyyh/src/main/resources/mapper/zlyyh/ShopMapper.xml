@@ -26,9 +26,21 @@
         <result property="updateBy" column="update_by"/>
         <result property="updateTime" column="update_time"/>
         <result property="platformKey" column="platform_key"/>
+        <result property="showStartDate" column="show_start_date"/>
+        <result property="showEndDate" column="show_end_date"/>
+        <result property="assignDate" column="assign_date"/>
+        <result property="weekDate" column="week_date"/>
+        <result property="sellTime" column="sell_time"/>
+        <result property="shopImgs" column="shop_imgs"/>
+        <result property="shopLogo" column="shop_logo"/>
+        <result property="sort" column="sort"/>
+        <result property="shopTags" column="shop_tags"/>
+        <result property="shopType" column="shop_type"/>
+        <result property="extensionServiceProviderId" column="extension_service_provider_id"/>
+        <result property="pushType" column="push_type"/>
+        <result property="supplierShopId" column="supplier_shop_id"/>
         <result property="sysDeptId" column="sys_dept_id"/>
         <result property="sysUserId" column="sys_user_id"/>
-        <result property="supplierShopId" column="supplier_shop_id"/>
     </resultMap>
 
 

@@ -2,20 +2,23 @@ package com.ruoyi.zlyyh.domain.bo;
 
 import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
-import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import javax.validation.constraints.*;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import java.util.Date;
+
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
+
+import com.ruoyi.common.core.web.domain.BaseEntity;
 
 /**
  * 门店业务对象
  *
  * @author yzgnet
- * @date 2023-03-21
+ * @date 2023-09-16
  */
 
 @Data
@@ -110,9 +113,86 @@ public class ShopBo extends BaseEntity {
     @NotNull(message = "平台标识不能为空", groups = { AddGroup.class, EditGroup.class })
     private Long platformKey;
 
+    /**
+     * 展示开始时间
+     */
+    private Date showStartDate;
+
+    /**
+     * 展示结束时间
+     */
+    private Date showEndDate;
+
+    /**
+     * 指定周几: 0-不指定，1-指定周几
+     */
+    private String assignDate;
+
+    /**
+     * 周几展示：1-周日，2-周一，3-周二...7-周六，多个之间用英文逗号隔开
+     */
+    private String weekDate;
+
+    /**
+     * 几点开始展示,几点结束,格式：HH:mm:ss-HH:mm:ss
+     */
+    private String sellTime;
+
+    /**
+     * 门店图片
+     */
+    private String shopImgs;
+
+    /**
+     * 门店logo
+     */
+    private String shopLogo;
+
+    /**
+     * 排序：从小到大
+     */
+    private Long sort;
+
     private List<Long> commercialTenantIds;
+
+    /**
+     * 标签，多个之间用英文逗号隔开
+     */
+    private String shopTags;
+
+    /**
+     * 门店类型：0-餐饮，1-便利店，2-茶饮，3-酒店，4-景点，5-演出，6-电影院
+     */
+    private String shopType;
 
     private Long productId;
 
+    /**
+     * 商户拓展服务商表
+     */
+    private Long extensionServiceProviderId;
+
+    /**
+     * 推荐类型：0-不推荐，1-商圈精选，2-品牌精选
+     */
+    private String pushType;
+
+    /**
+     * 供应商门店id
+     */
     private String supplierShopId;
+
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
+
+    private String businessDistrictId;
+
+
 }

@@ -154,7 +154,7 @@ public class CtripUtils {
         return JSONObject.parseObject(result);
     }
 
-    public static void cancelOrder(String externalOrderNumber,String partnerType,String refundUrl) {
+    public static String cancelOrder(String externalOrderNumber,String partnerType,String refundUrl) {
 // 取消订单请求参数
         Map<String,Object> map = new HashMap<>();
         map.put("orderId",externalOrderNumber);
@@ -170,12 +170,13 @@ public class CtripUtils {
         }
         JSONObject jsonObject = JSONObject.parseObject(result);
         JSONObject resultJson = jsonObject.getJSONObject("result");
-        int code = resultJson.getIntValue("code");
-        if(0 != code){
+        String code = resultJson.getString("code");
+        if(!"0".equals(code)){
             String message = resultJson.getString("message");
             log.error("携程取消订单失败，携程订单编号：{}，失败原因：{}",externalOrderNumber,message);
             throw new ServiceException("系统繁忙，请稍后重试！");
         }
+        return code;
 
     }
 

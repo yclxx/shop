@@ -17,20 +17,15 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
-import com.ruoyi.zlyyh.domain.CommercialTenant;
-import com.ruoyi.zlyyh.domain.CommercialTenantProduct;
-import com.ruoyi.zlyyh.domain.Shop;
-import com.ruoyi.zlyyh.domain.bo.ShopBo;
-import com.ruoyi.zlyyh.domain.bo.ShopImportBo;
-import com.ruoyi.zlyyh.domain.bo.ShopMerchantBo;
-import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
-import com.ruoyi.zlyyh.domain.vo.ShopMerchantVo;
-import com.ruoyi.zlyyh.domain.vo.ShopVo;
+import com.ruoyi.zlyyh.domain.*;
+import com.ruoyi.zlyyh.domain.bo.*;
+import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
 import com.ruoyi.zlyyh.mapper.CommercialTenantProductMapper;
 import com.ruoyi.zlyyh.mapper.ShopMapper;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.domain.bo.ShopImportDataBo;
+import com.ruoyi.zlyyhadmin.service.IBusinessDistrictShopService;
 import com.ruoyi.zlyyhadmin.service.IShopMerchantService;
 import com.ruoyi.zlyyhadmin.service.IShopProductService;
 import com.ruoyi.zlyyhadmin.service.IShopService;
@@ -64,6 +59,7 @@ public class ShopServiceImpl implements IShopService {
     private final IShopMerchantService shopMerchantService;
     private final CommercialTenantProductMapper commercialTenantProductMapper;
     private final IShopProductService shopProductService;
+    private final IBusinessDistrictShopService businessDistrictShopService;
 
     /**
      * 项目启动初始化门店缓存
@@ -131,7 +127,20 @@ public class ShopServiceImpl implements IShopService {
      */
     @Override
     public ShopVo queryById(Long shopId) {
-        return baseMapper.selectVoById(shopId);
+        ShopVo shopVo = baseMapper.selectVoById(shopId);
+        BusinessDistrictShopBo businessDistrictShopBo = new BusinessDistrictShopBo();
+        businessDistrictShopBo.setShopId(shopId);
+        List<BusinessDistrictShopVo> businessDistrictShopVos = businessDistrictShopService.queryList(businessDistrictShopBo);
+        if (ObjectUtil.isNotEmpty(businessDistrictShopVos)) {
+            StringBuilder businessDistrictShopId = new StringBuilder();
+            for (BusinessDistrictShopVo businessDistrictShopVo : businessDistrictShopVos) {
+                businessDistrictShopId.append(businessDistrictShopVo.getBusinessDistrictId()).append(",");
+            }
+            if (StringUtils.isNotBlank(businessDistrictShopId)) {
+                shopVo.setBusinessDistrictId(businessDistrictShopId.substring(0, businessDistrictShopId.length() - 1));
+            }
+        }
+        return shopVo;
     }
 
     /**
@@ -202,6 +211,7 @@ public class ShopServiceImpl implements IShopService {
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setShopId(add.getShopId());
+            processBusiness(bo.getShopId(),bo.getBusinessDistrictId(),false);
         }
         return flag;
     }
@@ -214,9 +224,12 @@ public class ShopServiceImpl implements IShopService {
     public Boolean updateByBo(ShopBo bo) {
         getAddressCode(bo);
         Shop update = BeanUtil.toBean(bo, Shop.class);
-        int i = baseMapper.updateById(update);
+        boolean flag = baseMapper.updateById(update) > 0;
 //        changeGeoCache(update.getShopId());
-        return i > 0;
+        if (flag) {
+            processBusiness(bo.getShopId(), bo.getBusinessDistrictId(), true);
+        }
+        return flag;
     }
 
     /**
@@ -229,8 +242,28 @@ public class ShopServiceImpl implements IShopService {
             CacheUtils.evict(CacheNames.SHOP, id);
             //删除门店同时删除门店商品的信息
             delShopProduct(id);
+            //删除与商圈相关信息
+            delShopBusinessDistrictId(id);
         }
         return baseMapper.deleteBatchIds(ids) > 0;
+    }
+
+    private void processBusiness(Long shopId, String businessDistrictId, boolean update) {
+        if (null == shopId) {
+            return;
+        }
+        if (update) {
+            businessDistrictShopService.remove(new LambdaQueryWrapper<BusinessDistrictShop>().eq(BusinessDistrictShop::getShopId, shopId));
+        }
+        if (ObjectUtil.isNotEmpty(businessDistrictId)) {
+            String[] split = businessDistrictId.split(",");
+            for (String s : split) {
+                BusinessDistrictShopBo businessDistrictShopBo = new BusinessDistrictShopBo();
+                businessDistrictShopBo.setShopId(shopId);
+                businessDistrictShopBo.setBusinessDistrictId(Long.parseLong(s));
+                businessDistrictShopService.insertByBo(businessDistrictShopBo);
+            }
+        }
     }
 
     @Async
@@ -317,6 +350,10 @@ public class ShopServiceImpl implements IShopService {
 
     private void delShopProduct(Long shopId) {
         shopProductService.deleteWithValidByShopId(shopId);
+    }
+
+    private void delShopBusinessDistrictId(Long shopId) {
+        businessDistrictShopService.deleteWithValidByShopId(shopId);
     }
 
     private void saveMerchant(String str, String merchantType, Long shopId) {
