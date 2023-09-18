@@ -107,6 +107,30 @@
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15to18</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-crypto</artifactId>
+        </dependency>
+
+        <!--   银联加密机 开始     -->
+        <dependency>
+            <groupId>cn.tass</groupId>
+            <artifactId>TassHsmBaseLib</artifactId>
+            <version>1.5.1.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>cn.tass</groupId>
+            <artifactId>TassEHSMApi</artifactId>
+            <version>2.1.44</version>
+        </dependency>
+        <!--   银联加密机 结束     -->
     </dependencies>
 
 </project>

@@ -90,10 +90,10 @@ public class SysProfileController extends BaseController {
     public R<Void> updatePwd(String oldPassword, String newPassword) {
         SysUser user = userService.selectUserById(LoginHelper.getUserId());
         if (StringUtils.isNotBlank(oldPassword)) {
-            oldPassword = RSAUtils.decryptByPrivateKey(oldPassword, RSAUtils.pik);
+            oldPassword = RSAUtils.decryptByPrivateKey(oldPassword, RSAUtils.PIK);
         }
         if (StringUtils.isNotBlank(newPassword)) {
-            newPassword = RSAUtils.decryptByPrivateKey(newPassword, RSAUtils.pik);
+            newPassword = RSAUtils.decryptByPrivateKey(newPassword, RSAUtils.PIK);
         }
         String password = user.getPassword();
         if (!BCrypt.checkpw(oldPassword, password)) {

@@ -4,6 +4,7 @@ import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.secure.BCrypt;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.crypto.SecureUtil;
 import com.ruoyi.auth.form.RegisterBody;
 import com.ruoyi.auth.properties.UserPasswordProperties;
 import com.ruoyi.common.core.constant.CacheConstants;
@@ -52,7 +53,7 @@ public class SysLoginService {
         LoginUser userInfo = remoteUserService.getUserInfo(username);
         // 密码解密
         if (StringUtils.isNotBlank(password)) {
-            password = RSAUtils.decryptByPrivateKey(password, RSAUtils.pik);
+            password = RSAUtils.decryptByPrivateKey(password, RSAUtils.PIK);
         }
         String finalPassword = password;
         checkLogin(LoginType.PASSWORD, username, () -> !BCrypt.checkpw(finalPassword, userInfo.getPassword()));

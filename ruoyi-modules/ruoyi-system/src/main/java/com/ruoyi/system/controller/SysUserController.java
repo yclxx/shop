@@ -211,7 +211,7 @@ public class SysUserController extends BaseController {
         userService.checkUserAllowed(user);
         userService.checkUserDataScope(user.getUserId());
         if(StringUtils.isNotBlank(user.getPassword())){
-            user.setPassword(RSAUtils.decryptByPrivateKey(user.getPassword(),RSAUtils.pik));
+            user.setPassword(RSAUtils.decryptByPrivateKey(user.getPassword(),RSAUtils.PIK));
         }
         user.setPassword(BCrypt.hashpw(user.getPassword()));
         return toAjax(userService.resetPwd(user));

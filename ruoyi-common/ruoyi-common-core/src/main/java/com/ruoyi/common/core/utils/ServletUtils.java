@@ -16,6 +16,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -99,6 +100,20 @@ public class ServletUtils extends ServletUtil {
             params.put(entry.getKey(), StringUtils.join(entry.getValue(), StringUtils.SEPARATOR));
         }
         return params;
+    }
+
+    public static String getParamJson(ServletRequest request) {
+        StringBuilder data = new StringBuilder();
+        String line;
+        BufferedReader reader;
+        try {
+            reader = request.getReader();
+            while (null != (line = reader.readLine())) {
+                data.append(line);
+            }
+        } catch (IOException ignored) {
+        }
+        return data.toString().replace(" ", "");
     }
 
     /**

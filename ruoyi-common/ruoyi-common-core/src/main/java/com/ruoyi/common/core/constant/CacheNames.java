@@ -183,4 +183,9 @@ public interface CacheNames {
      * 商品列表
      */
     String productList = "productList#30m";
+
+    /**
+     * 分销商缓存
+     */
+    String DISTRIBUTOR = "distributor#2d";
 }
