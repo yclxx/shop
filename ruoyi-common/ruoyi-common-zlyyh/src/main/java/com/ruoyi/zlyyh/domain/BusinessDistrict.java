@@ -9,45 +9,44 @@ import java.util.Date;
 import java.math.BigDecimal;
 
 import java.math.BigDecimal;
-import java.util.Date;
 import com.ruoyi.common.core.web.domain.BaseEntity;
 
 /**
- * 门店对象 t_shop
+ * 商圈对象 t_business_district
  *
- * @author yzgnet
- * @date 2023-09-16
+ * @author yzg
+ * @date 2023-09-15
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("t_shop")
-public class Shop extends BaseEntity {
+@TableName("t_business_district")
+public class BusinessDistrict extends BaseEntity {
 
     private static final long serialVersionUID=1L;
 
     /**
      * ID
      */
-    @TableId(value = "shop_id")
-    private Long shopId;
+    @TableId(value = "business_district_id")
+    private Long businessDistrictId;
     /**
-     * 商户ID
+     * 商圈名称
      */
-    private Long commercialTenantId;
+    private String businessDistrictName;
     /**
-     * 门店名称
+     * 商圈图片
      */
-    private String shopName;
+    private String businessDistrictImg;
     /**
-     * 门店电话
+     * 电话
      */
-    private String shopTel;
+    private String businessMobile;
     /**
      * 营业时间
      */
     private String businessHours;
     /**
-     * 门店地址
+     * 地址
      */
     private String address;
     /**
@@ -91,66 +90,17 @@ public class Shop extends BaseEntity {
      */
     private BigDecimal latitude;
     /**
+     * 商圈自定义区域,基于高德地图,经纬度之间用,隔开 每组经纬度之间用;隔开 例如：经度,纬度;经度,纬度;经度,纬度;经度,纬度
+     */
+    private String businessDistrictScope;
+    /**
      * 平台标识
      */
     private Long platformKey;
     /**
-     * 展示开始时间
-     */
-    private Date showStartDate;
-    /**
-     * 展示结束时间
-     */
-    private Date showEndDate;
-    /**
-     * 指定周几: 0-不指定，1-指定周几
-     */
-    private String assignDate;
-    /**
-     * 周几展示：1-周日，2-周一，3-周二...7-周六，多个之间用英文逗号隔开
-     */
-    private String weekDate;
-    /**
-     * 几点开始展示,几点结束,格式：HH:mm:ss-HH:mm:ss
-     */
-    private String sellTime;
-    /**
-     * 门店图片
-     */
-    private String shopImgs;
-    /**
-     * 门店logo
-     */
-    private String shopLogo;
-    /**
-     * 排序：从小到大
-     */
-    private Long sort;
-    /**
-     * 标签，多个之间用英文逗号隔开
-     */
-    private String shopTags;
-    /**
-     * 门店类型：0-餐饮，1-便利店，2-茶饮，3-酒店，4-景点，5-演出，6-电影院
-     */
-    private String shopType;
-    /**
-     * 商户拓展服务商表
-     */
-    private Long extensionServiceProviderId;
-    /**
-     * 推荐类型：0-不推荐，1-商圈精选，2-品牌精选
-     */
-    private String pushType;
-    /**
-     * 供应商门店id
-     */
-    private String supplierShopId;
-    /**
      * 部门id
      */
     private Long sysDeptId;
-
     /**
      * 用户id
      */

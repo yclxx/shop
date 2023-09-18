@@ -1,5 +1,8 @@
 package com.ruoyi.zlyyh.domain.vo;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
 import com.alibaba.excel.annotation.ExcelIgnoreUnannotated;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.ruoyi.common.core.annotation.Sensitive;
@@ -7,15 +10,15 @@ import com.ruoyi.common.core.enums.SensitiveStrategy;
 import com.ruoyi.common.excel.annotation.ExcelDictFormat;
 import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
+import java.util.Date;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
+
 
 /**
  * 门店视图对象
  *
  * @author yzgnet
- * @date 2023-03-21
+ * @date 2023-09-16
  */
 @Data
 @ExcelIgnoreUnannotated
@@ -134,8 +137,97 @@ public class ShopVo implements Serializable {
     private Long platformKey;
 
     /**
-     * 距离 千米
+     * 展示开始时间
+     */
+    @ExcelProperty(value = "展示开始时间")
+    private Date showStartDate;
+
+    /**
+     * 展示结束时间
+     */
+    @ExcelProperty(value = "展示结束时间")
+    private Date showEndDate;
+
+    /**
+     * 指定周几: 0-不指定，1-指定周几
+     */
+    @ExcelProperty(value = "指定周几: 0-不指定，1-指定周几")
+    private String assignDate;
+
+    /**
+     * 周几展示：1-周日，2-周一，3-周二...7-周六，多个之间用英文逗号隔开
+     */
+    @ExcelProperty(value = "周几展示：1-周日，2-周一，3-周二...7-周六，多个之间用英文逗号隔开")
+    private String weekDate;
+
+    /**
+     * 几点开始展示,几点结束,格式：HH:mm:ss-HH:mm:ss
+     */
+    @ExcelProperty(value = "几点开始展示,几点结束,格式：HH:mm:ss-HH:mm:ss")
+    private String sellTime;
+
+    /**
+     * 门店图片
+     */
+    @ExcelProperty(value = "门店图片")
+    private String shopImgs;
+
+    /**
+     * 门店logo
+     */
+    @ExcelProperty(value = "门店logo")
+    private String shopLogo;
+
+    /**
+     * 排序：从小到大
+     */
+    @ExcelProperty(value = "排序：从小到大")
+    private Long sort;
+
+    /**
+     * 标签，多个之间用英文逗号隔开
+     */
+    @ExcelProperty(value = "标签，多个之间用英文逗号隔开")
+    private String shopTags;
+
+    /**
+     * 门店类型：0-餐饮，1-便利店，2-茶饮，3-酒店，4-景点，5-演出，6-电影院
+     */
+    @ExcelProperty(value = "门店类型：0-餐饮，1-便利店，2-茶饮，3-酒店，4-景点，5-演出，6-电影院")
+    private String shopType;
+
+    /**
+     *距离 千米
      */
     private BigDecimal distance;
+
+    /**
+     * 商户拓展服务商表
+     */
+    @ExcelProperty(value = "商户拓展服务商表")
+    private Long extensionServiceProviderId;
+
+    /**
+     * 推荐类型：0-不推荐，1-商圈精选，2-品牌精选
+     */
+    @ExcelProperty(value = "推荐类型：0-不推荐，1-商圈精选，2-品牌精选")
+    private String pushType;
+
+
+    /**
+     * 部门id
+     */
+    @ExcelProperty(value = "部门id")
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    @ExcelProperty(value = "用户id")
+    private Long sysUserId;
+
+
+    private String businessDistrictId;
+
 
 }

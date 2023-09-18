@@ -20,11 +20,9 @@ import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.HistoryOrderBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.*;
+import com.ruoyi.zlyyh.properties.CtripConfig;
 import com.ruoyi.zlyyh.properties.YsfFoodProperties;
-import com.ruoyi.zlyyh.utils.BigDecimalUtils;
-import com.ruoyi.zlyyh.utils.PermissionUtils;
-import com.ruoyi.zlyyh.utils.YsfFoodUtils;
-import com.ruoyi.zlyyh.utils.YsfUtils;
+import com.ruoyi.zlyyh.utils.*;
 import com.ruoyi.zlyyh.utils.sdk.LogUtil;
 import com.ruoyi.zlyyh.utils.sdk.PayUtils;
 import com.ruoyi.zlyyhmobile.service.*;
@@ -48,7 +46,7 @@ import java.util.Map;
 @Service
 public class HistoryOrderServiceImpl implements IHistoryOrderService {
     private static final YsfFoodProperties YSF_FOOD_PROPERTIES = SpringUtils.getBean(YsfFoodProperties.class);
-
+    private static final com.ruoyi.zlyyh.properties.CtripConfig CtripConfig = SpringUtils.getBean(CtripConfig.class);
     private final HistoryOrderMapper baseMapper;
     private final IUserService userService;
     private final IMerchantService merchantService;
@@ -83,6 +81,10 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
         } else if ("11".equals(orderVo.getOrderType()) || "12".equals(orderVo.getOrderType())) {
             List<OrderUnionSendVo> orderUnionSendVos = orderUnionSendService.queryListByNumber(number);
             orderVo.setOrderUnionSendVos(orderUnionSendVos);
+        } else if ("15".equals(orderVo.getOrderType())) {
+            //塞入携程商品
+            OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(orderVo.getNumber());
+            orderVo.setOrderFoodInfoVo(orderFoodInfoVo);
         }
         return orderVo;
     }
@@ -228,6 +230,28 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
             refundMapper.insert(refund);
             order.setStatus("4");
             baseMapper.updateById(order);
+            return;
+        } else if (orderType.equals("15")) {
+            //如果是携程订单
+            OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(orderVo.getNumber());
+            if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && !orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
+                throw new ServiceException("该订单无法申请退款");
+            }
+            order.setCancelStatus("0");
+            order.setStatus("4");
+            baseMapper.updateById(order);
+            //如果电子券为未使用状态 在这里先走退款接口
+            if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
+                String accessToken = CtripUtils.getAccessToken();
+                String refundUrl = CtripConfig.getUrl() + "?AID=" + CtripConfig.getAid() + "&SID=" + CtripConfig.getSid() +
+                    "&ICODE=" + CtripConfig.getCancelOrderCode() + "&Token=" + accessToken;
+                //请求美食退款订单接口
+                if ("1".equals(orderVo.getCancelStatus())) {
+                    throw new ServiceException("退款已提交,不可重复申请");
+                }
+                CtripUtils.cancelOrder(orderVo.getExternalOrderNumber(), CtripConfig.getPartnerType(),refundUrl);
+            }
+            refundMapper.insert(refund);
             return;
         } else {
             //其他订单 只在失败的情况下才能申请退款

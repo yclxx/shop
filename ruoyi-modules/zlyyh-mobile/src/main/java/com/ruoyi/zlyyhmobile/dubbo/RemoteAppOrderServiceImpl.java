@@ -22,8 +22,10 @@ import com.ruoyi.zlyyh.domain.vo.OrderUnionPayVo;
 import com.ruoyi.zlyyh.domain.vo.OrderVo;
 import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayParams;
 import com.ruoyi.zlyyh.mapper.OrderUnionSendMapper;
+import com.ruoyi.zlyyh.properties.CtripConfig;
 import com.ruoyi.zlyyh.properties.YsfFoodProperties;
 import com.ruoyi.zlyyh.properties.utils.YsfDistributionPropertiesUtils;
+import com.ruoyi.zlyyh.utils.CtripUtils;
 import com.ruoyi.zlyyh.utils.YsfFoodUtils;
 import com.ruoyi.zlyyh.utils.sdk.UnionPayDistributionUtil;
 import com.ruoyi.zlyyhmobile.service.*;
@@ -49,7 +51,7 @@ import java.util.List;
 @DubboService
 public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
     private static final YsfFoodProperties YSF_FOOD_PROPERTIES = SpringUtils.getBean(YsfFoodProperties.class);
-
+    private static final com.ruoyi.zlyyh.properties.CtripConfig CtripConfig = SpringUtils.getBean(com.ruoyi.zlyyh.properties.CtripConfig.class);
     @Autowired
     private LockTemplate lockTemplate;
     @Autowired
@@ -90,16 +92,28 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
         String appId = YSF_FOOD_PROPERTIES.getAppId();
         String rsaPrivateKey = YSF_FOOD_PROPERTIES.getRsaPrivateKey();
         String refundUrl = YSF_FOOD_PROPERTIES.getRefundUrl();
+
         //请求美食退款订单接口
         OrderVo orderVo = orderService.queryById(number);
-        if (!"1".equals(orderVo.getOrderType()) || !"5".equals(orderVo.getOrderType())) {
+        if (!"1".equals(orderVo.getOrderType()) || !"5".equals(orderVo.getOrderType()) ||!"15".equals(orderVo.getOrderType()) ) {
             throw new ServiceException("非美食订单，无法向供应商申请退款");
         }
         if ("1".equals(orderVo.getCancelStatus())) {
             throw new ServiceException("该订单已收到供应商退款,不可重复申请");
         }
-        String s = YsfFoodUtils.cancelOrder(appId, orderVo.getExternalOrderNumber(), rsaPrivateKey, refundUrl);
-        if (ObjectUtil.isNotEmpty(s)) {
+        String s = "";
+        String s1 = "";
+        //根据订单类型请求不同供应商接口
+        if ("5".equals(orderVo.getOrderType())){
+            //口碑类型商品
+            s = YsfFoodUtils.cancelOrder(appId, orderVo.getExternalOrderNumber(), rsaPrivateKey, refundUrl);
+        } else if ("15".equals(orderVo.getOrderType())) {
+            String accessToken = CtripUtils.getAccessToken();
+            String refundCtripUrl = CtripConfig.getUrl() + "?AID=" + CtripConfig.getAid() + "&SID=" + CtripConfig.getSid() +
+                "&ICODE=" + CtripConfig.getCancelOrderCode() + "&Token=" + accessToken;
+            s1 = CtripUtils.cancelOrder(orderVo.getExternalOrderNumber(), CtripConfig.getPartnerType(), refundCtripUrl);
+        }
+        if (ObjectUtil.isNotEmpty(s) || "0".equals(s1)) {
             //订单设置为退款种状态 等待回调
             Order order = new Order();
             order.setCancelStatus("0");
@@ -115,14 +129,25 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
         String refundUrl = YSF_FOOD_PROPERTIES.getRefundUrl();
         //请求美食退款订单接口
         HistoryOrderVo orderVo = historyOrderService.queryById(number);
-        if (!"1".equals(orderVo.getOrderType()) || !"5".equals(orderVo.getOrderType())) {
+        if (!"1".equals(orderVo.getOrderType()) || !"5".equals(orderVo.getOrderType()) || !"15".equals(orderVo.getOrderType())) {
             throw new ServiceException("非美食订单，无法向供应商申请退款");
         }
         if ("1".equals(orderVo.getCancelStatus())) {
             throw new ServiceException("该订单已收到供应商退款,不可重复申请");
         }
-        String s = YsfFoodUtils.cancelOrder(appId, orderVo.getExternalOrderNumber(), rsaPrivateKey, refundUrl);
-        if (ObjectUtil.isNotEmpty(s)) {
+        String s = "";
+        String s1 = "";
+        //根据订单类型请求不同供应商接口
+        if ("5".equals(orderVo.getOrderType())){
+            //口碑类型商品
+            s = YsfFoodUtils.cancelOrder(appId, orderVo.getExternalOrderNumber(), rsaPrivateKey, refundUrl);
+        } else if ("15".equals(orderVo.getOrderType())) {
+            String accessToken = CtripUtils.getAccessToken();
+            String refundCtripUrl = CtripConfig.getUrl() + "?AID=" + CtripConfig.getAid() + "&SID=" + CtripConfig.getSid() +
+                "&ICODE=" + CtripConfig.getCancelOrderCode() + "&Token=" + accessToken;
+            s1 = CtripUtils.cancelOrder(orderVo.getExternalOrderNumber(), CtripConfig.getPartnerType(), refundCtripUrl);
+        }
+        if (ObjectUtil.isNotEmpty(s) || "0".equals(s1)) {
             //订单设置为退款种状态 等待回调
             HistoryOrder order = new HistoryOrder();
             order.setCancelStatus("0");

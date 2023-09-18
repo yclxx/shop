@@ -134,7 +134,7 @@ public class RefundServiceImpl implements IRefundService {
             }
             //历史订单进行退款
             orderBackTransBo.setRefund(historyOrder.getOutAmount());
-            if ("5".equals(historyOrder.getOrderType())) {
+            if ("5".equals(historyOrder.getOrderType()) || "15".equals(historyOrder.getOrderType())) {
                 //美食订单 判断供应商是否已经退款
                 if (!"1".equals(historyOrder.getCancelStatus())) {
                     throw new ServiceException("供应商未成功退款");
@@ -147,7 +147,7 @@ public class RefundServiceImpl implements IRefundService {
             return;
         }
         orderBackTransBo.setRefund(order.getOutAmount());
-        if ("5".equals(order.getOrderType())) {
+        if ("5".equals(order.getOrderType()) || "15".equals(order.getOrderType())) {
             //美食订单 判断供应商是否已经退款
             if (!"1".equals(order.getCancelStatus())) {
                 throw new ServiceException("供应商未成功退款");
