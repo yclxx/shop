@@ -15,9 +15,12 @@
         <result property="ticketChooseSeat" column="ticket_choose_seat"/>
         <result property="ticketForm" column="ticket_form"/>
         <result property="ticketCard" column="ticket_card"/>
-        <result property="ticketService" column="ticket_service"/>
         <result property="ticketPostWay" column="ticket_post_way"/>
         <result property="ticketPostage" column="ticket_postage"/>
         <result property="ticketNotice" column="ticket_notice"/>
+        <result property="ticketNonsupport" column="ticket_nonsupport"/>
+        <result property="ticketInvoice" column="ticket_invoice"/>
+        <result property="ticketExpired" column="ticket_expired"/>
+        <result property="ticketAnyTime" column="ticket_any_time"/>
     </resultMap>
 </mapper>

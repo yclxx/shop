@@ -1,5 +1,6 @@
 package com.ruoyi.zlyyh.domain.bo;
 
+import com.alibaba.excel.annotation.ExcelProperty;
 import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
 import com.ruoyi.common.core.web.domain.BaseEntity;
@@ -58,15 +59,31 @@ public class ProductTicketBo extends BaseEntity {
     @NotBlank(message = "身份信息不能为空", groups = {AddGroup.class, EditGroup.class})
     private String ticketCard;
     /**
-     * 服务方式
-     */
-    @NotBlank(message = "服务方式不能为空", groups = {AddGroup.class, EditGroup.class})
-    private String ticketService;
-    /**
      * 快递方式
      */
     @NotBlank(message = "快递方式不能为空", groups = {AddGroup.class, EditGroup.class})
     private String ticketPostWay;
+    /**
+     * 是否不支持退款
+     */
+    @NotBlank(message = "不支持退款不能为空", groups = {AddGroup.class, EditGroup.class})
+    private String ticketNonsupport;
+    /**
+     * 是否电子发票
+     */
+    @NotBlank(message = "电子发票不能为空", groups = {AddGroup.class, EditGroup.class})
+    private String ticketInvoice;
+    /**
+     * 是否过期退
+     */
+    @NotBlank(message = "过期退不能为空", groups = {AddGroup.class, EditGroup.class})
+    private String ticketExpired;
+    /**
+     * 是否随时退
+     */
+    @NotBlank(message = "随时退不能为空", groups = {AddGroup.class, EditGroup.class})
+    private String ticketAnyTime;
+
     /**
      * 邮费
      */

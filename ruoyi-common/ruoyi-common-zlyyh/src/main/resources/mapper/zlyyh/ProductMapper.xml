@@ -47,6 +47,7 @@
         <result property="showCity" column="show_city"/>
         <result property="merchantId" column="merchant_id"/>
         <result property="shopGroupId" column="shop_group_id"/>
+        <result property="shopId" column="shop_id"/>
         <result property="btnText" column="btn_text"/>
         <result property="shareTitle" column="share_title"/>
         <result property="shareName" column="share_name"/>

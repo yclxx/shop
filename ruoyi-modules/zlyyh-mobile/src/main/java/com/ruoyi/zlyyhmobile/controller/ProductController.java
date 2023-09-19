@@ -59,6 +59,17 @@ public class ProductController {
      *
      * @return 商品列表
      */
+    @GetMapping("/getProductTicketInfo")
+    public R<ProductVo> getProductTicketInfo(ProductBo productBo) {
+        ProductVo productVo = productService.queryTicketById(productBo.getProductId());
+        return R.ok(productVo);
+    }
+
+    /**
+     * 获取商品详情
+     *
+     * @return 商品列表
+     */
     @GetMapping("/getProduct")
     public R<ProductVo> getProduct(ProductBo bo) {
         ProductVo productVo = productService.queryById(bo.getProductId());

@@ -46,6 +46,7 @@ public class ProductServiceImpl implements IProductService {
     private final ICategoryProductService categoryProductService;
     private final IShopProductService shopProductService;
     private final IProductInfoService productInfoService;
+    private final IProductTicketService productTicketService;
 
     /**
      * 查询商品
@@ -68,6 +69,19 @@ public class ProductServiceImpl implements IProductService {
         }
         ProductInfoVo productInfoVo = productInfoService.queryById(productId);
         productVo.setProductInfoVo(productInfoVo);
+        return productVo;
+    }
+
+    @Override
+    public ProductVo queryTicketById(Long productId) {
+        ProductVo productVo = baseMapper.selectVoById(productId);
+        if (null == productVo) {
+            return null;
+        }
+        ProductTicketVo productTicketVo = productTicketService.queryProductTicket(productId);
+        List<ProductTicketSessionVo> ticketSessionVos = productTicketService.querySessionAndLineByProductId(productId);
+        productVo.setTicket(productTicketVo);
+        productVo.setTicketSession(ticketSessionVos);
         return productVo;
     }
 

@@ -269,6 +269,11 @@ public class ProductVo implements Serializable {
      */
     @ExcelProperty(value = "门店组ID")
     private Long shopGroupId;
+    /**
+     * 门店ID
+     */
+    @ExcelProperty(value = "门店ID")
+    private String shopId;
 
     /**
      * 按钮名称

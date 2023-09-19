@@ -4,6 +4,7 @@ import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
 import javax.validation.constraints.*;
 
 import java.util.Date;
@@ -28,7 +29,7 @@ public class ShopBo extends BaseEntity {
     /**
      * ID
      */
-    @NotNull(message = "ID不能为空", groups = { EditGroup.class })
+    @NotNull(message = "ID不能为空", groups = {EditGroup.class})
     private Long shopId;
 
     /**
@@ -39,7 +40,7 @@ public class ShopBo extends BaseEntity {
     /**
      * 门店名称
      */
-    @NotBlank(message = "门店名称不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotBlank(message = "门店名称不能为空", groups = {AddGroup.class, EditGroup.class})
     private String shopName;
 
     /**
@@ -110,7 +111,7 @@ public class ShopBo extends BaseEntity {
     /**
      * 平台标识
      */
-    @NotNull(message = "平台标识不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotNull(message = "平台标识不能为空", groups = {AddGroup.class, EditGroup.class})
     private Long platformKey;
 
     /**
@@ -194,5 +195,8 @@ public class ShopBo extends BaseEntity {
 
     private String businessDistrictId;
 
-
+    /**
+     * 最大查询数量
+     */
+    private Integer pageSize;
 }

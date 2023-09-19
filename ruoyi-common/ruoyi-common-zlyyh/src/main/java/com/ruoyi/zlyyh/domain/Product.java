@@ -193,6 +193,10 @@ public class Product extends BaseEntity {
      */
     private Long shopGroupId;
     /**
+     * 门店ID
+     */
+    private String shopId;
+    /**
      * 按钮名称
      */
     private String btnText;

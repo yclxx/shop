@@ -73,7 +73,10 @@ public class ProductTicketServiceImpl implements IProductTicketService {
         lqw.eq(StringUtils.isNotBlank(bo.getTicketChooseSeat()), ProductTicket::getTicketChooseSeat, bo.getTicketChooseSeat());
         lqw.eq(StringUtils.isNotBlank(bo.getTicketForm()), ProductTicket::getTicketForm, bo.getTicketForm());
         lqw.eq(StringUtils.isNotBlank(bo.getTicketCard()), ProductTicket::getTicketCard, bo.getTicketCard());
-        lqw.eq(StringUtils.isNotBlank(bo.getTicketService()), ProductTicket::getTicketService, bo.getTicketService());
+        lqw.eq(StringUtils.isNotBlank(bo.getTicketNonsupport()), ProductTicket::getTicketNonsupport, bo.getTicketNonsupport());
+        lqw.eq(StringUtils.isNotBlank(bo.getTicketInvoice()), ProductTicket::getTicketInvoice, bo.getTicketInvoice());
+        lqw.eq(StringUtils.isNotBlank(bo.getTicketExpired()), ProductTicket::getTicketExpired, bo.getTicketExpired());
+        lqw.eq(StringUtils.isNotBlank(bo.getTicketAnyTime()), ProductTicket::getTicketAnyTime, bo.getTicketAnyTime());
         lqw.eq(StringUtils.isNotBlank(bo.getTicketPostWay()), ProductTicket::getTicketPostWay, bo.getTicketPostWay());
         lqw.eq(bo.getTicketPostage() != null, ProductTicket::getTicketPostage, bo.getTicketPostage());
         lqw.eq(StringUtils.isNotBlank(bo.getTicketNotice()), ProductTicket::getTicketNotice, bo.getTicketNotice());
