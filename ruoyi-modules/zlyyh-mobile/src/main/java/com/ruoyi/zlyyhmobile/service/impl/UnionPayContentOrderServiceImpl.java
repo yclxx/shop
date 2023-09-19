@@ -8,9 +8,11 @@ import com.ruoyi.common.core.utils.ServletUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.zlyyh.constant.UnionPayConstants;
 import com.ruoyi.zlyyh.domain.vo.DistributorVo;
-import com.ruoyi.zlyyh.domain.vo.ProductVo;
+import com.ruoyi.zlyyh.domain.vo.OrderVo;
+import com.ruoyi.zlyyh.mapper.UnionPayContentOrderMapper;
 import com.ruoyi.zlyyhmobile.domain.bo.UnionPayCreateBo;
 import com.ruoyi.zlyyhmobile.service.IDistributorService;
+import com.ruoyi.zlyyhmobile.service.IOrderService;
 import com.ruoyi.zlyyhmobile.service.IProductService;
 import com.ruoyi.zlyyhmobile.service.IUnionPayContentOrderService;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,8 @@ public class UnionPayContentOrderServiceImpl implements IUnionPayContentOrderSer
 
     private final IDistributorService distributorService;
     private final IProductService productService;
+    private final UnionPayContentOrderMapper unionPayContentOrderMapper;
+    private final IOrderService orderService;
 
     /**
      * 银联分销
@@ -100,45 +104,16 @@ public class UnionPayContentOrderServiceImpl implements IUnionPayContentOrderSer
      */
     private JSONObject upSuppQuerybond(HttpServletRequest request, HttpServletResponse response, UnionPayCreateBo unionPayCreateBo, DistributorVo distributorVo) {
         // TODO 银联内容方直接查询订单表中是否存在对应供应商订单号的订单，如果存在，根据类型返回对应订单信息即可，不存在返回失败。
-        // 获取产品编号
-        String prodId = unionPayCreateBo.getProdId();
-        if (StringUtils.isBlank(prodId)) {
-            return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "参数错误[prodId]", null, null, null, distributorVo.getPrivateKey(), null);
+        OrderVo orderVo = orderService.queryByExternalOrderNumber(unionPayCreateBo.getOrderId());
+        if (null == orderVo) {
+            return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "订单创建失败,暂不支持该渠道方", null, null, null, distributorVo.getPrivateKey(), null);
         }
-        Long productId;
-        Long skuId = null;
-        if (prodId.contains("_")) {
-            String[] s = prodId.split("_");
-            if (s.length < 2) {
-                return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "参数错误[prodId]", null, null, null, distributorVo.getPrivateKey(), null);
-            }
-            productId = getProductId(s[0]);
-            skuId = getProductId(s[1]);
-        } else {
-            productId = getProductId(prodId);
-        }
-        if(null == productId){
-            return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "参数错误[prodId]", null, null, null, distributorVo.getPrivateKey(), null);
-        }
-        ProductVo productVo = productService.queryById(productId);
-        if (null == productVo || !"0".equals(productVo.getStatus())) {
-            return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "商品不存在或已下架!", null, null, null, distributorVo.getPrivateKey(), null);
-        }
-        if ("1".equals(productVo.getProductAffiliation())) {
-            return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD00030000", "商品不可购买", null, null, null, distributorVo.getPrivateKey(), null);
-        }
-        // 查询订单是否存在，存在直接返回结果
-
-        // 发券
         return null;
-    }
-
-    private Long getProductId(String prodId) {
-        try {
-            return Long.parseLong(prodId);
-        } catch (NumberFormatException e) {
-            return null;
-        }
+//        // 根据订单类型返回不同信息
+//        if("12".equals(orderVo.getOrderType())){
+//
+//        }
+//        return unionPayOrderResultVo(request, response, unionPayCreateBo, "0000000000", "请求成功", null, prodCertTp, resultList, privateKey, origProcSt);
     }
 
     /**

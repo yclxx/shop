@@ -216,6 +216,14 @@ public interface IOrderService {
      */
     Long countByUserId(Long userId, Integer day);
 
+    /**
+     * 查询订单信息
+     *
+     * @param externalOrderNumber 供应商订单号
+     * @return 订单信息
+     */
+    OrderVo queryByExternalOrderNumber(String externalOrderNumber);
+
 //    /**
 //     * 银联内容分销 内容方 发券-退券-订单查询
 //     *

@@ -6,6 +6,7 @@
 
     <resultMap type="com.ruoyi.zlyyh.domain.UnionPayContentOrder" id="UnionPayContentOrderResult">
         <result property="id" column="id"/>
+        <result property="unionPayAppId" column="union_pay_app_id"/>
         <result property="unionPayOrderId" column="union_pay_order_id"/>
         <result property="unionPayProdId" column="union_pay_prod_id"/>
         <result property="unionPayTxnTime" column="union_pay_txn_time"/>
