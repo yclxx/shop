@@ -2387,6 +2387,19 @@ public class OrderServiceImpl implements IOrderService {
         return baseMapper.selectCount(lqw);
     }
 
+    /**
+     * 查询订单信息
+     *
+     * @param externalOrderNumber 供应商订单号
+     * @return 订单信息
+     */
+    public OrderVo queryByExternalOrderNumber(String externalOrderNumber) {
+        LambdaQueryWrapper<Order> lqw = Wrappers.lambdaQuery();
+        lqw.eq(Order::getExternalOrderNumber, externalOrderNumber);
+        lqw.last("order by number desc limit 1");
+        return baseMapper.selectVoOne(lqw);
+    }
+
 //    /**
 //     * 银联分销
 //     */

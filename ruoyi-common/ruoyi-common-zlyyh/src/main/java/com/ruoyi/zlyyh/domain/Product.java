@@ -256,4 +256,14 @@ public class Product extends BaseEntity {
      * 用户id
      */
     private Long sysUserId;
+
+    /**
+     * 银联分销：0-不通过，1-通过
+     */
+    private String unionPay;
+
+    /**
+     * 分销商
+     */
+    private String distributorId;
 }

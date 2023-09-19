@@ -65,6 +65,8 @@
         <result property="sendAccountType" column="send_account_type"/>
         <result property="sysDeptId" column="sys_dept_id"/>
         <result property="sysUserId" column="sys_user_id"/>
+        <result property="unionPay" column="union_pay"/>
+        <result property="distributorId" column="distributor_id"/>
     </resultMap>
 
 

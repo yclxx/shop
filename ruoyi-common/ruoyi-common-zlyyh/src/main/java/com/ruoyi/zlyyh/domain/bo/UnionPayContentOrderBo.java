@@ -21,6 +21,11 @@ public class UnionPayContentOrderBo extends BaseEntity {
     private Long id;
 
     /**
+     * 银联发券内容方AppId
+     */
+    private String unionPayAppId;
+
+    /**
      * 银联发券订单号
      */
     private String unionPayOrderId;

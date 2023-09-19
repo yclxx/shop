@@ -18,13 +18,17 @@ import lombok.EqualsAndHashCode;
 @TableName("t_union_pay_content_order")
 public class UnionPayContentOrder extends BaseEntity {
 
-    private static final long serialVersionUID=1L;
+    private static final long serialVersionUID = 1L;
 
     /**
      * ID
      */
     @TableId(value = "id")
     private Long id;
+    /**
+     * 银联发券内容方AppId
+     */
+    private String unionPayAppId;
     /**
      * 银联发券订单号
      */

@@ -9,6 +9,15 @@ export function listDistributor(query) {
   })
 }
 
+// 查询平台下拉信息列表
+export function selectListDistributor(query) {
+  return request({
+    url: '/zlyyh-admin/distributor/selectList',
+    method: 'get',
+    params: query
+  })
+}
+
 // 查询分销商信息详细
 export function getDistributor(distributorId) {
   return request({

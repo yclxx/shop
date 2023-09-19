@@ -2,9 +2,12 @@ package com.ruoyi.zlyyhadmin.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.ruoyi.common.core.domain.R;
+import com.ruoyi.common.core.utils.BeanCopyUtils;
+import com.ruoyi.common.core.utils.ColumnUtil;
 import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
 import com.ruoyi.common.core.web.controller.BaseController;
+import com.ruoyi.common.core.web.domain.SelectListEntity;
 import com.ruoyi.common.excel.utils.ExcelUtil;
 import com.ruoyi.common.log.annotation.Log;
 import com.ruoyi.common.log.enums.BusinessType;
@@ -45,6 +48,15 @@ public class DistributorController extends BaseController {
     @GetMapping("/list")
     public TableDataInfo<DistributorVo> list(DistributorBo bo, PageQuery pageQuery) {
         return iDistributorService.queryPageList(bo, pageQuery);
+    }
+
+    /**
+     * 查询分销商下拉列表
+     */
+    @GetMapping("/selectList")
+    public R<List<SelectListEntity>> selectList(DistributorBo bo) {
+        List<DistributorVo> distributorVos = iDistributorService.queryList(bo);
+        return R.ok(BeanCopyUtils.copyListToSelectListVo(distributorVos, ColumnUtil.getFieldName(DistributorVo::getDistributorId), ColumnUtil.getFieldName(DistributorVo::getDistributorName), null));
     }
 
     /**

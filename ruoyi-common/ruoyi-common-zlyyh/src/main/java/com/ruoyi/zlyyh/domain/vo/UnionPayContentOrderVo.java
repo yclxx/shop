@@ -28,6 +28,11 @@ public class UnionPayContentOrderVo {
     private Long id;
 
     /**
+     * 银联发券内容方AppId
+     */
+    private String unionPayAppId;
+
+    /**
      * 银联发券订单号
      */
     @ExcelProperty(value = "银联发券订单号")
