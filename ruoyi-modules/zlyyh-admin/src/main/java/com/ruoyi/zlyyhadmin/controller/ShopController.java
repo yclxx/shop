@@ -66,6 +66,15 @@ public class ShopController extends BaseController {
     }
 
     /**
+     * 查询门店下拉列表
+     */
+    @GetMapping("/selectShopListById")
+    public R<List<SelectListEntity>> selectShopListById(@RequestParam("ids") List<String> ids) {
+        List<ShopVo> shopVoList = iShopService.queryList(ids);
+        return R.ok(BeanCopyUtils.copyListToSelectListVo(shopVoList, ColumnUtil.getFieldName(ShopVo::getShopId), ColumnUtil.getFieldName(ShopVo::getShopName), null));
+    }
+
+    /**
      * 导出门店列表
      */
     @SaCheckPermission("zlyyh:shop:export")

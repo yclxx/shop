@@ -58,25 +58,36 @@ public class ProductTicketVo {
      */
     @ExcelProperty(value = "是否需要身份信息")
     private String ticketCard;
-
-    /**
-     * 服务方式
-     */
-    @ExcelProperty(value = "服务方式")
-    private String ticketService;
-
     /**
      * 快递方式
      */
     @ExcelProperty(value = "快递方式")
     private String ticketPostWay;
-
+    /**
+     * 是否不支持退款
+     */
+    @ExcelProperty(value = "不支持退款")
+    private String ticketNonsupport;
+    /**
+     * 是否电子发票
+     */
+    @ExcelProperty(value = "电子发票")
+    private String ticketInvoice;
+    /**
+     * 是否过期退
+     */
+    @ExcelProperty(value = "过期退")
+    private String ticketExpired;
+    /**
+     * 是否随时退
+     */
+    @ExcelProperty(value = "随时退")
+    private String ticketAnyTime;
     /**
      * 邮费
      */
     @ExcelProperty(value = "邮费")
     private BigDecimal ticketPostage;
-
     /**
      * 须知
      */

@@ -40,6 +40,8 @@ public interface IShopService {
      */
     List<ShopVo> queryList(ShopBo bo);
 
+    List<ShopVo> queryList(List<String> ids);
+
     /**
      * 修改门店
      */

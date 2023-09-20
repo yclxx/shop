@@ -15,10 +15,7 @@ import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.zlyyh.domain.CategoryProduct;
 import com.ruoyi.zlyyh.domain.CommercialTenantProduct;
 import com.ruoyi.zlyyh.domain.Product;
-import com.ruoyi.zlyyh.domain.bo.CategoryProductBo;
-import com.ruoyi.zlyyh.domain.bo.CommercialTenantProductBo;
-import com.ruoyi.zlyyh.domain.bo.ProductBo;
-import com.ruoyi.zlyyh.domain.bo.ProductTicketSessionBo;
+import com.ruoyi.zlyyh.domain.bo.*;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.ProductMapper;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
@@ -30,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 商品Service业务层处理
@@ -46,7 +44,7 @@ public class ProductServiceImpl implements IProductService {
     private final ICommercialTenantProductService commercialTenantProductService;
     private final IProductTicketService productTicketService;
     private final IProductTicketSessionService productTicketSessionService;
-
+    private final IShopProductService shopProductService;
 
     /**
      * 查询商品
@@ -87,6 +85,10 @@ public class ProductServiceImpl implements IProductService {
             sessionBo.setProductId(productId);
             List<ProductTicketSessionVo> ticketSessionVos = productTicketSessionService.queryLists(sessionBo);
             productVo.setTicketSession(ticketSessionVos);
+        }
+        List<Long> shopIds = shopProductService.queryByProductId(productId);
+        if (!shopIds.isEmpty()) {
+            productVo.setShopId(StringUtils.join(shopIds, ","));
         }
         return productVo;
     }
@@ -179,10 +181,8 @@ public class ProductServiceImpl implements IProductService {
         lqw.eq(StringUtils.isNotBlank(bo.getShowIndex()), Product::getShowIndex, bo.getShowIndex());
         lqw.eq(bo.getPlatformKey() != null, Product::getPlatformKey, bo.getPlatformKey());
         lqw.eq(bo.getSort() != null, Product::getSort, bo.getSort());
-        lqw.between(params.get("beginStartDate") != null && params.get("endStartDate") != null,
-            Product::getShowStartDate, params.get("beginStartDate"), params.get("endStartDate"));
-        lqw.between(params.get("beginEndDate") != null && params.get("endEndDate") != null,
-            Product::getShowEndDate, params.get("beginEndDate"), params.get("endEndDate"));
+        lqw.between(params.get("beginStartDate") != null && params.get("endStartDate") != null, Product::getShowStartDate, params.get("beginStartDate"), params.get("endStartDate"));
+        lqw.between(params.get("beginEndDate") != null && params.get("endEndDate") != null, Product::getShowEndDate, params.get("beginEndDate"), params.get("endEndDate"));
         return lqw;
     }
 
@@ -247,6 +247,16 @@ public class ProductServiceImpl implements IProductService {
             processCategory(bo.getProductId(), bo.getCategoryId(), false);
             processCommercialTenantProduct(bo.getProductId(), bo.getCommercialTenantId(), false);
         }
+        // 处理门店与产品关联表
+        if (StringUtils.isNotEmpty(bo.getShopId())) {
+            String[] split = bo.getShopId().split(",");
+            for (String s : split) {
+                ShopProductBo shopBo = new ShopProductBo();
+                shopBo.setProductId(bo.getProductId());
+                shopBo.setShopId(Long.valueOf(s));
+                shopProductService.insertByBo(shopBo);
+            }
+        }
         return flag;
     }
 
@@ -292,6 +302,17 @@ public class ProductServiceImpl implements IProductService {
             try {
                 CacheUtils.clear(CacheNames.productList);
             } catch (Exception ignored) {
+            }
+        }
+        // 处理门店与产品关联表
+        if (StringUtils.isNotEmpty(bo.getShopId())) {
+            shopProductService.deleteByProductId(bo.getProductId());
+            String[] split = bo.getShopId().split(",");
+            for (String s : split) {
+                ShopProductBo shopBo = new ShopProductBo();
+                shopBo.setProductId(bo.getProductId());
+                shopBo.setShopId(Long.valueOf(s));
+                shopProductService.insertByBo(shopBo);
             }
         }
         return flag;
