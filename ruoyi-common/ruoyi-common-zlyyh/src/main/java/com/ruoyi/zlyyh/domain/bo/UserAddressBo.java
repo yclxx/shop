@@ -58,7 +58,7 @@ public class UserAddressBo extends BaseEntity {
     private String address;
 
     /**
-     * 地址四级联动ID，对应t_area表，多个之间用空格隔开
+     * 县市code
      */
     private String areaId;
 
