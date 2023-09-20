@@ -313,6 +313,16 @@ public class ProductBo extends BaseEntity {
     private String distributorId;
 
     /**
+     * 可使用开始时间
+     */
+    private Date usedStartTime;
+
+    /**
+     * 可使用结束时间
+     */
+    private Date usedEndTime;
+
+    /**
      * 演出票商品信息
      */
     private ProductTicketBo ticket;

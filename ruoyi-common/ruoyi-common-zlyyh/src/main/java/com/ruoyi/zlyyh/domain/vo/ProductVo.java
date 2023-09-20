@@ -369,6 +369,15 @@ public class ProductVo implements Serializable {
      */
     private String distributorId;
 
+    /**
+     * 可使用开始时间
+     */
+    private Date usedStartTime;
+
+    /**
+     * 可使用结束时间
+     */
+    private Date usedEndTime;
 
     private ProductTicketVo ticket;
 
