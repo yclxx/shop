@@ -26,7 +26,7 @@ public class ProductBo extends BaseEntity {
     /**
      * ID
      */
-    @NotNull(message = "ID不能为空", groups = { EditGroup.class })
+    @NotNull(message = "ID不能为空", groups = {EditGroup.class})
     private Long productId;
 
     /**
@@ -37,7 +37,7 @@ public class ProductBo extends BaseEntity {
     /**
      * 商品名称
      */
-    @NotBlank(message = "商品名称不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotBlank(message = "商品名称不能为空", groups = {AddGroup.class, EditGroup.class})
     private String productName;
 
     /**
@@ -58,19 +58,19 @@ public class ProductBo extends BaseEntity {
     /**
      * 商品归属：0-商城内部（自己开发的页面），1-宣传展示（外部提供的页面）
      */
-    @NotBlank(message = "商品归属不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotBlank(message = "商品归属不能为空", groups = {AddGroup.class, EditGroup.class})
     private String productAffiliation;
 
     /**
      * 商品类型：0-优惠券，2-优惠活动
      */
-    @NotBlank(message = "商品类型不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotBlank(message = "商品类型不能为空", groups = {AddGroup.class, EditGroup.class})
     private String productType;
 
     /**
      * 领取方式：0-免费领取，1-付费领取，2-积点兑换
      */
-    @NotBlank(message = "领取方式不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotBlank(message = "领取方式不能为空", groups = {AddGroup.class, EditGroup.class})
     private String pickupMethod;
 
     /**
@@ -101,7 +101,7 @@ public class ProductBo extends BaseEntity {
     /**
      * 跳转类型：0-无需跳转，1-内部页面，2-外部页面，3-小程序跳转，4-图片页面，5-RN跳转
      */
-    @NotBlank(message = "跳转类型不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotBlank(message = "跳转类型不能为空", groups = {AddGroup.class, EditGroup.class})
     private String toType;
 
     /**
@@ -117,7 +117,7 @@ public class ProductBo extends BaseEntity {
     /**
      * 状态（0正常 1停用）
      */
-    @NotBlank(message = "状态不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotBlank(message = "状态不能为空", groups = {AddGroup.class, EditGroup.class})
     private String status;
 
     /**
@@ -231,6 +231,11 @@ public class ProductBo extends BaseEntity {
     private Long shopGroupId;
 
     /**
+     * 门店组ID
+     */
+    private String shopId;
+
+    /**
      * 按钮名称
      */
     private String btnText;
@@ -253,7 +258,7 @@ public class ProductBo extends BaseEntity {
     /**
      * 平台标识
      */
-    @NotNull(message = "平台不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotNull(message = "平台不能为空", groups = {AddGroup.class, EditGroup.class})
     private Long platformKey;
 
     /**
@@ -303,9 +308,19 @@ public class ProductBo extends BaseEntity {
     private String unionPay;
 
     /**
-     * 分销商
+     * 银联产品编号
      */
-    private String distributorId;
+    private String unionProductId;
+
+    /**
+     * 可使用开始时间
+     */
+    private Date usedStartTime;
+
+    /**
+     * 可使用结束时间
+     */
+    private Date usedEndTime;
 
     /**
      * 演出票商品信息

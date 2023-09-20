@@ -583,6 +583,8 @@ public class OrderServiceImpl implements IOrderService {
         order.setExternalProductSendValue(productVo.getExternalProductSendValue());
         order.setOrderType(productVo.getProductType());
         order.setParentNumber(bo.getParentNumber());
+        order.setUsedStartTime(productVo.getUsedStartTime());
+        order.setUsedEndTime(productVo.getUsedEndTime());
 
         OrderInfo orderInfo = new OrderInfo();
         orderInfo.setNumber(order.getNumber());

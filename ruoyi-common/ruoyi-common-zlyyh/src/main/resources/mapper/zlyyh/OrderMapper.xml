@@ -42,6 +42,9 @@
         <result property="parentNumber" column="parent_number"/>
         <result property="sysDeptId" column="sys_dept_id"/>
         <result property="sysUserId" column="sys_user_id"/>
+        <result property="usedStartTime" column="used_start_time"/>
+        <result property="usedEndTime" column="used_end_time"/>
+        <result property="usedTime" column="used_time"/>
     </resultMap>
     <select id="sumSendValue" resultType="java.math.BigDecimal">
         SELECT COALESCE(CAST(sum(external_product_send_value) AS DECIMAL(10, 2)), 0.00) AS external_product_send_value

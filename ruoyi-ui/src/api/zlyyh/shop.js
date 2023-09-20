@@ -51,3 +51,12 @@ export function selectShopList(query) {
     params: query
   })
 }
+
+// 查询门店下拉信息列表
+export function selectShopListById(query) {
+  return request({
+    url: '/zlyyh-admin/shop/selectShopListById',
+    method: 'get',
+    params: query
+  })
+}

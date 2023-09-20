@@ -66,7 +66,9 @@
         <result property="sysDeptId" column="sys_dept_id"/>
         <result property="sysUserId" column="sys_user_id"/>
         <result property="unionPay" column="union_pay"/>
-        <result property="distributorId" column="distributor_id"/>
+        <result property="unionProductId" column="union_product_id"/>
+        <result property="usedStartTime" column="used_start_time"/>
+        <result property="usedEndTime" column="used_end_time"/>
     </resultMap>
 
 

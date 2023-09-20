@@ -182,7 +182,18 @@ public class ShopServiceImpl implements IShopService {
         }
         lqw.eq(StringUtils.isNotBlank(bo.getStatus()), Shop::getStatus, bo.getStatus());
         lqw.eq(bo.getPlatformKey() != null, Shop::getPlatformKey, bo.getPlatformKey());
+        if (bo.getPageSize() != null) {
+            String sql = "limit " + bo.getPageSize();
+            lqw.last(sql);
+        }
         return lqw;
+    }
+
+    @Override
+    public List<ShopVo> queryList(List<String> ids) {
+        LambdaQueryWrapper<Shop> lqw = Wrappers.lambdaQuery();
+        lqw.in(Shop::getShopId, ids);
+        return baseMapper.selectVoList(lqw);
     }
 
     /**
@@ -211,7 +222,7 @@ public class ShopServiceImpl implements IShopService {
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setShopId(add.getShopId());
-            processBusiness(bo.getShopId(),bo.getBusinessDistrictId(),false);
+            processBusiness(bo.getShopId(), bo.getBusinessDistrictId(), false);
         }
         return flag;
     }
@@ -397,7 +408,7 @@ public class ShopServiceImpl implements IShopService {
             bo.setProcode(procode);
             bo.setCitycode(citycode);
             bo.setAdcode(adcode);
-            if (ObjectUtil.isEmpty(bo.getLatitude()) || ObjectUtil.isEmpty(bo.getLongitude())){
+            if (ObjectUtil.isEmpty(bo.getLatitude()) || ObjectUtil.isEmpty(bo.getLongitude())) {
                 String location = addressInfo.getString("location");
                 String[] split = location.split(",");
                 String longitude = split[0];
@@ -445,7 +456,7 @@ public class ShopServiceImpl implements IShopService {
     }
 
     @Override
-    public ShopVo queryByNameAndSupplierId(String name,String supplierShopId) {
+    public ShopVo queryByNameAndSupplierId(String name, String supplierShopId) {
         LambdaQueryWrapper<Shop> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(Shop::getShopName, name);
         queryWrapper.eq(Shop::getSupplierShopId, supplierShopId);

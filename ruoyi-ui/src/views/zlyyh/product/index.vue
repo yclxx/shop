@@ -209,8 +209,8 @@
                 </el-form-item>
               </el-col>
               <el-col :span="8">
-                <el-form-item label="领取方式" prop="pickupMethod">
-                  <el-select v-model="form.pickupMethod" placeholder="请选择领取方式" style="width: 100%;">
+                <el-form-item label="售卖方式" prop="pickupMethod">
+                  <el-select v-model="form.pickupMethod" placeholder="请选择售卖方式" style="width: 100%;">
                     <el-option v-for="dict in dict.type.t_product_pickup_method" :key="dict.value" :label="dict.label"
                       :value="dict.value"></el-option>
                   </el-select>
@@ -271,16 +271,30 @@
                 </el-form-item>
               </el-col>
               <el-col :span="8" v-if="form.productAffiliation && form.productAffiliation == '0'">
-                <el-form-item label="领取开始时间" prop="sellStartDate">
+                <el-form-item label="售卖开始时间" prop="sellStartDate">
                   <el-date-picker clearable v-model="form.sellStartDate" type="datetime" style="width: 100%;"
-                    value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择领取开始时间">
+                    value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择售卖开始时间">
                   </el-date-picker>
                 </el-form-item>
               </el-col>
               <el-col :span="8" v-if="form.productAffiliation && form.productAffiliation == '0'">
-                <el-form-item label="领取结束时间" prop="sellEndDate">
+                <el-form-item label="售卖结束时间" prop="sellEndDate">
                   <el-date-picker clearable v-model="form.sellEndDate" type="datetime" style="width: 100%;"
-                    value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择领取结束时间" default-time="23:59:59">
+                    value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择售卖结束时间" default-time="23:59:59">
+                  </el-date-picker>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8" v-if="form.productAffiliation && form.productAffiliation == '0'">
+                <el-form-item label="使用开始时间" prop="usedStartTime">
+                  <el-date-picker clearable v-model="form.usedStartTime" type="datetime" style="width: 100%;"
+                    value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择使用开始时间">
+                  </el-date-picker>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8" v-if="form.productAffiliation && form.productAffiliation == '0'">
+                <el-form-item label="使用结束时间" prop="usedEndTime">
+                  <el-date-picker clearable v-model="form.usedEndTime" type="datetime" style="width: 100%;"
+                    value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择使用结束时间" default-time="23:59:59">
                   </el-date-picker>
                 </el-form-item>
               </el-col>
@@ -401,11 +415,14 @@
               </el-col>
               <el-col :span="8"
                 v-if="form.productAffiliation && form.productAffiliation == '0' && form.unionPay == '1'">
-                <el-form-item label="内容方" prop="distributorId">
-                  <el-select v-model="form.distributorId" placeholder="请选择内容方" style="width: 100%;">
-                    <el-option v-for="dict in distributorList" :key="dict.id" :label="dict.label"
-                      :value="dict.id"></el-option>
-                  </el-select>
+                <el-form-item label="内容方" prop="unionProductId">
+                  <span slot="label">
+                    分销编号
+                    <el-tooltip content="银联分销产品的产品编号" placement="top">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input v-model="form.unionProductId" placeholder="请输入银联分销产品编号" />
                 </el-form-item>
               </el-col>
               <el-col :span="8">
@@ -583,9 +600,10 @@
           <el-form ref="form" :model="form" :rules="rules" label-width="110px">
             <el-row>
               <el-col :span="8">
-                <el-form-item label="门店组" prop="shopGroupId">
-                  <el-select v-model="form.shopGroupId" placeholder="请选择门店组" filterable clearable style="width: 100%;">
-                    <el-option v-for="item in shopGroupList" :key="item.id" :value="item.id" :label="item.label">
+                <el-form-item label="门店" prop="shopId">
+                  <el-select v-model="form.shopId" placeholder="请输入门店名称搜索" multiple filterable remote reserve-keyword
+                    :remote-method="selectShopLists" clearable style="width: 100%;">
+                    <el-option v-for="item in shopList" :key="item.id" :value="item.id" :label="item.label">
                     </el-option>
                   </el-select>
                 </el-form-item>
@@ -696,9 +714,35 @@
                 </el-form-item>
               </el-col>
               <el-col :span="8">
-                <el-form-item label="服务方式" required="true">
-                  <el-select v-model="form.ticket.ticketService" placeholder="请选择服务方式" style="width: 100%;">
-                    <el-option v-for="item in ticketServiceList" :key="item.value" :label="item.label"
+                <el-form-item label="不支持退" required="true">
+                  <el-select v-model="form.ticket.ticketNonsupport" placeholder="请选择不支持退" style="width: 100%;">
+                    <el-option v-for="item in ticketStatusList" :key="item.value" :label="item.label"
+                      :value="item.value" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="8">
+                <el-form-item label="电子发票" required="true">
+                  <el-select v-model="form.ticket.ticketInvoice" placeholder="请选择电子发票" style="width: 100%;">
+                    <el-option v-for="item in ticketStatusList" :key="item.value" :label="item.label"
+                      :value="item.value" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="过期退" required="true">
+                  <el-select v-model="form.ticket.ticketExpired" placeholder="请选择过期退" style="width: 100%;">
+                    <el-option v-for="item in ticketStatusList" :key="item.value" :label="item.label"
+                      :value="item.value" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="随时退" required="true">
+                  <el-select v-model="form.ticket.ticketAnyTime" placeholder="请选择随时退" style="width: 100%;">
+                    <el-option v-for="item in ticketStatusList" :key="item.value" :label="item.label"
                       :value="item.value" />
                   </el-select>
                 </el-form-item>
@@ -870,9 +914,6 @@
     listSelectMerchant
   } from "@/api/zlyyh/merchant"
   import {
-    selectListShopGroup
-  } from "@/api/zlyyh/shopGroup"
-  import {
     selectListMerchant
   } from "@/api/zlyyh/commercialTenant"
   import {
@@ -886,13 +927,24 @@
     productShowCityTreeSelect,
     selectCityList
   } from "@/api/zlyyh/area"
+  import {
+    selectShopList,
+    selectShopListById
+  } from "@/api/zlyyh/shop";
+  import item from "@/layout/components/Sidebar/Item.vue";
 
   export default {
     name: "Product",
+    computed: {
+      item() {
+        return item
+      }
+    },
     dicts: ['t_product_to_type', 't_product_status', 't_product_affiliation', 't_product_assign_date', 't_product_type',
       't_product_show_original_amount', 't_product_pickup_method', 't_grad_period_date_list', 't_product_search',
       't_search_status', 't_product_pay_user', 't_show_index', 't_product_send_account_type', 't_cus_refund',
-      'sys_normal_disable', 't_product_union_pay'
+      'sys_normal_disable',
+      't_product_union_pay'
     ],
     data() {
       return {
@@ -917,7 +969,7 @@
         productList: [],
         platformList: [],
         merchantList: [],
-        shopGroupList: [],
+        shopList: [],
         commercialTenantList: [],
         cityList: [],
         categoryList: [],
@@ -1124,7 +1176,7 @@
           }],
           unionPay: [{
             required: true,
-            message: "商品范围不能为空",
+            message: "请选择是否是涉及银联分销",
             trigger: "blur"
           }],
         },
@@ -1164,21 +1216,13 @@
             label: '无需填写'
           }
         ],
-        ticketServiceList: [{
+        ticketStatusList: [{
             value: '0',
-            label: '不支持退'
+            label: '是'
           },
           {
             value: '1',
-            label: '电子发票'
-          },
-          {
-            value: '2',
-            label: '过期退'
-          },
-          {
-            value: '3',
-            label: '随时退'
+            label: '否'
           },
         ],
         ticketPostWayList: [{
@@ -1193,7 +1237,8 @@
             value: '2',
             label: '另付邮费'
           },
-        ]
+        ],
+        shopParams: undefined
       };
     },
     created() {
@@ -1205,12 +1250,7 @@
       listSelectMerchant({}).then(res => {
         this.merchantList = res.data;
       })
-      let shopParams = {
-        status: "0"
-      }
-      selectListShopGroup(shopParams).then(res => {
-        this.shopGroupList = res.data;
-      })
+      this.selectShopLists();
       let merchantParams = {
         status: "0"
       }
@@ -1231,6 +1271,31 @@
       })
     },
     methods: {
+      selectShopLists(query) {
+        if (query !== undefined) {
+          this.shopParams = {
+            status: "0",
+            shopName: query,
+            pageSize: 100
+          }
+        } else {
+          this.shopParams = {
+            status: "0",
+            pageSize: 100
+          }
+        }
+        selectShopList(this.shopParams).then(res => {
+          this.shopList = res.data;
+        })
+      },
+      selectShop(query) {
+        let params = {
+          ids: query
+        }
+        selectShopListById(params).then(res => {
+          this.shopList = res.data;
+        })
+      },
       selectAll(val) {
         if (this.cityNodeAll) {
           // 	设置目前勾选的节点，使用此方法必须设置 node-key 属性
@@ -1341,8 +1406,11 @@
           showEndDate: undefined,
           sellStartDate: undefined,
           sellEndDate: undefined,
+          usedStartTime: undefined,
+          usedEndTime: undefined,
           assignDate: "0",
           unionPay: undefined,
+          unionProductId: undefined,
           weekDate: undefined,
           sellTime: undefined,
           totalCount: undefined,
@@ -1359,7 +1427,8 @@
           tags: undefined,
           showCity: undefined,
           merchantId: undefined,
-          shopGroupId: undefined,
+          shopId: undefined,
+          //shopGroupId: undefined,
           commercialTenantId: undefined,
           categoryId: undefined,
           btnText: undefined,
@@ -1377,7 +1446,10 @@
             ticketChooseSeat: undefined,
             ticketForm: undefined,
             ticketCard: undefined,
-            ticketService: undefined,
+            ticketNonsupport: undefined,
+            ticketInvoice: undefined,
+            ticketExpired: undefined,
+            ticketAnyTime: undefined,
             ticketPostWay: undefined,
             ticketPostage: undefined,
             ticketNotice: undefined
@@ -1465,6 +1537,10 @@
           if (this.form && this.form.commercialTenantId) {
             this.form.commercialTenantId = this.form.commercialTenantId.split(",")
           }
+          if (this.form && this.form.shopId) {
+            this.selectShop(response.data.shopId);
+            this.form.shopId = this.form.shopId.split(",")
+          }
           this.cityNodeAll = false;
           this.$nextTick(() => {
             showCity.then(res => {
@@ -1532,6 +1608,9 @@
             }
             if (this.form.commercialTenantId) {
               this.form.commercialTenantId = this.form.commercialTenantId.toString();
+            }
+            if (this.form.shopId) {
+              this.form.shopId = this.form.shopId.join(",");
             }
             if (this.form.productId != null) {
               updateProduct(this.form).then(response => {
@@ -1633,15 +1712,28 @@
           this.$modal.msgWarning("身份信息不能为空！");
           return 0;
         }
-        if (this.form.ticket.ticketService === undefined) {
-          this.$modal.msgWarning("服务方式不能为空！");
-          return 0;
-        }
+
         if (this.form.ticket.ticketPostWay === undefined) {
           this.$modal.msgWarning("快递方式不能为空！");
           return 0;
         }
 
+        if (this.form.ticket.ticketNonsupport === undefined) {
+          this.$modal.msgWarning("不支持退不能为空！");
+          return 0;
+        }
+        if (this.form.ticket.ticketInvoice === undefined) {
+          this.$modal.msgWarning("电子发票不能为空！");
+          return 0;
+        }
+        if (this.form.ticket.ticketExpired === undefined) {
+          this.$modal.msgWarning("过期退不能为空！");
+          return 0;
+        }
+        if (this.form.ticket.ticketAnyTime === undefined) {
+          this.$modal.msgWarning("随时退不能为空！");
+          return 0;
+        }
         if (ticketSession.length === 0) {
           this.$modal.msgWarning("场次信息不能为空！");
         } else {
@@ -1668,7 +1760,7 @@
               return 0;
             }
             for (let j = 0; j < session.ticketLine.length; j++) {
-              const ticketLine = session.ticketLine[i];
+              const ticketLine = session.ticketLine[j];
               if (ticketLine === undefined) {
                 this.$modal.msgWarning("票种信息不能为空！");
                 return 0;

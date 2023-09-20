@@ -269,6 +269,11 @@ public class ProductVo implements Serializable {
      */
     @ExcelProperty(value = "门店组ID")
     private Long shopGroupId;
+    /**
+     * 门店ID
+     */
+    @ExcelProperty(value = "门店ID")
+    private String shopId;
 
     /**
      * 按钮名称
@@ -360,10 +365,19 @@ public class ProductVo implements Serializable {
     private String unionPay;
 
     /**
-     * 分销商
+     * 银联产品编号
      */
-    private String distributorId;
+    private String unionProductId;
 
+    /**
+     * 可使用开始时间
+     */
+    private Date usedStartTime;
+
+    /**
+     * 可使用结束时间
+     */
+    private Date usedEndTime;
 
     private ProductTicketVo ticket;
 

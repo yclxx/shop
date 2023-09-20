@@ -28,6 +28,13 @@ public interface IProductService {
     ProductVo queryFoodById(Long productId);
 
     /**
+     * 查询演出票
+     * @param productId
+     * @return
+     */
+    ProductVo queryTicketById(Long productId);
+
+    /**
      * 查询商品列表
      */
     TableDataInfo<ProductVo> queryPageList(ProductBo bo, PageQuery pageQuery);

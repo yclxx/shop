@@ -52,13 +52,25 @@ public class ProductTicket extends BaseEntity {
      */
     private String ticketCard;
     /**
-     * 服务方式
-     */
-    private String ticketService;
-    /**
      * 快递方式
      */
     private String ticketPostWay;
+    /**
+     * 是否不支持退款
+     */
+    private String ticketNonsupport;
+    /**
+     * 是否电子发票
+     */
+    private String ticketInvoice;
+    /**
+     * 是否过期退
+     */
+    private String ticketExpired;
+    /**
+     * 随时退
+     */
+    private String ticketAnyTime;
     /**
      * 邮费
      */
