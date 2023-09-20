@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.zlyyh.mapper.CodeMapper">
+
+    <resultMap type="com.ruoyi.zlyyh.domain.Code" id="CodeResult">
+    <result property="id" column="id"/>
+    <result property="productId" column="product_id"/>
+    <result property="productSessionId" column="product_session_id"/>
+    <result property="productSkuId" column="product_sku_id"/>
+    <result property="productName" column="product_name"/>
+    <result property="productSessionName" column="product_session_name"/>
+    <result property="productSkuName" column="product_sku_name"/>
+    <result property="codeNo" column="code_no"/>
+    <result property="allocationState" column="allocation_state"/>
+    <result property="number" column="number"/>
+    <result property="usedStatus" column="used_status"/>
+    <result property="codeType" column="code_type"/>
+    <result property="usedTime" column="used_time"/>
+    <result property="shopId" column="shop_id"/>
+    <result property="shopName" column="shop_name"/>
+    <result property="verifierId" column="verifier_id"/>
+    <result property="verifierMobile" column="verifier_mobile"/>
+    <result property="qrcodeImgUrl" column="qrcode_img_url"/>
+    <result property="appointmentShopId" column="appointment_shop_id"/>
+    <result property="appointmentShopName" column="appointment_shop_name"/>
+    <result property="appointmentDate" column="appointment_date"/>
+    <result property="appointmentStatus" column="appointment_status"/>
+    <result property="appointmentId" column="appointment_id"/>
+    <result property="createBy" column="create_by"/>
+    <result property="createTime" column="create_time"/>
+    <result property="updateBy" column="update_by"/>
+    <result property="updateTime" column="update_time"/>
+    <result property="delFlag" column="del_flag"/>
+    <result property="sysDeptId" column="sys_dept_id"/>
+    <result property="sysUserId" column="sys_user_id"/>
+    </resultMap>
+
+
+</mapper>

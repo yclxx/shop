@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ruoyi.common.core.web.domain.BaseEntity;
+import com.ruoyi.common.encrypt.annotation.EncryptField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -52,6 +53,7 @@ public class UnionPayContentOrder extends BaseEntity {
     /**
      * 银联发券账号
      */
+    @EncryptField
     private String unionPayProdAstId;
     /**
      * 银联发券状态
