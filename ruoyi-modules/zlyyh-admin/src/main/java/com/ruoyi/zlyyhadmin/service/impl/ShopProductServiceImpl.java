@@ -7,6 +7,7 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.ruoyi.zlyyh.domain.Shop;
 import com.ruoyi.zlyyh.domain.ShopMerchant;
 import com.ruoyi.zlyyhadmin.service.IShopProductService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import com.ruoyi.zlyyh.mapper.ShopProductMapper;
 import java.util.List;
 import java.util.Map;
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 /**
  * 商品门店关联Service业务层处理
@@ -36,7 +38,7 @@ public class ShopProductServiceImpl implements IShopProductService {
      * 查询商品门店关联
      */
     @Override
-    public ShopProductVo queryById(Long id){
+    public ShopProductVo queryById(Long id) {
         return baseMapper.selectVoById(id);
     }
 
@@ -95,7 +97,7 @@ public class ShopProductServiceImpl implements IShopProductService {
     /**
      * 保存前的数据校验
      */
-    private void validEntityBeforeSave(ShopProduct entity){
+    private void validEntityBeforeSave(ShopProduct entity) {
         //TODO 做一些数据校验,如唯一约束
     }
 
@@ -104,7 +106,7 @@ public class ShopProductServiceImpl implements IShopProductService {
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
-        if(isValid){
+        if (isValid) {
             //TODO 做一些业务上的校验,判断是否需要校验
         }
         return baseMapper.deleteBatchIds(ids) > 0;
@@ -112,11 +114,23 @@ public class ShopProductServiceImpl implements IShopProductService {
 
     @Override
     public Integer deleteWithValidByShopId(Long shopId) {
-        return baseMapper.delete(new LambdaQueryWrapper<ShopProduct>().eq(ShopProduct::getShopId,shopId));
+        return baseMapper.delete(new LambdaQueryWrapper<ShopProduct>().eq(ShopProduct::getShopId, shopId));
     }
 
     @Override
     public List<ShopProductVo> queryByShopId(Long shopId) {
-        return baseMapper.selectVoList(new LambdaQueryWrapper<ShopProduct>().eq(ShopProduct::getShopId,shopId));
+        return baseMapper.selectVoList(new LambdaQueryWrapper<ShopProduct>().eq(ShopProduct::getShopId, shopId));
+    }
+
+    @Override
+    public Integer deleteByProductId(Long productId) {
+        return baseMapper.delete(new LambdaQueryWrapper<ShopProduct>().eq(ShopProduct::getProductId, productId));
+    }
+
+    @Override
+    public List<Long> queryByProductId(Long productId) {
+        LambdaQueryWrapper<ShopProduct> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(ShopProduct::getProductId, productId);
+        return baseMapper.selectList(queryWrapper).stream().map(ShopProduct::getShopId).collect(Collectors.toList());
     }
 }

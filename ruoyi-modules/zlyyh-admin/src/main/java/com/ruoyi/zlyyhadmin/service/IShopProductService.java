@@ -55,4 +55,9 @@ public interface IShopProductService {
     Integer deleteWithValidByShopId(Long shopId);
 
     List<ShopProductVo> queryByShopId(Long shopId);
+
+    Integer deleteByProductId(Long productId);
+
+    List<Long> queryByProductId(Long productId);
+
 }

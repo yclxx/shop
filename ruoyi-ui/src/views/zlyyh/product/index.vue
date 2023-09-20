@@ -1393,8 +1393,8 @@ export default {
         tags: undefined,
         showCity: undefined,
         merchantId: undefined,
-        shopGroupId: undefined,
         shopId: undefined,
+        //shopGroupId: undefined,
         commercialTenantId: undefined,
         categoryId: undefined,
         btnText: undefined,
@@ -1503,7 +1503,6 @@ export default {
         if (this.form && this.form.commercialTenantId) {
           this.form.commercialTenantId = this.form.commercialTenantId.split(",")
         }
-        debugger
         if (this.form && this.form.shopId) {
           this.selectShop(response.data.shopId);
           this.form.shopId = this.form.shopId.split(",")
