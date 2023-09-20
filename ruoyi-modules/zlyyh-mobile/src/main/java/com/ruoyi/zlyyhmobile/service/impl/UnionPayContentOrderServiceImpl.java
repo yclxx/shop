@@ -4,10 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.ruoyi.common.core.utils.JsonUtils;
-import com.ruoyi.common.core.utils.RSAUtils;
-import com.ruoyi.common.core.utils.ServletUtils;
-import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.core.utils.*;
 import com.ruoyi.zlyyh.constant.UnionPayConstants;
 import com.ruoyi.zlyyh.domain.Code;
 import com.ruoyi.zlyyh.domain.UnionPayContentOrder;
@@ -91,20 +88,37 @@ public class UnionPayContentOrderServiceImpl implements IUnionPayContentOrderSer
             // 发券
             return upSuppQuerybond(request, response, unionPayCreateBo, distributorVo);
         } else if ("up.supp.returnbond".equals(bizMethod)) {
-            // 退券
+            // todo 退券处理
             return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD00020022", "不允许退券", null, null, null, distributorVo.getPrivateKey(), null);
         } else if ("up.supp.stquery".equals(bizMethod)) {
-//            // 交易状态查询
-//            OrderVo orderVo = queryOrderByExternalOrderNumber(unionPayCreateBo.getOrigOrderId(), purchasingAgentVo.getPurchasingAgentId());
-//            if (null != orderVo) {
-//                return upSuppStquery(request, response, unionPayCreateBo, orderVo, distributorVo.getPrivateKey());
-//            } else {
-//                return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD00050025", "订单不存在", null, null, null, distributorVo.getPrivateKey(), null);
-//            }
+            // 交易状态查询
+            return upSuppStquery(request, response, unionPayCreateBo, distributorVo);
         } else {
             return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD20000000", "请求方式不支持，请联系内容提供方", null, null, null, distributorVo.getPrivateKey(), null);
         }
-        return null;
+    }
+
+    /**
+     * 银联分销发券
+     */
+    private JSONObject upSuppStquery(HttpServletRequest request, HttpServletResponse response, UnionPayCreateBo unionPayCreateBo, DistributorVo distributorVo) {
+        if ("up.supp.querybond".equals(unionPayCreateBo.getOrigBizMethod())) {
+            OrderVo orderVo = orderService.queryByExternalOrderNumber(unionPayCreateBo.getOrigOrderId());
+            if (null == orderVo) {
+                return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "订单不存在", null, null, null, distributorVo.getPrivateKey(), null);
+            }
+            if (!"2".equals(orderVo.getStatus())) {
+                return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "订单未支付", null, null, null, distributorVo.getPrivateKey(), null);
+            }
+            List<JSONObject> bondList = this.queryCodeVoList(orderVo, distributorVo.getPublicKey());
+            if (ObjectUtil.isEmpty(bondList)) {
+                return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "未找到对应券码", null, null, null, distributorVo.getPrivateKey(), null);
+            }
+            return unionPayOrderResultVo(request, response, unionPayCreateBo, "0000000000", "发券成功", null, "0", bondList, distributorVo.getPrivateKey(), "00");
+        } else if ("up.supp.returnbond".equals(unionPayCreateBo.getOrigBizMethod())) {
+            // todo 退券交易查询
+        }
+        return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "原交易类型不支持", null, null, null, distributorVo.getPrivateKey(), null);
     }
 
     /**
@@ -118,7 +132,7 @@ public class UnionPayContentOrderServiceImpl implements IUnionPayContentOrderSer
         if (!"2".equals(orderVo.getStatus())) {
             return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "订单创建失败,订单非支付成功状态", null, null, null, distributorVo.getPrivateKey(), null);
         }
-        List<JSONObject> bondList = this.queryCodeVoList(orderVo.getNumber(), distributorVo.getPublicKey());
+        List<JSONObject> bondList = this.queryCodeVoList(orderVo, distributorVo.getPublicKey());
         if (ObjectUtil.isEmpty(bondList)) {
             return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "订单创建失败,未找到对应券码", null, null, null, distributorVo.getPrivateKey(), null);
         }
@@ -141,12 +155,12 @@ public class UnionPayContentOrderServiceImpl implements IUnionPayContentOrderSer
     /**
      * 查询订单券码记录
      *
-     * @param number 订单信息
+     * @param orderVo 订单信息
      * @return 券码集合
      */
-    private List<JSONObject> queryCodeVoList(Long number, String publicKey) {
+    private List<JSONObject> queryCodeVoList(OrderVo orderVo, String publicKey) {
         LambdaQueryWrapper<Code> lqw = Wrappers.lambdaQuery();
-        lqw.eq(Code::getNumber, number);
+        lqw.eq(Code::getNumber, orderVo.getNumber());
         List<CodeVo> codeVos = codeMapper.selectVoList(lqw);
         if (ObjectUtil.isEmpty(codeVos)) {
             return new ArrayList<>();
@@ -155,8 +169,8 @@ public class UnionPayContentOrderServiceImpl implements IUnionPayContentOrderSer
         List<JSONObject> resultList = new ArrayList<>(codeVos.size());
         for (CodeVo codeVo : codeVos) {
             JSONObject result = new JSONObject();
-//            result.put("effectDtTm", StringUtils.isNotBlank(orderCardVo.getCardStartTime()) ? DateUtils.parseDateToStr(DateUtils.YYYYMMDDHHMMSS, DateUtils.parseDate(orderCardVo.getCardStartTime())) : DateUtils.parseDateToStr(DateUtils.YYYYMMDDHHMMSS, orderCardVo.getCreateTime()));
-//            result.put("exprDtTm", DateUtils.parseDateToStr(DateUtils.YYYYMMDDHHMMSS, DateUtils.parseDate(orderCardVo.getCardDeadline())));
+            result.put("effectDtTm", null != orderVo.getUsedStartTime() ? DateUtils.parseDateToStr(DateUtils.YYYYMMDDHHMMSS, orderVo.getUsedStartTime()) : DateUtils.parseDateToStr(DateUtils.YYYYMMDDHHMMSS, orderVo.getCreateTime()));
+            result.put("exprDtTm", null != orderVo.getUsedEndTime() ? DateUtils.parseDateToStr(DateUtils.YYYYMMDDHHMMSS, orderVo.getUsedEndTime()) : DateUtils.parseDateToStr(DateUtils.YYYYMMDDHHMMSS, DateUtils.addDays(orderVo.getCreateTime(), 30)));
             result.put("bondNo", RSAUtils.encryptByPublicKey(codeVo.getCodeNo(), publicKey));
             resultList.add(result);
         }

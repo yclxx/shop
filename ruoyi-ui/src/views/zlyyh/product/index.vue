@@ -415,11 +415,14 @@
               </el-col>
               <el-col :span="8"
                 v-if="form.productAffiliation && form.productAffiliation == '0' && form.unionPay == '1'">
-                <el-form-item label="内容方" prop="distributorId">
-                  <el-select v-model="form.distributorId" placeholder="请选择内容方" style="width: 100%;">
-                    <el-option v-for="dict in distributorList" :key="dict.id" :label="dict.label"
-                      :value="dict.id"></el-option>
-                  </el-select>
+                <el-form-item label="内容方" prop="unionProductId">
+                  <span slot="label">
+                    分销编号
+                    <el-tooltip content="银联分销产品的产品编号" placement="top">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input v-model="form.unionProductId" placeholder="请输入银联分销产品编号" />
                 </el-form-item>
               </el-col>
               <el-col :span="8">
@@ -1407,6 +1410,7 @@
           usedEndTime: undefined,
           assignDate: "0",
           unionPay: undefined,
+          unionProductId: undefined,
           weekDate: undefined,
           sellTime: undefined,
           totalCount: undefined,
