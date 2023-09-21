@@ -365,9 +365,9 @@ public class ProductVo implements Serializable {
     private String unionPay;
 
     /**
-     * 分销商
+     * 银联产品编号
      */
-    private String distributorId;
+    private String unionProductId;
 
     /**
      * 可使用开始时间
