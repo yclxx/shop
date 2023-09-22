@@ -38,6 +38,11 @@ public class CodeServiceImpl implements ICodeService {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean insertByOrder(Long number) {
+        // 先查询是否有生成过了，有券码直接返回成功
+        Long l = baseMapper.selectCount(Wrappers.lambdaQuery(Code.class).eq(Code::getNumber, number));
+        if (l > 0) {
+            return true;
+        }
         OrderVo orderVo = orderMapper.selectVoById(number);
         if (null == orderVo) {
             return false;
