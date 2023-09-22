@@ -59,6 +59,14 @@ public interface IOrderService {
     OrderVo queryById(Long number);
 
     /**
+     * 查询订单详情
+     *
+     * @param number 订单number
+     * @return 用户信息
+     */
+    OrderVo queryBaseOrderById(Long number);
+
+    /**
      * 查询订单列表
      */
     TableDataInfo<OrderVo> queryPageList(OrderBo bo, PageQuery pageQuery);
