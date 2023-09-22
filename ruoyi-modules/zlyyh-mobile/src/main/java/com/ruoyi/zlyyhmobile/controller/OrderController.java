@@ -142,7 +142,7 @@ public class OrderController {
      * 订单支付回调 美食套餐
      */
     @RequestMapping("/ignore/foodPayCallBack")
-    public void foodPayCallBack(JSONObject jsonObject) {
+    public void foodPayCallBack(@RequestBody JSONObject jsonObject) {
         log.info("美食订单支付回调接收开始");
         JSONObject data = jsonObject.getJSONObject("data");
         if (ObjectUtil.isEmpty(data)) {
@@ -157,8 +157,8 @@ public class OrderController {
     /**
      * 订单支付回调 携程订单
      */
-    @RequestMapping("/ignore/foodPayCallBack")
-    public void ctripOrderCallBack(JSONObject jsonObject) {
+    @RequestMapping("/ignore/ctripOrderCallBack")
+    public void ctripOrderCallBack(@RequestBody JSONObject jsonObject) {
         log.info("携程订单支付回调接收开始");
         String orderId = jsonObject.getString("orderId");
         if (ObjectUtil.isEmpty(orderId)) {
@@ -174,7 +174,7 @@ public class OrderController {
      * 退款成功回调 美食套餐
      */
     @RequestMapping("/ignore/cancelCallBack")
-    public void cancelCallBack(JSONObject jsonObject) {
+    public void cancelCallBack(@RequestBody JSONObject jsonObject) {
         log.info("美食订单退款回调接收开始");
         JSONObject data = jsonObject.getJSONObject("data");
         if (ObjectUtil.isEmpty(data)) {

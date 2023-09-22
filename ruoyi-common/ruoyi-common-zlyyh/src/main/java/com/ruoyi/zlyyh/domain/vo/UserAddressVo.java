@@ -44,7 +44,6 @@ public class UserAddressVo {
     /**
      * 联系电话
      */
-    @Sensitive(strategy = SensitiveStrategy.PHONE)
     @ExcelProperty(value = "联系电话")
     private String tel;
 
@@ -63,7 +62,7 @@ public class UserAddressVo {
     /**
      * 地址四级联动ID，对应t_area表，多个之间用空格隔开
      */
-    @ExcelProperty(value = "地址四级联动ID，对应t_area表，多个之间用空格隔开")
+    @ExcelProperty(value = "县市code")
     private String areaId;
 
     /**
