@@ -73,7 +73,7 @@ public class UserServiceImpl implements IUserService {
             log.info("查询62会员不走缓存，userId={}", userId);
         }
         PlatformVo platformVo = platformService.queryById(userVo.getPlatformKey());
-        if (null == platformVo) {
+        if (null == platformVo || "0".equals(platformVo.getUnionPayVip())) {
             return null;
         }
         memberVipBalanceVo = YsfUtils.queryMemberVipBalance(userVo.getMobile(), platformVo.getAppId(), platformVo.getSecret(), platformVo.getSymmetricKey(), platformVo.getPlatformKey());

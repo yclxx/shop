@@ -113,6 +113,14 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
+            <el-form-item label="会员权限" prop="unionPayVip">
+              <el-select v-model="form.unionPayVip" style="width: 100%;" placeholder="请选择云闪付会员权限">
+                <el-option v-for="dict in dict.type.t_platform_union_pay_vip" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
             <el-form-item label="状态" prop="status">
               <el-select v-model="form.status" style="width: 100%;" placeholder="请选择状态">
                 <el-option v-for="dict in dict.type.t_platform_status" :key="dict.value" :label="dict.label"
@@ -152,13 +160,8 @@
             </el-form-item>
           </el-col>
           <el-col :span="24">
-            <!-- <el-form-item label="活动城市" prop="platformCity">
-              <el-input v-model="form.platformCity" type="textarea" placeholder="请输入内容" />
-            </el-form-item> -->
             <el-form-item label="活动城市">
-              <!-- @change="handleCheckedTreeNodeAll($event)" -->
               <el-checkbox v-model="cityNodeAll" @change="selectAll">不限制城市</el-checkbox>
-              <!-- <el-checkbox v-model="cityExpand">父子联动</el-checkbox> -->
               <el-tree @check="handleNodeClick" class="tree-border" :data="cityOptions" show-checkbox default-expand-all
                 ref="city" node-key="id" empty-text="加载中,请稍后" :props="defaultProps"></el-tree>
             </el-form-item>
@@ -196,7 +199,7 @@
 
   export default {
     name: "Platform",
-    dicts: ['t_platform_status'],
+    dicts: ['t_platform_status', 't_platform_union_pay_vip'],
     components: {
       Treeselect
     },
@@ -296,6 +299,11 @@
             message: "支付商户号不能为空",
             trigger: "blur"
           }],
+          unionPayVip: [{
+            required: true,
+            message: "云闪付会员权限不能为空",
+            trigger: "blur"
+          }],
         },
         insert: true,
       };
@@ -338,6 +346,7 @@
           platformName: undefined,
           platformTitle: undefined,
           status: undefined,
+          unionPayVip: undefined,
           appId: undefined,
           encryptAppId: undefined,
           secret: undefined,

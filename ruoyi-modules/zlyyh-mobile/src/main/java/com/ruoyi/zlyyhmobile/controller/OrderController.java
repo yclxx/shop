@@ -93,7 +93,7 @@ public class OrderController {
     @GetMapping(value = "/queryOrderPay/{number}")
     public R<Void> queryOrderPay(@NotNull(message = "缺失必要参数")
                                  @PathVariable("number") Long number) {
-        return R.ok(orderService.queryOrderPay(number,0));
+        return R.ok(orderService.queryOrderPay(number));
     }
 
     /**
@@ -253,15 +253,14 @@ public class OrderController {
 
     @PostMapping("/orderRefund/{number}")
     public R<Void> orderRefund(@NotNull(message = "请求错误")
-                          @PathVariable("number") Long number) {
+                               @PathVariable("number") Long number) {
         orderService.orderRefund(number, LoginHelper.getUserId());
         return R.ok();
     }
 
-
     @PostMapping("/historyOrderRefund/{number}")
     public R<Void> historyOrderRefund(@NotNull(message = "请求错误")
-                               @PathVariable("number") Long number) {
+                                      @PathVariable("number") Long number) {
         historyOrderService.historyOrderRefund(number, LoginHelper.getUserId());
         return R.ok();
     }
