@@ -70,6 +70,11 @@ public class UserIdcardController extends BaseController {
      */
     @GetMapping("/{userIdcardId}")
     public R<UserIdcardVo> getInfo(@NotNull(message = "主键不能为空") @PathVariable Long userIdcardId) {
+        Long userId = LoginHelper.getUserId();
+        UserIdcardVo userIdcardVo = iUserIdcardService.queryById(userIdcardId);
+        if (null == userIdcardVo || !userIdcardVo.getUserId().equals(userId)) {
+            throw new ServiceException("用户信息不匹配,请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
+        }
         return R.ok(iUserIdcardService.queryById(userIdcardId));
     }
 
@@ -78,7 +83,7 @@ public class UserIdcardController extends BaseController {
      */
     @Log(title = "观影用户信息", businessType = BusinessType.INSERT)
     @PostMapping("/add")
-    public R<Void> add(@Validated(AddGroup.class) @RequestBody UserIdcardBo bo) {
+    public R<Void> add(@Validated @RequestBody UserIdcardBo bo) {
         bo.setUserId(LoginHelper.getUserId());
         return toAjax(iUserIdcardService.insertByBo(bo)? 1 : 0);
     }
@@ -88,7 +93,7 @@ public class UserIdcardController extends BaseController {
      */
     @Log(title = "观影用户信息", businessType = BusinessType.UPDATE)
     @PostMapping("/edit")
-    public R<Void> edit(@Validated(EditGroup.class) @RequestBody UserIdcardBo bo) {
+    public R<Void> edit(@Validated @RequestBody UserIdcardBo bo) {
         bo.setUserId(LoginHelper.getUserId());
         UserIdcardVo userIdcardVo = iUserIdcardService.queryById(bo.getUserIdcardId());
         if (null == userIdcardVo || !userIdcardVo.getUserId().equals(bo.getUserId())) {

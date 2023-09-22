@@ -16,6 +16,7 @@ import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.zlyyh.domain.Page;
+import com.ruoyi.zlyyh.domain.vo.UserIdcardVo;
 import com.ruoyi.zlyyhmobile.service.IUserAddressService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -77,6 +78,11 @@ public class UserAddressController extends BaseController {
      */
     @GetMapping("/{userAddressId}")
     public R<UserAddressVo> getInfo(@NotNull(message = "主键不能为空") @PathVariable Long userAddressId) {
+        Long userId = LoginHelper.getUserId();
+        UserAddressVo userAddressVo = iUserAddressService.queryById(userAddressId);
+        if (null == userAddressVo || !userAddressVo.getUserId().equals(userId)) {
+            throw new ServiceException("用户信息不匹配,请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
+        }
         return R.ok(iUserAddressService.queryById(userAddressId));
     }
 
@@ -85,7 +91,7 @@ public class UserAddressController extends BaseController {
      */
     @Log(title = "用户地址", businessType = BusinessType.INSERT)
     @PostMapping("/add")
-    public R<Void> add(@Validated(AddGroup.class) UserAddressBo bo) {
+    public R<Void> add(@Validated @RequestBody UserAddressBo bo) {
         bo.setUserId(LoginHelper.getUserId());
         return toAjax(iUserAddressService.insertByBo(bo) ? 1 : 0);
     }
@@ -95,7 +101,7 @@ public class UserAddressController extends BaseController {
      */
     @Log(title = "用户地址", businessType = BusinessType.UPDATE)
     @PostMapping("/edit")
-    public R<Void> edit(@Validated(EditGroup.class) UserAddressBo bo) {
+    public R<Void> edit(@Validated @RequestBody UserAddressBo bo) {
         bo.setUserId(LoginHelper.getUserId());
         UserAddressVo userAddressVo = iUserAddressService.queryById(bo.getUserAddressId());
         if (null == userAddressVo || !userAddressVo.getUserId().equals(bo.getUserId())) {
@@ -110,7 +116,7 @@ public class UserAddressController extends BaseController {
     @Log(title = "用户地址", businessType = BusinessType.UPDATE)
     @RepeatSubmit
     @PostMapping("/editDefault")
-    public R<Void> editDefault(UserAddressBo bo) {
+    public R<Void> editDefault(@Validated @RequestBody UserAddressBo bo) {
         bo.setUserId(LoginHelper.getUserId());
         UserAddressVo userAddressVo = iUserAddressService.queryById(bo.getUserAddressId());
         if (null == userAddressVo || !userAddressVo.getUserId().equals(bo.getUserId())) {
