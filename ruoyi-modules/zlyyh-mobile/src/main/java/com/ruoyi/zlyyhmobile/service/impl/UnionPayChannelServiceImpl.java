@@ -6,7 +6,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.zlyyh.domain.Order;
-import com.ruoyi.zlyyh.domain.OrderPushInfo;
 import com.ruoyi.zlyyh.domain.OrderUnionPay;
 import com.ruoyi.zlyyh.domain.vo.OrderUnionSendVo;
 import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayBizMethod;

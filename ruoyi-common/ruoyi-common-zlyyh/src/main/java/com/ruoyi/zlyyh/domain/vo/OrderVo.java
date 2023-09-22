@@ -8,6 +8,7 @@ import com.ruoyi.common.excel.annotation.ExcelDictFormat;
 import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
@@ -20,7 +21,7 @@ import java.util.List;
  */
 @Data
 @ExcelIgnoreUnannotated
-public class OrderVo {
+public class OrderVo implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

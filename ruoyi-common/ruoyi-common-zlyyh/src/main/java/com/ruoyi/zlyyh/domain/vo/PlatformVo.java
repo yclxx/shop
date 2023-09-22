@@ -6,6 +6,7 @@ import com.ruoyi.common.excel.annotation.ExcelDictFormat;
 import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -16,7 +17,7 @@ import java.util.List;
  */
 @Data
 @ExcelIgnoreUnannotated
-public class PlatformVo {
+public class PlatformVo implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
