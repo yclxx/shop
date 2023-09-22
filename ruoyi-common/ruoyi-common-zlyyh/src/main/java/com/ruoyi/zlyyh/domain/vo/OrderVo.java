@@ -233,4 +233,30 @@ public class OrderVo {
      * 使用时间
      */
     private Date usedTime;
+
+    /**
+     * 银联分销：0-不通过，1-通过
+     */
+    private String unionPay;
+
+    /**
+     * 银联产品编号
+     */
+    private String unionProductId;
+    /**
+     * 场次ID
+     */
+    private Long productSessionId;
+    /**
+     * 规格ID
+     */
+    private Long productSkuId;
+    /**
+     * 场次名称
+     */
+    private String productSessionName;
+    /**
+     * 规格名称
+     */
+    private String productSkuName;
 }

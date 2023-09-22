@@ -95,7 +95,7 @@ public interface IOrderService {
      * @param number 订单号
      * @return 支付结果
      */
-    String queryOrderPay(Long number, Integer type);
+    String queryOrderPay(Long number);
 
     /**
      * 查询用户未支付订单数量
@@ -223,44 +223,4 @@ public interface IOrderService {
      * @return 订单信息
      */
     OrderVo queryByExternalOrderNumber(String externalOrderNumber);
-
-//    /**
-//     * 银联内容分销 内容方 发券-退券-订单查询
-//     *
-//     * @param request          请求
-//     * @param response         响应
-//     * @param unionPayCreateBo 请求参数
-//     * @return 结果
-//     */
-//    JSONObject unionPay(HttpServletRequest request, HttpServletResponse response, UnionPayCreateBo unionPayCreateBo);
-//
-//    /**
-//     * 向银联发券
-//     *
-//     * @param distributorVo 分销商
-//     * @param txnTime       交易时间
-//     * @param orderId       订单号
-//     * @param prodId        商品编号
-//     * @param purQty        购买数量
-//     * @param prodAstIdTp   发券账号类型
-//     * @param prodAstId     发券账号
-//     */
-//    String createOrder(DistributorVo distributorVo, String txnTime, String orderId, String bizMethod, String prodId, String purQty, String prodAstIdTp, String prodAstId);
-//
-//    /**
-//     * 退券
-//     *
-//     * @param bizMethod 交易类型
-//     * @param txnTime   交易时间
-//     * @param orderId   订单号
-//     * @param prodId    商品id
-//     * @param bondNo    券码
-//     * @return
-//     */
-//    String refundOrder(DistributorVo distributorVo, String bizMethod, String txnTime, String orderId, String prodId, String bondNo);
-//
-//    /**
-//     * 交易状态查询
-//     */
-//    String dealStatus(DistributorVo distributorVo, String bizMethod, String txnTime, String orderId, String origBizMethod, String origTxnTime, String origOrderId);
 }

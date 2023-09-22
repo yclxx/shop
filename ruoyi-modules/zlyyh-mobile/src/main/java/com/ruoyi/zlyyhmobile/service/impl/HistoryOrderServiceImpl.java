@@ -272,7 +272,7 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
         }
         OrderBackTrans orderBackTrans = new OrderBackTrans();
         orderBackTrans.setRefund(orderVo.getOutAmount());
-        orderBackTrans.setThNumber(IdUtils.getDateUUID("T"));
+        orderBackTrans.setThNumber(IdUtils.getSnowflakeNextIdStr("T"));
         orderBackTrans.setOrderBackTransState("0");
         orderBackTrans.setNumber(orderVo.getNumber());
         //根据订单类型进行退款
