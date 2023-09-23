@@ -1090,6 +1090,16 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     /**
+     * 查询订单详情
+     *
+     * @param number 订单number
+     * @return 用户信息
+     */
+    public OrderVo queryBaseOrderById(Long number) {
+        return baseMapper.selectVoById(number);
+    }
+
+    /**
      * 查询订单列表
      */
     @Override
