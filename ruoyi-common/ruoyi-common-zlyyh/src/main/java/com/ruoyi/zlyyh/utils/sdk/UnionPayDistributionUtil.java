@@ -225,10 +225,10 @@ public class UnionPayDistributionUtil {
     /**
      * 订单状态查询
      */
-    public static String orderStatus(Long number, String bizMethod, String chnlProdId, Long origOrderId, String origTxnTime, Long platformKey, String appId, String certPath) {
+    public static String orderStatus(String bizMethod, String chnlProdId, Long origOrderId, String origTxnTime, Long platformKey, String appId, String certPath) {
         Map<String, String> reqData = getReqData(UnionPayBizMethod.STQUERY.getBizMethod(), appId, IdUtil.getSnowflakeNextIdStr());
         // 组装HTTP请求报文体 根据实际业务填写
-        Map<String, Object> bodyMap = getBody(appId, number.toString());
+        Map<String, Object> bodyMap = getBody(appId, IdUtil.getSnowflakeNextIdStr());
         // 商品代码
         bodyMap.put("chnlProdId", chnlProdId);
         // 原交易关键字

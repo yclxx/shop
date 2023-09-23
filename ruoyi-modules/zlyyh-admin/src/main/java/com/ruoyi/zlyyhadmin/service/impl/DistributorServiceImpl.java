@@ -5,6 +5,7 @@ import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ruoyi.common.core.constant.CacheNames;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
@@ -15,6 +16,7 @@ import com.ruoyi.zlyyh.domain.vo.DistributorVo;
 import com.ruoyi.zlyyh.mapper.DistributorMapper;
 import com.ruoyi.zlyyhadmin.service.IDistributorService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -71,6 +73,7 @@ public class DistributorServiceImpl implements IDistributorService {
     /**
      * 新增分销商信息
      */
+    @CacheEvict(cacheNames = CacheNames.DISTRIBUTOR, allEntries = true)
     @Override
     public Boolean insertByBo(DistributorBo bo) {
         Distributor add = BeanUtil.toBean(bo, Distributor.class);
@@ -92,6 +95,7 @@ public class DistributorServiceImpl implements IDistributorService {
     /**
      * 修改分销商信息
      */
+    @CacheEvict(cacheNames = CacheNames.DISTRIBUTOR, allEntries = true)
     @Override
     public Boolean updateByBo(DistributorBo bo) {
         Distributor update = BeanUtil.toBean(bo, Distributor.class);
@@ -101,6 +105,7 @@ public class DistributorServiceImpl implements IDistributorService {
     /**
      * 批量删除分销商信息
      */
+    @CacheEvict(cacheNames = CacheNames.DISTRIBUTOR, allEntries = true)
     @Override
     public Boolean deleteWithValidByIds(Collection<String> ids, Boolean isValid) {
         if (isValid) {

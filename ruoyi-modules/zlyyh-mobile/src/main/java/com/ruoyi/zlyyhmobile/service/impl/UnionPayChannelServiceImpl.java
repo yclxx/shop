@@ -89,7 +89,7 @@ public class UnionPayChannelServiceImpl implements IUnionPayChannelService {
     /**
      * 银联分销 直销 订单发券
      *
-     * @param order         订单信息
+     * @param order 订单信息
      */
     public void orderSend(Order order) {
         List<OrderUnionSendVo> orderUnionSendVos = orderUnionSendService.queryListByNumber(order.getNumber());
@@ -114,18 +114,18 @@ public class UnionPayChannelServiceImpl implements IUnionPayChannelService {
             String certPath;
             if ("11".equals(order.getOrderType())) {
                 certPath = YsfDistributionPropertiesUtils.getCertPathJC(order.getPlatformKey());
-                orderStatusStr = UnionPayDistributionUtil.orderStatus(order.getNumber(), UnionPayBizMethod.CHNLPUR.getBizMethod(), externalProductId, order.getNumber(), data.getString("txnTime"), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJCAppId(order.getPlatformKey()), certPath);
+                orderStatusStr = UnionPayDistributionUtil.orderStatus(UnionPayBizMethod.CHNLPUR.getBizMethod(), externalProductId, order.getNumber(), data.getString("txnTime"), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJCAppId(order.getPlatformKey()), certPath);
             } else {
                 certPath = YsfDistributionPropertiesUtils.getCertPathJD(order.getPlatformKey());
-                orderStatusStr = UnionPayDistributionUtil.orderStatus(order.getNumber(), UnionPayBizMethod.chnlpur.getBizMethod(), externalProductId, order.getNumber(), orderUnionPay.getTxnTime(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), certPath);
+                orderStatusStr = UnionPayDistributionUtil.orderStatus(UnionPayBizMethod.chnlpur.getBizMethod(), externalProductId, order.getNumber(), orderUnionPay.getTxnTime(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), certPath);
             }
             JSONObject orderStatus = JSONObject.parseObject(orderStatusStr);
             // 查询成功，开始处理。
             if (orderStatus.getString("code").equals(UnionPayParams.CodeSuccess.getStr())) {
                 // 发放成功
                 if ("05".equals(orderStatus.getString("prodOrderSt"))) {
-                    String prodTp = data.getString("prodTp");
-                    JSONArray bondLst = data.getJSONArray("bondLst");
+                    String prodTp = orderStatus.getString("prodTp");
+                    JSONArray bondLst = orderStatus.getJSONArray("bondLst");
                     if (orderUnionPay != null) {
                         orderUnionSendService.insertList(order.getNumber(), orderUnionPay.getProdTn(), prodTp, bondLst, certPath, YsfDistributionPropertiesUtils.getCertPwd(order.getPlatformKey()));
                     } else {
@@ -133,9 +133,9 @@ public class UnionPayChannelServiceImpl implements IUnionPayChannelService {
                         orderUnionSendService.insertList(order.getNumber(), prodTn, prodTp, bondLst, certPath, YsfDistributionPropertiesUtils.getCertPwd(order.getPlatformKey()));
                         orderUnionPay = new OrderUnionPay();
                         orderUnionPay.setNumber(order.getNumber());
-                        orderUnionPay.setOrderId(data.getString("orderId"));
+                        orderUnionPay.setOrderId(orderStatus.getString("orderId"));
                         orderUnionPay.setProdTn(prodTn);
-                        orderUnionPay.setTxnTime(data.getString("txnTime"));
+                        orderUnionPay.setTxnTime(orderStatus.getString("txnTime"));
                         orderUnionPay.setUsrPayAmt("0");
                         orderUnionPayMapper.insertOrUpdate(orderUnionPay);
                         order.setExternalOrderNumber(prodTn);
