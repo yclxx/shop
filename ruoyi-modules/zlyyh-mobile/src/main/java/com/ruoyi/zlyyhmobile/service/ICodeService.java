@@ -1,12 +1,7 @@
 package com.ruoyi.zlyyhmobile.service;
 
-import com.ruoyi.zlyyh.domain.Code;
 import com.ruoyi.zlyyh.domain.vo.CodeVo;
-import com.ruoyi.zlyyh.domain.bo.CodeBo;
-import com.ruoyi.common.mybatis.core.page.PageQuery;
-import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -18,32 +13,47 @@ import java.util.List;
 public interface ICodeService {
 
     /**
-     * 查询商品券码
+     * 新增商品券码
      */
-    CodeVo queryById(Long id);
+    Boolean insertByOrder(Long number);
 
     /**
-     * 查询商品券码列表
+     * 查询核销码
+     *
+     * @param number 订单号
+     * @return 核销码集合
      */
-    TableDataInfo<CodeVo> queryPageList(CodeBo bo, PageQuery pageQuery);
+    List<CodeVo> queryByNumber(Long number);
 
     /**
-     * 查询商品券码列表
+     * 查询券码
+     *
+     * @param codeNo 核销码
+     * @return 券码信息
      */
-    List<CodeVo> queryList(CodeBo bo);
+    CodeVo queryByCodeNo(String codeNo);
 
     /**
-     * 修改商品券码
+     * 作废券码
+     *
+     * @param codeNo 券码
+     * @return 结果
      */
-    Boolean insertByBo(CodeBo bo);
+    boolean cancellationCode(String codeNo);
 
     /**
-     * 修改商品券码
+     * 核销券码
+     *
+     * @param codeNo 券码
+     * @return true 成功，false 失败
      */
-    Boolean updateByBo(CodeBo bo);
+    Boolean usedCode(String codeNo);
 
     /**
-     * 校验并批量删除商品券码信息
+     * 票券返还
+     *
+     * @param codeNo 核销码
+     * @return true 成功,false 失败
      */
-    Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
+    Boolean rollbackCode(String codeNo);
 }

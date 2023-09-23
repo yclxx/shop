@@ -97,4 +97,9 @@ public class Platform extends BaseEntity {
      * 部门id
      */
     private Long manangerDeptId;
+
+    /**
+     * 云闪付62会员权限：0-无权限，1-有权限
+     */
+    private String unionPayVip;
 }

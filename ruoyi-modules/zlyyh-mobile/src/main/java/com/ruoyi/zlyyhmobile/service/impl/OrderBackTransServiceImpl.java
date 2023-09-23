@@ -129,7 +129,7 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
                 throw new ServiceException("商户不存在，请联系客服处理");
             }
         }
-        bo.setThNumber(IdUtils.getDateUUID("T"));
+        bo.setThNumber(IdUtils.getSnowflakeNextIdStr("T"));
         bo.setOrderBackTransState("0");
         bo.setNumber(order.getNumber());
         order.setStatus("4");

@@ -4,23 +4,25 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.*;
 import com.ruoyi.zlyyh.constant.UnionPayConstants;
-import com.ruoyi.zlyyh.domain.Code;
 import com.ruoyi.zlyyh.domain.UnionPayContentOrder;
-import com.ruoyi.zlyyh.domain.vo.CodeVo;
-import com.ruoyi.zlyyh.domain.vo.DistributorVo;
-import com.ruoyi.zlyyh.domain.vo.OrderVo;
-import com.ruoyi.zlyyh.domain.vo.UnionPayContentOrderVo;
-import com.ruoyi.zlyyh.mapper.CodeMapper;
+import com.ruoyi.zlyyh.domain.UnionPayContentRefundOrder;
+import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.UnionPayContentOrderMapper;
+import com.ruoyi.zlyyh.mapper.UnionPayContentRefundOrderMapper;
 import com.ruoyi.zlyyhmobile.domain.bo.UnionPayCreateBo;
+import com.ruoyi.zlyyhmobile.event.UnionPayContentSendCouponCallbackEvent;
+import com.ruoyi.zlyyhmobile.service.ICodeService;
 import com.ruoyi.zlyyhmobile.service.IDistributorService;
 import com.ruoyi.zlyyhmobile.service.IOrderService;
 import com.ruoyi.zlyyhmobile.service.IUnionPayContentOrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -38,12 +40,13 @@ public class UnionPayContentOrderServiceImpl implements IUnionPayContentOrderSer
     private final IDistributorService distributorService;
     private final UnionPayContentOrderMapper baseMapper;
     private final IOrderService orderService;
-    private final CodeMapper codeMapper;
-    ;
+    private final ICodeService codeService;
+    private final UnionPayContentRefundOrderMapper refundOrderMapper;
 
     /**
      * 银联分销
      */
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public JSONObject unionPay(HttpServletRequest request, HttpServletResponse response, UnionPayCreateBo unionPayCreateBo) {
         String postData = ServletUtils.getParamJson(request);
@@ -88,8 +91,11 @@ public class UnionPayContentOrderServiceImpl implements IUnionPayContentOrderSer
             // 发券
             return upSuppQuerybond(request, response, unionPayCreateBo, distributorVo);
         } else if ("up.supp.returnbond".equals(bizMethod)) {
-            // todo 退券处理
-            return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD00020022", "不允许退券", null, null, null, distributorVo.getPrivateKey(), null);
+            try {
+                return upSuppReturnbond(request, response, unionPayCreateBo, distributorVo);
+            } catch (Exception e) {
+                return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD20000000", "退券失败", null, null, null, distributorVo.getPrivateKey(), null);
+            }
         } else if ("up.supp.stquery".equals(bizMethod)) {
             // 交易状态查询
             return upSuppStquery(request, response, unionPayCreateBo, distributorVo);
@@ -99,26 +105,80 @@ public class UnionPayContentOrderServiceImpl implements IUnionPayContentOrderSer
     }
 
     /**
-     * 银联分销发券
+     * 银联分销退券
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public JSONObject upSuppReturnbond(HttpServletRequest request, HttpServletResponse response, UnionPayCreateBo unionPayCreateBo, DistributorVo distributorVo) {
+        String codeNo = RSAUtils.decryptByPrivateKey(unionPayCreateBo.getBondNo(), distributorVo.getPrivateKey());
+        if (StringUtils.isEmpty(codeNo)) {
+            return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD00020022", "券码解密失败", null, null, null, distributorVo.getPrivateKey(), null);
+        }
+        // 作废券码
+        boolean b;
+        try {
+            b = codeService.cancellationCode(codeNo);
+        } catch (Exception e) {
+            return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD00020022", e.getMessage(), null, null, null, distributorVo.getPrivateKey(), null);
+        }
+        if (!b) {
+            throw new ServiceException("退券失败");
+        }
+        UnionPayContentRefundOrder refundOrder = new UnionPayContentRefundOrder();
+        refundOrder.setUnionPayAppId(distributorVo.getDistributorId());
+        refundOrder.setUnionPayOrderId(unionPayCreateBo.getOrderId());
+        refundOrder.setUnionPayProdId(unionPayCreateBo.getProdId());
+        refundOrder.setUnionPayTxnTime(unionPayCreateBo.getTxnTime());
+        refundOrder.setUnionPayBondNo(codeNo);
+        refundOrder.setUnionPayResultStatus("00");
+        int insert = refundOrderMapper.insert(refundOrder);
+        if (insert < 1) {
+            throw new ServiceException("退券失败");
+        }
+        return unionPayOrderResultVo(request, response, unionPayCreateBo, "0000000000", "退券成功", "00", null, null, distributorVo.getPrivateKey(), null);
+    }
+
+    /**
+     * 银联分销 发券状态查询
      */
     private JSONObject upSuppStquery(HttpServletRequest request, HttpServletResponse response, UnionPayCreateBo unionPayCreateBo, DistributorVo distributorVo) {
         if ("up.supp.querybond".equals(unionPayCreateBo.getOrigBizMethod())) {
-            OrderVo orderVo = orderService.queryByExternalOrderNumber(unionPayCreateBo.getOrigOrderId());
-            if (null == orderVo) {
-                return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "订单不存在", null, null, null, distributorVo.getPrivateKey(), null);
-            }
-            if (!"2".equals(orderVo.getStatus())) {
-                return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "订单未支付", null, null, null, distributorVo.getPrivateKey(), null);
-            }
-            List<JSONObject> bondList = this.queryCodeVoList(orderVo, distributorVo.getPublicKey());
-            if (ObjectUtil.isEmpty(bondList)) {
-                return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "未找到对应券码", null, null, null, distributorVo.getPrivateKey(), null);
-            }
-            return unionPayOrderResultVo(request, response, unionPayCreateBo, "0000000000", "发券成功", null, "0", bondList, distributorVo.getPrivateKey(), "00");
+            return queryBond(request, response, unionPayCreateBo, distributorVo);
         } else if ("up.supp.returnbond".equals(unionPayCreateBo.getOrigBizMethod())) {
-            // todo 退券交易查询
+            return returnBond(request, response, unionPayCreateBo, distributorVo);
         }
         return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "原交易类型不支持", null, null, null, distributorVo.getPrivateKey(), null);
+    }
+
+    /**
+     * 退券状态查询
+     */
+    private JSONObject returnBond(HttpServletRequest request, HttpServletResponse response, UnionPayCreateBo unionPayCreateBo, DistributorVo distributorVo) {
+        LambdaQueryWrapper<UnionPayContentRefundOrder> lqw = Wrappers.lambdaQuery();
+        lqw.eq(UnionPayContentRefundOrder::getUnionPayOrderId, unionPayCreateBo.getOrigOrderId());
+        lqw.last("order by id desc limit 1");
+        UnionPayContentRefundOrderVo refundOrderVo = refundOrderMapper.selectVoOne(lqw);
+        if (null == refundOrderVo) {
+            return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "原订单不存在", null, null, null, distributorVo.getPrivateKey(), null);
+        }
+        return unionPayOrderResultVo(request, response, unionPayCreateBo, "0000000000", "成功", null, null, null, distributorVo.getPrivateKey(), refundOrderVo.getUnionPayResultStatus());
+    }
+
+    /**
+     * 发券状态查询
+     */
+    private JSONObject queryBond(HttpServletRequest request, HttpServletResponse response, UnionPayCreateBo unionPayCreateBo, DistributorVo distributorVo) {
+        OrderVo orderVo = orderService.queryByExternalOrderNumber(unionPayCreateBo.getOrigOrderId());
+        if (null == orderVo) {
+            return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "订单不存在", null, null, null, distributorVo.getPrivateKey(), null);
+        }
+        if (!"2".equals(orderVo.getStatus())) {
+            return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "订单未支付", null, null, null, distributorVo.getPrivateKey(), null);
+        }
+        List<JSONObject> bondList = this.queryCodeVoList(orderVo, distributorVo.getPublicKey());
+        if (ObjectUtil.isEmpty(bondList)) {
+            return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "未找到对应券码", null, null, null, distributorVo.getPrivateKey(), null);
+        }
+        return unionPayOrderResultVo(request, response, unionPayCreateBo, "0000000000", "发券成功", null, "0", bondList, distributorVo.getPrivateKey(), "00");
     }
 
     /**
@@ -149,7 +209,34 @@ public class UnionPayContentOrderServiceImpl implements IUnionPayContentOrderSer
                 return unionPayOrderResultVo(request, response, unionPayCreateBo, "PD40000000", "订单创建失败,系统异常", null, null, null, distributorVo.getPrivateKey(), null);
             }
         }
-        return unionPayOrderResultVo(request, response, unionPayCreateBo, "0000000000", "发券成功", "00", "0", bondList, distributorVo.getPrivateKey(), null);
+        String prodCertTp = "0";
+        // 异步通知发券成功
+        UnionPayContentSendCouponCallbackEvent event = getUnionPayContentSendCouponCallbackEvent(unionPayCreateBo, distributorVo, orderVo, bondList, prodCertTp);
+        SpringUtils.context().publishEvent(event);
+        // 同步返回结果
+        return unionPayOrderResultVo(request, response, unionPayCreateBo, "0000000000", "发券成功", "00", prodCertTp, bondList, distributorVo.getPrivateKey(), null);
+    }
+
+    /**
+     * 组装异步通知内容
+     *
+     * @param unionPayCreateBo 请求信息
+     * @param distributorVo    分销商信息
+     * @param orderVo          订单信息
+     * @return 通知内容
+     */
+    @NotNull
+    private UnionPayContentSendCouponCallbackEvent getUnionPayContentSendCouponCallbackEvent(UnionPayCreateBo unionPayCreateBo, DistributorVo distributorVo, OrderVo orderVo, List<JSONObject> bondList, String prodCertTp) {
+        UnionPayContentSendCouponCallbackEvent event = new UnionPayContentSendCouponCallbackEvent();
+        event.setUnionPayProductId(getProductId(orderVo));
+        event.setPrivateKey(distributorVo.getPrivateKey());
+        event.setOrigTxnTime(unionPayCreateBo.getTxnTime());
+        event.setOrigOrderId(unionPayCreateBo.getOrderId());
+        event.setAppId(distributorVo.getDistributorId());
+        event.setCallbackUrl(distributorVo.getBackUrl());
+        event.setBondList(bondList);
+        event.setProdCertTp(prodCertTp);
+        return event;
     }
 
     /**
@@ -159,9 +246,7 @@ public class UnionPayContentOrderServiceImpl implements IUnionPayContentOrderSer
      * @return 券码集合
      */
     private List<JSONObject> queryCodeVoList(OrderVo orderVo, String publicKey) {
-        LambdaQueryWrapper<Code> lqw = Wrappers.lambdaQuery();
-        lqw.eq(Code::getNumber, orderVo.getNumber());
-        List<CodeVo> codeVos = codeMapper.selectVoList(lqw);
+        List<CodeVo> codeVos = codeService.queryByNumber(orderVo.getNumber());
         if (ObjectUtil.isEmpty(codeVos)) {
             return new ArrayList<>();
         }
@@ -272,5 +357,19 @@ public class UnionPayContentOrderServiceImpl implements IUnionPayContentOrderSer
         }
         log.info("银联分销，reqId:{},返回参数：{},签名原文：{},签名结果：{}", request.getHeader(UnionPayConstants.REQ_ID), result, str, sign);
         return result;
+    }
+
+    /**
+     * 获取产品编号 如果有规格则返回规格ID
+     *
+     * @param orderVo 订单信息
+     * @return 产品编号
+     */
+    private String getProductId(OrderVo orderVo) {
+        String productId = orderVo.getProductId().toString();
+        if (null != orderVo.getProductSkuId()) {
+            productId = orderVo.getProductSkuId().toString();
+        }
+        return productId;
     }
 }
