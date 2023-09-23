@@ -10,6 +10,7 @@ import com.ruoyi.common.core.utils.RSAUtils;
 import com.ruoyi.common.core.utils.SpringUtils;
 import com.ruoyi.zlyyh.domain.Code;
 import com.ruoyi.zlyyh.domain.Product;
+import com.ruoyi.zlyyh.domain.UnionPayContentOrder;
 import com.ruoyi.zlyyh.domain.vo.CodeVo;
 import com.ruoyi.zlyyh.domain.vo.DistributorVo;
 import com.ruoyi.zlyyh.domain.vo.OrderVo;
@@ -17,12 +18,12 @@ import com.ruoyi.zlyyh.domain.vo.UnionPayContentOrderVo;
 import com.ruoyi.zlyyh.mapper.CodeMapper;
 import com.ruoyi.zlyyh.mapper.OrderMapper;
 import com.ruoyi.zlyyh.mapper.ProductMapper;
+import com.ruoyi.zlyyh.mapper.UnionPayContentOrderMapper;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhmobile.enums.UnionPayCallbackBizMethodType;
 import com.ruoyi.zlyyhmobile.event.UnionPayContentCallbackEvent;
 import com.ruoyi.zlyyhmobile.service.ICodeService;
 import com.ruoyi.zlyyhmobile.service.IDistributorService;
-import com.ruoyi.zlyyhmobile.service.IUnionPayContentOrderService;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
@@ -44,7 +45,7 @@ public class CodeServiceImpl implements ICodeService {
     private final CodeMapper baseMapper;
     private final OrderMapper orderMapper;
     private final ProductMapper productMapper;
-    private final IUnionPayContentOrderService unionPayContentOrderService;
+    private final UnionPayContentOrderMapper unionPayContentOrderMapper;
     private final IDistributorService distributorService;
 
     /**
@@ -266,7 +267,10 @@ public class CodeServiceImpl implements ICodeService {
      * @return 分销商信息
      */
     private void callback(CodeVo codeVo, OrderVo orderVo, UnionPayCallbackBizMethodType bizMethod) {
-        UnionPayContentOrderVo unionPayContentOrderVo = unionPayContentOrderService.queryByNumber(orderVo.getNumber());
+        LambdaQueryWrapper<UnionPayContentOrder> lqw = Wrappers.lambdaQuery();
+        lqw.eq(UnionPayContentOrder::getNumber, orderVo.getNumber());
+        lqw.last("order by id desc limit 1");
+        UnionPayContentOrderVo unionPayContentOrderVo = unionPayContentOrderMapper.selectVoOne(lqw);
         if (null == unionPayContentOrderVo) {
             // 没有银联分销订单，直接返回
             return;

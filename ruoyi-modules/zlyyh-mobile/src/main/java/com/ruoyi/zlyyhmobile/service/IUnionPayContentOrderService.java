@@ -22,10 +22,4 @@ public interface IUnionPayContentOrderService {
      */
     JSONObject unionPay(HttpServletRequest request, HttpServletResponse response, UnionPayCreateBo unionPayCreateBo);
 
-    /**
-     * 查询内容分销订单
-     * @param number 订单号
-     * @return 订单信息
-     */
-    UnionPayContentOrderVo queryByNumber(Long number);
 }
