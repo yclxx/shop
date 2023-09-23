@@ -127,12 +127,12 @@ public class OrderServiceImpl implements IOrderService {
      * @param order 订单信息
      */
     @Override
-    public void updateOrder(Order order) {
+    public Order updateOrder(Order order) {
         int insert = baseMapper.updateById(order);
         if (insert <= 0) {
             throw new ServiceException("更新订单失败");
         }
-        order = baseMapper.selectById(order.getNumber());
+        return baseMapper.selectById(order.getNumber());
     }
 
     /**
@@ -255,7 +255,7 @@ public class OrderServiceImpl implements IOrderService {
                             OrderCacheUtils.setOrderCache(order);
                         } else {
                             // 修改订单信息
-                            updateOrder(order);
+                            order = updateOrder(order);
                         }
                         break;
                     }
@@ -293,7 +293,7 @@ public class OrderServiceImpl implements IOrderService {
             } else {
                 orderPushInfoMapper.insert(orderPushInfo);
                 // 修改订单信息
-                updateOrder(order);
+                order = updateOrder(order);
             }
             if (StringUtils.isBlank(order.getExternalProductId()) || (("3".equals(order.getOrderType()) || "10".equals(order.getOrderType()) || "4".equals(order.getOrderType())) && null == order.getExternalProductSendValue())) {
                 if (null == productVo || (!"9".equals(productVo.getProductType()) && StringUtils.isBlank(productVo.getExternalProductId()))) {
@@ -327,7 +327,7 @@ public class OrderServiceImpl implements IOrderService {
                 }
                 // 请求银联发券接口
                 unionPayChannelService.orderSend(order);
-                updateOrder(order);
+                order = updateOrder(order);
             }
             if ("0".equals(order.getOrderType())) {
                 // 请求接口发券
@@ -358,7 +358,7 @@ public class OrderServiceImpl implements IOrderService {
                 sendResult(R.ok(sendStr), orderPushInfo, order, cache, false);
             } else if ("12".equals(order.getOrderType())) {
                 unionPayChannelService.orderSend(order);
-                updateOrder(order);
+                order = updateOrder(order);
             } else if ("15".equals(order.getOrderType())) {
                 payCtripFoodOrder(order.getExternalOrderNumber());
             } else {
@@ -411,12 +411,12 @@ public class OrderServiceImpl implements IOrderService {
         } else if ("9".equals(order.getOrderType())) {
             R<Void> result = queryProductPackageHandle(order.getNumber(), order.getProductId());
             sendResult(result, orderPushCache, order, cache, false);
-        } else if ("11".equals(order.getOrderType()) || "12".equals(order.getOrderType())) {
+        } else if ("11".equals(order.getOrderType()) || "12".equals(order.getOrderType()) || "1".equals(order.getOrderType())) {
             JSONObject data = queryProductUnionSendHandle(order.getNumber());
             if (data != null) {
                 rechargeUnionResult(data, orderPushCache, order);
                 orderPushInfoMapper.updateById(orderPushCache);
-                updateOrder(order);
+                order = updateOrder(order);
             }
         }
     }
@@ -506,7 +506,7 @@ public class OrderServiceImpl implements IOrderService {
         } else {
             orderPushInfoMapper.updateById(orderPushCache);
             // 修改订单信息
-            updateOrder(order);
+            order = updateOrder(order);
         }
     }
 
@@ -873,7 +873,7 @@ public class OrderServiceImpl implements IOrderService {
             orderFoodInfo.setOrderStatus(orderStatus);
             orderFoodInfo.setOfficialPrice(officialPrice);
             orderFoodInfo.setSellingPrice(sellingPrice);
-            updateOrder(order);
+            order = updateOrder(order);
             orderFoodInfoMapper.updateById(orderFoodInfo);
         }
 
@@ -1189,7 +1189,7 @@ public class OrderServiceImpl implements IOrderService {
             }
             order.setCancelStatus("0");
             order.setStatus("4");
-            updateOrder(order);
+            order = updateOrder(order);
             //如果电子券为未使用状态 在这里先走退款接口
             if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
                 String appId = YSF_FOOD_PROPERTIES.getAppId();
@@ -1229,7 +1229,7 @@ public class OrderServiceImpl implements IOrderService {
             //如果是电子券卡密订单 等待同意
             refundMapper.insert(refund);
             order.setStatus("4");
-            updateOrder(order);
+            order = updateOrder(order);
             return;
         } else {
             //其他订单 只在失败的情况下才能申请退款
@@ -1298,7 +1298,7 @@ public class OrderServiceImpl implements IOrderService {
                 order.setStatus("6");
             }
         }
-        updateOrder(order);
+        order = updateOrder(order);
         if ("9".equals(order.getOrderType())) {
             Order ob = new Order();
             ob.setStatus(order.getStatus());
@@ -1372,7 +1372,7 @@ public class OrderServiceImpl implements IOrderService {
                         throw new ServiceException("支付商户配置异常");
                     }
                     order.setPayMerchant(merchantVo.getId());
-                    updateOrder(order);
+                    order = updateOrder(order);
                     // 支付金额 乘100，把元转成分
                     Integer amount = BigDecimalUtils.toMinute(order.getWantAmount());
                     String tn = PayUtils.pay(order.getNumber().toString(), amount.toString(), merchantVo.getPayCallbackUrl(), merchantVo.getMerchantNo(), merchantVo.getMerchantKey(), merchantVo.getCertPath(), null, order.getExpireDate());
@@ -1399,7 +1399,7 @@ public class OrderServiceImpl implements IOrderService {
                 order.setOutAmount(order.getWantAmount());
                 order.setStatus("2");
                 order.setPayTime(new Date());
-                updateOrder(order);
+                order = updateOrder(order);
                 // 删除待支付订单缓存
                 delCacheOrder(order.getNumber());
                 // 发券
@@ -1468,74 +1468,86 @@ public class OrderServiceImpl implements IOrderService {
         if (null == order || null == orderInfo) {
             return "订单不存在";
         }
-        // 直销商品额外处理
-        if ("12".equals(order.getOrderType()) || "1".equals(order.getUnionPay())) {
-            // 查询订单券码状态
-            List<OrderUnionSendVo> orderUnionSendVos = orderUnionSendService.queryListByNumber(order.getNumber());
-            if (!orderUnionSendVos.isEmpty()) {
-                return "订单支付成功";
+        if ("3".equals(order.getStatus())) {
+            return "订单已关闭";
+        }
+        if ("0".equals(order.getStatus()) || "1".equals(order.getStatus())) {
+            // 直销商品额外处理
+            if ("12".equals(order.getOrderType()) || "1".equals(order.getUnionPay())) {
+                return queryUnionPayOrderPayStatus(order);
             }
-            // 未发券，执行订单发券操作
-            OrderUnionPay orderUnionPay = orderUnionPayMapper.selectById(order.getNumber());
-            // 查询订单支付状态
-            String orderStatusStr = UnionPayDistributionUtil.orderStatus(order.getNumber(), UnionPayBizMethod.FRONT.getBizMethod(), null, order.getNumber(), orderUnionPay.getTxnTime(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), YsfDistributionPropertiesUtils.getCertPathJD(order.getPlatformKey()));
-            JSONObject orderStatus = JSONObject.parseObject(orderStatusStr);
-            if (orderStatus.getString("code").equals(UnionPayParams.CodeSuccess.getStr())) {
-                String prodOrderSt = orderStatus.getString("prodOrderSt");
-                if (StringUtils.isNotEmpty(prodOrderSt) && "00".equals(prodOrderSt)) {
+            if (null == order.getPayMerchant()) {
+                return "订单未支付";
+            }
+            MerchantVo merchantVo = merchantService.queryById(order.getPayMerchant());
+            if (null == merchantVo) {
+                return "商户不存在";
+            }
+            Map<String, String> rspData = PayUtils.queryOrder(order.getNumber().toString(), DateUtils.parseDateToStr("yyyyMMddHHmmss", order.getCreateTime()), merchantVo.getMerchantNo(), merchantVo.getMerchantKey(), merchantVo.getCertPath());
+            if (null == rspData) {
+                return "支付结果查询失败，请稍后重试";
+            }
+            String origRespCode = rspData.get("origRespCode");
+            // 查询订单时的订单号
+            String queryId = rspData.get("queryId");
+            // 交易传输时间
+            String traceTime = rspData.get("traceTime");
+            // 系统跟踪号
+            String traceNo = rspData.get("traceNo");
+            // 交易金额，单位分
+            String txnAmt = rspData.get("txnAmt");
+            // 转换单位为元
+            BigDecimal txnAmount = BigDecimalUtils.toMoney(Integer.valueOf(txnAmt));
+            // 记录订单发送时间	 商户代码merId、商户订单号orderId、订单发送时间txnTime三要素唯一确定一笔交易。
+            String txnTime = rspData.get("txnTime");
+            // 5.1.2issAddnData订单优惠信息（支持单品）
+            String issAddnData = rspData.get("issAddnData");
+            if (StringUtils.isNotBlank(issAddnData)) {
+                issAddnData = Base64.decodeStr(issAddnData);
+            }
+            if (("00").equals(origRespCode)) {
+                //交易成功，
+                handleOrder(order, txnAmount, queryId, traceTime, traceNo, txnTime, issAddnData);
+                return "订单支付成功";
+            } else {
+                //其他应答码为交易失败
+                log.info("交易失败：" + rspData.get("origRespMsg") + "。<br> ");
+                return "订单未支付";
+            }
+        }
+        return "订单支付成功";
+    }
+
+    /**
+     * 查询银联分销订单支付状态
+     *
+     * @param order 订单信息
+     * @return 结果
+     */
+    private String queryUnionPayOrderPayStatus(Order order) {
+        // 查询订单券码状态
+        List<OrderUnionSendVo> orderUnionSendVos = orderUnionSendService.queryListByNumber(order.getNumber());
+        if (!orderUnionSendVos.isEmpty()) {
+            return "订单支付成功";
+        }
+        // 未发券，执行订单发券操作
+        OrderUnionPay orderUnionPay = orderUnionPayMapper.selectById(order.getNumber());
+        // 查询订单支付状态
+        String orderStatusStr = UnionPayDistributionUtil.orderStatus(UnionPayBizMethod.FRONT.getBizMethod(), null, order.getNumber(), orderUnionPay.getTxnTime(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), YsfDistributionPropertiesUtils.getCertPathJD(order.getPlatformKey()));
+        JSONObject orderStatus = JSONObject.parseObject(orderStatusStr);
+        if (orderStatus.getString("code").equals(UnionPayParams.CodeSuccess.getStr())) {
+            String prodOrderSt = orderStatus.getString("prodOrderSt");
+            if (StringUtils.isNotEmpty(prodOrderSt)) {
+                if ("00".equals(prodOrderSt)) {
                     // 直销（银联分销）
                     order.setStatus("2");
-                    updateOrder(order);
+                    order = updateOrder(order);
                     SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
                     return "订单支付成功";
                 }
             }
-            return "订单未支付";
-        } else {
-            if ("3".equals(order.getStatus())) {
-                return "订单已关闭";
-            } else if ("0".equals(order.getStatus()) || "1".equals(order.getStatus())) {
-                if (null == order.getPayMerchant()) {
-                    return "订单未支付";
-                }
-                MerchantVo merchantVo = merchantService.queryById(order.getPayMerchant());
-                if (null == merchantVo) {
-                    return "商户不存在";
-                }
-                Map<String, String> rspData = PayUtils.queryOrder(order.getNumber().toString(), DateUtils.parseDateToStr("yyyyMMddHHmmss", order.getCreateTime()), merchantVo.getMerchantNo(), merchantVo.getMerchantKey(), merchantVo.getCertPath());
-                if (null == rspData) {
-                    return "支付结果查询失败，请稍后重试";
-                }
-                String origRespCode = rspData.get("origRespCode");
-                // 查询订单时的订单号
-                String queryId = rspData.get("queryId");
-                // 交易传输时间
-                String traceTime = rspData.get("traceTime");
-                // 系统跟踪号
-                String traceNo = rspData.get("traceNo");
-                // 交易金额，单位分
-                String txnAmt = rspData.get("txnAmt");
-                // 转换单位为元
-                BigDecimal txnAmount = BigDecimalUtils.toMoney(Integer.valueOf(txnAmt));
-                // 记录订单发送时间	 商户代码merId、商户订单号orderId、订单发送时间txnTime三要素唯一确定一笔交易。
-                String txnTime = rspData.get("txnTime");
-                // 5.1.2issAddnData订单优惠信息（支持单品）
-                String issAddnData = rspData.get("issAddnData");
-                if (StringUtils.isNotBlank(issAddnData)) {
-                    issAddnData = Base64.decodeStr(issAddnData);
-                }
-                if (("00").equals(origRespCode)) {
-                    //交易成功，
-                    handleOrder(order, txnAmount, queryId, traceTime, traceNo, txnTime, issAddnData);
-                    return "订单支付成功";
-                } else {
-                    //其他应答码为交易失败
-                    log.info("交易失败：" + rspData.get("origRespMsg") + "。<br> ");
-                    return "订单未支付";
-                }
-            }
-            return "订单支付成功";
         }
+        return "订单未支付";
     }
 
     /**
@@ -1694,7 +1706,7 @@ public class OrderServiceImpl implements IOrderService {
             orderFoodInfo.setTotalAmount(totalAmount);
             orderFoodInfo.setUsedAmount(usedAmount);
             orderFoodInfo.setRefundAmount(refundAmount);
-            updateOrder(order);
+            order = updateOrder(order);
             orderFoodInfoMapper.updateById(orderFoodInfo);
         }
     }
@@ -1792,7 +1804,7 @@ public class OrderServiceImpl implements IOrderService {
             if (orderUnionSendVos.isEmpty()) {
                 // 修改订单状态
                 order.setStatus("2");
-                updateOrder(order);
+                order = updateOrder(order);
                 SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
             }
             orderUnionPayMapper.updateById(orderUnionPay);
@@ -1812,18 +1824,18 @@ public class OrderServiceImpl implements IOrderService {
             String certPath;
             if ("11".equals(order.getOrderType())) {
                 certPath = YsfDistributionPropertiesUtils.getCertPathJC(order.getPlatformKey());
-                orderStatusStr = UnionPayDistributionUtil.orderStatus(order.getNumber(), UnionPayBizMethod.CHNLPUR.getBizMethod(), externalProductId, order.getNumber(), data.getString("txnTime"), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJCAppId(order.getPlatformKey()), certPath);
+                orderStatusStr = UnionPayDistributionUtil.orderStatus(UnionPayBizMethod.CHNLPUR.getBizMethod(), externalProductId, order.getNumber(), data.getString("txnTime"), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJCAppId(order.getPlatformKey()), certPath);
             } else {
                 certPath = YsfDistributionPropertiesUtils.getCertPathJD(order.getPlatformKey());
-                orderStatusStr = UnionPayDistributionUtil.orderStatus(order.getNumber(), UnionPayBizMethod.chnlpur.getBizMethod(), externalProductId, order.getNumber(), orderUnionPay.getTxnTime(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), certPath);
+                orderStatusStr = UnionPayDistributionUtil.orderStatus(UnionPayBizMethod.chnlpur.getBizMethod(), externalProductId, order.getNumber(), orderUnionPay.getTxnTime(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), certPath);
             }
             JSONObject orderStatus = JSONObject.parseObject(orderStatusStr);
             // 查询成功，开始处理。
             if (orderStatus.getString("code").equals(UnionPayParams.CodeSuccess.getStr())) {
                 // 发放成功
                 if ("05".equals(orderStatus.getString("prodOrderSt"))) {
-                    String prodTp = data.getString("prodTp");
-                    JSONArray bondLst = data.getJSONArray("bondLst");
+                    String prodTp = orderStatus.getString("prodTp");
+                    JSONArray bondLst = orderStatus.getJSONArray("bondLst");
                     if (orderUnionPay != null) {
                         orderUnionSendService.insertList(order.getNumber(), orderUnionPay.getProdTn(), prodTp, bondLst, certPath, YsfDistributionPropertiesUtils.getCertPwd(order.getPlatformKey()));
                     } else {
@@ -1831,9 +1843,9 @@ public class OrderServiceImpl implements IOrderService {
                         orderUnionSendService.insertList(order.getNumber(), prodTn, prodTp, bondLst, certPath, YsfDistributionPropertiesUtils.getCertPwd(order.getPlatformKey()));
                         orderUnionPay = new OrderUnionPay();
                         orderUnionPay.setNumber(order.getNumber());
-                        orderUnionPay.setOrderId(data.getString("orderId"));
+                        orderUnionPay.setOrderId(orderStatus.getString("orderId"));
                         orderUnionPay.setProdTn(prodTn);
-                        orderUnionPay.setTxnTime(data.getString("txnTime"));
+                        orderUnionPay.setTxnTime(orderStatus.getString("txnTime"));
                         orderUnionPay.setUsrPayAmt("0");
                         orderUnionPayMapper.insertOrUpdate(orderUnionPay);
                         order.setExternalOrderNumber(prodTn);
@@ -1896,7 +1908,7 @@ public class OrderServiceImpl implements IOrderService {
         if ("8".equals(state)) {
             //退款成功
             order.setCancelStatus("1");
-            updateOrder(order);
+            order = updateOrder(order);
         }
     }
 
@@ -1946,7 +1958,7 @@ public class OrderServiceImpl implements IOrderService {
             throw new ServiceException("订单不存在");
         }
         rechargeResult(data, orderPushInfo, order);
-        updateOrder(order);
+        order = updateOrder(order);
         orderPushInfoMapper.updateById(orderPushInfo);
     }
 
@@ -2073,7 +2085,7 @@ public class OrderServiceImpl implements IOrderService {
         if (null == order.getPayTime()) {
             order.setPayTime(DateUtils.getNowDate());
         }
-        updateOrder(order);
+        order = updateOrder(order);
         // 删除未支付订单缓存
         delCacheOrder(order.getNumber());
         // 发券
@@ -2135,10 +2147,10 @@ public class OrderServiceImpl implements IOrderService {
                 String expid = "1".equals(order.getUnionPay()) ? order.getUnionProductId() : order.getExternalProductId();
                 certPath = YsfDistributionPropertiesUtils.getCertPathJD(order.getPlatformKey());
                 // 直销
-                orderStatusStr = UnionPayDistributionUtil.orderStatus(order.getNumber(), UnionPayBizMethod.chnlpur.getBizMethod(), expid, orderUnionPay.getNumber(), orderUnionPay.getTxnTime(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), certPath);
+                orderStatusStr = UnionPayDistributionUtil.orderStatus(UnionPayBizMethod.chnlpur.getBizMethod(), expid, orderUnionPay.getNumber(), orderUnionPay.getTxnTime(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), certPath);
             } else { // 代销
                 certPath = YsfDistributionPropertiesUtils.getCertPathJC(order.getPlatformKey());
-                orderStatusStr = UnionPayDistributionUtil.orderStatus(order.getNumber(), UnionPayBizMethod.CHNLPUR.getBizMethod(), order.getExternalProductId(), orderUnionPay.getNumber(), orderUnionPay.getTxnTime(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJCAppId(order.getPlatformKey()), certPath);
+                orderStatusStr = UnionPayDistributionUtil.orderStatus(UnionPayBizMethod.CHNLPUR.getBizMethod(), order.getExternalProductId(), orderUnionPay.getNumber(), orderUnionPay.getTxnTime(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJCAppId(order.getPlatformKey()), certPath);
             }
             JSONObject orderStatus = JSONObject.parseObject(orderStatusStr);
             // 查询成功，开始处理。

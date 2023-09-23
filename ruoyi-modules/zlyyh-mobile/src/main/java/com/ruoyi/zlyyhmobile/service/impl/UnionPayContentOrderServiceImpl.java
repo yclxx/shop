@@ -48,23 +48,24 @@ public class UnionPayContentOrderServiceImpl implements IUnionPayContentOrderSer
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public JSONObject unionPay(HttpServletRequest request, HttpServletResponse response, UnionPayCreateBo unionPayCreateBo) {
+    public JSONObject unionPay(HttpServletRequest request, HttpServletResponse response) {
         String postData = ServletUtils.getParamJson(request);
-        log.info("银联分销,请求头：{}，请求参数：{}", JsonUtils.toJsonString(ServletUtils.getHeaderMap(request)), postData);
+        log.info("银联分销内容方,请求头：{}，请求参数：{}", JsonUtils.toJsonString(ServletUtils.getHeaderMap(request)), postData);
+        UnionPayCreateBo unionPayCreateBo = JsonUtils.parseObject(postData, UnionPayCreateBo.class);
         // 版本号
-        String version = ServletUtils.getHeader(UnionPayConstants.VERSION);
+        String version = request.getHeader(UnionPayConstants.VERSION);
         // 发送方索引类型
-        String appType = ServletUtils.getHeader(UnionPayConstants.APP_TYPE);
+        String appType = request.getHeader(UnionPayConstants.APP_TYPE);
         // 发送方索引标识码
-        String appId = ServletUtils.getHeader(UnionPayConstants.APP_ID);
+        String appId = request.getHeader(UnionPayConstants.APP_ID);
         // 接口类型 标识交易类型
-        String bizMethod = ServletUtils.getHeader(UnionPayConstants.BIZ_METHOD);
+        String bizMethod = request.getHeader(UnionPayConstants.BIZ_METHOD);
         // 签名 由请求或应答的发送方根据报文签名方法生成，填写对报文摘要的签名
-        String sign = ServletUtils.getHeader(UnionPayConstants.SIGN);
+        String sign = request.getHeader(UnionPayConstants.SIGN);
         // 签名或摘要方式
-        String signMethod = ServletUtils.getHeader(UnionPayConstants.SIGN_METHOD);
+        String signMethod = request.getHeader(UnionPayConstants.SIGN_METHOD);
         // 发送方流水号
-        String reqId = ServletUtils.getHeader(UnionPayConstants.REQ_ID);
+        String reqId = request.getHeader(UnionPayConstants.REQ_ID);
         // 查询采购商
         DistributorVo distributorVo = distributorService.queryById(appId);
         // 获取采购商验签证书
@@ -355,7 +356,7 @@ public class UnionPayContentOrderServiceImpl implements IUnionPayContentOrderSer
             sign = RSAUtils.sign(privateKey, str);
             response.setHeader(UnionPayConstants.SIGN, sign);
         }
-        log.info("银联分销，reqId:{},返回参数：{},签名原文：{},签名结果：{}", request.getHeader(UnionPayConstants.REQ_ID), result, str, sign);
+        log.info("银联分销内容方，reqId:{},返回参数：{},签名原文：{},签名结果：{}", request.getHeader(UnionPayConstants.REQ_ID), result, str, sign);
         return result;
     }
 

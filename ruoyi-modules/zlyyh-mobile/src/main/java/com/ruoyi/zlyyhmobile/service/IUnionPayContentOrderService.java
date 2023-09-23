@@ -1,8 +1,6 @@
 package com.ruoyi.zlyyhmobile.service;
 
 import com.alibaba.fastjson.JSONObject;
-import com.ruoyi.zlyyh.domain.vo.UnionPayContentOrderVo;
-import com.ruoyi.zlyyhmobile.domain.bo.UnionPayCreateBo;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -17,9 +15,8 @@ public interface IUnionPayContentOrderService {
      *
      * @param request          请求
      * @param response         响应
-     * @param unionPayCreateBo 请求参数
      * @return 结果
      */
-    JSONObject unionPay(HttpServletRequest request, HttpServletResponse response, UnionPayCreateBo unionPayCreateBo);
+    JSONObject unionPay(HttpServletRequest request, HttpServletResponse response);
 
 }
