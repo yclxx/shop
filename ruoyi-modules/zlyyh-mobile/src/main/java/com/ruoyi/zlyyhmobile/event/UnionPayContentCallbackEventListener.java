@@ -2,6 +2,7 @@ package com.ruoyi.zlyyhmobile.event;
 
 import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.ruoyi.zlyyhmobile.enums.UnionPayCallbackBizMethodType;
 import com.ruoyi.zlyyhmobile.utils.UnionPayUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,21 +18,22 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class UnionPayContentRefundCallbackEventListener {
+public class UnionPayContentCallbackEventListener {
 
     /**
      * 退券通知
      */
     @Async
     @EventListener
-    public void refundCoupon(UnionPayContentRefundCallbackEvent event) {
+    public void unionPayCallback(UnionPayContentCallbackEvent event) {
         String orderId = IdUtil.getSnowflakeNextIdStr();
-        String bizMethod = "up.supp.returnbond";
 
-        JSONObject params = UnionPayUtils.getCallbackJson(orderId, bizMethod, event.getAppId(), event.getUnionPayProductId());
+        JSONObject params = UnionPayUtils.getCallbackJson(orderId, event.getBizMethodType().getBizMethod(), event.getAppId(), event.getUnionPayProductId());
         params.put("bondNo", event.getBondNo());
         params.put("procTime", event.getProcTime());
-
-        UnionPayUtils.postUnionPay(params,event.getAppId(),bizMethod,orderId,event.getPrivateKey(), event.getCallbackUrl());
+        if (UnionPayCallbackBizMethodType.ROLLBACK.equals(event.getBizMethodType())) {
+            params.put("bondSt", "05");
+        }
+        UnionPayUtils.postUnionPay(params, event.getAppId(), event.getBizMethodType().getBizMethod(), orderId, event.getPrivateKey(), event.getCallbackUrl());
     }
 }

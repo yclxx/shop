@@ -1,5 +1,6 @@
 package com.ruoyi.zlyyhmobile.event;
 
+import com.ruoyi.zlyyhmobile.enums.UnionPayCallbackBizMethodType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,7 +13,7 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UnionPayContentRefundCallbackEvent implements Serializable {
+public class UnionPayContentCallbackEvent implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
@@ -32,11 +33,13 @@ public class UnionPayContentRefundCallbackEvent implements Serializable {
      */
     private String callbackUrl;
     /**
-     * 券码列表
+     * 券码
      */
     private String bondNo;
     /**
-     * 退券时间
+     * 时间
      */
     private String procTime;
+
+    private UnionPayCallbackBizMethodType bizMethodType;
 }

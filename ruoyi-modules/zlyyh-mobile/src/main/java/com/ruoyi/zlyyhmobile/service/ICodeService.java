@@ -40,4 +40,20 @@ public interface ICodeService {
      * @return 结果
      */
     boolean cancellationCode(String codeNo);
+
+    /**
+     * 核销券码
+     *
+     * @param codeNo 券码
+     * @return true 成功，false 失败
+     */
+    Boolean usedCode(String codeNo);
+
+    /**
+     * 票券返还
+     *
+     * @param codeNo 核销码
+     * @return true 成功,false 失败
+     */
+    Boolean rollbackCode(String codeNo);
 }
