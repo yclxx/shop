@@ -127,12 +127,12 @@ public class OrderServiceImpl implements IOrderService {
      * @param order 订单信息
      */
     @Override
-    public void updateOrder(Order order) {
+    public Order updateOrder(Order order) {
         int insert = baseMapper.updateById(order);
         if (insert <= 0) {
             throw new ServiceException("更新订单失败");
         }
-        order = baseMapper.selectById(order.getNumber());
+        return baseMapper.selectById(order.getNumber());
     }
 
     /**
@@ -255,7 +255,7 @@ public class OrderServiceImpl implements IOrderService {
                             OrderCacheUtils.setOrderCache(order);
                         } else {
                             // 修改订单信息
-                            updateOrder(order);
+                            order = updateOrder(order);
                         }
                         break;
                     }
@@ -293,7 +293,7 @@ public class OrderServiceImpl implements IOrderService {
             } else {
                 orderPushInfoMapper.insert(orderPushInfo);
                 // 修改订单信息
-                updateOrder(order);
+                order = updateOrder(order);
             }
             if (StringUtils.isBlank(order.getExternalProductId()) || (("3".equals(order.getOrderType()) || "10".equals(order.getOrderType()) || "4".equals(order.getOrderType())) && null == order.getExternalProductSendValue())) {
                 if (null == productVo || (!"9".equals(productVo.getProductType()) && StringUtils.isBlank(productVo.getExternalProductId()))) {
@@ -327,7 +327,7 @@ public class OrderServiceImpl implements IOrderService {
                 }
                 // 请求银联发券接口
                 unionPayChannelService.orderSend(order);
-                updateOrder(order);
+                order = updateOrder(order);
             }
             if ("0".equals(order.getOrderType())) {
                 // 请求接口发券
@@ -358,7 +358,7 @@ public class OrderServiceImpl implements IOrderService {
                 sendResult(R.ok(sendStr), orderPushInfo, order, cache, false);
             } else if ("12".equals(order.getOrderType())) {
                 unionPayChannelService.orderSend(order);
-                updateOrder(order);
+                order = updateOrder(order);
             } else if ("15".equals(order.getOrderType())) {
                 payCtripFoodOrder(order.getExternalOrderNumber());
             } else {
@@ -416,7 +416,7 @@ public class OrderServiceImpl implements IOrderService {
             if (data != null) {
                 rechargeUnionResult(data, orderPushCache, order);
                 orderPushInfoMapper.updateById(orderPushCache);
-                updateOrder(order);
+                order = updateOrder(order);
             }
         }
     }
@@ -506,7 +506,7 @@ public class OrderServiceImpl implements IOrderService {
         } else {
             orderPushInfoMapper.updateById(orderPushCache);
             // 修改订单信息
-            updateOrder(order);
+            order = updateOrder(order);
         }
     }
 
@@ -873,7 +873,7 @@ public class OrderServiceImpl implements IOrderService {
             orderFoodInfo.setOrderStatus(orderStatus);
             orderFoodInfo.setOfficialPrice(officialPrice);
             orderFoodInfo.setSellingPrice(sellingPrice);
-            updateOrder(order);
+            order = updateOrder(order);
             orderFoodInfoMapper.updateById(orderFoodInfo);
         }
 
@@ -1189,7 +1189,7 @@ public class OrderServiceImpl implements IOrderService {
             }
             order.setCancelStatus("0");
             order.setStatus("4");
-            updateOrder(order);
+            order = updateOrder(order);
             //如果电子券为未使用状态 在这里先走退款接口
             if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
                 String appId = YSF_FOOD_PROPERTIES.getAppId();
@@ -1229,7 +1229,7 @@ public class OrderServiceImpl implements IOrderService {
             //如果是电子券卡密订单 等待同意
             refundMapper.insert(refund);
             order.setStatus("4");
-            updateOrder(order);
+            order = updateOrder(order);
             return;
         } else {
             //其他订单 只在失败的情况下才能申请退款
@@ -1298,7 +1298,7 @@ public class OrderServiceImpl implements IOrderService {
                 order.setStatus("6");
             }
         }
-        updateOrder(order);
+        order = updateOrder(order);
         if ("9".equals(order.getOrderType())) {
             Order ob = new Order();
             ob.setStatus(order.getStatus());
@@ -1372,7 +1372,7 @@ public class OrderServiceImpl implements IOrderService {
                         throw new ServiceException("支付商户配置异常");
                     }
                     order.setPayMerchant(merchantVo.getId());
-                    updateOrder(order);
+                    order = updateOrder(order);
                     // 支付金额 乘100，把元转成分
                     Integer amount = BigDecimalUtils.toMinute(order.getWantAmount());
                     String tn = PayUtils.pay(order.getNumber().toString(), amount.toString(), merchantVo.getPayCallbackUrl(), merchantVo.getMerchantNo(), merchantVo.getMerchantKey(), merchantVo.getCertPath(), null, order.getExpireDate());
@@ -1399,7 +1399,7 @@ public class OrderServiceImpl implements IOrderService {
                 order.setOutAmount(order.getWantAmount());
                 order.setStatus("2");
                 order.setPayTime(new Date());
-                updateOrder(order);
+                order = updateOrder(order);
                 // 删除待支付订单缓存
                 delCacheOrder(order.getNumber());
                 // 发券
@@ -1541,7 +1541,7 @@ public class OrderServiceImpl implements IOrderService {
                 if ("00".equals(prodOrderSt)) {
                     // 直销（银联分销）
                     order.setStatus("2");
-                    updateOrder(order);
+                    order = updateOrder(order);
                     SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
                     return "订单支付成功";
                 }
@@ -1706,7 +1706,7 @@ public class OrderServiceImpl implements IOrderService {
             orderFoodInfo.setTotalAmount(totalAmount);
             orderFoodInfo.setUsedAmount(usedAmount);
             orderFoodInfo.setRefundAmount(refundAmount);
-            updateOrder(order);
+            order = updateOrder(order);
             orderFoodInfoMapper.updateById(orderFoodInfo);
         }
     }
@@ -1804,7 +1804,7 @@ public class OrderServiceImpl implements IOrderService {
             if (orderUnionSendVos.isEmpty()) {
                 // 修改订单状态
                 order.setStatus("2");
-                updateOrder(order);
+                order = updateOrder(order);
                 SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
             }
             orderUnionPayMapper.updateById(orderUnionPay);
@@ -1908,7 +1908,7 @@ public class OrderServiceImpl implements IOrderService {
         if ("8".equals(state)) {
             //退款成功
             order.setCancelStatus("1");
-            updateOrder(order);
+            order = updateOrder(order);
         }
     }
 
@@ -1958,7 +1958,7 @@ public class OrderServiceImpl implements IOrderService {
             throw new ServiceException("订单不存在");
         }
         rechargeResult(data, orderPushInfo, order);
-        updateOrder(order);
+        order = updateOrder(order);
         orderPushInfoMapper.updateById(orderPushInfo);
     }
 
@@ -2085,7 +2085,7 @@ public class OrderServiceImpl implements IOrderService {
         if (null == order.getPayTime()) {
             order.setPayTime(DateUtils.getNowDate());
         }
-        updateOrder(order);
+        order = updateOrder(order);
         // 删除未支付订单缓存
         delCacheOrder(order.getNumber());
         // 发券
