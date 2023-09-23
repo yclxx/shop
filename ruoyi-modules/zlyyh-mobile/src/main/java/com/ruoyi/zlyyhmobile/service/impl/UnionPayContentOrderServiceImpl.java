@@ -105,19 +105,6 @@ public class UnionPayContentOrderServiceImpl implements IUnionPayContentOrderSer
     }
 
     /**
-     * 查询内容分销订单
-     *
-     * @param number 订单号
-     * @return 订单信息
-     */
-    public UnionPayContentOrderVo queryByNumber(Long number) {
-        LambdaQueryWrapper<UnionPayContentOrder> lqw = Wrappers.lambdaQuery();
-        lqw.eq(UnionPayContentOrder::getNumber, number);
-        lqw.last("order by id desc limit 1");
-        return baseMapper.selectVoOne(lqw);
-    }
-
-    /**
      * 银联分销退券
      */
     @Transactional(rollbackFor = Exception.class)
