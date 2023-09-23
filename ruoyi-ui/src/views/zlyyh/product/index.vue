@@ -153,9 +153,9 @@
 
     <!-- 添加或修改商品对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="1200px" append-to-body>
-      <el-tabs v-model="activeName">
-        <el-tab-pane label="基本信息" name="basicCoupon" key="basicCoupon" :style="{height: tableHeight}">
-          <el-form ref=" form" :model="form" :rules="rules" label-width="110px">
+      <el-form ref=" form" :model="form" :rules="rules" label-width="110px">
+        <el-tabs v-model="activeName">
+          <el-tab-pane label="基本信息" name="basicCoupon" key="basicCoupon" :style="{height: tableHeight}">
             <el-row>
               <el-col :span="8">
                 <el-form-item label="商品名称" prop="productName">
@@ -467,10 +467,8 @@
                 </el-form-item>
               </el-col>
             </el-row>
-          </el-form>
-        </el-tab-pane>
-        <el-tab-pane label="商品规则" name="couponCount" key="couponCount" :style="{height: tableHeight}">
-          <el-form ref="form" :model="form" :rules="rules" label-width="120px">
+          </el-tab-pane>
+          <el-tab-pane label="商品规则" name="couponCount" key="couponCount" :style="{height: tableHeight}">
             <el-row>
               <el-col :span="8">
                 <el-form-item label="领取区间" prop="sellTime">
@@ -594,10 +592,8 @@
                 </el-form-item>
               </el-col>
             </el-row>
-          </el-form>
-        </el-tab-pane>
-        <el-tab-pane label="扩展信息" name="expand" key="expand" :style="{height: tableHeight}">
-          <el-form ref="form" :model="form" :rules="rules" label-width="110px">
+          </el-tab-pane>
+          <el-tab-pane label="扩展信息" name="expand" key="expand" :style="{height: tableHeight}">
             <el-row>
               <el-col :span="8">
                 <el-form-item label="门店" prop="shopId">
@@ -691,14 +687,12 @@
                 </el-form-item>
               </el-col>
             </el-row>
-          </el-form>
-        </el-tab-pane>
-        <el-tab-pane label="演出票信息" name="ticket" key="ticket"
-          v-if="form.ticket && (form.productType == '13' || isUpdate)">
-          <el-form ref="form" :rules="rules" :model="form" label-width="110px">
+          </el-tab-pane>
+          <el-tab-pane label="演出票信息" name="ticket" key="ticket"
+            v-if="form.ticket && (form.productType == '13' || isUpdate)">
             <el-row>
               <el-col :span="8">
-                <el-form-item label="票形式" required="true">
+                <el-form-item label="票形式" :required="true">
                   <el-select v-model="form.ticket.ticketForm" placeholder="请选择票形式" style="width: 100%;">
                     <el-option v-for="item in ticketFormList" :key="item.value" :label="item.label"
                       :value="item.value" />
@@ -706,7 +700,7 @@
                 </el-form-item>
               </el-col>
               <el-col :span="8">
-                <el-form-item label="身份信息" required="true">
+                <el-form-item label="身份信息" :required="true">
                   <el-select v-model="form.ticket.ticketCard" placeholder="请选择身份信息" style="width: 100%;">
                     <el-option v-for="item in ticketCardList" :key="item.value" :label="item.label"
                       :value="item.value" />
@@ -714,7 +708,7 @@
                 </el-form-item>
               </el-col>
               <el-col :span="8">
-                <el-form-item label="不支持退" required="true">
+                <el-form-item label="不支持退" :required="true">
                   <el-select v-model="form.ticket.ticketNonsupport" placeholder="请选择不支持退" style="width: 100%;">
                     <el-option v-for="item in ticketStatusList" :key="item.value" :label="item.label"
                       :value="item.value" />
@@ -724,7 +718,7 @@
             </el-row>
             <el-row>
               <el-col :span="8">
-                <el-form-item label="电子发票" required="true">
+                <el-form-item label="电子发票" :required="true">
                   <el-select v-model="form.ticket.ticketInvoice" placeholder="请选择电子发票" style="width: 100%;">
                     <el-option v-for="item in ticketStatusList" :key="item.value" :label="item.label"
                       :value="item.value" />
@@ -732,7 +726,7 @@
                 </el-form-item>
               </el-col>
               <el-col :span="8">
-                <el-form-item label="过期退" required="true">
+                <el-form-item label="过期退" :required="true">
                   <el-select v-model="form.ticket.ticketExpired" placeholder="请选择过期退" style="width: 100%;">
                     <el-option v-for="item in ticketStatusList" :key="item.value" :label="item.label"
                       :value="item.value" />
@@ -740,7 +734,7 @@
                 </el-form-item>
               </el-col>
               <el-col :span="8">
-                <el-form-item label="随时退" required="true">
+                <el-form-item label="随时退" :required="true">
                   <el-select v-model="form.ticket.ticketAnyTime" placeholder="请选择随时退" style="width: 100%;">
                     <el-option v-for="item in ticketStatusList" :key="item.value" :label="item.label"
                       :value="item.value" />
@@ -750,7 +744,7 @@
             </el-row>
             <el-row>
               <el-col :span="8">
-                <el-form-item label="选座方式" required="true">
+                <el-form-item label="选座方式" :required="true">
                   <el-select v-model="form.ticket.ticketChooseSeat" placeholder="请选择快递方式" style="width: 100%;">
                     <el-option v-for="item in ticketChooseSeatList" :key="item.value" :label="item.label"
                       :value="item.value" />
@@ -758,7 +752,7 @@
                 </el-form-item>
               </el-col>
               <el-col :span="8">
-                <el-form-item label="快递方式" required="true">
+                <el-form-item label="快递方式" :required="true">
                   <el-select v-model="form.ticket.ticketPostWay" placeholder="请选择快递方式" style="width: 100%;">
                     <el-option v-for="item in ticketPostWayList" :key="item.value" :label="item.label"
                       :value="item.value" />
@@ -778,91 +772,91 @@
                 </el-form-item>
               </el-col>
             </el-row>
-          </el-form>
-        </el-tab-pane>
-        <el-tab-pane label="场次与票种" name="session" key="session"
-          v-if="form.ticket && (form.productType == '13' || isUpdate)">
-          <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="addSessionRow()">新增场次与票种
-          </el-button>
-          <el-table :data="form.ticketSession" :rules="rules" ref="table" style="width: 100%">
-            <el-table-column type="expand">
-              <template slot-scope="props">
-                <el-table :data="props.row.ticketLine">
-                  <el-table-column :render-header="renderHeader" label="票种名称" align="center" prop="lineTitle">
-                    <template slot-scope="scope">
-                      <el-input v-model="scope.row.lineTitle" placeholder="请输入票种名称" />
-                    </template>
-                  </el-table-column>
-                  <el-table-column :render-header="renderHeader" label="销售价格" align="center" prop="linePrice">
-                    <template slot-scope="scope">
-                      <el-input v-model="scope.row.linePrice" placeholder="请输入销售价格" />
-                    </template>
-                  </el-table-column>
-                  <el-table-column :render-header="renderHeader" label="结算价格" align="center" prop="lineSettlePrice">
-                    <template slot-scope="scope">
-                      <el-input v-model="scope.row.lineSettlePrice" placeholder="请输入结算价格" />
-                    </template>
-                  </el-table-column>
-                  <el-table-column :render-header="renderHeader" label="总数量" align="center" prop="lineNumber">
-                    <template slot-scope="scope">
-                      <el-input v-model="scope.row.lineNumber" placeholder="请输入总数量" />
-                    </template>
-                  </el-table-column>
-                  <el-table-column :render-header="renderHeader" label="单次购买上限" align="center" prop="lineUpperLimit">
-                    <template slot-scope="scope">
-                      <el-input v-model="scope.row.lineUpperLimit" placeholder="请输入单次购买上限" />
-                    </template>
-                  </el-table-column>
-                  <el-table-column :render-header="renderHeader" label="状态" align="center" prop="lineStatus">
-                    <template slot-scope="scope">
-                      <el-select v-model="scope.row.lineStatus" placeholder="请选择状态">
-                        <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
-                          :value="dict.value"></el-option>
-                      </el-select>
-                    </template>
-                  </el-table-column>
-                  <el-table-column label="操作" align="center">
-                    <template slot-scope="scope">
-                      <el-button size="mini" type="text" icon="el-icon-delete" @click="delLineRow(props.row,scope.row)"
-                        v-hasPermi="['zlyyh:productTicketSession:remove']">删除
-                      </el-button>
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </template>
-            </el-table-column>
-            <el-table-column :render-header="renderHeader" label="场次名称" align="center" prop="lineTitle">
-              <template slot-scope="scope">
-                <el-input v-model="scope.row.session" placeholder="请输入场次名称" />
-              </template>
-            </el-table-column>
-            <el-table-column :render-header="renderHeader" label="状态" align="center" prop="lineStatus">
-              <template slot-scope="scope">
-                <el-select v-model="scope.row.status" placeholder="请选择状态">
-                  <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
-                    :value="dict.value"></el-option>
-                </el-select>
-              </template>
-            </el-table-column>
-            <el-table-column :render-header="renderHeader" label="日期" align="center" prop="sessionDate">
-              <template slot-scope="scope">
-                <el-date-picker clearable v-model="scope.row.date" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-                  placeholder="请选择日期">
-                </el-date-picker>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-              <template slot-scope="scope">
-                <el-button type="primary" plain size="mini" @click="addLineRow(scope.row)">新增票种
-                </el-button>
-                <el-button size="mini" type="text" icon="el-icon-delete" @click="delSessionRow(scope.row)"
-                  v-hasPermi="['zlyyh:productTicketSession:remove']">删除
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-tab-pane>
-      </el-tabs>
+          </el-tab-pane>
+          <el-tab-pane label="场次与票种" name="session" key="session"
+            v-if="form.ticket && (form.productType == '13' || isUpdate)">
+            <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="addSessionRow()">新增场次与票种
+            </el-button>
+            <el-table :data="form.ticketSession" :rules="rules" ref="table" style="width: 100%">
+              <el-table-column type="expand">
+                <template slot-scope="props">
+                  <el-table :data="props.row.ticketLine">
+                    <el-table-column :render-header="renderHeader" label="票种名称" align="center" prop="lineTitle">
+                      <template slot-scope="scope">
+                        <el-input v-model="scope.row.lineTitle" placeholder="请输入票种名称" />
+                      </template>
+                    </el-table-column>
+                    <el-table-column :render-header="renderHeader" label="销售价格" align="center" prop="linePrice">
+                      <template slot-scope="scope">
+                        <el-input v-model="scope.row.linePrice" placeholder="请输入销售价格" />
+                      </template>
+                    </el-table-column>
+                    <el-table-column :render-header="renderHeader" label="结算价格" align="center" prop="lineSettlePrice">
+                      <template slot-scope="scope">
+                        <el-input v-model="scope.row.lineSettlePrice" placeholder="请输入结算价格" />
+                      </template>
+                    </el-table-column>
+                    <el-table-column :render-header="renderHeader" label="总数量" align="center" prop="lineNumber">
+                      <template slot-scope="scope">
+                        <el-input v-model="scope.row.lineNumber" placeholder="请输入总数量" />
+                      </template>
+                    </el-table-column>
+                    <el-table-column :render-header="renderHeader" label="单次购买上限" align="center" prop="lineUpperLimit">
+                      <template slot-scope="scope">
+                        <el-input v-model="scope.row.lineUpperLimit" placeholder="请输入单次购买上限" />
+                      </template>
+                    </el-table-column>
+                    <el-table-column :render-header="renderHeader" label="状态" align="center" prop="lineStatus">
+                      <template slot-scope="scope">
+                        <el-select v-model="scope.row.lineStatus" placeholder="请选择状态">
+                          <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+                            :value="dict.value"></el-option>
+                        </el-select>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="操作" align="center">
+                      <template slot-scope="scope">
+                        <el-button size="mini" type="text" icon="el-icon-delete"
+                          @click="delLineRow(props.row,scope.row)" v-hasPermi="['zlyyh:productTicketSession:remove']">删除
+                        </el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </template>
+              </el-table-column>
+              <el-table-column :render-header="renderHeader" label="场次名称" align="center" prop="lineTitle">
+                <template slot-scope="scope">
+                  <el-input v-model="scope.row.session" placeholder="请输入场次名称" />
+                </template>
+              </el-table-column>
+              <el-table-column :render-header="renderHeader" label="状态" align="center" prop="lineStatus">
+                <template slot-scope="scope">
+                  <el-select v-model="scope.row.status" placeholder="请选择状态">
+                    <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+                      :value="dict.value"></el-option>
+                  </el-select>
+                </template>
+              </el-table-column>
+              <el-table-column :render-header="renderHeader" label="日期" align="center" prop="sessionDate">
+                <template slot-scope="scope">
+                  <el-date-picker clearable v-model="scope.row.date" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
+                    placeholder="请选择日期">
+                  </el-date-picker>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+                <template slot-scope="scope">
+                  <el-button type="primary" plain size="mini" @click="addLineRow(scope.row)">新增票种
+                  </el-button>
+                  <el-button size="mini" type="text" icon="el-icon-delete" @click="delSessionRow(scope.row)"
+                    v-hasPermi="['zlyyh:productTicketSession:remove']">删除
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-tab-pane>
+        </el-tabs>
+      </el-form>
       <el-form label-width="100px">
         <el-form-item style="text-align: center;margin-left:-100px;margin-top:10px;">
           <el-button v-if="activeName != tabNameList[0]" @click="lastTab()">上一步</el-button>
