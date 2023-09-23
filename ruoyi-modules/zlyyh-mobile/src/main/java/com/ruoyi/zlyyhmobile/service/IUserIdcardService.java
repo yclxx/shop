@@ -1,10 +1,8 @@
 package com.ruoyi.zlyyhmobile.service;
 
-import com.ruoyi.zlyyh.domain.UserIdcard;
-import com.ruoyi.zlyyh.domain.vo.UserIdcardVo;
-import com.ruoyi.zlyyh.domain.bo.UserIdcardBo;
-import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.zlyyh.domain.bo.UserIdcardBo;
+import com.ruoyi.zlyyh.domain.vo.UserIdcardVo;
 
 import java.util.Collection;
 import java.util.List;
@@ -32,6 +30,12 @@ public interface IUserIdcardService {
      * 查询观影用户信息列表
      */
     List<UserIdcardVo> queryList(UserIdcardBo bo);
+    /**
+     * 查询指定观影人
+     * @param ids
+     * @return
+     */
+    List<UserIdcardVo> queryListByIds(List<Long> ids);
 
     /**
      * 修改观影用户信息

@@ -17,11 +17,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 商品券码Service业务层处理
- *
  * @author yzg
  * @date 2023-09-20
  */
@@ -59,7 +57,7 @@ public class CodeServiceImpl implements ICodeService {
     }
 
     private LambdaQueryWrapper<Code> buildQueryWrapper(CodeBo bo) {
-        Map<String, Object> params = bo.getParams();
+        //Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<Code> lqw = Wrappers.lambdaQuery();
         lqw.eq(bo.getProductId() != null, Code::getProductId, bo.getProductId());
         lqw.eq(bo.getProductSessionId() != null, Code::getProductSessionId, bo.getProductSessionId());

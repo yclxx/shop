@@ -28,7 +28,7 @@ public class LianLianParam implements Serializable {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class ProductList2Param implements Serializable {
+    public static class ProductListParam implements Serializable {
         // 产品列表参数
         private String channelId;
         private String cityCode;
@@ -39,7 +39,7 @@ public class LianLianParam implements Serializable {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class ProductDetail2Param implements Serializable {
+    public static class ProductDetailParam implements Serializable {
         // 产品详情（图文）参数
         private String productId;
     }
@@ -47,7 +47,7 @@ public class LianLianParam implements Serializable {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class CreateOrder2Param implements Serializable {
+    public static class CreateOrderParam implements Serializable {
         // 创建渠道订单-并自动发码参数
         private String validToken;
         private String thirdPartyOrderNo;
@@ -70,7 +70,7 @@ public class LianLianParam implements Serializable {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class OrderQuery2Param implements Serializable {
+    public static class OrderQueryParam implements Serializable {
         // 查询订单详情参数
         private String channelId;
         private String channelOrderId;
@@ -81,7 +81,7 @@ public class LianLianParam implements Serializable {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class OrderReturn2Param implements Serializable {
+    public static class OrderReturnParam implements Serializable {
         private String thirdOrderId;//第三方订单号
         private String channelOrderId;// 联联渠道订单号
         private String orderId;// 小订单号
@@ -109,7 +109,7 @@ public class LianLianParam implements Serializable {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class ProductInfo2Param implements Serializable {
+    public static class ProductInfoParam implements Serializable {
         // 查询产品详情参数
         private String channelId;//产品编号
         private String productId;//产品编号
@@ -119,7 +119,7 @@ public class LianLianParam implements Serializable {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class CheckOrder2Param implements Serializable {
+    public static class CheckOrderParam implements Serializable {
         // 验证-渠道订单创建条件参数
         private String locationId;
         private String thirdPartyOrderNo;
@@ -141,7 +141,7 @@ public class LianLianParam implements Serializable {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class ReSendSms2Param implements Serializable {
+    public static class ReSendSmsParam implements Serializable {
         // 重发短信参数
         private String channelOrderId;//渠道订单编号
         private String cOrderId;//渠道订单编号
@@ -151,7 +151,7 @@ public class LianLianParam implements Serializable {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class ProductState2Param implements Serializable {//联联产品上下架售罄通知
+    public static class ProductStateParam implements Serializable {//联联产品上下架售罄通知
         private Integer productId;
         private Integer type;//类型 0:下架 1:上架 2:售罄
         private String items;//:[1000324,1000325] //套餐 id 列表
@@ -161,7 +161,7 @@ public class LianLianParam implements Serializable {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class ApplyRefund2Param implements Serializable {
+    public static class ApplyRefundParam implements Serializable {
         // 联联订单退款
         private String channelOrderNo;//渠道订单号
         private List<String> orderNoList;//退款小订单号列表
@@ -170,7 +170,7 @@ public class LianLianParam implements Serializable {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class OrderCheck2Param implements Serializable {//订单核销参数
+    public static class OrderCheckParam implements Serializable {//订单核销参数
         private String channelId;//第三方订单号
         private String channelOrderId;//渠道订单号
         private String thirdOrderId;//渠道订单号

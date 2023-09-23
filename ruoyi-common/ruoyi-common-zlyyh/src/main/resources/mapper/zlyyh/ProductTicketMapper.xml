@@ -23,4 +23,30 @@
         <result property="ticketExpired" column="ticket_expired"/>
         <result property="ticketAnyTime" column="ticket_any_time"/>
     </resultMap>
+
+    <select id="selectVoByProductId" resultMap="ProductTicketResult">
+        SELECT
+        ticket.ticket_id,
+        ticket.create_by,
+        ticket.create_time,
+        ticket.update_by,
+        ticket.update_time,
+        ticket.product_id,
+        ticket.ticket_status,
+        ticket.ticket_ticket_type,
+        ticket.ticket_choose_seat,
+        ticket.ticket_form,
+        ticket.ticket_card,
+        ticket.ticket_post_way,
+        ticket.ticket_postage,
+        ticket.ticket_notice,
+        ticket.ticket_nonsupport,
+        ticket.ticket_invoice,
+        ticket.ticket_expired,
+        ticket.ticket_any_time
+        FROM
+        t_product_ticket ticket
+        WHERE
+        ticket.product_id = #{productId}
+    </select>
 </mapper>

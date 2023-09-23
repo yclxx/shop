@@ -2,14 +2,13 @@ package com.ruoyi.zlyyh.domain.bo;
 
 import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
+import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import javax.validation.constraints.*;
 
-import java.util.Date;
-
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import com.ruoyi.common.core.web.domain.BaseEntity;
 
 /**
  * 商品拓展业务对象
@@ -57,6 +56,12 @@ public class ProductInfoBo extends BaseEntity {
      */
     @NotBlank(message = "第三方产品id不能为空", groups = { AddGroup.class, EditGroup.class })
     private String itemId;
+
+    /**
+     * 第三方产品结算价格
+     */
+    //@NotBlank(message = "第三方产品id不能为空", groups = { AddGroup.class, EditGroup.class })
+    private BigDecimal itemPrice;
 
     /**
      * 折扣

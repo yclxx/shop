@@ -10,4 +10,6 @@ import com.ruoyi.zlyyh.domain.vo.ProductTicketVo;
  * @author yzg
  * @date 2023-09-11
  */
-public interface ProductTicketMapper extends BaseMapperPlus<ProductTicketMapper, ProductTicket, ProductTicketVo> {}
+public interface ProductTicketMapper extends BaseMapperPlus<ProductTicketMapper, ProductTicket, ProductTicketVo> {
+    ProductTicket selectVoByProductId(Long productId);
+}

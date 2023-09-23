@@ -1,13 +1,12 @@
 package com.ruoyi.zlyyh.domain.vo;
 
-import java.math.BigDecimal;
 import com.alibaba.excel.annotation.ExcelIgnoreUnannotated;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.ruoyi.common.excel.annotation.ExcelDictFormat;
 import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
-import java.util.Date;
 
+import java.math.BigDecimal;
 
 
 /**
@@ -60,6 +59,11 @@ public class ProductInfoVo {
     @ExcelProperty(value = "第三方产品id")
     private String itemId;
 
+    /**
+     * 第三方产品结算价格
+     */
+    //@NotBlank(message = "第三方产品id不能为空", groups = { AddGroup.class, EditGroup.class })
+    private BigDecimal itemPrice;
     /**
      * 折扣
      */
