@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.exception.user.UserException;
 import com.ruoyi.common.core.utils.BeanCopyUtils;
+import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.SpringUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.redis.utils.RedisUtils;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -60,12 +62,12 @@ public class OrderTicketServiceImpl implements OrderTicketService {
             throw new ServiceException("请求失败，请退出重试");
         }
         // 校验城市
-        //if (StringUtils.isBlank(bo.getCityCode())) {
-        //    throw new ServiceException("未获取到您的位置信息,请确认是否开启定位服务");
-        //}
-        //if (StringUtils.isNotBlank(platformVo.getPlatformCity()) && !"ALL".equalsIgnoreCase(platformVo.getPlatformCity()) && !platformVo.getPlatformCity().contains(bo.getCityCode())) {
-        //    throw new ServiceException("您当前所在位置不在观影地址参与范围!");
-        //}
+        if (StringUtils.isBlank(bo.getCityCode())) {
+            throw new ServiceException("未获取到您的位置信息,请确认是否开启定位服务");
+        }
+        if (StringUtils.isNotBlank(platformVo.getPlatformCity()) && !"ALL".equalsIgnoreCase(platformVo.getPlatformCity()) && !platformVo.getPlatformCity().contains(bo.getCityCode())) {
+            throw new ServiceException("您当前所在位置不在观影地址参与范围!");
+        }
         // 校验是否有订单，有订单直接返回
         String cacheObject = RedisUtils.getCacheObject(OrderCacheUtils.getUsreOrderOneCacheKey(platformVo.getPlatformKey(), bo.getUserId(), bo.getLineId()));
         if (StringUtils.isNotBlank(cacheObject)) {
@@ -231,7 +233,26 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         }
         orderMapper.insert(order);
         baseMapper.insert(orderTicket);
+        // 缓存订单数据
+        cacheOrder(order);
         return new CreateOrderResult(order.getNumber(), "1");
+    }
+
+    /**
+     * 缓存用户未支付订单
+     * @param order 订单信息
+     */
+    private void cacheOrder(Order order) {
+        String orderCacheKey = "orders:" + order.getNumber();
+        long datePoorMinutes = 30;
+        if (null != order.getExpireDate()) {
+            datePoorMinutes = DateUtils.getDatePoorMinutes(order.getExpireDate(), new Date());
+            datePoorMinutes = datePoorMinutes + 20;
+        }
+        Duration duration = Duration.ofMinutes(datePoorMinutes);
+        RedisUtils.setCacheObject(orderCacheKey, order, duration);
+        String userOrderCacheKey = OrderCacheUtils.getUsreOrderOneCacheKey(order.getPlatformKey(), order.getUserId(), order.getProductId());
+        RedisUtils.setCacheObject(userOrderCacheKey, orderCacheKey, duration);
     }
 
     @Override

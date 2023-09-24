@@ -114,7 +114,7 @@ public class OrderTicketServiceImpl implements IOrderTicketService {
                     codeWrapper.eq(Code::getUsedStatus, "0");
                     List<CodeVo> codeVos = codeMapper.selectVoList(codeWrapper);
                     if (ObjectUtil.isEmpty(codeVos)) continue;
-                    // 开始核销
+                    // 发起核销
                     codeVos.forEach(o -> {
                         remoteCodeService.usedCode(o.getCodeNo());
                     });

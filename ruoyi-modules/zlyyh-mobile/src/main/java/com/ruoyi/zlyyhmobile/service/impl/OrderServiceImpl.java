@@ -359,6 +359,9 @@ public class OrderServiceImpl implements IOrderService {
             } else if ("12".equals(order.getOrderType())) {
                 unionPayChannelService.orderSend(order);
                 updateOrder(order);
+            } else if ("13".equals(order.getOrderType())) {
+                // 演出票订单，创建核销码
+                codeService.insertByOrder(order.getNumber());
             } else if ("15".equals(order.getOrderType())) {
                 payCtripFoodOrder(order.getExternalOrderNumber());
             } else {
@@ -687,7 +690,7 @@ public class OrderServiceImpl implements IOrderService {
                 }
                 order = baseMapper.selectById(order.getNumber());
                 SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
-//                orderStreamProducer.streamOrderMsg(order.getNumber().toString());
+                //orderStreamProducer.streamOrderMsg(order.getNumber().toString());
                 return new CreateOrderResult(order.getNumber(), "0");
             }
             // 需支付
@@ -717,6 +720,8 @@ public class OrderServiceImpl implements IOrderService {
                 }
                 unionPayChannelService.createUnionPayOrder(externalProductId, order);
             }
+            // 联联订单处理
+            //if ("13".equals(productVo.getProductType())) {}
             // 保存订单 后续如需改动成缓存订单，需注释
             insertOrder(order);
             orderInfoMapper.insert(orderInfo);
@@ -1216,7 +1221,7 @@ public class OrderServiceImpl implements IOrderService {
             if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
                 String accessToken = CtripUtils.getAccessToken();
                 String refundUrl = CtripConfig.getUrl() + "?AID=" + CtripConfig.getAid() + "&SID=" + CtripConfig.getSid() +
-                        "&ICODE=" + CtripConfig.getCancelOrderCode() + "&Token=" + accessToken;
+                    "&ICODE=" + CtripConfig.getCancelOrderCode() + "&Token=" + accessToken;
                 //请求美食退款订单接口
                 if ("1".equals(orderVo.getCancelStatus())) {
                     throw new ServiceException("退款已提交,不可重复申请");

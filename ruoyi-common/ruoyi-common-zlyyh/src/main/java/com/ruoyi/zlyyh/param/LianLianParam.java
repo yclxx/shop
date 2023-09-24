@@ -162,7 +162,6 @@ public class LianLianParam implements Serializable {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class ApplyRefundParam implements Serializable {
-        // 联联订单退款
         private String channelOrderNo;//渠道订单号
         private List<String> orderNoList;//退款小订单号列表
     }
