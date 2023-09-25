@@ -22,13 +22,15 @@ import com.ruoyi.zlyyh.domain.vo.OrderUnionPayVo;
 import com.ruoyi.zlyyh.domain.vo.OrderVo;
 import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayParams;
 import com.ruoyi.zlyyh.mapper.OrderUnionSendMapper;
-import com.ruoyi.zlyyh.properties.CtripConfig;
 import com.ruoyi.zlyyh.properties.YsfFoodProperties;
 import com.ruoyi.zlyyh.properties.utils.YsfDistributionPropertiesUtils;
 import com.ruoyi.zlyyh.utils.CtripUtils;
 import com.ruoyi.zlyyh.utils.YsfFoodUtils;
 import com.ruoyi.zlyyh.utils.sdk.UnionPayDistributionUtil;
-import com.ruoyi.zlyyhmobile.service.*;
+import com.ruoyi.zlyyhmobile.service.IHistoryOrderService;
+import com.ruoyi.zlyyhmobile.service.IMissionUserRecordService;
+import com.ruoyi.zlyyhmobile.service.IOrderService;
+import com.ruoyi.zlyyhmobile.service.IOrderUnionPayService;
 import com.ruoyi.zlyyhmobile.utils.redis.OrderCacheUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -95,7 +97,7 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
 
         //请求美食退款订单接口
         OrderVo orderVo = orderService.queryById(number);
-        if (!"1".equals(orderVo.getOrderType()) || !"5".equals(orderVo.getOrderType()) ||!"15".equals(orderVo.getOrderType()) ) {
+        if (!"1".equals(orderVo.getOrderType()) || !"5".equals(orderVo.getOrderType()) || !"15".equals(orderVo.getOrderType())) {
             throw new ServiceException("非美食订单，无法向供应商申请退款");
         }
         if ("1".equals(orderVo.getCancelStatus())) {
@@ -104,7 +106,7 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
         String s = "";
         String s1 = "";
         //根据订单类型请求不同供应商接口
-        if ("5".equals(orderVo.getOrderType())){
+        if ("5".equals(orderVo.getOrderType())) {
             //口碑类型商品
             s = YsfFoodUtils.cancelOrder(appId, orderVo.getExternalOrderNumber(), rsaPrivateKey, refundUrl);
         } else if ("15".equals(orderVo.getOrderType())) {
@@ -117,7 +119,7 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
             //订单设置为退款种状态 等待回调
             Order order = new Order();
             order.setCancelStatus("0");
-            orderService.updateOrder(order);
+            order = orderService.updateOrder(order);
         }
 
     }
@@ -138,7 +140,7 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
         String s = "";
         String s1 = "";
         //根据订单类型请求不同供应商接口
-        if ("5".equals(orderVo.getOrderType())){
+        if ("5".equals(orderVo.getOrderType())) {
             //口碑类型商品
             s = YsfFoodUtils.cancelOrder(appId, orderVo.getExternalOrderNumber(), rsaPrivateKey, refundUrl);
         } else if ("15".equals(orderVo.getOrderType())) {

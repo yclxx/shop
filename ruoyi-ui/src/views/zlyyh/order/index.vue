@@ -823,13 +823,15 @@
       },
       // 退券按钮
       handleCouponRefund(row) {
-        const thNumbers = row.number || this.ids;
-        couponRefundOrder(thNumbers).then(response => {
-          this.$modal.msgSuccess("操作成功");
-          this.refundOpen = false;
+        this.$modal.confirm('是否确认退款订单"' + row.number + '"？').then(() => {
+          this.loading = true;
+          return couponRefundOrder(row.number);
+        }).then(() => {
+          this.loading = false;
           this.getList();
-        }).finally(() => {
-          this.buttonLoading = false;
+          this.$modal.msgSuccess("操作成功");
+        }).catch(() => {}).finally(() => {
+          this.loading = false;
         });
       },
       /** 提交按钮 */

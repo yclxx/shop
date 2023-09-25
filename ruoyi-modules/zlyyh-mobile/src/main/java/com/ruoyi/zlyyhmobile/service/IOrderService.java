@@ -95,7 +95,7 @@ public interface IOrderService {
      */
     String payOrder(Long number, Long userId);
 
-    void updateOrder(Order order);
+    Order updateOrder(Order order);
 
     /**
      * 查询订单支付状态

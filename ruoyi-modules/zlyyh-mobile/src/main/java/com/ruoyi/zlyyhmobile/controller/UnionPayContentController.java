@@ -1,13 +1,11 @@
 package com.ruoyi.zlyyhmobile.controller;
 
 import com.alibaba.fastjson.JSONObject;
-import com.ruoyi.zlyyhmobile.domain.bo.UnionPayCreateBo;
 import com.ruoyi.zlyyhmobile.service.IUnionPayContentOrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,8 +30,8 @@ public class UnionPayContentController {
     /**
      * 内容分销 发券
      */
-    @PostMapping("/order")
-    public JSONObject distributionSend(HttpServletRequest request, HttpServletResponse response, @RequestBody UnionPayCreateBo unionPayCreateBo) {
-        return publisherPayContentOrderService.unionPay(request, response, unionPayCreateBo);
+    @PostMapping("/ignore/order")
+    public JSONObject distributionSend(HttpServletRequest request, HttpServletResponse response) {
+        return publisherPayContentOrderService.unionPay(request, response);
     }
 }
