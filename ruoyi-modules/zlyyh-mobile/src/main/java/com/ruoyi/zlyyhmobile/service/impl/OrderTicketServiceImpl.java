@@ -251,8 +251,8 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         }
 
         // 银联分销预下单处理
-        if ("12".equals(productVo.getProductType()) || "1".equals(productVo.getUnionPay())) {
-            String externalProductId = "1".equals(productVo.getUnionPay()) ? productVo.getUnionProductId() : productVo.getExternalProductId();
+        if ("1".equals(productVo.getUnionPay())) {
+            String externalProductId = ticketLineVo.getOtherId();
             if (StringUtils.isEmpty(externalProductId)) {
                 throw new ServiceException("抱歉，商品配置错误[expid]");
             }
