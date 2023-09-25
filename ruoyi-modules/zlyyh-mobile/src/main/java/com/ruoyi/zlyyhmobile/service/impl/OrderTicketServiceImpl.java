@@ -61,13 +61,13 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         if (null == platformVo) {
             throw new ServiceException("请求失败，请退出重试");
         }
-//        // 校验城市
-//        if (StringUtils.isBlank(bo.getCityCode())) {
-//            throw new ServiceException("未获取到您的位置信息,请确认是否开启定位服务");
-//        }
-//        if (StringUtils.isNotBlank(platformVo.getPlatformCity()) && !"ALL".equalsIgnoreCase(platformVo.getPlatformCity()) && !platformVo.getPlatformCity().contains(bo.getCityCode())) {
-//            throw new ServiceException("您当前所在位置不在观影地址参与范围!");
-//        }
+        // 校验城市
+        //if (StringUtils.isBlank(bo.getCityCode())) {
+        //    throw new ServiceException("未获取到您的位置信息,请确认是否开启定位服务");
+        //}
+        //if (StringUtils.isNotBlank(platformVo.getPlatformCity()) && !"ALL".equalsIgnoreCase(platformVo.getPlatformCity()) && !platformVo.getPlatformCity().contains(bo.getCityCode())) {
+        //    throw new ServiceException("您当前所在位置不在观影地址参与范围!");
+        //}
         // 校验是否有订单，有订单直接返回
         String cacheObject = RedisUtils.getCacheObject(OrderCacheUtils.getUsreOrderOneCacheKey(platformVo.getPlatformKey(), bo.getUserId(), bo.getLineId()));
         if (StringUtils.isNotBlank(cacheObject)) {
@@ -97,15 +97,31 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         if ("1".equals(productVo.getProductAffiliation())) {
             throw new ServiceException("商品不可购买");
         }
+
         // 票种查询
         ProductTicketLineVo ticketLineVo = ticketLineMapper.selectVoById(bo.getLineId());
         if (ObjectUtil.isEmpty(ticketLineVo)) throw new ServiceException("此票档无法购买");
         if (ticketLineVo.getLineUpperLimit() < bo.getPayCount())
             throw new ServiceException("单次购买数量不能超过" + ticketLineVo.getLineUpperLimit());
-        BigDecimal orderTicketLineNumber = baseMapper.getOrderTicketLineNumber(ticketLineVo.getLineId());
-        if (null == orderTicketLineNumber) orderTicketLineNumber = BigDecimal.ZERO;
-        if (ticketLineVo.getLineNumber() < (orderTicketLineNumber.longValue() + bo.getPayCount()))
-            throw new ServiceException("票档所剩数量不足");
+
+        String lineNumber = "lineNumber:";
+        // 查询可购票档数量缓存
+        Long lineNumbers = RedisUtils.getCacheObject(lineNumber + bo.getLineId());
+        if (ObjectUtil.isNotEmpty(lineNumbers)) {
+            if (lineNumbers.compareTo(bo.getPayCount()) < 0) {
+                throw new ServiceException("票档所剩数量不足");
+            }
+        } else {
+            BigDecimal orderTicketLineNumber = baseMapper.getOrderTicketLineNumber(ticketLineVo.getLineId());
+            if (null == orderTicketLineNumber) orderTicketLineNumber = BigDecimal.ZERO;
+            long payCount = orderTicketLineNumber.longValue() + bo.getPayCount();
+            if (ticketLineVo.getLineNumber() < (payCount))
+                throw new ServiceException("票档所剩数量不足");
+            // 设置缓存一天时间
+            RedisUtils.setCacheObject(lineNumber + bo.getLineId(), ticketLineVo.getLineNumber() - payCount, Duration.ofDays(1));
+        }
+
+
         // 门店信息处理
         ShopVo shopVo = shopService.queryById(bo.getShopId());
         if (ObjectUtil.isEmpty(shopVo)) throw new ServiceException("观影信息异常");
@@ -153,6 +169,7 @@ public class OrderTicketServiceImpl implements OrderTicketService {
 
         OrderTicket orderTicket = new OrderTicket();
         orderTicket.setNumber(order.getNumber());
+        orderTicket.setStatus("0");
         orderTicket.setProductId(ticketLineVo.getProductId());
         orderTicket.setSessionId(ticketLineVo.getSessionId());
         orderTicket.setLineId(ticketLineVo.getLineId());

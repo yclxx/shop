@@ -9,6 +9,7 @@
         <result property="productId" column="product_id"/>
         <result property="sessionId" column="session_id"/>
         <result property="lineId" column="line_id"/>
+        <result property="status" column="status"/>
         <result property="ticketTime" column="ticket_time"/>
         <result property="price" column="price"/>
         <result property="sellPrice" column="sell_price"/>
@@ -44,5 +45,6 @@
         t_order_ticket ticket
         WHERE
         ticket.line_id = #{lineId}
+        AND ticket.status = '0'
     </select>
 </mapper>

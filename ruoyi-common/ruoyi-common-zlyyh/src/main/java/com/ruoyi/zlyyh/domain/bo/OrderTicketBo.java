@@ -45,6 +45,10 @@ public class OrderTicketBo extends BaseEntity {
      */
     @NotNull(message = "票种id不能为空", groups = {AddGroup.class, EditGroup.class})
     private Long lineId;
+    /**
+     * 订单状态 0 正常 1停用
+     */
+    private String status;
 
     /**
      * 观影时间
