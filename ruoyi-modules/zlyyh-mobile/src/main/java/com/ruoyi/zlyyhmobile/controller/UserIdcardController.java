@@ -108,9 +108,9 @@ public class UserIdcardController extends BaseController {
      *
      * @param userIdcardId 主键串
      */
-    @Log(title = "用户地址", businessType = BusinessType.DELETE)
+    @Log(title = "用户身份信息", businessType = BusinessType.DELETE)
     @PostMapping("/del/{userIdcardId}")
-    public R<Void> remove(@NotEmpty(message = "主键不能为空") @PathVariable Integer userIdcardId) {
+    public R<Void> remove(@NotEmpty(message = "主键不能为空") @PathVariable String userIdcardId) {
         Map<String, Object> map = new HashMap<>();
         map.put("user_idcard_id", userIdcardId);
         map.put("user_id", LoginHelper.getUserId());
