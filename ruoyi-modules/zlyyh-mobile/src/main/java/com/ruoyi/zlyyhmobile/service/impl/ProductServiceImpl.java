@@ -16,6 +16,7 @@ import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.zlyyh.domain.Product;
 import com.ruoyi.zlyyh.domain.bo.ProductBo;
+import com.ruoyi.zlyyh.domain.bo.ShopBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
 import com.ruoyi.zlyyh.mapper.ProductMapper;
@@ -45,6 +46,7 @@ public class ProductServiceImpl implements IProductService {
     private final ICategoryService categoryService;
     private final ICategoryProductService categoryProductService;
     private final IShopProductService shopProductService;
+    private final IShopService shopService;
     private final IProductInfoService productInfoService;
     private final IProductTicketService productTicketService;
 
@@ -115,6 +117,17 @@ public class ProductServiceImpl implements IProductService {
         }
         List<ProductVo> resultPro = new ArrayList<>(build.getRows().size());
         for (ProductVo productVo : build.getRows()) {
+            //把门店加上
+            ShopBo shopBo = new ShopBo();
+            shopBo.setProductId(productVo.getProductId());
+            PageQuery pageQuery1 = new PageQuery();
+            pageQuery1.setPageSize(1);
+            pageQuery1.setPageNum(1);
+            TableDataInfo<ShopVo> shop= shopService.getShopListByProductId(shopBo, pageQuery1);
+            if (ObjectUtil.isNotEmpty(shop) && ObjectUtil.isNotEmpty(shop.getRows())){
+                ShopVo shopVo = shop.getRows().get(0);
+                productVo.setShopVo(shopVo);
+            }
             boolean dayFlag = StringUtils.isBlank(bo.getWeekDate()) || bo.getWeekDate().equals("" + DateUtil.dayOfWeek(new Date()));
             if (dayFlag) {
                 resultPro.add(ProductUtils.getProductVoCheck(productVo, userId, bo.getPlatformKey(), bo.getShowCity(), true));

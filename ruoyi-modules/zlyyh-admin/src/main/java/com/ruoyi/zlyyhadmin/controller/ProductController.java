@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -57,7 +58,10 @@ public class ProductController extends BaseController {
      */
     @GetMapping("/selectListProduct")
     public R<List<SelectListEntity>> selectListProduct(ProductBo bo) {
-        List<ProductVo> productVos = iProductService.queryList(bo);
+        //查询下拉列表时加入时间和状态判断
+        bo.setStatus("0");
+        bo.setSearchStatus("0");
+        List<ProductVo> productVos = iProductService.queryProductList(bo);
         return R.ok(BeanCopyUtils.copyListToSelectListVo(productVos, ColumnUtil.getFieldName(ProductVo::getProductId), ColumnUtil.getFieldName(ProductVo::getProductName), null));
     }
 

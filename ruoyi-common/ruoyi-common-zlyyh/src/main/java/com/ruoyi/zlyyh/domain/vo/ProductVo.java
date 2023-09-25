@@ -382,4 +382,6 @@ public class ProductVo implements Serializable {
     private ProductTicketVo ticket;
 
     private List<ProductTicketSessionVo> ticketSession;
+
+    private ShopVo shopVo;
 }

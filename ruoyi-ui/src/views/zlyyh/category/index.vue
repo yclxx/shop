@@ -337,7 +337,9 @@
       },
       //商户下拉列表
       getMerSelectList() {
-        selectListMerchant({}).then(response => {
+        selectListMerchant({
+          status: '0'
+        }).then(response => {
           this.commercialTenantList = response.data;
         });
       },

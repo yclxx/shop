@@ -37,6 +37,11 @@ public interface IProductService {
     List<ProductVo> queryList(ProductBo bo);
 
     /**
+     * 查询商品列表
+     */
+    List<ProductVo> queryProductList(ProductBo bo);
+
+    /**
      * 修改商品
      */
     Boolean insertByBo(ProductBo bo);

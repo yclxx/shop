@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.constant.CacheNames;
 import com.ruoyi.common.core.exception.ServiceException;
+import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
@@ -125,6 +126,19 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public List<ProductVo> queryList(ProductBo bo) {
         LambdaQueryWrapper<Product> lqw = buildQueryWrapper(bo);
+        return baseMapper.selectVoList(lqw);
+    }
+
+    /**
+     * 查询商品下拉列表
+     */
+    @Override
+    public List<ProductVo> queryProductList(ProductBo bo) {
+        LambdaQueryWrapper<Product> lqw = new LambdaQueryWrapper<>();
+        lqw.eq(StringUtils.isNotBlank(bo.getStatus()), Product::getStatus, bo.getStatus());
+        lqw.eq(StringUtils.isNotBlank(bo.getSearchStatus()),Product::getSearchStatus,bo.getSearchStatus());
+        lqw.and(lq -> lq.ge(Product::getShowEndDate, DateUtils.dateTimeNow()).or(e -> e.isNull(Product::getShowEndDate)));
+        lqw.and(lq -> lq.ge(Product::getSellEndDate, DateUtils.dateTimeNow()).or(e -> e.isNull(Product::getSellEndDate)));
         return baseMapper.selectVoList(lqw);
     }
 
