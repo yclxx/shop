@@ -153,7 +153,7 @@
 
     <!-- 添加或修改商品对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="1200px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="110px">
+      <el-form ref="form" :model="form" :rules="rules" label-width="120px">
         <el-tabs v-model="activeName">
           <el-tab-pane label="基本信息" name="basicCoupon" key="basicCoupon" :style="{height: tableHeight}">
             <el-row>
