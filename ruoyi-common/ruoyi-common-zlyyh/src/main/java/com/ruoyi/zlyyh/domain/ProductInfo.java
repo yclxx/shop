@@ -1,15 +1,12 @@
 package com.ruoyi.zlyyh.domain;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import java.io.Serializable;
-import java.util.Date;
-import java.math.BigDecimal;
 
 import java.math.BigDecimal;
-import com.ruoyi.common.core.web.domain.BaseEntity;
 
 /**
  * 商品拓展对象 t_product_info
@@ -22,7 +19,7 @@ import com.ruoyi.common.core.web.domain.BaseEntity;
 @TableName("t_product_info")
 public class ProductInfo extends BaseEntity {
 
-    private static final long serialVersionUID=1L;
+    private static final long serialVersionUID = 1L;
 
     /**
      * 商品ID
@@ -49,6 +46,10 @@ public class ProductInfo extends BaseEntity {
      * 第三方产品id
      */
     private String itemId;
+    /**
+     * 第三方产品id
+     */
+    private BigDecimal itemPrice;
     /**
      * 折扣
      */

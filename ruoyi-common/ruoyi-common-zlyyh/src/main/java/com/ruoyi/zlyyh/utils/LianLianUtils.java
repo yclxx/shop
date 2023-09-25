@@ -58,7 +58,7 @@ public class LianLianUtils {
      */
     public static JSONObject getProductList(String channelId, String secret, String url, String cityCode, Integer pageNum) {
         //组装产品列表请求参数
-        LianLianParam.ProductList2Param productListParam = new LianLianParam.ProductList2Param();
+        LianLianParam.ProductListParam productListParam = new LianLianParam.ProductListParam();
         productListParam.setChannelId(channelId);
         productListParam.setCityCode(cityCode);
         productListParam.setPageNum(pageNum);
@@ -74,7 +74,7 @@ public class LianLianUtils {
      */
     public static JSONObject getProductDetail(String channelId, String secret, String url, String productId) {
         //组装产品详情请求参数
-        LianLianParam.ProductDetail2Param productDetailParam = new LianLianParam.ProductDetail2Param();
+        LianLianParam.ProductDetailParam productDetailParam = new LianLianParam.ProductDetailParam();
         productDetailParam.setProductId(productId);
         String encryptedData = JSONObject.toJSONString(productDetailParam);
         return sendLianLianHttp(channelId, secret, url, encryptedData, false);
@@ -82,15 +82,36 @@ public class LianLianUtils {
 
     /**
      * 查询产品详情信息
+     *
      * @param productId
      * @return
      */
     public static JSONObject getProductShop(String channelId, String secret, String url, String productId) {
         //组装产品列表请求参数
-        LianLianParam.ProductInfo2Param productInfoParam = new LianLianParam.ProductInfo2Param();
+        LianLianParam.ProductInfoParam productInfoParam = new LianLianParam.ProductInfoParam();
         productInfoParam.setChannelId(channelId);
         productInfoParam.setProductId(productId);
         String encryptedData = JSONObject.toJSONString(productInfoParam);
+        return sendLianLianHttp(channelId, secret, url, encryptedData, false);
+    }
+
+    /**
+     * 验证-渠道订单创建条件
+     * @param productId 联联商品id
+     * @param itemId 联联套餐id
+     * @return
+     */
+    public static JSONObject getValidToken(String channelId, String secret, String url, String number,
+                                           Integer productId,String itemId,String customerName,String customerPhoneNumber) {
+        LianLianParam.CheckOrderParam checkOrderParam = new LianLianParam.CheckOrderParam();
+        checkOrderParam.setThirdPartyOrderNo(number);
+        checkOrderParam.setProductId(productId);
+        checkOrderParam.setItemId(itemId);//套餐id
+        checkOrderParam.setCustomerName(customerName);
+        checkOrderParam.setCustomerPhoneNumber(customerPhoneNumber);
+        checkOrderParam.setQuantity(1);
+        checkOrderParam.setPayType(1);
+        String encryptedData = JSONObject.toJSONString(checkOrderParam);
         return sendLianLianHttp(channelId, secret, url, encryptedData, false);
     }
 

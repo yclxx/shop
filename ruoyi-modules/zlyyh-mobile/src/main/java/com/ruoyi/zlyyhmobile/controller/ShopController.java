@@ -1,5 +1,6 @@
 package com.ruoyi.zlyyhmobile.controller;
 
+import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.utils.ServletUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
@@ -10,9 +11,11 @@ import com.ruoyi.zlyyhmobile.service.IShopService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 
 /**
@@ -52,5 +55,14 @@ public class ShopController {
         }
         bo.setCitycode(ServletUtils.getHeader(ZlyyhConstants.CITY_CODE));
         return shopService.getShopListByProductId(bo, pageQuery);
+    }
+
+    /**
+     * 获取商品门店信息
+     * @return 门店列表
+     */
+    @GetMapping("/{shopId}")
+    public R<ShopVo> getShopListByProductId(@NotNull(message = "主键不能为空") @PathVariable Long shopId) {
+        return R.ok(shopService.queryById(shopId));
     }
 }

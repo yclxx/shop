@@ -37,7 +37,7 @@ public class UserIdcardServiceImpl implements IUserIdcardService {
      * 查询观影用户信息
      */
     @Override
-    public UserIdcardVo queryById(Long userIdcardId){
+    public UserIdcardVo queryById(Long userIdcardId) {
         return baseMapper.selectVoById(userIdcardId);
     }
 
@@ -60,6 +60,16 @@ public class UserIdcardServiceImpl implements IUserIdcardService {
     @Override
     public List<UserIdcardVo> queryList(UserIdcardBo bo) {
         LambdaQueryWrapper<UserIdcard> lqw = buildQueryWrapper(bo);
+        return baseMapper.selectVoList(lqw);
+    }
+
+    /**
+     * 查询观影用户信息列表
+     */
+    @Override
+    public List<UserIdcardVo> queryListByIds(List<Long> ids) {
+        LambdaQueryWrapper<UserIdcard> lqw = Wrappers.lambdaQuery();
+        lqw.in(UserIdcard::getUserIdcardId, ids);
         return baseMapper.selectVoList(lqw);
     }
 
@@ -100,7 +110,7 @@ public class UserIdcardServiceImpl implements IUserIdcardService {
     /**
      * 保存前的数据校验
      */
-    private void validEntityBeforeSave(UserIdcard entity){
+    private void validEntityBeforeSave(UserIdcard entity) {
         //TODO 做一些数据校验,如唯一约束
         if (ObjectUtil.isNull(entity.getUserIdcardId())) {
             UserIdcardBo a = new UserIdcardBo();
@@ -123,7 +133,7 @@ public class UserIdcardServiceImpl implements IUserIdcardService {
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
-        if(isValid){
+        if (isValid) {
             //TODO 做一些业务上的校验,判断是否需要校验
         }
         return baseMapper.deleteBatchIds(ids) > 0;
