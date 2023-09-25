@@ -17,28 +17,10 @@ export function getProductTicketLine(lineId) {
   })
 }
 
-// 新增演出票种
-export function addProductTicketLine(data) {
+// 查询观影人列表
+export function getOrderIdCardList(lineId) {
   return request({
-    url: '/zlyyh-admin/productTicketLine',
-    method: 'post',
-    data: data
-  })
-}
-
-// 修改演出票种
-export function updateProductTicketLine(data) {
-  return request({
-    url: '/zlyyh-admin/productTicketLine',
-    method: 'put',
-    data: data
-  })
-}
-
-// 删除演出票种
-export function delProductTicketLine(lineId) {
-  return request({
-    url: '/zlyyh-admin/productTicketLine/' + lineId,
-    method: 'delete'
+    url: '/zlyyh-admin/orderTicket/getOrderIdCardList/' + lineId,
+    method: 'get'
   })
 }
