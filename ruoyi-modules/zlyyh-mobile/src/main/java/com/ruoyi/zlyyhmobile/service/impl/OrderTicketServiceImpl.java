@@ -47,6 +47,7 @@ public class OrderTicketServiceImpl implements OrderTicketService {
     private final ProductTicketSessionMapper ticketSessionMapper;
     private final ProductTicketLineMapper ticketLineMapper;
     private final CodeMapper codeMapper;
+    private final IUnionPayChannelService unionPayChannelService;
 
 
     /**
@@ -248,6 +249,15 @@ public class OrderTicketServiceImpl implements OrderTicketService {
             baseMapper.insert(orderTicket);
             return new CreateOrderResult(order.getNumber(), "0");
         }
+
+        // 银联分销预下单处理
+        if ("12".equals(productVo.getProductType()) || "1".equals(productVo.getUnionPay())) {
+            String externalProductId = "1".equals(productVo.getUnionPay()) ? productVo.getUnionProductId() : productVo.getExternalProductId();
+            if (StringUtils.isEmpty(externalProductId)) {
+                throw new ServiceException("抱歉，商品配置错误[expid]");
+            }
+            unionPayChannelService.createUnionPayOrder(externalProductId, order);
+        }
         orderMapper.insert(order);
         baseMapper.insert(orderTicket);
         // 缓存订单数据
@@ -257,6 +267,7 @@ public class OrderTicketServiceImpl implements OrderTicketService {
 
     /**
      * 缓存用户未支付订单
+     *
      * @param order 订单信息
      */
     private void cacheOrder(Order order) {
