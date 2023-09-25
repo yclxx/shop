@@ -52,6 +52,11 @@ public class OrderTicketVo {
     private Long lineId;
 
     /**
+     * 订单状态 0 正常 1停用
+     */
+    @ExcelProperty(value = "订单状态:0正常,1停用")
+    private String status;
+    /**
      * 观影时间
      */
     @ExcelProperty(value = "观影时间")

@@ -1,15 +1,12 @@
 package com.ruoyi.zlyyh.domain;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import java.io.Serializable;
-import java.util.Date;
-import java.math.BigDecimal;
 
 import java.math.BigDecimal;
-import com.ruoyi.common.core.web.domain.BaseEntity;
 
 /**
  * 美食套餐详细订单对象 t_order_food_info
@@ -22,7 +19,7 @@ import com.ruoyi.common.core.web.domain.BaseEntity;
 @TableName("t_order_food_info")
 public class OrderFoodInfo extends BaseEntity {
 
-    private static final long serialVersionUID=1L;
+    private static final long serialVersionUID = 1L;
 
     /**
      * 订单号
@@ -41,6 +38,10 @@ public class OrderFoodInfo extends BaseEntity {
      * 核销码
      */
     private String ticketCode;
+    /**
+     * 二维码图片地址
+     */
+    public String ticketCodeUrl;
     /**
      * 凭证ID
      */

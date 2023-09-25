@@ -97,21 +97,56 @@ public class LianLianUtils {
 
     /**
      * 验证-渠道订单创建条件
+     *
      * @param productId 联联商品id
-     * @param itemId 联联套餐id
+     * @param itemId    联联套餐id
      * @return
      */
     public static JSONObject getValidToken(String channelId, String secret, String url, String number,
-                                           Integer productId,String itemId,String customerName,String customerPhoneNumber) {
+                                           String productId, String itemId, String customerName, String customerPhoneNumber) {
         LianLianParam.CheckOrderParam checkOrderParam = new LianLianParam.CheckOrderParam();
         checkOrderParam.setThirdPartyOrderNo(number);
-        checkOrderParam.setProductId(productId);
+        checkOrderParam.setProductId(Integer.valueOf(productId));
         checkOrderParam.setItemId(itemId);//套餐id
         checkOrderParam.setCustomerName(customerName);
         checkOrderParam.setCustomerPhoneNumber(customerPhoneNumber);
         checkOrderParam.setQuantity(1);
         checkOrderParam.setPayType(1);
         String encryptedData = JSONObject.toJSONString(checkOrderParam);
+        return sendLianLianHttp(channelId, secret, url, encryptedData, false);
+    }
+
+    /**
+     * 创建订单
+     *
+     * @param productId 联联商品id
+     * @param itemId    联联套餐id
+     * @return
+     */
+    public static JSONObject createOrder(String channelId, String secret, String url, String number, String validToken,
+                                         String productId, String itemId, String customerName, String customerPhoneNumber) {
+        LianLianParam.CreateOrderParam createOrderParam = new LianLianParam.CreateOrderParam();
+        createOrderParam.setValidToken(validToken);
+        createOrderParam.setThirdPartyOrderNo(number);
+        createOrderParam.setProductId(Integer.valueOf(productId));
+        createOrderParam.setItemId(itemId);
+        createOrderParam.setCustomerName(customerName);
+        createOrderParam.setCustomerPhoneNumber(customerPhoneNumber);
+        createOrderParam.setQuantity(1);
+        createOrderParam.setPayType(1);//余额
+        String encryptedData = JSONObject.toJSONString(createOrderParam);
+        return sendLianLianHttp(channelId, secret, url, encryptedData, false);
+    }
+
+    /**
+     * 查询订单详情
+     */
+    public static JSONObject getOrderDetails(String channelId, String secret, String url, String number, String channelOrderId) {
+        LianLianParam.OrderQueryParam queryParam = new LianLianParam.OrderQueryParam();
+        queryParam.setThirdOrderId(number);//第三方订单号
+        queryParam.setChannelOrderId(channelOrderId);//渠道订单号
+        queryParam.setChannelId(channelId);
+        String encryptedData = JSONObject.toJSONString(queryParam);
         return sendLianLianHttp(channelId, secret, url, encryptedData, false);
     }
 

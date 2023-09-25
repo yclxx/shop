@@ -1,12 +1,10 @@
 package com.ruoyi.zlyyh.domain.vo;
 
-import java.math.BigDecimal;
 import com.alibaba.excel.annotation.ExcelIgnoreUnannotated;
 import com.alibaba.excel.annotation.ExcelProperty;
-import com.ruoyi.common.excel.annotation.ExcelDictFormat;
-import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
-import java.util.Date;
+
+import java.math.BigDecimal;
 
 
 
@@ -45,6 +43,11 @@ public class OrderFoodInfoVo {
      */
     @ExcelProperty(value = "核销码")
     private String ticketCode;
+    /**
+     * 二维码图片地址
+     */
+    @ExcelProperty(value = "二维码")
+    public String ticketCodeUrl;
 
     /**
      * 凭证ID

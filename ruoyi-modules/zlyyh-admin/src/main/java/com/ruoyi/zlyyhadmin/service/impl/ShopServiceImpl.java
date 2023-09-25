@@ -182,10 +182,6 @@ public class ShopServiceImpl implements IShopService {
         }
         lqw.eq(StringUtils.isNotBlank(bo.getStatus()), Shop::getStatus, bo.getStatus());
         lqw.eq(bo.getPlatformKey() != null, Shop::getPlatformKey, bo.getPlatformKey());
-        if (bo.getPageSize() != null) {
-            String sql = "limit " + bo.getPageSize();
-            lqw.last(sql);
-        }
         return lqw;
     }
 

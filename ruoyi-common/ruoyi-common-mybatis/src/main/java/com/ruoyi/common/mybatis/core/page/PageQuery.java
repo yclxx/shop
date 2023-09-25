@@ -60,8 +60,8 @@ public class PageQuery implements Serializable {
         if (pageNum <= 0) {
             pageNum = DEFAULT_PAGE_NUM;
         }
-        if (pageSize > 200) {
-            pageSize = 200;
+        if (pageSize > 2000) {
+            pageSize = 2000;
         }
         Page<T> page = new Page<>(pageNum, pageSize);
         List<OrderItem> orderItems = buildOrderItem();
