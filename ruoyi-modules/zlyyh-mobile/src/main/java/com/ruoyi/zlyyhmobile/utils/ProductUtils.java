@@ -113,11 +113,19 @@ public class ProductUtils {
             }
             return R.fail("每周" + sendDate + "开始", null == appProductVo ? productVo : appProductVo);
         }
-        if (StringUtils.isNotBlank(productVo.getShowCity()) && !"ALL".equalsIgnoreCase(productVo.getShowCity()) && !productVo.getShowCity().contains(cityCode)) {
-            if (null != appProductVo) {
-                appProductVo.setProductStatus("4");
+        if (StringUtils.isNotBlank(productVo.getShowCity()) && !"ALL".equalsIgnoreCase(productVo.getShowCity())) {
+            if (StringUtils.isBlank(cityCode)) {
+                if (null != appProductVo) {
+                    appProductVo.setProductStatus("4");
+                }
+                return R.fail("未获取到您的位置信息,请确认是否开启定位服务!", null == appProductVo ? productVo : appProductVo);
             }
-            return R.fail("您当前所在位置不在活动参与范围!", null == appProductVo ? productVo : appProductVo);
+            if (!productVo.getShowCity().contains(cityCode)) {
+                if (null != appProductVo) {
+                    appProductVo.setProductStatus("4");
+                }
+                return R.fail("您当前所在位置不在活动参与范围!", null == appProductVo ? productVo : appProductVo);
+            }
         }
         String dayCount = RedisUtils.getCacheObject(ZlyyhUtils.getProductDayCount() + productVo.getProductId());
         if (StringUtils.isNotBlank(dayCount) && "1".equals(dayCount)) {

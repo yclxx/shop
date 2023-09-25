@@ -525,13 +525,13 @@ public class OrderServiceImpl implements IOrderService {
         if (null == platformVo) {
             throw new ServiceException("请求失败，请退出重试");
         }
-        // 校验城市
-        if (StringUtils.isBlank(bo.getCityCode())) {
-            throw new ServiceException("未获取到您的位置信息,请确认是否开启定位服务");
-        }
-        if (StringUtils.isNotBlank(platformVo.getPlatformCity()) && !"ALL".equalsIgnoreCase(platformVo.getPlatformCity()) && !platformVo.getPlatformCity().contains(bo.getCityCode())) {
-            throw new ServiceException("您当前所在位置不在活动参与范围!");
-        }
+//        // 校验城市
+//        if (StringUtils.isBlank(bo.getCityCode())) {
+//            throw new ServiceException("未获取到您的位置信息,请确认是否开启定位服务");
+//        }
+//        if (StringUtils.isNotBlank(platformVo.getPlatformCity()) && !"ALL".equalsIgnoreCase(platformVo.getPlatformCity()) && !platformVo.getPlatformCity().contains(bo.getCityCode())) {
+//            throw new ServiceException("您当前所在位置不在活动参与范围!");
+//        }
         // 校验是否有订单，有订单直接返回
         String cacheObject = RedisUtils.getCacheObject(OrderCacheUtils.getUsreOrderOneCacheKey(platformVo.getPlatformKey(), bo.getUserId(), bo.getProductId()));
         if (StringUtils.isNotBlank(cacheObject)) {
