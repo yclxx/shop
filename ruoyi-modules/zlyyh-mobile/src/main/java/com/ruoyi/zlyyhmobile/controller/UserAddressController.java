@@ -132,7 +132,7 @@ public class UserAddressController extends BaseController {
      */
     @Log(title = "用户地址", businessType = BusinessType.DELETE)
     @PostMapping("/del/{userAddressId}")
-    public R<Void> remove(@NotEmpty(message = "主键不能为空") @PathVariable Integer userAddressId) {
+    public R<Void> remove(@NotEmpty(message = "主键不能为空") @PathVariable String userAddressId) {
         Map<String, Object> map = new HashMap<>();
         map.put("user_address_id", userAddressId);
         map.put("user_id", LoginHelper.getUserId());
