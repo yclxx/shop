@@ -3,51 +3,41 @@
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="订单号" prop="number">
         <el-input
-          v-model="queryParams.number"
-          placeholder="请输入订单号"
-          clearable
-          @keyup.enter.native="handleQuery"
+            v-model="queryParams.number"
+            placeholder="请输入订单号"
+            clearable
+            @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="产品id" prop="productId">
+      <el-form-item label="产品" prop="productName">
         <el-input
-          v-model="queryParams.productId"
-          placeholder="请输入产品id"
-          clearable
-          @keyup.enter.native="handleQuery"
+            v-model="queryParams.productName"
+            placeholder="请输入产品"
+            clearable
+            @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="场次id" prop="sessionId">
+      <el-form-item label="场次" prop="sessionName">
         <el-input
-          v-model="queryParams.sessionId"
-          placeholder="请输入场次id"
-          clearable
-          @keyup.enter.native="handleQuery"
+            v-model="queryParams.sessionName"
+            placeholder="请输入场次"
+            clearable
+            @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="票种id" prop="lineId">
+      <el-form-item label="票种" prop="lineName">
         <el-input
-          v-model="queryParams.lineId"
-          placeholder="请输入票种id"
-          clearable
-          @keyup.enter.native="handleQuery"
+            v-model="queryParams.lineName"
+            placeholder="请输入票种"
+            clearable
+            @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="观影时间" prop="ticketTime">
-        <el-date-picker clearable
-                        v-model="queryParams.ticketTime"
-                        type="datetime"
-                        value-format="yyyy-MM-dd"
-                        placeholder="请选择观影时间">
-        </el-date-picker>
-      </el-form-item>
-      <el-form-item label="购买数量" prop="count">
-        <el-input
-          v-model="queryParams.count"
-          placeholder="请输入购买数量"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
+      <el-form-item label="订单状态" prop="status">
+        <el-select v-model="queryParams.status" placeholder="请选择订单状态" clearable>
+          <el-option v-for="dict in dict.type.t_order_status" :key="dict.value" :label="dict.label"
+                     :value="dict.value"/>
+        </el-select>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -58,12 +48,12 @@
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button
-          type="warning"
-          plain
-          icon="el-icon-download"
-          size="mini"
-          @click="handleExport"
-          v-hasPermi="['zlyyh:orderTicket:export']"
+            type="warning"
+            plain
+            icon="el-icon-download"
+            size="mini"
+            @click="handleExport"
+            v-hasPermi="['zlyyh:orderTicket:export']"
         >导出
         </el-button>
       </el-col>
@@ -76,24 +66,28 @@
     </el-row>
 
     <el-table v-loading="loading" :data="orderTicketList">
-      <el-table-column label="订单号" align="left" prop="number" width="230">
+      <el-table-column label="订单" align="left" prop="number" width="230">
         <template slot-scope="scope">
           <div>
             订单号：{{ scope.row.number }}
           </div>
+          <span>
+            订单状态:
+            <dict-tag :options="dict.type.t_order_status" :value="scope.row.status"/>
+          </span>
           <div>
-            产品id：{{ scope.row.productId }}
+            产品：{{ scope.row.productName }}
           </div>
           <div>
-            场次id：{{ scope.row.sessionId }}
-          </div>
-          <div>
-            票种id：{{ scope.row.lineId }}
+            场次：{{ scope.row.sessionName }}
           </div>
         </template>
       </el-table-column>
       <el-table-column label="票档信息" align="left" prop="count">
         <template slot-scope="scope">
+          <div>
+            票档：{{ scope.row.lineName }}
+          </div>
           <div>
             购买金额：{{ scope.row.price }}
           </div>
@@ -102,6 +96,30 @@
           </div>
           <div>
             购买数量：{{ scope.row.count }}
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column label="观影信息" align="left" prop="ticketTime">
+        <template slot-scope="scope">
+          <div>观影时间:{{ parseTime(scope.row.ticketTime, '{y}-{m}-{d} {h}:{m}') }}</div>
+          <div>
+            观影地址：{{ scope.row.shopAddress }}
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column label="快递方式" align="left" prop="ticketPostWay">
+        <template slot-scope="scope">
+          <div>
+            <span v-if="scope.row.ticketForm == 1">电子票</span>
+            <span v-if="scope.row.ticketForm == 2">实体票</span>
+          </div>
+          <div>快递方式:
+            <span v-if="scope.row.ticketPostWay == '0'">无需邮寄</span>
+            <span v-if="scope.row.ticketPostWay == '1'">包邮</span>
+            <span v-if="scope.row.ticketPostWay == '2'">另付邮费</span>
+          </div>
+          <div>
+            邮费：{{ scope.row.ticketPostage }}
           </div>
         </template>
       </el-table-column>
@@ -136,30 +154,6 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="观影信息" align="left" prop="ticketTime">
-        <template slot-scope="scope">
-          <div>观影时间:{{ parseTime(scope.row.ticketTime, '{y}-{m}-{d} {h}:{m}') }}</div>
-          <div>
-            观影地址：{{ scope.row.shopAddress }}
-          </div>
-        </template>
-      </el-table-column>
-      <el-table-column label="快递方式" align="left" prop="ticketPostWay">
-        <template slot-scope="scope">
-          <div>
-            <span v-if="scope.row.ticketForm == 1">电子票</span>
-            <span v-if="scope.row.ticketForm == 2">实体票</span>
-          </div>
-          <div>快递方式:
-            <span v-if="scope.row.ticketPostWay == '0'">无需邮寄</span>
-            <span v-if="scope.row.ticketPostWay == '1'">包邮</span>
-            <span v-if="scope.row.ticketPostWay == '2'">另付邮费</span>
-          </div>
-          <div>
-            邮费：{{ scope.row.ticketPostage }}
-          </div>
-        </template>
-      </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <div>
@@ -178,11 +172,11 @@
     </el-table>
 
     <pagination
-      v-show="total>0"
-      :total="total"
-      :page.sync="queryParams.pageNum"
-      :limit.sync="queryParams.pageSize"
-      @pagination="getList"
+        v-show="total>0"
+        :total="total"
+        :page.sync="queryParams.pageNum"
+        :limit.sync="queryParams.pageSize"
+        @pagination="getList"
     />
 
     <el-dialog title="票种详情" :visible.sync="lineOpen" width="30%">
@@ -206,10 +200,10 @@
         状态:
         <el-select disabled v-model="ticketLine.lineStatus" placeholder="请选择状态">
           <el-option
-            v-for="dict in dict.type.sys_normal_disable"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
+              v-for="dict in dict.type.sys_normal_disable"
+              :key="dict.value"
+              :label="dict.label"
+              :value="dict.value"
           ></el-option>
         </el-select>
       </div>
@@ -265,11 +259,11 @@
         </el-table-column>
       </el-table>
       <pagination
-        v-show="codeTotal>0"
-        :total="codeTotal"
-        :page.sync="codeParams.pageNum"
-        :limit.sync="codeParams.pageSize"
-        @pagination="listCode(null)"
+          v-show="codeTotal>0"
+          :total="codeTotal"
+          :page.sync="codeParams.pageNum"
+          :limit.sync="codeParams.pageSize"
+          @pagination="listCode(null)"
       />
     </el-dialog>
 
@@ -307,7 +301,7 @@ import {getToken} from "@/utils/auth";
 
 export default {
   name: "OrderTicket",
-  dicts: ['sys_normal_disable'],
+  dicts: ['sys_normal_disable', 't_order_status'],
   data() {
     return {
       // 按钮loading
@@ -341,11 +335,10 @@ export default {
         pageNum: 1,
         pageSize: 10,
         number: undefined,
-        productId: undefined,
-        sessionId: undefined,
-        lineId: undefined,
-        ticketTime: undefined,
-        count: undefined,
+        status: undefined,
+        productName: undefined,
+        sessionName: undefined,
+        lineName: undefined,
       },
       lineOpen: false,
       ticketLine: {
@@ -548,7 +541,7 @@ export default {
       this.upload.isUploading = false;
       this.$refs.upload.clearFiles();
       this.$alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + response
-        .msg + "</div>", "导入结果", {
+          .msg + "</div>", "导入结果", {
         dangerouslyUseHTMLString: true
       });
       this.getList();

@@ -36,26 +36,30 @@ public class OrderTicketVo {
     /**
      * 产品id
      */
-    @ExcelProperty(value = "产品id")
+    @ExcelIgnore
     private Long productId;
+    @ExcelProperty(value = "商品")
+    private String productName;
 
     /**
      * 场次id
      */
-    @ExcelProperty(value = "场次id")
+    @ExcelIgnore
     private Long sessionId;
+    @ExcelProperty(value = "场次")
+    private String sessionName;
 
     /**
      * 票种id
      */
-    @ExcelProperty(value = "票种id")
+    @ExcelIgnore
     private Long lineId;
+    @ExcelProperty(value = "票档")
+    private String lineName;
 
-    /**
-     * 订单状态 0 正常 1停用
-     */
-    @ExcelProperty(value = "订单状态:0正常,1停用")
+    @ExcelIgnore
     private String status;
+
     /**
      * 观影时间
      */

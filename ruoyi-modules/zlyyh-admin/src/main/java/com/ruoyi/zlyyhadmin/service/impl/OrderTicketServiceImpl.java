@@ -64,6 +64,11 @@ public class OrderTicketServiceImpl implements IOrderTicketService {
         return TableDataInfo.build(result);
     }
 
+    public TableDataInfo<OrderTicketVo> selectPageUserList(OrderTicketBo bo, PageQuery pageQuery) {
+        Page<OrderTicketVo> result = baseMapper.selectVoPages(pageQuery.build(), bo);
+        return TableDataInfo.build(result);
+    }
+
     /**
      * 查询演出票订单列表
      */

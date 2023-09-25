@@ -8,7 +8,6 @@ import com.ruoyi.common.log.annotation.Log;
 import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
-import com.ruoyi.system.api.RemoteCodeService;
 import com.ruoyi.zlyyh.domain.bo.LogisticsImportBo;
 import com.ruoyi.zlyyh.domain.bo.OrderTicketBo;
 import com.ruoyi.zlyyh.domain.vo.OrderIdcardVo;
@@ -39,7 +38,6 @@ import java.util.List;
 public class OrderTicketController extends BaseController {
 
     private final IOrderTicketService iOrderTicketService;
-    private final RemoteCodeService remoteCodeService;
 
     /**
      * 查询演出票订单列表
@@ -47,7 +45,7 @@ public class OrderTicketController extends BaseController {
     @SaCheckPermission("zlyyh:orderTicket:list")
     @GetMapping("/list")
     public TableDataInfo<OrderTicketVo> list(OrderTicketBo bo, PageQuery pageQuery) {
-        return iOrderTicketService.queryPageList(bo, pageQuery);
+        return iOrderTicketService.selectPageUserList(bo, pageQuery);
     }
 
     /**
