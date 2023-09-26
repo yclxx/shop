@@ -293,8 +293,8 @@
         <el-table-column label="场次id" align="center" prop="sessionId"/>
         <el-table-column label="第三方编号" align="center" prop="otherId"/>
         <el-table-column label="票种名称" align="center" prop="lineTitle"/>
-        <el-table-column label="销售价格" align="center" prop="linePrice"/>
-        <el-table-column label="结算价格" align="center" prop="lineSettlePrice"/>
+        <el-table-column label="市场价格" align="center" prop="linePrice"/>
+        <el-table-column label="售价" align="center" prop="lineSettlePrice"/>
         <el-table-column label="购买数量上限" align="center" prop="lineNumber"/>
         <el-table-column label="单次购买上限" align="center" prop="lineUpperLimit"/>
         <el-table-column label="状态" align="center" prop="lineStatus">
@@ -335,14 +335,14 @@
         <el-form-item label="销售价格" prop="linePrice">
           <el-input v-model="lineForm.linePrice" placeholder="请输入销售价格"/>
         </el-form-item>
-        <el-form-item label="结算价格" prop="linePrice">
-          <el-input v-model="lineForm.lineSettlePrice" placeholder="请输入结算价格"/>
+        <el-form-item label="售价" prop="lineSettlePrice">
+          <el-input v-model="lineForm.lineSettlePrice" placeholder="请输入售价"/>
         </el-form-item>
-        <el-form-item label="购买数量上限" prop="linePrice">
-          <el-input v-model="lineForm.lineNumber" placeholder="请输入价格"/>
+        <el-form-item label="购买数量上限" prop="lineNumber">
+          <el-input v-model="lineForm.lineNumber" placeholder="请输入购买数量上限"/>
         </el-form-item>
-        <el-form-item label="单次购买上限" prop="linePrice">
-          <el-input v-model="lineForm.lineUpperLimit" placeholder="请输入价格"/>
+        <el-form-item label="单次购买上限" prop="lineUpperLimit">
+          <el-input v-model="lineForm.lineUpperLimit" placeholder="请输入单次购买上限"/>
         </el-form-item>
         <el-form-item label="状态" prop="lineStatus">
           <el-select v-model="lineForm.lineStatus" placeholder="请选择状态">
@@ -479,7 +479,10 @@ export default {
           {required: true, message: "票种名称不能为空", trigger: "blur"}
         ],
         linePrice: [
-          {required: true, message: "价格不能为空", trigger: "blur"}
+          {required: true, message: "市场价格不能为空", trigger: "blur"}
+        ],
+        lineSettlePrice: [
+          {required: true, message: "售价不能为空", trigger: "blur"}
         ],
         lineStatus: [
           {required: true, message: "状态不能为空", trigger: "change"}

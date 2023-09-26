@@ -3,10 +3,6 @@ package com.ruoyi.zlyyh.domain.vo;
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelIgnoreUnannotated;
 import com.alibaba.excel.annotation.ExcelProperty;
-import com.ruoyi.common.core.annotation.Sensitive;
-import com.ruoyi.common.core.enums.SensitiveStrategy;
-import com.ruoyi.common.excel.annotation.ExcelDictFormat;
-import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import com.ruoyi.zlyyh.domain.Order;
 import lombok.Data;
 
@@ -69,13 +65,13 @@ public class OrderTicketVo {
     /**
      * 购买金额
      */
-    @ExcelProperty(value = "购买金额")
+    @ExcelIgnore
     private BigDecimal price;
 
     /**
      * 结算金额
      */
-    @ExcelProperty(value = "结算金额")
+    @ExcelProperty(value = "售价")
     private BigDecimal sellPrice;
 
     /**
@@ -99,21 +95,19 @@ public class OrderTicketVo {
     /**
      * 联系电话
      */
-    @Sensitive(strategy = SensitiveStrategy.PHONE)
     @ExcelProperty(value = "联系电话")
     private String tel;
 
     /**
      * 地址中文，省市县等，用空格隔开
      */
-    @ExcelProperty(value = "地址中文，省市县等，用空格隔开")
+    @ExcelProperty(value = "省市县")
     private String address;
 
     /**
      * 详细地址（街道门牌号啥的，全地址需要address+address_info）
      */
-    @ExcelProperty(value = "详细地址", converter = ExcelDictConvert.class)
-    @ExcelDictFormat(readConverterExp = "街=道门牌号啥的，全地址需要address+address_info")
+    @ExcelProperty(value = "详细地址")
     private String addressInfo;
 
     /**
@@ -125,13 +119,13 @@ public class OrderTicketVo {
     /**
      * 门店名称
      */
-    @ExcelProperty(value = "门店名称")
+    @ExcelIgnore
     private String shopName;
 
     /**
      * 门店地址
      */
-    @ExcelProperty(value = "门店地址")
+    @ExcelIgnore
     private String shopAddress;
     /**
      * 是否不支持退款
@@ -161,17 +155,17 @@ public class OrderTicketVo {
     /**
      * 票形式
      */
-    @ExcelProperty(value = "票形式")
+    @ExcelIgnore
     private String ticketForm;
     /**
      * 快递方式
      */
-    @ExcelProperty(value = "快递方式")
+    @ExcelIgnore
     private String ticketPostWay;
     /**
      * 邮费
      */
-    @ExcelProperty(value = "邮费")
+    @ExcelIgnore
     private BigDecimal ticketPostage;
     /**
      * 物流单号
@@ -191,7 +185,6 @@ public class OrderTicketVo {
 
     @ExcelIgnore
     private Order order;
-
     /**
      * 观影人信息
      */

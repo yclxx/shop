@@ -2,8 +2,6 @@ package com.ruoyi.zlyyh.domain.vo;
 
 import com.alibaba.excel.annotation.ExcelIgnoreUnannotated;
 import com.alibaba.excel.annotation.ExcelProperty;
-import com.ruoyi.common.core.annotation.Sensitive;
-import com.ruoyi.common.core.enums.SensitiveStrategy;
 import lombok.Data;
 
 /**
@@ -44,7 +42,7 @@ public class OrderIdcardVo {
     /**
      * 证件号
      */
-    @Sensitive(strategy = SensitiveStrategy.ID_CARD)
+    //@Sensitive(strategy = SensitiveStrategy.ID_CARD)
     @ExcelProperty(value = "证件号")
     private String idCard;
 

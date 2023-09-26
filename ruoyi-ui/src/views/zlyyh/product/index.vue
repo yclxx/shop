@@ -807,15 +807,15 @@
                         <el-input v-model="scope.row.otherId" placeholder="请输入第三方id"/>
                       </template>
                     </el-table-column>
-                    <el-table-column :render-header="renderHeader" label="销售价格" align="center" prop="linePrice">
+                    <el-table-column :render-header="renderHeader" label="市场价格" align="center" prop="linePrice">
                       <template slot-scope="scope">
-                        <el-input v-model="scope.row.linePrice" placeholder="请输入销售价格"/>
+                        <el-input v-model="scope.row.linePrice" placeholder="请输入市场价格"/>
                       </template>
                     </el-table-column>
-                    <el-table-column :render-header="renderHeader" label="结算价格" align="center"
+                    <el-table-column :render-header="renderHeader" label="售价" align="center"
                                      prop="lineSettlePrice">
                       <template slot-scope="scope">
-                        <el-input v-model="scope.row.lineSettlePrice" placeholder="请输入结算价格"/>
+                        <el-input v-model="scope.row.lineSettlePrice" placeholder="请输入售价"/>
                       </template>
                     </el-table-column>
                     <el-table-column :render-header="renderHeader" label="总数量" align="center" prop="lineNumber">
@@ -1445,7 +1445,7 @@ export default {
         tags: undefined,
         showCity: undefined,
         merchantId: undefined,
-        shopId: undefined,
+        shopId: [],
         //shopGroupId: undefined,
         commercialTenantId: undefined,
         categoryId: undefined,
@@ -1721,6 +1721,14 @@ export default {
     // 演出票数据校验
     checkTicketSession(ticketSession) {
       debugger
+      if (this.form.shopId.length <= 0) {
+        this.$modal.msgWarning("商品类型为演出时，门店不能为空");
+        return 0;
+      }
+      if (this.form.shopId.length >= 2) {
+        this.$modal.msgWarning("商品类型为演出时，门店暂时只能有一个");
+        return 0;
+      }
       if (this.form.ticket.ticketForm === undefined) {
         this.$modal.msgWarning("票形式不能为空！");
         return 0;
@@ -1791,12 +1799,12 @@ export default {
               return 0;
             }
             if (ticketLine.linePrice == null || ticketLine.linePrice === '' || ticketLine.linePrice === undefined) {
-              this.$modal.msgWarning("销售价格不能为空！");
+              this.$modal.msgWarning("市场价格不能为空！");
               return 0;
             }
             if (ticketLine.lineSettlePrice == null || ticketLine.lineSettlePrice === '' || ticketLine
               .lineSettlePrice === undefined) {
-              this.$modal.msgWarning("结算价格不能为空！");
+              this.$modal.msgWarning("售价不能为空！");
               return 0;
             }
             if (ticketLine.lineNumber == null || ticketLine.lineNumber === '' || ticketLine.lineNumber ===

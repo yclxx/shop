@@ -306,7 +306,6 @@ public class OrderTicketServiceImpl implements OrderTicketService {
             List<CodeVo> codeVos = codeMapper.selectVoList(queryCode);
             if (ObjectUtil.isNotEmpty(codeVos)) {
                 orderTicketVo.setCodeVos(codeVos);
-
             }
         }
         return orderTicketVo;
