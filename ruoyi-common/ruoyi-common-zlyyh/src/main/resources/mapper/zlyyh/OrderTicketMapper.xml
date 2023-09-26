@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
-    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ruoyi.zlyyh.mapper.OrderTicketMapper">
 
     <resultMap type="com.ruoyi.zlyyh.domain.OrderTicket" id="OrderTicketResult">
@@ -9,7 +9,6 @@
         <result property="productId" column="product_id"/>
         <result property="sessionId" column="session_id"/>
         <result property="lineId" column="line_id"/>
-        <result property="status" column="status"/>
         <result property="ticketTime" column="ticket_time"/>
         <result property="price" column="price"/>
         <result property="sellPrice" column="sell_price"/>
@@ -36,15 +35,73 @@
         <result property="logistics" column="logistics"/>
         <result property="logisticsStatus" column="logistics_status"/>
         <result property="logisticsCom" column="logistics_com"/>
+        <result property="productName" column="product_name"/>
+        <result property="sessionName" column="session_name"/>
+        <result property="lineName" column="line_name"/>
     </resultMap>
+
+    <select id="selectVoPages" resultType="com.ruoyi.zlyyh.domain.vo.OrderTicketVo">
+        SELECT
+        ticket.number,
+        ticket.ticket_time ticketTime,
+        ticket.product_id productId,
+        ticket.session_id sessionId,
+        ticket.line_id lineId,
+        ticket.price,
+        ticket.sell_price sellPrice,
+        ticket.count,
+        ticket.user_address_id userAddressId,
+        ticket.NAME,
+        ticket.tel,
+        ticket.address,
+        ticket.address_info addressInfo,
+        ticket.shop_id shopId,
+        ticket.shop_name shopName,
+        ticket.shop_address shopAddress,
+        ticket.ticket_form ticketForm,
+        ticket.ticket_nonsupport ticketNonsupport,
+        ticket.ticket_invoice ticketInvoice,
+        ticket.ticket_expired ticketExpired,
+        ticket.ticket_any_time ticketAnyTime,
+        ticket.ticket_choose_seat ticketChooseSeat,
+        ticket.ticket_post_way ticketPostWay,
+        ticket.ticket_postage ticketPostage,
+        ticket.logistics logistics,
+        ticket.logistics_status logisticsStatus,
+        ticket.logistics_com logisticsCom,
+        ticket.product_name productName,
+        ticket.session_name sessionName,
+        ticket.line_name lineName,
+        o.`status`
+        FROM
+        t_order_ticket ticket
+        LEFT JOIN t_order o ON ticket.number = o.number
+        where ticket.del_flag = '0'
+        <if test="bo.number != null and bo.number != ''">
+            AND ticket.number = #{bo.number}
+        </if>
+        <if test="bo.productName != null and bo.productName != ''">
+            AND ticket.product_name = #{bo.productName}
+        </if>
+        <if test="bo.sessionName != null and bo.sessionName != ''">
+            AND ticket.session_name = #{bo.sessionName}
+        </if>
+        <if test="bo.lineName != null and bo.lineName != ''">
+            AND ticket.line_name = #{bo.lineName}
+        </if>
+        <if test="bo.status != null and bo.status != ''">
+            AND o.status = #{bo.status}
+        </if>
+        order by ticket.create_time desc
+    </select>
 
     <select id="getOrderTicketLineNumber" resultType="java.math.BigDecimal">
         SELECT
         IF ( SUM( ticket.count ) IS NULL ,0 , SUM( ticket.count ))
-        FROM
-        t_order_ticket ticket
+        FROM t_order_ticket ticket
+        LEFT JOIN t_order o ON ticket.number = o.number
         WHERE
         ticket.line_id = #{lineId}
-        AND ticket.status = '0'
+        AND o.status = '2'
     </select>
 </mapper>

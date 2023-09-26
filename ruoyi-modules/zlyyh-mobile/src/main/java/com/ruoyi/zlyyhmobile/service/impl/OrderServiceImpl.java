@@ -1525,8 +1525,8 @@ public class OrderServiceImpl implements IOrderService {
             } else if ("13".equals(order.getOrderType())) {
                 // 处理演出订单
                 OrderTicket orderTicket = orderTicketMapper.selectById(order.getNumber());
-                orderTicket.setStatus("1");
-                orderTicketMapper.updateById(orderTicket);
+                //orderTicket.setStatus("1");
+                //orderTicketMapper.updateById(orderTicket);
                 Object cacheObject = RedisUtils.getCacheObject("lineNumber:" + orderTicket.getLineId());
                 if (ObjectUtil.isNotEmpty(cacheObject)) {
                     Long count = (Long) cacheObject;

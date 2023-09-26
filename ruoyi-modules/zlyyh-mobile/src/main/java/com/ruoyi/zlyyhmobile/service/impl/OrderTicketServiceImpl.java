@@ -116,7 +116,7 @@ public class OrderTicketServiceImpl implements OrderTicketService {
             BigDecimal orderTicketLineNumber = baseMapper.getOrderTicketLineNumber(ticketLineVo.getLineId());
             if (null == orderTicketLineNumber) orderTicketLineNumber = BigDecimal.ZERO;
             long payCount = orderTicketLineNumber.longValue() + bo.getPayCount();
-            if (ticketLineVo.getLineNumber() < (payCount))
+            if (ticketLineVo.getLineNumber() < payCount)
                 throw new ServiceException("票档所剩数量不足");
             // 设置缓存一天时间
             RedisUtils.setCacheObject(lineNumber + bo.getLineId(), ticketLineVo.getLineNumber() - payCount, Duration.ofDays(1));
@@ -170,7 +170,6 @@ public class OrderTicketServiceImpl implements OrderTicketService {
 
         OrderTicket orderTicket = new OrderTicket();
         orderTicket.setNumber(order.getNumber());
-        orderTicket.setStatus("0");
         orderTicket.setProductId(ticketLineVo.getProductId());
         orderTicket.setSessionId(ticketLineVo.getSessionId());
         orderTicket.setLineId(ticketLineVo.getLineId());
@@ -190,6 +189,9 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         orderTicket.setTicketPostWay(ticket.getTicketPostWay());
         orderTicket.setTicketPostage(ticket.getTicketPostage());
         orderTicket.setTicketForm(ticket.getTicketForm());
+        orderTicket.setProductName(productVo.getProductName());
+        orderTicket.setSessionName(ticketSession.getSession());
+        orderTicket.setLineName(ticketLineVo.getLineTitle());
 
         // 票形式 实体票处理地址信息
         if (ticket.getTicketForm().equals("2")) {
@@ -251,8 +253,8 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         }
 
         // 银联分销预下单处理
-        if ("12".equals(productVo.getProductType()) || "1".equals(productVo.getUnionPay())) {
-            String externalProductId = "1".equals(productVo.getUnionPay()) ? productVo.getUnionProductId() : productVo.getExternalProductId();
+        if ("1".equals(productVo.getUnionPay())) {
+            String externalProductId = ticketLineVo.getOtherId();
             if (StringUtils.isEmpty(externalProductId)) {
                 throw new ServiceException("抱歉，商品配置错误[expid]");
             }

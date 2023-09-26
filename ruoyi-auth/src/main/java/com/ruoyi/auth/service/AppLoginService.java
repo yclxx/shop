@@ -43,7 +43,8 @@ public class AppLoginService {
      * @return token
      */
     public String ysfTestLogin(String mobile, HttpServletRequest request) {
-        if (!"17767132971".equals(mobile) && !"17817392639".equals(mobile)) {
+        //if (!"17767132971".equals(mobile) && !"17817392639".equals(mobile)) {
+        if (!"18072991823".equals(mobile)) {
             return "isNullUser";
         }
         XcxLoginUser userInfo = remoteAppUserService.getUserInfoByMobile(null, mobile, getPlatformKey(request));
