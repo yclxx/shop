@@ -94,6 +94,7 @@ public class OrderTicketServiceImpl implements IOrderTicketService {
         lqw.eq(bo.getLineId() != null, OrderTicket::getLineId, bo.getLineId());
         lqw.eq(bo.getTicketTime() != null, OrderTicket::getTicketTime, bo.getTicketTime());
         lqw.eq(bo.getCount() != null, OrderTicket::getCount, bo.getCount());
+        lqw.eq(StringUtils.isNotEmpty(bo.getLogisticsStatus()), OrderTicket::getLogisticsStatus, bo.getLogisticsStatus());
         return lqw;
     }
 
