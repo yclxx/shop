@@ -66,7 +66,7 @@
         ticket.ticket_choose_seat ticketChooseSeat,
         ticket.ticket_post_way ticketPostWay,
         ticket.ticket_postage ticketPostage,
-        ticket.logistics,
+        ticket.logistics logistics,
         ticket.logistics_status logisticsStatus,
         ticket.logistics_com logisticsCom,
         ticket.product_name productName,
@@ -92,15 +92,16 @@
         <if test="bo.status != null and bo.status != ''">
             AND o.status = #{bo.status}
         </if>
+        order by ticket.create_time desc
     </select>
 
     <select id="getOrderTicketLineNumber" resultType="java.math.BigDecimal">
         SELECT
         IF ( SUM( ticket.count ) IS NULL ,0 , SUM( ticket.count ))
         FROM t_order_ticket ticket
+        LEFT JOIN t_order o ON ticket.number = o.number
         WHERE
         ticket.line_id = #{lineId}
-        LEFT JOIN t_order o ON ticket.number = o.number
         AND o.status = '2'
     </select>
 </mapper>
