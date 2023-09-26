@@ -1445,7 +1445,7 @@ export default {
         tags: undefined,
         showCity: undefined,
         merchantId: undefined,
-        shopId: undefined,
+        shopId: [],
         //shopGroupId: undefined,
         commercialTenantId: undefined,
         categoryId: undefined,
@@ -1721,6 +1721,14 @@ export default {
     // 演出票数据校验
     checkTicketSession(ticketSession) {
       debugger
+      if (this.form.shopId.length <= 0) {
+        this.$modal.msgWarning("商品类型为演出时，门店不能为空");
+        return 0;
+      }
+      if (this.form.shopId.length >= 2) {
+        this.$modal.msgWarning("商品类型为演出时，门店暂时只能有一个");
+        return 0;
+      }
       if (this.form.ticket.ticketForm === undefined) {
         this.$modal.msgWarning("票形式不能为空！");
         return 0;
