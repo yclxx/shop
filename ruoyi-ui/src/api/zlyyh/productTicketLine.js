@@ -20,7 +20,6 @@ export function addProductTicketLine(data) {
 
 // 修改演出票种
 export function updateProductTicketLine(data) {
-// 查询观影人列表
   return request({
     url: '/zlyyh-admin/productTicketLine',
     method: 'put',
@@ -44,7 +43,6 @@ export function getOrderIdCardList(lineId) {
   })
 }
 
-
 // 删除演出票种
 export function delProductTicketLine(lineId) {
   return request({
@@ -52,4 +50,3 @@ export function delProductTicketLine(lineId) {
     method: 'delete'
   })
 }
-
