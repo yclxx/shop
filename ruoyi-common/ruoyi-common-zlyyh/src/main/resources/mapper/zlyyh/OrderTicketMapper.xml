@@ -83,6 +83,9 @@
         <if test="bo.productName != null and bo.productName != ''">
             AND ticket.product_name = #{bo.productName}
         </if>
+        <if test="bo.logisticsStatus != null and bo.logisticsStatus != ''">
+            AND ticket.logistics_status = #{bo.logisticsStatus}
+        </if>
         <if test="bo.sessionName != null and bo.sessionName != ''">
             AND ticket.session_name = #{bo.sessionName}
         </if>

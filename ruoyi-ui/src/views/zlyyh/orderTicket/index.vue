@@ -39,6 +39,12 @@
                      :value="dict.value"/>
         </el-select>
       </el-form-item>
+      <el-form-item label="物流状态" prop="logisticsStatus">
+        <el-select v-model="queryParams.logisticsStatus" placeholder="请选择物流状态" clearable>
+          <el-option v-for="s in logisticsStatusList" :key="s.value" :label="s.label"
+                     :value="s.value"/>
+        </el-select>
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -185,10 +191,10 @@
         <span>{{ ticketLine.lineTitle }}</span>
       </div>
       <div>
-        销售价格: {{ ticketLine.linePrice }}
+        市场价格: {{ ticketLine.linePrice }}
       </div>
       <div>
-        结算价格: {{ ticketLine.lineSettlePrice }}
+        售价: {{ ticketLine.lineSettlePrice }}
       </div>
       <div>
         购买数量上限: {{ ticketLine.lineNumber }}
@@ -325,6 +331,12 @@ export default {
       orderTicketIdCardList: [],
       open: false,
       codeList: [],
+      logisticsStatusList: [
+        {value: '0', label: '未发货'},
+        {value: '1', label: '未发货'},
+        {value: '2', label: '已签收'},
+        {value: '3', label: '已拒收'}
+      ],
       codeParams: {
         pageNum: 1,
         pageSize: 10,
@@ -339,6 +351,7 @@ export default {
         productName: undefined,
         sessionName: undefined,
         lineName: undefined,
+        logisticsStatus: undefined
       },
       lineOpen: false,
       ticketLine: {
