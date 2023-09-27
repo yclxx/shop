@@ -843,10 +843,33 @@
                   </el-select>
                 </template>
               </el-table-column>
-              <el-table-column :render-header="renderHeader" label="日期" align="center" prop="sessionDate">
+              <el-table-column :render-header="renderHeader" label="是否预约范围" align="center" prop="sessionDate">
+                <template slot-scope="scope">
+                  <el-select v-model="scope.row.isRange" placeholder="请选择状态">
+                    <el-option v-for="dict in ticketStatusList" :key="dict.value" :label="dict.label"
+                               :value="dict.value"></el-option>
+                  </el-select>
+                </template>
+              </el-table-column>
+              <el-table-column label="观影时间" align="center" prop="date">
                 <template slot-scope="scope">
                   <el-date-picker clearable v-model="scope.row.date" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
                     placeholder="请选择日期">
+                                  placeholder="请选择日期">
+                  </el-date-picker>
+                </template>
+              </el-table-column>
+              <el-table-column label="预约日期" align="left" prop="sessionDate">
+                <template slot-scope="scope">
+                  <el-date-picker
+                    v-model="scope.row.sessionDate"
+                    type="daterange"
+                    align="right"
+                    unlink-panels
+                    range-separator="至"
+                    value-format="yyyy-MM-dd"
+                    start-placeholder="开始日期"
+                    end-placeholder="结束日期">
                   </el-date-picker>
                 </template>
               </el-table-column>
@@ -936,6 +959,808 @@
     isArray
   } from "@/utils/validate.js"
 
+export default {
+  name: "Product",
+  computed: {
+    item() {
+      return item
+    }
+  },
+  dicts: ['t_product_to_type', 't_product_status', 't_product_affiliation', 't_product_assign_date', 't_product_type',
+    't_product_show_original_amount', 't_product_pickup_method', 't_grad_period_date_list', 't_product_search',
+    't_search_status', 't_product_pay_user', 't_show_index', 't_product_send_account_type', 't_cus_refund',
+    'sys_normal_disable',
+    't_product_union_pay'
+  ],
+  data() {
+    return {
+      tableHeight: document.documentElement.scrollHeight - 245 + "px",
+      activeName: "basicCoupon",
+      tabNameList: ["basicCoupon", "couponCount", "expand", "ticket", "session"],
+      // 按钮loading
+      buttonLoading: false,
+      // 遮罩层
+      loading: true,
+      // 选中数组
+      ids: [],
+      // 非单个禁用
+      single: true,
+      // 非多个禁用
+      multiple: true,
+      // 显示搜索条件
+      showSearch: true,
+      // 总条数
+      total: 0,
+      // 商品表格数据
+      productList: [],
+      platformList: [],
+      merchantList: [],
+      shopList: [],
+      commercialTenantList: [],
+      cityList: [],
+      categoryList: [],
+      cityNodeAll: false,
+      defaultProps: {
+        children: "children",
+        label: "label"
+      },
+      showStartDate: [],
+      showEndDate: [],
+      pickerOptions: {
+        shortcuts: [{
+          text: '最近一周',
+          onClick(picker) {
+            const end = new Date();
+            const start = new Date();
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+            picker.$emit('pick', [start, end]);
+          }
+        }, {
+          text: '最近一个月',
+          onClick(picker) {
+            const end = new Date();
+            const start = new Date();
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+            picker.$emit('pick', [start, end]);
+          }
+        }, {
+          text: '最近三个月',
+          onClick(picker) {
+            const end = new Date();
+            const start = new Date();
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+            picker.$emit('pick', [start, end]);
+          }
+        }]
+      },
+      //城市列表
+      cityOptions: [],
+      distributorList: [],
+      // 弹出层标题
+      title: "",
+      // 是否显示弹出层
+      open: false,
+      openDayCount: false,
+      dayCount: '',
+      // 查询参数
+      queryParams: {
+        pageNum: 1,
+        pageSize: 10,
+        externalProductId: undefined,
+        productId: undefined,
+        productName: undefined,
+        productAbbreviation: undefined,
+        productSubhead: undefined,
+        productImg: undefined,
+        productAffiliation: undefined,
+        productType: undefined,
+        pickupMethod: undefined,
+        showOriginalAmount: undefined,
+        originalAmount: undefined,
+        sellAmount: undefined,
+        vipUpAmount: undefined,
+        vipAmount: undefined,
+        toType: undefined,
+        appId: undefined,
+        url: undefined,
+        showIndex: undefined,
+        status: undefined,
+        showStartDate: undefined,
+        showEndDate: undefined,
+        sellStartDate: undefined,
+        sellEndDate: undefined,
+        assignDate: undefined,
+        weekDate: undefined,
+        sellTime: undefined,
+        totalCount: undefined,
+        monthCount: undefined,
+        weekCount: undefined,
+        dayCount: undefined,
+        dayUserCount: undefined,
+        weekUserCount: undefined,
+        monthUserCount: undefined,
+        totalUserCount: undefined,
+        description: undefined,
+        providerLogo: undefined,
+        providerName: undefined,
+        tags: undefined,
+        showCity: undefined,
+        merchantId: undefined,
+        shopGroupId: undefined,
+        btnText: undefined,
+        shareTitle: undefined,
+        shareName: undefined,
+        shareImage: undefined,
+        platformKey: undefined,
+        sort: undefined,
+        orderByColumn: "product_id",
+        isAsc: 'desc'
+      },
+      // 表单参数
+      form: {},
+      // 表单校验
+      rules: {
+        productId: [{
+          required: true,
+          message: "ID不能为空",
+          trigger: "blur"
+        }],
+        productName: [{
+          required: true,
+          message: "商品名称不能为空",
+          trigger: "blur"
+        }],
+        productAffiliation: [{
+          required: true,
+          message: "商品归属不能为空",
+          trigger: "change"
+        }],
+        productType: [{
+          required: true,
+          message: "商品类型不能为空",
+          trigger: "change"
+        }],
+        sendAccountType: [{
+          required: true,
+          message: "发券账号类型不能为空",
+          trigger: "change"
+        }],
+        pickupMethod: [{
+          required: true,
+          message: "领取方式不能为空",
+          trigger: "change"
+        }],
+        showOriginalAmount: [{
+          required: true,
+          message: "是否显示市场价格不能为空",
+          trigger: "change"
+        }],
+        originalAmount: [{
+          required: true,
+          message: "市场价格不能为空",
+          trigger: "blur"
+        }],
+        sellAmount: [{
+          required: true,
+          message: "售卖价格不能为空",
+          trigger: "blur"
+        }],
+        toType: [{
+          required: true,
+          message: "跳转类型不能为空",
+          trigger: "change"
+        }],
+        appId: [{
+          required: true,
+          message: "小程序ID不能为空",
+          trigger: "blur"
+        }],
+        status: [{
+          required: true,
+          message: "状态不能为空",
+          trigger: "change"
+        }],
+        assignDate: [{
+          required: true,
+          message: "指定周几不能为空",
+          trigger: "change"
+        }],
+        weekDate: [{
+          required: true,
+          message: "周几能领不能为空",
+          trigger: "blur"
+        }],
+        platformKey: [{
+          required: true,
+          message: "平台不能为空",
+          trigger: "blur"
+        }],
+        externalProductSendValue: [{
+          required: true,
+          message: "发放金额不能为空",
+          trigger: "blur"
+        }],
+        search: [{
+          required: true,
+          message: "商品范围不能为空",
+          trigger: "blur"
+        }],
+        searchStatus: [{
+          required: true,
+          message: "是否搜索不能为空",
+          trigger: "blur"
+        }],
+        cusRefund: [{
+          required: true,
+          message: "是否支持用户退款不能为空",
+          trigger: "blur"
+        }],
+        payUser: [{
+          required: true,
+          message: "商品范围不能为空",
+          trigger: "blur"
+        }],
+        unionPay: [{
+          required: true,
+          message: "请选择是否是涉及银联分销",
+          trigger: "blur"
+        }],
+      },
+      isUpdate: false,
+      ticketChooseSeatList: [{
+        value: '1',
+        label: '在线选座'
+      },
+        {
+          value: '2',
+          label: '先到先得'
+        },
+        {
+          value: '3',
+          label: '无座'
+        },
+        {
+          value: '4',
+          label: '实体票'
+        }
+      ],
+      ticketFormList: [{
+        value: '1',
+        label: '电子票'
+      },
+        {
+          value: '2',
+          label: '实体票'
+        }
+      ],
+      ticketCardList: [{
+        value: '0',
+        label: '必须填写'
+      },
+        {
+          value: '1',
+          label: '无需填写'
+        }
+      ],
+      ticketStatusList: [{
+        value: '0',
+        label: '是'
+      },
+        {
+          value: '1',
+          label: '否'
+        },
+      ],
+      ticketPostWayList: [{
+        value: '0',
+        label: '无需邮寄'
+      },
+        {
+          value: '1',
+          label: '包邮'
+        },
+        {
+          value: '2',
+          label: '另付邮费'
+        },
+      ],
+      shopParams: undefined
+    };
+  },
+  created() {
+    this.getList();
+    this.getCitySelectList();
+    selectListPlatform({}).then(res => {
+      this.platformList = res.data;
+    })
+    listSelectMerchant({}).then(res => {
+      this.merchantList = res.data;
+    })
+    this.selectShopLists();
+    let merchantParams = {
+      status: "0"
+    }
+    selectListMerchant(merchantParams).then(res => {
+      this.commercialTenantList = res.data;
+    })
+    let categoryParams = {
+      categoryListType: "0",
+      status: "0"
+    }
+    selectListCategory(categoryParams).then(res => {
+      this.categoryList = res.data;
+    })
+    selectListDistributor({
+      status: "0"
+    }).then(res => {
+      this.distributorList = res.data;
+    })
+  },
+  methods: {
+    selectShopLists(query) {
+      if (query !== undefined) {
+        this.shopParams = {
+          status: "0",
+          shopName: query,
+          pageSize: 100
+        }
+      } else {
+        this.shopParams = {
+          status: "0",
+          pageSize: 100
+        }
+      }
+      selectShopList(this.shopParams).then(res => {
+        this.shopList = res.data;
+      })
+    },
+    selectShop(query) {
+      let params = {
+        ids: query
+      }
+      selectShopListById(params).then(res => {
+        this.shopList = res.data;
+      })
+    },
+    selectAll(val) {
+      if (this.cityNodeAll) {
+        // 	设置目前勾选的节点，使用此方法必须设置 node-key 属性
+        this.$refs.city.setCheckedNodes([])
+      } else {
+        // 全部不选中
+        this.$refs.city.setCheckedNodes([])
+      }
+    },
+    //city下拉列表
+    getCitySelectList() {
+      let cityForm = {
+        level: "city"
+      }
+      selectCityList(cityForm).then(response => {
+        this.cityList = response.data;
+      })
+    },
+    changePlatform(row) {
+      let platformName = ''
+      this.platformList.forEach(item => {
+        if (row.platformKey == item.id) {
+          platformName = item.label;
+        }
+      })
+      if (platformName && platformName.length > 0) {
+        row.platformName = platformName;
+        return platformName;
+      }
+      return row.platformKey;
+    },
+    handleNodeClick(data) {
+      this.cityNodeAll = false;
+    },
+    lastTab() {
+      let index = this.tabNameList.indexOf(this.activeName);
+      if (index > 0) {
+        this.activeName = this.tabNameList[index - 1]
+      }
+    },
+    nextTab() {
+      let index = this.tabNameList.indexOf(this.activeName);
+      if (index < this.tabNameList.length - 1) {
+        this.activeName = this.tabNameList[index + 1]
+      }
+    },
+    /** 查询商品列表 */
+    getList() {
+      this.loading = true;
+      this.queryParams.params = {};
+      if (null != this.showStartDate && '' != this.showStartDate) {
+        this.queryParams.params["beginStartDate"] = this.showStartDate[0];
+        this.queryParams.params["endStartDate"] = this.showStartDate[1];
+      }
+      if (null != this.showEndDate && '' != this.showEndDate) {
+        this.queryParams.params["beginEndDate"] = this.showEndDate[0];
+        this.queryParams.params["endEndDate"] = this.showEndDate[1];
+      }
+      listProduct(this.queryParams).then(response => {
+        this.productList = response.rows;
+        this.total = response.total;
+        this.loading = false;
+      });
+    },
+    // 取消按钮
+    cancel() {
+      this.open = false;
+      this.reset();
+    },
+    dayCountCancel() {
+      this.openDayCount = false;
+      this.dayCount = '';
+      this.reset();
+    },
+    dayCountSubmitForm() {
+      this.buttonLoading = true;
+      setProductDayCount(this.dayCount, this.form).then(response => {
+        this.$modal.msgSuccess("操作成功");
+        this.openDayCount = false;
+      }).finally(() => {
+        this.buttonLoading = false;
+      });
+    },
+    // 表单重置
+    reset() {
+      this.form = {
+        productId: undefined,
+        externalProductId: undefined,
+        productName: undefined,
+        productAbbreviation: undefined,
+        productSubhead: undefined,
+        productImg: undefined,
+        productAffiliation: undefined,
+        productType: undefined,
+        pickupMethod: undefined,
+        showOriginalAmount: "0",
+        originalAmount: undefined,
+        sellAmount: undefined,
+        vipUpAmount: undefined,
+        vipAmount: undefined,
+        toType: "0",
+        showIndex: '0',
+        appId: undefined,
+        url: undefined,
+        status: "0",
+        search: undefined,
+        showStartDate: undefined,
+        showEndDate: undefined,
+        sellStartDate: undefined,
+        sellEndDate: undefined,
+        usedStartTime: undefined,
+        usedEndTime: undefined,
+        assignDate: "0",
+        unionPay: undefined,
+        unionProductId: undefined,
+        weekDate: undefined,
+        sellTime: undefined,
+        totalCount: undefined,
+        monthCount: undefined,
+        weekCount: undefined,
+        dayCount: undefined,
+        dayUserCount: undefined,
+        weekUserCount: undefined,
+        monthUserCount: undefined,
+        totalUserCount: undefined,
+        description: undefined,
+        providerLogo: undefined,
+        providerName: undefined,
+        tags: undefined,
+        showCity: undefined,
+        merchantId: undefined,
+        shopId: [],
+        commercialTenantId: undefined,
+        categoryId: undefined,
+        btnText: undefined,
+        shareTitle: undefined,
+        shareName: undefined,
+        shareImage: undefined,
+        createBy: undefined,
+        createTime: undefined,
+        updateBy: undefined,
+        updateTime: undefined,
+        delFlag: undefined,
+        platformKey: undefined,
+        sort: undefined,
+        ticket: {
+          ticketChooseSeat: undefined,
+          ticketForm: undefined,
+          ticketCard: undefined,
+          ticketNonsupport: undefined,
+          ticketInvoice: undefined,
+          ticketExpired: undefined,
+          ticketAnyTime: undefined,
+          ticketPostWay: undefined,
+          ticketPostage: undefined,
+          ticketNotice: undefined
+        },
+        ticketSession: [{
+          productId: undefined,
+          sessionId: undefined,
+          session: undefined,
+          status: undefined,
+          sessionDate: [],
+          isRange: '0',
+          beginDate: undefined,
+          endDate: undefined,
+          ticketLine: [{
+            lineId: undefined,
+            productId: undefined,
+            sessionId: undefined,
+            otherId: undefined,
+            lineTitle: undefined,
+            linePrice: undefined,
+            lineSettlePrice: undefined,
+            lineNumber: undefined,
+            lineUpperLimit: undefined,
+            lineStatus: undefined
+          }],
+        }]
+      };
+      this.resetForm("form");
+    },
+    /** 搜索按钮操作 */
+    handleQuery() {
+      this.queryParams.pageNum = 1;
+      this.getList();
+    },
+    /** 重置按钮操作 */
+    resetQuery() {
+      this.resetForm("queryForm");
+      this.handleQuery();
+    },
+    // 多选框选中数据
+    handleSelectionChange(selection) {
+      this.ids = selection.map(item => item.productId)
+      this.single = selection.length !== 1
+      this.multiple = !selection.length
+    },
+    /** 新增按钮操作 */
+    handleAdd() {
+      this.reset();
+      this.open = true;
+      this.title = "添加商品";
+      this.activeName = this.tabNameList[0];
+      this.cityNodeAll = true;
+      this.isUpdate = false;
+      this.getCityTreeselect();
+    },
+    getCityTreeselect() {
+      cityTreeselect().then(response => {
+        this.cityOptions = response.data;
+      });
+    },
+    getShowCityTreeselect(productId) {
+      return productShowCityTreeSelect(productId).then(response => {
+        this.cityOptions = response.data.citys;
+        return response;
+      });
+    },
+    /** 修改按钮操作 */
+    handleUpdate(row) {
+      this.loading = true;
+      this.reset();
+      this.activeName = this.tabNameList[0];
+      const productId = row.productId || this.ids
+      const showCity = this.getShowCityTreeselect(productId);
+      this.isUpdate = true;
+      getProduct(productId).then(response => {
+        this.loading = false;
+        this.form = response.data;
+        this.open = true;
+        this.title = "修改商品";
+        if (this.form && this.form.weekDate) {
+          this.form.weekDate = this.form.weekDate.split(",");
+        }
+        if (this.form && this.form.sellTime) {
+          this.form.sellTime = this.form.sellTime.split("-")
+        }
+        if (this.form && this.form.categoryId) {
+          this.form.categoryId = this.form.categoryId.split(",")
+        }
+        if (this.form && this.form.commercialTenantId) {
+          this.form.commercialTenantId = this.form.commercialTenantId.split(",")
+        }
+        if (this.form && this.form.shopId) {
+          this.selectShop(response.data.shopId);
+          this.form.shopId = this.form.shopId.split(",")
+        }
+        if (response.data.productType === '13') {
+          for (let i = 0; i < response.data.ticketSession.length; i++) {
+            const session = response.data.ticketSession[i];
+            if (session.isRange != null && session.isRange === '0') {
+              this.form.ticketSession[i].sessionDate = [2]
+              this.form.ticketSession[i].sessionDate[0] = response.data.ticketSession[i].beginDate
+              this.form.ticketSession[i].sessionDate[1] = response.data.ticketSession[i].endDate
+            }
+          }
+        }
+        this.cityNodeAll = false;
+        this.$nextTick(() => {
+          showCity.then(res => {
+            let checkedKeys = res.data.checkedKeys;
+            checkedKeys.forEach((v) => {
+              if (v == 99) {
+                this.cityNodeAll = true;
+              } else {
+                this.$nextTick(() => {
+                  this.$refs.city.setChecked(v, true, false);
+                })
+              }
+            })
+          })
+        })
+      });
+    },
+    handleUpdateDayCount(row) {
+      this.reset();
+      this.dayCount = '';
+      this.form.productId = row.productId
+      this.openDayCount = true;
+    },
+    handleTicketSessionLine(row) {
+      const productId = row.productId;
+      const params = {
+        pageNum: this.queryParams.pageNum
+      };
+      this.$tab.openPage("配置[" + row.productName + "]的场次与票种", '/zlyyh/productTicketSession/index/' + productId,
+        params);
+    },
+    //所有菜单节点数据
+    getCityAllCheckedKeys() {
+      //目前被选中的城市节点
+      let checkedKeys = this.$refs.city.getCheckedKeys();
+      //半选中的城市节点
+      let halfCheckedKeys = this.$refs.city.getHalfCheckedKeys();
+      checkedKeys.unshift.apply(checkedKeys, halfCheckedKeys);
+      return checkedKeys;
+    },
+    /** 提交按钮 */
+    submitForm() {
+      this.$refs["form"].validate(valid => {
+        if (valid) {
+          if (this.form.productType === '13') {
+            let check = this.checkTicketSession(this.form.ticketSession);
+            if (check === 0) {
+              return;
+            }
+          }
+          this.buttonLoading = true;
+          if (this.cityNodeAll) {
+            this.form.showCity = "ALL";
+          } else {
+            this.form.showCity = this.getCityAllCheckedKeys().toString();
+          }
+          if (this.form.weekDate) {
+            this.form.weekDate = this.form.weekDate.toString();
+          }
+          if (this.form.sellTime) {
+            this.form.sellTime = this.form.sellTime[0] + "-" + this.form.sellTime[1];
+          }
+          if (this.form.categoryId) {
+            this.form.categoryId = this.form.categoryId.toString();
+          }
+          if (this.form.commercialTenantId) {
+            this.form.commercialTenantId = this.form.commercialTenantId.toString();
+          }
+          if (this.form.shopId) {
+            this.form.shopId = this.form.shopId.join(",");
+          }
+          if (this.form.productId != null) {
+            updateProduct(this.form).then(response => {
+              this.$modal.msgSuccess("修改成功");
+              this.open = false;
+              this.getList();
+            }).finally(() => {
+              this.buttonLoading = false;
+            });
+          } else {
+            addProduct(this.form).then(response => {
+              this.$modal.msgSuccess("新增成功");
+              this.open = false;
+              this.getList();
+            }).finally(() => {
+              this.buttonLoading = false;
+            });
+          }
+        }
+      });
+    },
+    /** 删除按钮操作 */
+    handleDelete(row) {
+      const productIds = row.productId || this.ids;
+      this.$modal.confirm('是否确认删除商品编号为"' + productIds + '"的数据项？').then(() => {
+        this.loading = true;
+        return delProduct(productIds);
+      }).then(() => {
+        this.loading = false;
+        this.getList();
+        this.$modal.msgSuccess("删除成功");
+      }).catch(() => {
+      }).finally(() => {
+        this.loading = false;
+      });
+    },
+    /** 导出按钮操作 */
+    handleExport() {
+      this.download('zlyyh-admin/product/export', {
+        ...this.queryParams
+      }, `product_${new Date().getTime()}.xlsx`)
+    },
+    // 新增行
+    addSessionRow() {
+      if (this.form.ticketSession.length === 3) {
+        this.$modal.msg("场次已达上限。");
+        return;
+      }
+      const row = {
+        productId: undefined,
+        sessionId: undefined,
+        session: undefined,
+        status: undefined,
+        date: undefined,
+        ticketLine: [],
+      };
+      this.form.ticketSession.push(row)
+      this.addLineRow(row);
+    },
+    // 删除行
+    delSessionRow(row) {
+      const index = this.form.ticketSession.indexOf(row)
+      this.form.ticketSession.splice(index, 1);
+    },
+    // 新增行
+    addLineRow(row) {
+      if (row.ticketLine.length === 3) {
+        this.$modal.msg("票种已达上限。");
+        return;
+      }
+      const rows = {
+        lineId: undefined,
+        productId: undefined,
+        otherId: undefined,
+        sessionId: undefined,
+        lineTitle: undefined,
+        linePrice: undefined,
+        lineSettlePrice: undefined,
+        lineNumber: undefined,
+        lineUpperLimit: undefined,
+        lineStatus: undefined
+      };
+      row.ticketLine.push(rows);
+    }, // 删除行
+    delLineRow(row1, row2) {
+      const index = row1.ticketLine.indexOf(row2)
+      row1.ticketLine.splice(index, 1);
+    },
+    // 演出票数据校验
+    checkTicketSession(ticketSession) {
+      debugger
+      if (this.form.shopId.length <= 0) {
+        this.$modal.msgWarning("商品类型为演出时，门店不能为空");
+        return 0;
+      }
+      if (this.form.shopId.length >= 2) {
+        this.$modal.msgWarning("商品类型为演出时，门店暂时只能有一个");
+        return 0;
+      }
+      if (this.form.ticket.ticketForm === undefined) {
+        this.$modal.msgWarning("票形式不能为空！");
+        return 0;
+      }
+      if (this.form.ticket.ticketChooseSeat === undefined) {
+        this.$modal.msgWarning("选座方式不能为空！");
+        return 0;
+      }
+      if (this.form.ticket.ticketCard === undefined) {
+        this.$modal.msgWarning("身份信息不能为空！");
+        return 0;
+      }
   export default {
     name: "Product",
     computed: {
@@ -1728,101 +2553,115 @@
           return 0;
         }
 
-        if (this.form.ticket.ticketPostWay === undefined) {
-          this.$modal.msgWarning("快递方式不能为空！");
-          return 0;
-        }
+      if (this.form.ticket.ticketPostWay === undefined) {
+        this.$modal.msgWarning("快递方式不能为空！");
+        return 0;
+      }
 
-        if (this.form.ticket.ticketNonsupport === undefined) {
-          this.$modal.msgWarning("不支持退不能为空！");
-          return 0;
-        }
-        if (this.form.ticket.ticketInvoice === undefined) {
-          this.$modal.msgWarning("电子发票不能为空！");
-          return 0;
-        }
-        if (this.form.ticket.ticketExpired === undefined) {
-          this.$modal.msgWarning("过期退不能为空！");
-          return 0;
-        }
-        if (this.form.ticket.ticketAnyTime === undefined) {
-          this.$modal.msgWarning("随时退不能为空！");
-          return 0;
-        }
-        if (ticketSession.length === 0) {
-          this.$modal.msgWarning("场次信息不能为空！");
-        } else {
-          for (let i = 0; i < ticketSession.length; i++) {
-            const session = ticketSession[i];
-            if (session === undefined) {
-              this.$modal.msgWarning("场次信息不能为空！");
+      if (this.form.ticket.ticketNonsupport === undefined) {
+        this.$modal.msgWarning("不支持退不能为空！");
+        return 0;
+      }
+      if (this.form.ticket.ticketInvoice === undefined) {
+        this.$modal.msgWarning("电子发票不能为空！");
+        return 0;
+      }
+      if (this.form.ticket.ticketExpired === undefined) {
+        this.$modal.msgWarning("过期退不能为空！");
+        return 0;
+      }
+      if (this.form.ticket.ticketAnyTime === undefined) {
+        this.$modal.msgWarning("随时退不能为空！");
+        return 0;
+      }
+      if (ticketSession.length === 0) {
+        this.$modal.msgWarning("场次信息不能为空！");
+      } else {
+        for (let i = 0; i < ticketSession.length; i++) {
+          const session = ticketSession[i];
+          if (session === undefined) {
+            this.$modal.msgWarning("场次信息不能为空！");
+            return 0;
+          }
+          if (session.session == null || session.session === '' || session.session === undefined) {
+            this.$modal.msgWarning("场次名称不能为空！");
+            return 0;
+          }
+          if (session.status == null || session.status === '' || session.status === undefined) {
+            this.$modal.msgWarning("场次状态不能为空！");
+            return 0;
+          }
+          if (session.isRange == null || session.isRange === '' || session.isRange === undefined) {
+            this.$modal.msgWarning("是否预约时间不能为空！");
+            return 0;
+          }
+          if (session.isRange === '0') {
+            if (session.sessionDate.length <= 0) {
+              this.$modal.msgWarning("预约日期不能为空！");
               return 0;
+            } else {
+              session.beginDate = session.sessionDate[0];
+              session.endDate = session.sessionDate[1];
             }
-            if (session.session == null || session.session === '' || session.session === undefined) {
-              this.$modal.msgWarning("场次名称不能为空！");
-              return 0;
-            }
-            if (session.status == null || session.status === '' || session.status === undefined) {
-              this.$modal.msgWarning("场次状态不能为空！");
-              return 0;
-            }
+          } else {
             if (session.date == null || session.date === '' || session.date === undefined) {
               this.$modal.msgWarning("场次日期不能为空！");
               return 0;
             }
-            if (session.ticketLine.length === 0) {
+          }
+          if (session.ticketLine.length === 0) {
+            this.$modal.msgWarning("票种信息不能为空！");
+            return 0;
+          }
+          for (let j = 0; j < session.ticketLine.length; j++) {
+            const ticketLine = session.ticketLine[j];
+            if (ticketLine === undefined) {
               this.$modal.msgWarning("票种信息不能为空！");
               return 0;
             }
-            for (let j = 0; j < session.ticketLine.length; j++) {
-              const ticketLine = session.ticketLine[j];
-              if (ticketLine === undefined) {
-                this.$modal.msgWarning("票种信息不能为空！");
-                return 0;
-              }
-              if (ticketLine.lineTitle == null || ticketLine.lineTitle === '' || ticketLine.lineTitle === undefined) {
-                this.$modal.msgWarning("票种名称不能为空！");
-                return 0;
-              }
-              if (ticketLine.linePrice == null || ticketLine.linePrice === '' || ticketLine.linePrice === undefined) {
-                this.$modal.msgWarning("市场价格不能为空！");
-                return 0;
-              }
-              if (ticketLine.lineSettlePrice == null || ticketLine.lineSettlePrice === '' || ticketLine
-                .lineSettlePrice === undefined) {
-                this.$modal.msgWarning("售价不能为空！");
-                return 0;
-              }
-              if (ticketLine.lineNumber == null || ticketLine.lineNumber === '' || ticketLine.lineNumber ===
-                undefined) {
-                this.$modal.msgWarning("总数量不能为空！");
-                return 0;
-              }
-              if (ticketLine.lineUpperLimit == null || ticketLine.lineUpperLimit === '' || ticketLine.lineUpperLimit ===
-                undefined) {
-                this.$modal.msgWarning("单次购买上限不能为空！");
-                return 0;
-              }
-              if (ticketLine.lineStatus == null || ticketLine.lineStatus === '' || ticketLine.lineStatus ===
-                undefined) {
-                this.$modal.msgWarning("状态不能为空！");
-                return 0;
-              }
+            if (ticketLine.lineTitle == null || ticketLine.lineTitle === '' || ticketLine.lineTitle === undefined) {
+              this.$modal.msgWarning("票种名称不能为空！");
+              return 0;
+            }
+            if (ticketLine.linePrice == null || ticketLine.linePrice === '' || ticketLine.linePrice === undefined) {
+              this.$modal.msgWarning("市场价格不能为空！");
+              return 0;
+            }
+            if (ticketLine.lineSettlePrice == null || ticketLine.lineSettlePrice === '' || ticketLine
+              .lineSettlePrice === undefined) {
+              this.$modal.msgWarning("售价不能为空！");
+              return 0;
+            }
+            if (ticketLine.lineNumber == null || ticketLine.lineNumber === '' || ticketLine.lineNumber ===
+              undefined) {
+              this.$modal.msgWarning("总数量不能为空！");
+              return 0;
+            }
+            if (ticketLine.lineUpperLimit == null || ticketLine.lineUpperLimit === '' || ticketLine.lineUpperLimit ===
+              undefined) {
+              this.$modal.msgWarning("单次购买上限不能为空！");
+              return 0;
+            }
+            if (ticketLine.lineStatus == null || ticketLine.lineStatus === '' || ticketLine.lineStatus ===
+              undefined) {
+              this.$modal.msgWarning("状态不能为空！");
+              return 0;
             }
           }
         }
-      },
-      renderHeader(h, {
-        column
-      }) {
-        let currentLabel = column.label;
-        return h('span', {}, [
-          h('span', {
-            style: 'color:red'
-          }, '* '),
-          h('span', {}, currentLabel)
-        ])
-      },
-    }
-  };
+      }
+    },
+    renderHeader(h, {
+      column
+    }) {
+      let currentLabel = column.label;
+      return h('span', {}, [
+        h('span', {
+          style: 'color:red'
+        }, '* '),
+        h('span', {}, currentLabel)
+      ])
+    },
+  }
+};
 </script>

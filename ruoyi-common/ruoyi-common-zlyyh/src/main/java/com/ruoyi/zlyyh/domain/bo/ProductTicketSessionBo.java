@@ -47,6 +47,18 @@ public class ProductTicketSessionBo extends BaseEntity {
     @NotNull(message = "日期不能为空", groups = {AddGroup.class, EditGroup.class})
     private Date date;
     /**
+     * 是否时间范围
+     */
+    private String isRange;
+    /**
+     * 开始时间
+     */
+    private Date beginDate;
+    /**
+     * 结束时间
+     */
+    private Date endDate;
+    /**
      * 票种信息
      */
     private List<ProductTicketLineBo> ticketLine;

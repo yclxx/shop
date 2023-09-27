@@ -61,6 +61,11 @@ public class OrderTicketVo {
      */
     @ExcelProperty(value = "观影时间")
     private Date ticketTime;
+    /**
+     * 预约时间
+     */
+    @ExcelProperty(value = "预约时间")
+    private String reservation;
 
     /**
      * 购买金额
