@@ -114,7 +114,7 @@ public class CtripUtils {
         //请求参数
         //创建携程订单
         Map<String, Object> map = new HashMap<>();
-        map.put("sourceSerialNumber", order.getNumber());
+        map.put("sourceSerialNumber", order.getNumber().toString());
         map.put("productId",productId);
         map.put("quantity", 1);
         map.put("countryCode", "086");
@@ -185,22 +185,26 @@ public class CtripUtils {
     public static void main(String[] args) {
         String accessToken = getAccessToken();
         //请求参数
-        Map<String,Object> map = new HashMap<>();
-        Map<String,Object> map1 = new HashMap<>();
-        map1.put("partnerType","Yunshanfu");
-        map.put("header",map1);
-        map.put("pageIndex",1);
-        map.put("pageSize",20);
-        String param1 = JSONObject.toJSONString(map);
-        String url = "https://sopenservice.ctrip.com/openservice/serviceproxy.ashx?AID=3231970&SID=7645764&ICODE=af99f2f7f57e458fa764629f1342368e&Token="+accessToken;
-        JSONObject yunshanfu = getShopList(20, 1, "Yunshanfu", url);
-        System.out.println(yunshanfu);
-        String shopinfoUrl = "https://sopenservice.ctrip.com/openservice/serviceproxy.ashx?AID=3231970&SID=7645764&ICODE=992dd15221df48b6a0b598da026405ce&Token="+accessToken;
-        System.out.println(getShopProductList("Yunshanfu", "130152272", shopinfoUrl));
-        String proinfoUrl = "https://sopenservice.ctrip.com/openservice/serviceproxy.ashx?AID=3231970&SID=7645764&ICODE=8085b3470a3e463cab89a819668b688d&Token="+accessToken;
-        System.out.println(getProductInfo("Yunshanfu", "63558", proinfoUrl));
-        String shopinfUrl = "https://sopenservice.ctrip.com/openservice/serviceproxy.ashx?AID=3231970&SID=7645764&ICODE=eba2196988674a65991c6150d03dca76&Token="+accessToken;
-        System.out.println(getShopProductList("Yunshanfu", "130152272", shopinfUrl));
+//        Map<String,Object> map = new HashMap<>();
+//        Map<String,Object> map1 = new HashMap<>();
+//        map1.put("partnerType","Yunshanfu");
+//        map.put("header",map1);
+//        map.put("pageIndex",1);
+//        map.put("pageSize",20);
+//        String param1 = JSONObject.toJSONString(map);
+//        String url = "https://sopenservice.ctrip.com/openservice/serviceproxy.ashx?AID=3231970&SID=7645764&ICODE=af99f2f7f57e458fa764629f1342368e&Token="+accessToken;
+//        JSONObject yunshanfu = getShopList(20, 1, "Yunshanfu", url);
+//        System.out.println(yunshanfu);
+//        String shopinfoUrl = "https://sopenservice.ctrip.com/openservice/serviceproxy.ashx?AID=3231970&SID=7645764&ICODE=992dd15221df48b6a0b598da026405ce&Token="+accessToken;
+//        System.out.println(getShopProductList("Yunshanfu", "130152272", shopinfoUrl));
+//        String proinfoUrl = "https://sopenservice.ctrip.com/openservice/serviceproxy.ashx?AID=3231970&SID=7645764&ICODE=8085b3470a3e463cab89a819668b688d&Token="+accessToken;
+//        System.out.println(getProductInfo("Yunshanfu", "63558", proinfoUrl));
+//        String shopinfUrl = "https://sopenservice.ctrip.com/openservice/serviceproxy.ashx?AID=3231970&SID=7645764&ICODE=eba2196988674a65991c6150d03dca76&Token="+accessToken;
+//        System.out.println(getShopProductList("Yunshanfu", "130152272", shopinfUrl));
+//        Order order = new Order();
+//        order.setNumber(93882172937432L);
+//        System.out.println(createCtripOrder(order, "18757906428", "Yunshanfu", "115006", "https://sopenservice.ctrip.com/openservice/serviceproxy.ashx?AID=3231970&SID=7645764&ICODE=7056c065d68c46bd8ba9555fd2e323e8&Token=" + accessToken));
+
     }
 
 
