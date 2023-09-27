@@ -21,6 +21,7 @@ import com.ruoyi.zlyyhmobile.event.SendCouponEvent;
 import com.ruoyi.zlyyhmobile.service.*;
 import com.ruoyi.zlyyhmobile.utils.redis.OrderCacheUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class OrderTicketServiceImpl implements OrderTicketService {
@@ -162,6 +164,8 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         order.setUsedEndTime(productVo.getUsedEndTime());
         order.setUnionPay(productVo.getUnionPay());
         order.setUnionProductId(productVo.getUnionProductId());
+        order.setSysDeptId(productVo.getSysDeptId());
+        order.setSysUserId(productVo.getSysUserId());
         // 第三方订单号
         order.setExternalProductId(ticketLineVo.getOtherId());
         order.setUnionProductId(ticketLineVo.getOtherId());

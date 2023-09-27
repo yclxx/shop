@@ -294,6 +294,7 @@ public class RemoteFoodServicelmpl implements RemoteFoodService {
         productBo.setPickupMethod("1");
         productBo.setShowOriginalAmount("1");
         productBo.setProductAffiliation("0");
+        productBo.setShowIndex("1");
         productBo.setShowStartDate(DateUtils.parseDate(sjDate));
         productBo.setShowEndDate(DateUtils.parseDate(xjDate));
         productBo.setSellStartDate(DateUtils.parseDate(sjDate));

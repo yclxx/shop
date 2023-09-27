@@ -1,6 +1,5 @@
 package com.ruoyi.zlyyhmobile.service.impl;
 
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.crypto.SecureUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -21,7 +20,6 @@ import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
 import com.ruoyi.zlyyh.mapper.ProductMapper;
 import com.ruoyi.zlyyhmobile.service.*;
-import com.ruoyi.zlyyhmobile.utils.ProductUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.cache.annotation.Cacheable;
@@ -123,15 +121,17 @@ public class ProductServiceImpl implements IProductService {
             PageQuery pageQuery1 = new PageQuery();
             pageQuery1.setPageSize(1);
             pageQuery1.setPageNum(1);
-            TableDataInfo<ShopVo> shop= shopService.getShopListByProductId(shopBo, pageQuery1);
-            if (ObjectUtil.isNotEmpty(shop) && ObjectUtil.isNotEmpty(shop.getRows())){
+            TableDataInfo<ShopVo> shop = shopService.getShopListByProductId(shopBo, pageQuery1);
+            if (ObjectUtil.isNotEmpty(shop) && ObjectUtil.isNotEmpty(shop.getRows())) {
                 ShopVo shopVo = shop.getRows().get(0);
                 productVo.setShopVo(shopVo);
             }
-            boolean dayFlag = StringUtils.isBlank(bo.getWeekDate()) || bo.getWeekDate().equals("" + DateUtil.dayOfWeek(new Date()));
-            if (dayFlag) {
-                resultPro.add(ProductUtils.getProductVoCheck(productVo, userId, bo.getPlatformKey(), bo.getShowCity(), true));
-            }
+            // 瀑布流暂时不用校验数量
+//            boolean dayFlag = StringUtils.isBlank(bo.getWeekDate()) || bo.getWeekDate().equals("" + DateUtil.dayOfWeek(new Date()));
+//            if (dayFlag) {
+//                resultPro.add(ProductUtils.getProductVoCheck(productVo, userId, bo.getPlatformKey(), bo.getShowCity(), true));
+//            }
+            resultPro.add(productVo);
         }
         build.setRows(resultPro);
         return build;

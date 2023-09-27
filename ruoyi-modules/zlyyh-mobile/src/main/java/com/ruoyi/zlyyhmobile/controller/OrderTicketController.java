@@ -2,7 +2,6 @@ package com.ruoyi.zlyyhmobile.controller;
 
 import cn.hutool.core.util.DesensitizedUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.PhoneUtil;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.idempotent.annotation.RepeatSubmit;
 import com.ruoyi.common.log.annotation.Log;
@@ -58,7 +57,7 @@ public class OrderTicketController {
                                          @PathVariable("number") Long number) {
         OrderTicketVo orderTicketVo = orderTicketService.orderInfo(number);
         if (ObjectUtil.isNotEmpty(orderTicketVo)) {
-            orderTicketVo.setTel(PhoneUtil.hideBetween(orderTicketVo.getTel()).toString());
+            orderTicketVo.setTel(DesensitizedUtil.mobilePhone(orderTicketVo.getTel()));
             if (ObjectUtil.isNotEmpty(orderTicketVo.getOrderIdCardVos())) {
                 orderTicketVo.getOrderIdCardVos().forEach(o -> {
                     String s = DesensitizedUtil.idCardNum(o.getIdCard(), 6, 2);

@@ -154,21 +154,21 @@
           <el-col :span="12">
             <el-form-item label="展示开始时间" prop="showStartDate">
               <el-date-picker clearable v-model="form.showStartDate" type="datetime" style="width: 100%;"
-                              value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择展示开始时间">
+                value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择展示开始时间">
               </el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="展示结束时间" prop="showEndDate">
               <el-date-picker clearable v-model="form.showEndDate" type="datetime" style="width: 100%;"
-                              value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择展示结束时间" default-time="23:59:59">
+                value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择展示结束时间" default-time="23:59:59">
               </el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="展示区间" prop="sellTime">
               <el-time-picker is-range v-model="form.sellTime" range-separator="-" start-placeholder="开始时间"
-                              end-placeholder="结束时间" placeholder="选择时间范围" style="width: 100%;" value-format="HH:mm:ss">
+                end-placeholder="结束时间" placeholder="选择时间范围" style="width: 100%;" value-format="HH:mm:ss">
               </el-time-picker>
             </el-form-item>
           </el-col>
@@ -186,7 +186,7 @@
             <el-form-item label="指定周几" prop="assignDate">
               <el-select v-model="form.assignDate" placeholder="请选择指定周几" style="width: 100%;">
                 <el-option v-for="dict in dict.type.t_product_assign_date" :key="dict.value" :label="dict.label"
-                           :value="dict.value"></el-option>
+                  :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -195,14 +195,14 @@
             <el-form-item label="周几能领" prop="weekDate" v-if="form.assignDate == '1'">
               <el-select v-model="form.weekDate" placeholder="请选择星期" style="width: 100%;" multiple clearable>
                 <el-option v-for="dict in dict.type.t_grad_period_date_list" :key="dict.value" :label="dict.label"
-                           :value="dict.value"></el-option>
+                  :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="商圈" prop="businessDistrictId">
               <el-select v-model="form.businessDistrictId" placeholder="请选择商圈" filterable clearable multiple
-                         style="width: 100%;">
+                style="width: 100%;">
                 <el-option v-for="item in businessDistrictList" :key="item.id" :value="item.id" :label="item.label">
                 </el-option>
               </el-select>
@@ -234,7 +234,8 @@
               <i class="el-icon-question"></i>
             </el-tooltip>
           </span>
-          <el-select v-model="poiAddress" style="width: 100%;" @change="poiChange" placeholder="选择poi地址（poi地址只做地址辅助选项,保存的是商户店址）" clearable>
+          <el-select v-model="poiAddress" style="width: 100%;" @change="poiChange"
+            placeholder="选择poi地址（poi地址只做地址辅助选项,保存的是商户店址）" clearable>
             <el-option v-for="(poi,index) in pois" :key="index" :label="poi.address" :value="index" />
           </el-select>
         </el-form-item>
@@ -244,9 +245,9 @@
           </el-amap-search-box>
           <el-col :span="24">
             <el-amap vid="amapDemo" :center="center" :zoom="zoom" :plugin="plugin" :events="events"
-                     style="width: 100%;height: 400px;">
+              style="width: 100%;height: 400px;">
               <el-amap-marker v-for="(marker, index) in markers" :position="marker" :key="'marker' + index"
-                              :events="events"></el-amap-marker>
+                :events="events"></el-amap-marker>
             </el-amap>
           </el-col>
         </el-row>
@@ -394,16 +395,15 @@
   import {
     getToken
   } from "@/utils/auth";
-  import {
-    deptTreeSelect
-  } from "@/api/system/user";
   import "@riophae/vue-treeselect/dist/vue-treeselect.css";
   import Treeselect from "@riophae/vue-treeselect";
 
 
   export default {
     name: "Shop",
-    dicts: ['t_shop_status', 't_shop_merchant_type', 't_shop_merchant_status','t_product_assign_date','t_grad_period_date_list'],
+    dicts: ['t_shop_status', 't_shop_merchant_type', 't_shop_merchant_status', 't_product_assign_date',
+      't_grad_period_date_list'
+    ],
     components: {
       Treeselect
     },
@@ -491,9 +491,9 @@
                   self.form.city = ad.city
                   self.form.district = ad.district
                   //省行政编码最后面4个0
-                  self.form.procode =ad.adcode.substring(0,2)+'0000'
+                  self.form.procode = ad.adcode.substring(0, 2) + '0000'
                   //市编码最后2个0
-                  self.form.citycode = ad.adcode.substring(0,4)+'00';
+                  self.form.citycode = ad.adcode.substring(0, 4) + '00';
                   //区县编码
                   self.form.adcode = ad.adcode;
                   self.$nextTick()
@@ -685,7 +685,6 @@
       this.getMerSelectList();
       this.getBusinessDistrictList();
       this.getProductSelectList();
-      this.getDeptTree();
     },
     methods: {
       poiChange(index) {
@@ -711,9 +710,9 @@
               self.form.city = ad.city
               self.form.district = ad.district
               //省行政编码最后面4个0
-              self.form.procode =ad.adcode.substring(0,2)+'0000'
+              self.form.procode = ad.adcode.substring(0, 2) + '0000'
               //市编码最后2个0
-              self.form.citycode = ad.adcode.substring(0,4)+'00';
+              self.form.citycode = ad.adcode.substring(0, 4) + '00';
               //区县编码
               self.form.adcode = ad.adcode;
               self.$nextTick()
@@ -740,12 +739,6 @@
           }
           this.center = [mapcenter.lng, mapcenter.lat]
         }
-      },
-      /** 查询部门下拉树结构 */
-      getDeptTree() {
-        deptTreeSelect().then(response => {
-          this.deptOptions = response.data;
-        });
       },
       //商品下拉列表
       getProductSelectList() {

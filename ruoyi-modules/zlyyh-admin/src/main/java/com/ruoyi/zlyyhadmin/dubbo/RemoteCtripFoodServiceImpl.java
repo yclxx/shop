@@ -25,6 +25,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
@@ -281,7 +282,7 @@ public class RemoteCtripFoodServiceImpl implements RemoteCtripFoodService {
      */
     private void setProductInfo(JSONObject data, ProductInfoBo productInfoBo) {
         String title = data.getString("productName");
-        String itemId = data.getString("itemId");
+        String itemId = data.getString("productId");
         JSONArray pictures = data.getJSONArray("pictures");
         if (ObjectUtil.isNotEmpty(pictures)){
             JSONObject jsonObject = pictures.getJSONObject(0);
@@ -343,7 +344,9 @@ public class RemoteCtripFoodServiceImpl implements RemoteCtripFoodService {
         if (newSalePrice.subtract(vipPrice).compareTo(new BigDecimal("0.5")) == -1){
             throw new ServiceException("新售价结算价低于0.5");
         }
+        BigDecimal divide = newSalePrice.divide(originPrice, 2, RoundingMode.HALF_UP);
 
+        productInfoBo.setDiscount(divide.toString());
         productInfoBo.setItemId(itemId);
         productInfoBo.setTitle(title);
 
