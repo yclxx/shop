@@ -8,6 +8,7 @@ import com.ruoyi.zlyyh.domain.vo.OrderTicketVo;
 import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 演出票订单Mapper接口
@@ -18,6 +19,8 @@ import java.math.BigDecimal;
 public interface OrderTicketMapper extends BaseMapperPlus<OrderTicketMapper, OrderTicket, OrderTicketVo> {
 
     Page<OrderTicketVo> selectVoPages(@Param("page") Page<OrderTicket> page, @Param("bo") OrderTicketBo bo);
+
+    List<OrderTicketVo> selectVoLists(@Param("bo") OrderTicketBo bo);
 
     BigDecimal getOrderTicketLineNumber(Long lineId);
 }

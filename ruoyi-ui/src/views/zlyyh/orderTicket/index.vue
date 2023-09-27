@@ -3,35 +3,41 @@
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="订单号" prop="number">
         <el-input
-            v-model="queryParams.number"
-            placeholder="请输入订单号"
-            clearable
-            @keyup.enter.native="handleQuery"
+          v-model="queryParams.number"
+          placeholder="请输入订单号"
+          clearable
+          @keyup.enter.native="handleQuery"
         />
       </el-form-item>
       <el-form-item label="产品" prop="productName">
         <el-input
-            v-model="queryParams.productName"
-            placeholder="请输入产品"
-            clearable
-            @keyup.enter.native="handleQuery"
+          v-model="queryParams.productName"
+          placeholder="请输入产品"
+          clearable
+          @keyup.enter.native="handleQuery"
         />
       </el-form-item>
       <el-form-item label="场次" prop="sessionName">
         <el-input
-            v-model="queryParams.sessionName"
-            placeholder="请输入场次"
-            clearable
-            @keyup.enter.native="handleQuery"
+          v-model="queryParams.sessionName"
+          placeholder="请输入场次"
+          clearable
+          @keyup.enter.native="handleQuery"
         />
       </el-form-item>
       <el-form-item label="票种" prop="lineName">
         <el-input
-            v-model="queryParams.lineName"
-            placeholder="请输入票种"
-            clearable
-            @keyup.enter.native="handleQuery"
+          v-model="queryParams.lineName"
+          placeholder="请输入票种"
+          clearable
+          @keyup.enter.native="handleQuery"
         />
+      </el-form-item>
+      <el-form-item label="创建时间" prop="createTime">
+        <el-date-picker clearable v-model="createTime" size="small" :picker-options="pickerOptions"
+                        value-format="yyyy-MM-dd HH:mm:ss" type="datetimerange" range-separator="-"
+                        start-placeholder="开始日期"
+                        end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']"></el-date-picker>
       </el-form-item>
       <el-form-item label="订单状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择订单状态" clearable>
@@ -54,12 +60,12 @@
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button
-            type="warning"
-            plain
-            icon="el-icon-download"
-            size="mini"
-            @click="handleExport"
-            v-hasPermi="['zlyyh:orderTicket:export']"
+          type="warning"
+          plain
+          icon="el-icon-download"
+          size="mini"
+          @click="handleExport"
+          v-hasPermi="['zlyyh:orderTicket:export']"
         >导出
         </el-button>
       </el-col>
@@ -178,11 +184,11 @@
     </el-table>
 
     <pagination
-        v-show="total>0"
-        :total="total"
-        :page.sync="queryParams.pageNum"
-        :limit.sync="queryParams.pageSize"
-        @pagination="getList"
+      v-show="total>0"
+      :total="total"
+      :page.sync="queryParams.pageNum"
+      :limit.sync="queryParams.pageSize"
+      @pagination="getList"
     />
 
     <el-dialog title="票种详情" :visible.sync="lineOpen" width="30%">
@@ -206,10 +212,10 @@
         状态:
         <el-select disabled v-model="ticketLine.lineStatus" placeholder="请选择状态">
           <el-option
-              v-for="dict in dict.type.sys_normal_disable"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
+            v-for="dict in dict.type.sys_normal_disable"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
           ></el-option>
         </el-select>
       </div>
@@ -265,11 +271,11 @@
         </el-table-column>
       </el-table>
       <pagination
-          v-show="codeTotal>0"
-          :total="codeTotal"
-          :page.sync="codeParams.pageNum"
-          :limit.sync="codeParams.pageSize"
-          @pagination="listCode(null)"
+        v-show="codeTotal>0"
+        :total="codeTotal"
+        :page.sync="codeParams.pageNum"
+        :limit.sync="codeParams.pageSize"
+        @pagination="listCode(null)"
       />
     </el-dialog>
 
@@ -331,6 +337,35 @@ export default {
       orderTicketIdCardList: [],
       open: false,
       codeList: [],
+      //创建时间范围
+      createTime: [],
+      pickerOptions: {
+        shortcuts: [{
+          text: '最近一周',
+          onClick(picker) {
+            const end = new Date();
+            const start = new Date();
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+            picker.$emit('pick', [start, end]);
+          }
+        }, {
+          text: '最近一个月',
+          onClick(picker) {
+            const end = new Date();
+            const start = new Date();
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+            picker.$emit('pick', [start, end]);
+          }
+        }, {
+          text: '最近三个月',
+          onClick(picker) {
+            const end = new Date();
+            const start = new Date();
+            start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+            picker.$emit('pick', [start, end]);
+          }
+        }]
+      },
       logisticsStatusList: [
         {value: '0', label: '未发货'},
         {value: '1', label: '未发货'},
@@ -388,6 +423,11 @@ export default {
     /** 查询演出票订单列表 */
     getList() {
       this.loading = true;
+      this.queryParams.params = {};
+      if (null != this.createTime && '' != this.createTime) {
+        this.queryParams.params["beginCreateTime"] = this.createTime[0];
+        this.queryParams.params["endCreateTime"] = this.createTime[1];
+      }
       listOrderTicket(this.queryParams).then(response => {
         this.orderTicketList = response.rows;
         this.total = response.total;
@@ -444,6 +484,7 @@ export default {
     },
     /** 重置按钮操作 */
     resetQuery() {
+      this.createTime = [];
       this.resetForm("queryForm");
       this.handleQuery();
     },
@@ -554,7 +595,7 @@ export default {
       this.upload.isUploading = false;
       this.$refs.upload.clearFiles();
       this.$alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + response
-          .msg + "</div>", "导入结果", {
+        .msg + "</div>", "导入结果", {
         dangerouslyUseHTMLString: true
       });
       this.getList();
