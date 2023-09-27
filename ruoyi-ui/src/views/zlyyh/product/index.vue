@@ -1754,7 +1754,6 @@ export default {
     },
     // 演出票数据校验
     checkTicketSession(ticketSession) {
-      debugger
       if (this.form.shopId.length <= 0) {
         this.$modal.msgWarning("商品类型为演出时，门店不能为空");
         return 0;

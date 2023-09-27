@@ -1,5 +1,6 @@
 package com.ruoyi.zlyyh.domain.bo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
 import com.ruoyi.common.core.web.domain.BaseEntity;
@@ -53,10 +54,12 @@ public class ProductTicketSessionBo extends BaseEntity {
     /**
      * 开始时间
      */
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date beginDate;
     /**
      * 结束时间
      */
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date endDate;
     /**
      * 票种信息
