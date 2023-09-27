@@ -19,14 +19,6 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="日期" prop="date">
-        <el-date-picker clearable
-                        v-model="queryParams.date"
-                        type="date"
-                        value-format="yyyy-MM-dd"
-                        placeholder="请选择日期">
-        </el-date-picker>
-      </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -85,15 +77,30 @@
 
     <el-table v-loading="loading" :data="productTicketSessionList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column label="场次id" align="center" prop="sessionId" v-if="true"/>
-      <el-table-column label="商品id" align="center" prop="productId"/>
+      <!--      <el-table-column label="场次id" align="center" prop="sessionId" v-if="true"/>-->
+      <!--      <el-table-column label="商品id" align="center" prop="productId"/>-->
       <el-table-column label="场次名称" align="center" prop="session"/>
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
         </template>
       </el-table-column>
-      <el-table-column label="日期" align="center" prop="date" width="180">
+      <el-table-column label="是否预约日期" align="center" prop="isRange">
+        <template slot-scope="scope">
+          <span v-if="scope.row.isRange === '0'">是</span>
+          <span v-if="scope.row.isRange === '1'">否</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="预约日期" align="center" prop="beginDate">
+        <template slot-scope="scope">
+          <div v-if="scope.row.beginDate">
+            <span>{{ parseTime(scope.row.beginDate, '{y}-{m}-{d}') }}</span>
+            <span>至</span>
+            <span>{{ parseTime(scope.row.endDate, '{y}-{m}-{d}') }}</span>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column label="观影时间" align="center" prop="date">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.date, '{y}-{m}-{d}') }}</span>
         </template>
@@ -157,7 +164,22 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="日期" prop="date">
+            <el-form-item label="说明" prop="description">
+              <el-input v-model="form.description" placeholder="请输入说明"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="6">
+            <el-form-item label="是否预约日期" prop="isRange">
+              <el-select v-model="form.isRange" placeholder="请选择状态">
+                <el-option v-for="range in ticketStatusList" :key="range.value" :label="range.label"
+                           :value="range.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="观影时间" prop="date">
               <el-date-picker clearable
                               v-model="form.date"
                               type="datetime"
@@ -166,16 +188,28 @@
               </el-date-picker>
             </el-form-item>
           </el-col>
-          <el-col :span="6">
-            <el-form-item label="说明" prop="description">
-              <el-input v-model="form.description" placeholder="请输入说明"/>
+        </el-row>
+        <el-row>
+          <el-col>
+            <el-form-item label="预约日期" prop="sessionDate">
+              <el-date-picker
+                v-model="form.sessionDate"
+                type="daterange"
+                align="right"
+                unlink-panels
+                range-separator="至"
+                value-format="yyyy-MM-dd"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期">
+              </el-date-picker>
             </el-form-item>
           </el-col>
         </el-row>
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="addRow()">新增票种
         </el-button>
         <el-table :data="ticketLineData" ref="table" style="width: 100%">
-          <el-table-column :render-header="renderHeader" class="required" label="票种名称" align="center" prop="lineTitle">
+          <el-table-column :render-header="renderHeader" class="required" label="票种名称" align="center"
+                           prop="lineTitle">
             <template slot-scope="scope">
               <el-input v-model="scope.row.lineTitle" placeholder="请输入票种名称"/>
             </template>
@@ -420,6 +454,15 @@ export default {
         status: undefined,
         date: undefined
       },
+      ticketStatusList: [{
+        value: '0',
+        label: '是'
+      },
+        {
+          value: '1',
+          label: '否'
+        },
+      ],
       // 表单参数
       form: {},
       // 表单校验
@@ -430,8 +473,8 @@ export default {
         status: [
           {required: true, message: "状态不能为空", trigger: "change"}
         ],
-        date: [
-          {required: true, message: "日期不能为空", trigger: "blur"}
+        isRange: [
+          {required: true, message: "是否预约日期不能为空", trigger: "blur"}
         ]
       },
       ticketLineData: [{
@@ -517,6 +560,10 @@ export default {
         productId: undefined,
         session: undefined,
         status: undefined,
+        sessionDate: [],
+        isRange: undefined,
+        beginDate: undefined,
+        endDate: undefined,
         date: undefined,
         description: undefined,
         ticketLine: []
@@ -567,6 +614,11 @@ export default {
       getProductTicketSession(sessionId).then(response => {
         this.loading = false;
         this.form = response.data;
+        if (response.data.beginDate != null) {
+          this.form.sessionDate = [2];
+          this.form.sessionDate[0] = response.data.beginDate;
+          this.form.sessionDate[1] = response.data.endDate;
+        }
         this.ticketLineData = response.data.ticketLine;
         this.open = true;
         this.title = "修改演出场次与票种";
@@ -761,6 +813,26 @@ export default {
     },
     // 判断票种信息
     checkTicketLine() {
+      if (this.form.isRange == null || this.form.isRange === '' || this.form.isRange === undefined) {
+        this.$modal.msgWarning("请选择是否预约日期！");
+        return 0;
+      }
+      if (this.form.isRange === '0') {
+        if (this.form.sessionDate.length <= 0) {
+          this.$modal.msgWarning("预约日期不能为空！");
+          return 0;
+        } else {
+          this.form.beginDate = this.form.sessionDate[0];
+          this.form.endDate = this.form.sessionDate[1];
+        }
+      }
+      if (this.form.isRange === '1') {
+        if (this.form.date == null || this.form.date === '' || this.form.date === undefined) {
+          this.$modal.msgWarning("观影时间不能为空！");
+          return 0;
+        }
+      }
+
       if (this.ticketLineData.length === 0) {
         this.$modal.msgWarning("票种信息不能为空！");
       } else {
@@ -797,11 +869,11 @@ export default {
         }
       }
     },
-    renderHeader(h,{column}) {
+    renderHeader(h, {column}) {
       let currentLabel = column.label;
-      return h('span',{},[
-        h('span',{style: 'color:red'},'* '),
-        h('span',{},currentLabel)
+      return h('span', {}, [
+        h('span', {style: 'color:red'}, '* '),
+        h('span', {}, currentLabel)
       ])
     },
   }

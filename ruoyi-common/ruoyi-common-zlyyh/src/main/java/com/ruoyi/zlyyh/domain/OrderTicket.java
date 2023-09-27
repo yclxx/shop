@@ -45,6 +45,10 @@ public class OrderTicket extends BaseEntity {
      */
     private Date ticketTime;
     /**
+     * 预约时间
+     */
+    private String reservation;
+    /**
      * 购买金额
      */
     private BigDecimal price;

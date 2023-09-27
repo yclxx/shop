@@ -54,6 +54,8 @@ public class CreateOrderTicketBo {
      */
     private Long platformKey;
 
+    private String reservation;
+
     /**
      * 获取城市编码
      *

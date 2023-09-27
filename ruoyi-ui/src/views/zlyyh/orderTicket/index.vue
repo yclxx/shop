@@ -114,6 +114,7 @@
       <el-table-column label="观影信息" align="left" prop="ticketTime">
         <template slot-scope="scope">
           <div>观影时间:{{ parseTime(scope.row.ticketTime, '{y}-{m}-{d} {h}:{m}') }}</div>
+          <div>预约时间:{{ scope.row.reservation }}</div>
           <div>
             观影地址：{{ scope.row.shopAddress }}
           </div>

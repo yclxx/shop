@@ -1,7 +1,6 @@
 package com.ruoyi.zlyyh.domain;
 
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
@@ -20,7 +19,7 @@ import java.util.Date;
 @TableName("t_product_ticket_session")
 public class ProductTicketSession extends BaseEntity {
 
-    private static final long serialVersionUID=1L;
+    private static final long serialVersionUID = 1L;
 
     /**
      * 数据id
@@ -39,6 +38,18 @@ public class ProductTicketSession extends BaseEntity {
      * 状态 0正常 1停用
      */
     private String status;
+    /**
+     * 是否时间范围
+     */
+    private String isRange;
+    /**
+     * 开始时间
+     */
+    private Date beginDate;
+    /**
+     * 结束时间
+     */
+    private Date endDate;
     /**
      * 日期
      */

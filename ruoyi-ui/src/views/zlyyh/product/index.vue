@@ -156,7 +156,7 @@
                 @pagination="getList"/>
 
     <!-- 添加或修改商品对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="1200px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="90%" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="120px">
         <el-tabs v-model="activeName">
           <el-tab-pane label="基本信息" name="basicCoupon" key="basicCoupon" :style="{height: tableHeight}">
@@ -848,7 +848,7 @@
                   </el-table>
                 </template>
               </el-table-column>
-              <el-table-column :render-header="renderHeader" label="场次名称" align="center" prop="lineTitle">
+              <el-table-column :render-header="renderHeader" label="场次名称" align="center"  prop="lineTitle">
                 <template slot-scope="scope">
                   <el-input v-model="scope.row.session" placeholder="请输入场次名称"/>
                 </template>
@@ -861,10 +861,32 @@
                   </el-select>
                 </template>
               </el-table-column>
-              <el-table-column :render-header="renderHeader" label="日期" align="center" prop="sessionDate">
+              <el-table-column :render-header="renderHeader" label="是否预约范围" align="center" prop="sessionDate">
+                <template slot-scope="scope">
+                  <el-select v-model="scope.row.isRange" placeholder="请选择状态">
+                    <el-option v-for="dict in ticketStatusList" :key="dict.value" :label="dict.label"
+                               :value="dict.value"></el-option>
+                  </el-select>
+                </template>
+              </el-table-column>
+              <el-table-column label="观影时间" align="center" prop="date">
                 <template slot-scope="scope">
                   <el-date-picker clearable v-model="scope.row.date" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
                                   placeholder="请选择日期">
+                  </el-date-picker>
+                </template>
+              </el-table-column>
+              <el-table-column label="预约日期" align="left" prop="sessionDate">
+                <template slot-scope="scope">
+                  <el-date-picker
+                    v-model="scope.row.sessionDate"
+                    type="daterange"
+                    align="right"
+                    unlink-panels
+                    range-separator="至"
+                    value-format="yyyy-MM-dd"
+                    start-placeholder="开始日期"
+                    end-placeholder="结束日期">
                   </el-date-picker>
                 </template>
               </el-table-column>
@@ -1446,7 +1468,6 @@ export default {
         showCity: undefined,
         merchantId: undefined,
         shopId: [],
-        //shopGroupId: undefined,
         commercialTenantId: undefined,
         categoryId: undefined,
         btnText: undefined,
@@ -1477,7 +1498,10 @@ export default {
           sessionId: undefined,
           session: undefined,
           status: undefined,
-          date: undefined,
+          sessionDate: [],
+          isRange: '0',
+          beginDate: undefined,
+          endDate: undefined,
           ticketLine: [{
             lineId: undefined,
             productId: undefined,
@@ -1559,6 +1583,16 @@ export default {
         if (this.form && this.form.shopId) {
           this.selectShop(response.data.shopId);
           this.form.shopId = this.form.shopId.split(",")
+        }
+        if (response.data.productType === '13') {
+          for (let i = 0; i < response.data.ticketSession.length; i++) {
+            const session = response.data.ticketSession[i];
+            if (session.isRange != null && session.isRange === '0') {
+              this.form.ticketSession[i].sessionDate = [2]
+              this.form.ticketSession[i].sessionDate[0] = response.data.ticketSession[i].beginDate
+              this.form.ticketSession[i].sessionDate[1] = response.data.ticketSession[i].endDate
+            }
+          }
         }
         this.cityNodeAll = false;
         this.$nextTick(() => {
@@ -1780,9 +1814,23 @@ export default {
             this.$modal.msgWarning("场次状态不能为空！");
             return 0;
           }
-          if (session.date == null || session.date === '' || session.date === undefined) {
-            this.$modal.msgWarning("场次日期不能为空！");
+          if (session.isRange == null || session.isRange === '' || session.isRange === undefined) {
+            this.$modal.msgWarning("是否预约时间不能为空！");
             return 0;
+          }
+          if (session.isRange === '0') {
+            if (session.sessionDate.length <= 0) {
+              this.$modal.msgWarning("预约日期不能为空！");
+              return 0;
+            } else {
+              session.beginDate = session.sessionDate[0];
+              session.endDate = session.sessionDate[1];
+            }
+          } else {
+            if (session.date == null || session.date === '' || session.date === undefined) {
+              this.$modal.msgWarning("场次日期不能为空！");
+              return 0;
+            }
           }
           if (session.ticketLine.length === 0) {
             this.$modal.msgWarning("票种信息不能为空！");
