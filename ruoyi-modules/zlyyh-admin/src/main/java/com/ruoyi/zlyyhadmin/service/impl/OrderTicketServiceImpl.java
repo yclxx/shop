@@ -57,13 +57,6 @@ public class OrderTicketServiceImpl implements IOrderTicketService {
     /**
      * 查询演出票订单列表
      */
-    @Override
-    public TableDataInfo<OrderTicketVo> queryPageList(OrderTicketBo bo, PageQuery pageQuery) {
-        LambdaQueryWrapper<OrderTicket> lqw = buildQueryWrapper(bo);
-        Page<OrderTicketVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
-        return TableDataInfo.build(result);
-    }
-
     public TableDataInfo<OrderTicketVo> selectPageUserList(OrderTicketBo bo, PageQuery pageQuery) {
         Page<OrderTicketVo> result = baseMapper.selectVoPages(pageQuery.build(), bo);
         return TableDataInfo.build(result);
@@ -74,8 +67,7 @@ public class OrderTicketServiceImpl implements IOrderTicketService {
      */
     @Override
     public List<OrderTicketVo> queryList(OrderTicketBo bo) {
-        LambdaQueryWrapper<OrderTicket> lqw = buildQueryWrapper(bo);
-        return baseMapper.selectVoList(lqw);
+        return baseMapper.selectVoLists(bo);
     }
 
     @Override

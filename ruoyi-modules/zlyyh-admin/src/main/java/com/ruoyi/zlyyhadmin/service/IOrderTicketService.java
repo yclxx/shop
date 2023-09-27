@@ -26,8 +26,6 @@ public interface IOrderTicketService {
     /**
      * 查询演出票订单列表
      */
-    TableDataInfo<OrderTicketVo> queryPageList(OrderTicketBo bo, PageQuery pageQuery);
-
     TableDataInfo<OrderTicketVo> selectPageUserList(OrderTicketBo bo, PageQuery pageQuery);
 
     /**
