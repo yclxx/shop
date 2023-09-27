@@ -159,6 +159,8 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         order.setUsedEndTime(productVo.getUsedEndTime());
         order.setUnionPay(productVo.getUnionPay());
         order.setUnionProductId(productVo.getUnionProductId());
+        order.setSysDeptId(productVo.getSysDeptId());
+        order.setSysUserId(productVo.getSysUserId());
         // 第三方订单号
         order.setExternalProductId(ticketLineVo.getOtherId());
         order.setUnionProductId(ticketLineVo.getOtherId());

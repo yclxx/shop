@@ -26,6 +26,7 @@ import com.ruoyi.system.mapper.SysRoleMenuMapper;
 import com.ruoyi.system.mapper.SysUserRoleMapper;
 import com.ruoyi.system.service.ISysRoleService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,7 @@ import java.util.*;
  *
  * @author ruoyi
  */
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class SysRoleServiceImpl implements ISysRoleService {
@@ -72,7 +74,8 @@ public class SysRoleServiceImpl implements ISysRoleService {
             .like(StringUtils.isNotBlank(role.getRoleKey()), "r.role_key", role.getRoleKey())
             .between(params.get("beginTime") != null && params.get("endTime") != null,
                 "r.create_time", params.get("beginTime"), params.get("endTime"))
-            .orderByAsc("r.role_sort").orderByAsc("r.create_time");;
+            .orderByAsc("r.role_sort").orderByAsc("r.create_time");
+        ;
         return wrapper;
     }
 
@@ -424,20 +427,25 @@ public class SysRoleServiceImpl implements ISysRoleService {
         if (CollUtil.isEmpty(keys)) {
             return;
         }
-        // 角色关联的在线用户量过大会导致redis阻塞卡顿 谨慎操作
-        keys.parallelStream().forEach(key -> {
-            String token = StringUtils.substringAfterLast(key, ":");
-            // 如果已经过期则跳过
-            if (StpUtil.stpLogic.getTokenActivityTimeoutByToken(token) < -1) {
-                return;
-            }
-            LoginUser loginUser = LoginHelper.getLoginUser(token);
-            if (loginUser.getRoles().stream().anyMatch(r -> r.getRoleId().equals(roleId))) {
-                try {
-                    StpUtil.logoutByTokenValue(token);
-                } catch (NotLoginException ignored) {
+        try {
+            // 角色关联的在线用户量过大会导致redis阻塞卡顿 谨慎操作
+            keys.parallelStream().forEach(key -> {
+                log.info("清除角色关联用户key={}", key);
+                String token = StringUtils.substringAfterLast(key, ":");
+                // 如果已经过期则跳过
+                if (StpUtil.stpLogic.getTokenActivityTimeoutByToken(token) < -1) {
+                    return;
                 }
-            }
-        });
+                LoginUser loginUser = LoginHelper.getLoginUser(token);
+                if (loginUser.getRoles().stream().anyMatch(r -> r.getRoleId().equals(roleId))) {
+                    try {
+                        StpUtil.logoutByTokenValue(token);
+                    } catch (NotLoginException ignored) {
+                    }
+                }
+            });
+        } catch (Exception e) {
+            log.error("清除角色关联用户异常：", e);
+        }
     }
 }

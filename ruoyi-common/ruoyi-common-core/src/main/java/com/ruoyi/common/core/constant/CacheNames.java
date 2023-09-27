@@ -182,7 +182,7 @@ public interface CacheNames {
     /**
      * 商品列表
      */
-    String productList = "productList#30m";
+    String productList = "productList#5m";
 
     /**
      * 分销商缓存

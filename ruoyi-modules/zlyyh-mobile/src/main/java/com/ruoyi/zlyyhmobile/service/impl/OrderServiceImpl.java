@@ -603,6 +603,8 @@ public class OrderServiceImpl implements IOrderService {
         order.setUsedEndTime(productVo.getUsedEndTime());
         order.setUnionPay(productVo.getUnionPay());
         order.setUnionProductId(productVo.getUnionProductId());
+        order.setSysDeptId(productVo.getSysDeptId());
+        order.setSysUserId(productVo.getSysUserId());
 
         OrderInfo orderInfo = new OrderInfo();
         orderInfo.setNumber(order.getNumber());
