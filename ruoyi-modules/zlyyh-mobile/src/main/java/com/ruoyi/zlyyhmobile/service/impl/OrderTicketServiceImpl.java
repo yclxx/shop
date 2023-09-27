@@ -265,13 +265,13 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         }
 
         // 银联分销预下单处理
-        //if ("1".equals(productVo.getUnionPay())) {
-        //    String externalProductId = ticketLineVo.getOtherId();
-        //    if (StringUtils.isEmpty(externalProductId)) {
-        //        throw new ServiceException("抱歉，商品配置错误[expid]");
-        //    }
-        //    unionPayChannelService.createUnionPayOrder(externalProductId, order);
-        //}
+        if ("1".equals(productVo.getUnionPay())) {
+            String externalProductId = ticketLineVo.getOtherId();
+            if (StringUtils.isEmpty(externalProductId)) {
+                throw new ServiceException("抱歉，商品配置错误[expid]");
+            }
+            unionPayChannelService.createUnionPayOrder(externalProductId, order);
+        }
         // 向 redis 缓存设置已购买数量
         RedisUtils.setCacheObject(lineNumber + bo.getLineId(), lineNumbers + bo.getPayCount(), Duration.ofDays(1));
         orderMapper.insert(order);
