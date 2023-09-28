@@ -391,7 +391,7 @@ public class ProductServiceImpl implements IProductService {
             }
             lqw.in(Product::getProductId, commercialTenantProductVos.stream().map(CommercialTenantProductVo::getProductId).collect(Collectors.toList()));
         }
-        lqw.last("order by sort asc,update_time desc");
+        lqw.last("order by sort asc,update_time desc,product_id desc");
         return lqw;
     }
 

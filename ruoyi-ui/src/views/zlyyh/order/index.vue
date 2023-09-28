@@ -174,7 +174,7 @@
             v-hasPermi="['zlyyh:order:refund']">退款
           </el-button>
           <el-button
-            v-if="scope.row.status == 2  && scope.row.pickupMethod != 0 && (scope.row.orderType == '1' || scope.row.orderType == '5')"
+            v-if="scope.row.status == 2  && scope.row.pickupMethod != 0 && (scope.row.orderType == '1' || scope.row.orderType == '5' || scope.row.orderType == '15')"
             size="mini" type="text" icon="el-icon-edit" @click="handlefoodCancel(scope.row)"
             v-hasPermi="['zlyyh:order:refund']">美食退款
           </el-button>
