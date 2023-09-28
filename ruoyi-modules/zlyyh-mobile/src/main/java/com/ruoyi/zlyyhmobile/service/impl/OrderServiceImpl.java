@@ -107,7 +107,7 @@ public class OrderServiceImpl implements IOrderService {
      *
      * @param order 订单信息
      */
-    public void insertOrder(Order order) {
+    public Order insertOrder(Order order) {
         if (null != order.getProductId()) {
             ProductVo productVo = productService.queryById(order.getProductId());
             if (null != productVo) {
@@ -119,7 +119,7 @@ public class OrderServiceImpl implements IOrderService {
         if (insert <= 0) {
             throw new ServiceException("保存订单失败");
         }
-        order = baseMapper.selectById(order.getNumber());
+        return baseMapper.selectById(order.getNumber());
     }
 
     /**
@@ -183,7 +183,7 @@ public class OrderServiceImpl implements IOrderService {
             }
         }
         // 保存订单
-        insertOrder(order);
+        order = insertOrder(order);
         OrderInfo orderInfoCache = OrderCacheUtils.getOrderInfoCache(number);
         if (null != orderInfoCache) {
             int insert1 = orderInfoMapper.insert(orderInfoCache);
@@ -682,7 +682,7 @@ public class OrderServiceImpl implements IOrderService {
                 order.setStatus("2");
                 order.setPayTime(new Date());
                 // 保存订单 后续如需改动成缓存订单，需注释
-                insertOrder(order);
+                order = insertOrder(order);
                 orderInfoMapper.insert(orderInfo);
                 // 缓存订单 暂时先不用 需要改动地方太多
                 //            OrderCacheUtils.setOrderCache(order);
@@ -759,7 +759,7 @@ public class OrderServiceImpl implements IOrderService {
             //    }
             //}
             // 保存订单 后续如需改动成缓存订单，需注释
-            insertOrder(order);
+            order = insertOrder(order);
             orderInfoMapper.insert(orderInfo);
             // 缓存订单 暂时先不用 需要改动地方太多
 //            OrderCacheUtils.setOrderCache(order);
@@ -1515,23 +1515,24 @@ public class OrderServiceImpl implements IOrderService {
         // 回退名额
         callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), order.getCreateTime());
         try {
+            if ("13".equals(order.getOrderType())) {
+                // 处理演出订单
+                OrderTicket orderTicket = orderTicketMapper.selectById(order.getNumber());
+                // 查询已购数量
+                Object cacheObject = RedisUtils.getCacheObject("lineNumber:" + orderTicket.getLineId());
+                // 若不为空执行
+                if (ObjectUtil.isNotEmpty(cacheObject)) {
+                    Long count = (Long) cacheObject;
+                    count -= orderTicket.getCount();
+                    RedisUtils.setCacheObject("lineNumber:" + orderTicket.getLineId(), count, Duration.ofDays(1));
+                }
+            }
             // 银联分销订单（处理）
             if ("11".equals(order.getOrderType()) || "12".equals(order.getOrderType()) || "1".equals(order.getUnionPay())) {
                 if ("11".equals(order.getOrderType())) {
                     UnionPayDistributionUtil.orderCancel(order.getNumber(), order.getExternalOrderNumber(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJCAppId(order.getPlatformKey()), YsfDistributionPropertiesUtils.getCertPathJC(order.getPlatformKey()));
                 } else {
                     UnionPayDistributionUtil.orderCancel(order.getNumber(), order.getExternalOrderNumber(), order.getPlatformKey(), YsfDistributionPropertiesUtils.getJDAppId(order.getPlatformKey()), YsfDistributionPropertiesUtils.getCertPathJD(order.getPlatformKey()));
-                }
-            } else if ("13".equals(order.getOrderType())) {
-                // 处理演出订单
-                OrderTicket orderTicket = orderTicketMapper.selectById(order.getNumber());
-                //orderTicket.setStatus("1");
-                //orderTicketMapper.updateById(orderTicket);
-                Object cacheObject = RedisUtils.getCacheObject("lineNumber:" + orderTicket.getLineId());
-                if (ObjectUtil.isNotEmpty(cacheObject)) {
-                    Long count = (Long) cacheObject;
-                    count += orderTicket.getCount();
-                    RedisUtils.setCacheObject("lineNumber:" + orderTicket.getLineId(), count, Duration.ofDays(1));
                 }
             }
         } catch (Exception ignored) {

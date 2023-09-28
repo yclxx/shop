@@ -10,6 +10,7 @@
         <result property="sessionId" column="session_id"/>
         <result property="lineId" column="line_id"/>
         <result property="ticketTime" column="ticket_time"/>
+        <result property="reservation" column="reservation"/>
         <result property="price" column="price"/>
         <result property="sellPrice" column="sell_price"/>
         <result property="count" column="count"/>
@@ -50,6 +51,7 @@
         ticket.price,
         ticket.sell_price sellPrice,
         ticket.count,
+        ticket.reservation,
         ticket.user_address_id userAddressId,
         ticket.NAME,
         ticket.tel,
@@ -114,6 +116,7 @@
         ticket.price,
         ticket.sell_price sellPrice,
         ticket.count,
+        ticket.reservation,
         ticket.user_address_id userAddressId,
         ticket.NAME,
         ticket.tel,

@@ -114,6 +114,7 @@
       <el-table-column label="观影信息" align="left" prop="ticketTime">
         <template slot-scope="scope">
           <div>观影时间:{{ parseTime(scope.row.ticketTime, '{y}-{m}-{d} {h}:{m}') }}</div>
+          <div>预约时间:{{ scope.row.reservation }}</div>
           <div>
             观影地址：{{ scope.row.shopAddress }}
           </div>
@@ -169,15 +170,25 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <div>
-            <el-button type="text" size="mini" @click="queryTicketLine(scope.row)">票种
-            </el-button>
+          <el-button
+          type="text" size="mini"
+          v-hasPermi="['zlyyh:productTicketLine:query']"
+          @click="queryTicketLine(scope.row)">票种
+          </el-button>
           </div>
           <div>
-            <el-button type="text" size="mini" @click="queryOrderIdCard(scope.row)">观影人
-            </el-button>
+          <el-button
+          type="text"
+          size="mini"
+          v-hasPermi="['zlyyh:orderTicket:query']"
+          @click="queryOrderIdCard(scope.row)">观影人
+          </el-button>
           </div>
           <div>
-            <el-button type="text" size="mini" @click="listCode(scope.row)">核销</el-button>
+          <el-button
+          type="text" size="mini"
+          v-hasPermi="['zlyyh:code:list']"
+          @click="listCode(scope.row)">核销</el-button>
           </div>
         </template>
       </el-table-column>
@@ -259,13 +270,23 @@
         </el-table-column>
         <el-table-column label="操作">
           <template slot-scope="scope">
-            <el-button v-if="scope.row.usedStatus === '0'" type="text" size="mini" @click="writeOffCode(scope.row)">
+            <el-button v-if="scope.row.usedStatus === '0'"
+            type="text"
+            size="mini"
+            v-hasPermi="['zlyyh:orderTicket:writeOffCode']"
+            @click="writeOffCode(scope.row)">
               核销
             </el-button>
-            <el-button v-if="scope.row.usedStatus === '1'" type="text" size="mini" @click="voidCode(scope.row)">
+            <el-button v-if="scope.row.usedStatus === '1'"
+            type="text" size="mini"
+            v-hasPermi="['zlyyh:orderTicket:voidCode']"
+            @click="voidCode(scope.row)">
               票卷返还
             </el-button>
-            <el-button v-if="scope.row.usedStatus === '0'" type="text" size="mini" @click="returnCode(scope.row)">作废
+            <el-button v-if="scope.row.usedStatus === '0'"
+            type="text" size="mini"
+            v-hasPermi="['zlyyh:orderTicket:returnCode']"
+            @click="returnCode(scope.row)">作废
             </el-button>
           </template>
         </el-table-column>

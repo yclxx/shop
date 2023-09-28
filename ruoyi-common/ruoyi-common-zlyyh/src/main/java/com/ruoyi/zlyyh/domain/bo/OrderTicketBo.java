@@ -51,7 +51,10 @@ public class OrderTicketBo extends BaseEntity {
      */
     @NotNull(message = "观影时间不能为空", groups = {AddGroup.class, EditGroup.class})
     private Date ticketTime;
-
+    /**
+     * 预约时间
+     */
+    private String reservation;
     /**
      * 购买金额
      */

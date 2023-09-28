@@ -21,6 +21,7 @@ import com.ruoyi.zlyyhmobile.event.SendCouponEvent;
 import com.ruoyi.zlyyhmobile.service.*;
 import com.ruoyi.zlyyhmobile.utils.redis.OrderCacheUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class OrderTicketServiceImpl implements OrderTicketService {
@@ -106,22 +108,25 @@ public class OrderTicketServiceImpl implements OrderTicketService {
             throw new ServiceException("单次购买数量不能超过" + ticketLineVo.getLineUpperLimit());
 
         String lineNumber = "lineNumber:";
-        // 查询可购票档数量缓存
+        // 查询已购商品数量缓存
         Long lineNumbers = RedisUtils.getCacheObject(lineNumber + bo.getLineId());
         if (ObjectUtil.isNotEmpty(lineNumbers)) {
-            if (lineNumbers.compareTo(bo.getPayCount()) < 0) {
+            // 总数量减去已购数量，获得剩余可购数量
+            Long s = ticketLineVo.getLineNumber() - lineNumbers;
+            if (s.compareTo(bo.getPayCount()) < 0) {
                 throw new ServiceException("票档所剩数量不足");
             }
         } else {
+            lineNumbers = 0L;
+            // 产品已购买数量
             BigDecimal orderTicketLineNumber = baseMapper.getOrderTicketLineNumber(ticketLineVo.getLineId());
             if (null == orderTicketLineNumber) orderTicketLineNumber = BigDecimal.ZERO;
+            // 计算总购买数量
             long payCount = orderTicketLineNumber.longValue() + bo.getPayCount();
             if (ticketLineVo.getLineNumber() < payCount)
                 throw new ServiceException("票档所剩数量不足");
-            // 设置缓存一天时间
-            RedisUtils.setCacheObject(lineNumber + bo.getLineId(), ticketLineVo.getLineNumber() - payCount, Duration.ofDays(1));
+            // 缓存异构数量
         }
-
 
         // 门店信息处理
         ShopVo shopVo = shopService.queryById(bo.getShopId());
@@ -159,6 +164,8 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         order.setUsedEndTime(productVo.getUsedEndTime());
         order.setUnionPay(productVo.getUnionPay());
         order.setUnionProductId(productVo.getUnionProductId());
+        order.setSysDeptId(productVo.getSysDeptId());
+        order.setSysUserId(productVo.getSysUserId());
         // 第三方订单号
         order.setExternalProductId(ticketLineVo.getOtherId());
         order.setUnionProductId(ticketLineVo.getOtherId());
@@ -173,7 +180,9 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         orderTicket.setProductId(ticketLineVo.getProductId());
         orderTicket.setSessionId(ticketLineVo.getSessionId());
         orderTicket.setLineId(ticketLineVo.getLineId());
-        orderTicket.setTicketTime(ticketSession.getDate());
+        if (ObjectUtil.isNotEmpty(ticketSession.getDate())) {
+            orderTicket.setTicketTime(ticketSession.getDate());
+        }
         orderTicket.setPrice(ticketLineVo.getLinePrice());
         orderTicket.setSellPrice(ticketLineVo.getLineSettlePrice());
         orderTicket.setCount(bo.getPayCount());
@@ -192,6 +201,11 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         orderTicket.setProductName(productVo.getProductName());
         orderTicket.setSessionName(ticketSession.getSession());
         orderTicket.setLineName(ticketLineVo.getLineTitle());
+        // 设置预约时间
+        if (ticketSession.getIsRange().equals("0")) {
+            if (StringUtils.isEmpty(bo.getReservation())) throw new ServiceException("请选择预约时间");
+            orderTicket.setReservation(bo.getReservation());
+        }
 
         // 票形式 实体票处理地址信息
         if (ticket.getTicketForm().equals("2")) {
@@ -246,7 +260,6 @@ public class OrderTicketServiceImpl implements OrderTicketService {
             order.setStatus("2");
             order.setPayTime(new Date());
             SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
-            //orderStreamProducer.streamOrderMsg(order.getNumber().toString());
             orderMapper.insert(order);
             baseMapper.insert(orderTicket);
             return new CreateOrderResult(order.getNumber(), "0");
@@ -260,6 +273,8 @@ public class OrderTicketServiceImpl implements OrderTicketService {
             }
             unionPayChannelService.createUnionPayOrder(externalProductId, order);
         }
+        // 向 redis 缓存设置已购买数量
+        RedisUtils.setCacheObject(lineNumber + bo.getLineId(), lineNumbers + bo.getPayCount(), Duration.ofDays(1));
         orderMapper.insert(order);
         baseMapper.insert(orderTicket);
         // 缓存订单数据
