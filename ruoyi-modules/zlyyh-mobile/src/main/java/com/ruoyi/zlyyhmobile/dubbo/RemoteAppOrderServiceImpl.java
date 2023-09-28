@@ -117,6 +117,7 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
 
     private String refundOrder(String orderType, String cancelOrderStatus, String externalOrderNumber) {
         if (!"1".equals(orderType) && !"5".equals(orderType) && !"15".equals(orderType)) {
+            log.info("美食订单申请退款：{}", orderType);
             throw new ServiceException("非美食订单，无法向供应商申请退款");
         }
         if ("1".equals(cancelOrderStatus)) {
