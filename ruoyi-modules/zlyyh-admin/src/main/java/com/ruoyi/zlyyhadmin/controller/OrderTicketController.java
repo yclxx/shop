@@ -104,6 +104,7 @@ public class OrderTicketController extends BaseController {
     /**
      * 核销
      */
+    @SaCheckPermission("zlyyh:orderTicket:writeOffCode")
     @GetMapping("/writeOffCode/{codeNo}")
     public R<Boolean> writeOffCode(@NotNull(message = "主键不能为空") @PathVariable String codeNo) {
         return R.ok(iOrderTicketService.writeOffCode(codeNo));
@@ -112,6 +113,7 @@ public class OrderTicketController extends BaseController {
     /**
      * 票券返还
      */
+    @SaCheckPermission("zlyyh:orderTicket:voidCode")
     @GetMapping("/voidCode/{codeNo}")
     public R<Boolean> voidCode(@NotNull(message = "主键不能为空") @PathVariable String codeNo) {
         return R.ok(iOrderTicketService.voidCode(codeNo));
@@ -120,6 +122,7 @@ public class OrderTicketController extends BaseController {
     /**
      * 作废
      */
+    @SaCheckPermission("zlyyh:orderTicket:returnCode")
     @GetMapping("/returnCode/{codeNo}")
     public R<Boolean> returnCode(@NotNull(message = "主键不能为空") @PathVariable String codeNo) {
         return R.ok(iOrderTicketService.returnCode(codeNo));
