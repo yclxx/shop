@@ -180,7 +180,9 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         orderTicket.setProductId(ticketLineVo.getProductId());
         orderTicket.setSessionId(ticketLineVo.getSessionId());
         orderTicket.setLineId(ticketLineVo.getLineId());
-        orderTicket.setTicketTime(ticketSession.getDate());
+        if (ObjectUtil.isNotEmpty(ticketSession.getDate())) {
+            orderTicket.setTicketTime(ticketSession.getDate());
+        }
         orderTicket.setPrice(ticketLineVo.getLinePrice());
         orderTicket.setSellPrice(ticketLineVo.getLineSettlePrice());
         orderTicket.setCount(bo.getPayCount());
@@ -258,7 +260,6 @@ public class OrderTicketServiceImpl implements OrderTicketService {
             order.setStatus("2");
             order.setPayTime(new Date());
             SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
-            //orderStreamProducer.streamOrderMsg(order.getNumber().toString());
             orderMapper.insert(order);
             baseMapper.insert(orderTicket);
             return new CreateOrderResult(order.getNumber(), "0");

@@ -190,17 +190,23 @@
           </el-col>
         </el-row>
         <el-row>
-          <el-col>
-            <el-form-item label="预约日期" prop="sessionDate">
+          <el-col :span="6">
+            <el-form-item label="预约开始日期" prop="beginDate">
               <el-date-picker
-                v-model="form.sessionDate"
-                type="daterange"
-                align="right"
-                unlink-panels
-                range-separator="至"
+                v-model="form.beginDate"
+                type="date"
                 value-format="yyyy-MM-dd"
-                start-placeholder="开始日期"
-                end-placeholder="结束日期">
+                placeholder="请选择预约开始日期">
+              </el-date-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="预约结束日期" prop="endDate">
+              <el-date-picker
+                v-model="form.endDate"
+                type="date"
+                value-format="yyyy-MM-dd"
+                placeholder="请选择预约结束日期">
               </el-date-picker>
             </el-form-item>
           </el-col>
@@ -560,7 +566,6 @@ export default {
         productId: undefined,
         session: undefined,
         status: undefined,
-        sessionDate: [],
         isRange: undefined,
         beginDate: undefined,
         endDate: undefined,
@@ -614,11 +619,6 @@ export default {
       getProductTicketSession(sessionId).then(response => {
         this.loading = false;
         this.form = response.data;
-        if (response.data.beginDate != null) {
-          this.form.sessionDate = [2];
-          this.form.sessionDate[0] = response.data.beginDate;
-          this.form.sessionDate[1] = response.data.endDate;
-        }
         this.ticketLineData = response.data.ticketLine;
         this.open = true;
         this.title = "修改演出场次与票种";
@@ -818,12 +818,13 @@ export default {
         return 0;
       }
       if (this.form.isRange === '0') {
-        if (this.form.sessionDate.length <= 0) {
-          this.$modal.msgWarning("预约日期不能为空！");
+        if (this.form.beginDate == null || this.form.beginDate === '' || this.form.beginDate === undefined) {
+          this.$modal.msgWarning("预约开始日期不能为空！");
           return 0;
-        } else {
-          this.form.beginDate = this.form.sessionDate[0];
-          this.form.endDate = this.form.sessionDate[1];
+        }
+        if (this.form.endDate == null || this.form.endDate === '' || this.form.endDate === undefined) {
+          this.$modal.msgWarning("预约结束日期不能为空！");
+          return 0;
         }
       }
       if (this.form.isRange === '1') {
