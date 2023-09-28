@@ -173,13 +173,14 @@
           <el-button
           type="text" size="mini"
           v-hasPermi="['zlyyh:productTicketLine:query']"
+          icon="el-icon-tickets"
           @click="queryTicketLine(scope.row)">票种
           </el-button>
           </div>
           <div>
           <el-button
-          type="text"
-          size="mini"
+          type="text" size="mini"
+          icon="el-icon-monitor"
           v-hasPermi="['zlyyh:orderTicket:query']"
           @click="queryOrderIdCard(scope.row)">观影人
           </el-button>
@@ -187,6 +188,7 @@
           <div>
           <el-button
           type="text" size="mini"
+          icon="el-icon-s-operation"
           v-hasPermi="['zlyyh:code:list']"
           @click="listCode(scope.row)">核销</el-button>
           </div>
@@ -271,22 +273,25 @@
         <el-table-column label="操作">
           <template slot-scope="scope">
             <el-button v-if="scope.row.usedStatus === '0'"
-            type="text"
-            size="mini"
+            type="text" size="mini"
+            icon="el-icon-setting"
             v-hasPermi="['zlyyh:orderTicket:writeOffCode']"
-            @click="writeOffCode(scope.row)">
+            @click="confirm('writeOffCode',scope.row)">
               核销
             </el-button>
             <el-button v-if="scope.row.usedStatus === '1'"
             type="text" size="mini"
+            icon="el-icon-link"
             v-hasPermi="['zlyyh:orderTicket:voidCode']"
-            @click="voidCode(scope.row)">
+            @click="confirm('voidCode',scope.row)">
               票卷返还
             </el-button>
             <el-button v-if="scope.row.usedStatus === '0'"
             type="text" size="mini"
+            icon="el-icon-error"
             v-hasPermi="['zlyyh:orderTicket:returnCode']"
-            @click="returnCode(scope.row)">作废
+            @click="confirm('returnCode',scope.row)">
+              作废
             </el-button>
           </template>
         </el-table-column>
@@ -536,6 +541,33 @@ export default {
           this.open = true;
         });
       }
+    },
+    confirm(value,row) {
+      let text = undefined;
+      if (value === 'writeOffCode') {
+        text = '核销'
+      } else if (value === 'voidCode') {
+        text = '票卷返还'
+      } else if (value === 'returnCode') {
+        text = '作废'
+      }
+      this.$confirm('请确认是否执行'+text+'操作', '确认信息', {
+          distinguishCancelAndClose: true,
+          confirmButtonText: '确认',
+          cancelButtonText: '取消'
+        }).then(() => {
+          if (value === 'writeOffCode') {
+            this.writeOffCode(row)
+          } else if (value === 'voidCode') {
+            this.voidCode(row)
+          } else if (value === 'returnCode') {
+            this.returnCode(row)
+        }}).catch(action => {
+          this.$message({
+            type: 'info',
+            message: '已取消操作'
+          })
+      });
     },
     // 核销
     writeOffCode(row) {
