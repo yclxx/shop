@@ -105,7 +105,7 @@ public class RemoteCtripFoodServiceImpl implements RemoteCtripFoodService {
                 List<ShopProductVo> shopProductVos = shopProductService.queryByShopId(shopId);
                 //查询出之前与门店关联的商品id 然后先将这些商品下架
                 List<Long> productIds = shopProductVos.stream().map(ShopProductVo::getProductId).collect(Collectors.toList());
-                productService.updateProducts(productIds);
+                productService.updateProducts(productIds,"15");
                 //完成下架后 删除商品门店的关联
                 shopProductService.deleteWithValidByShopId(shopId);
                 //查询门店商品接口 获取商品
@@ -387,8 +387,9 @@ public class RemoteCtripFoodServiceImpl implements RemoteCtripFoodService {
             if (ObjectUtil.isEmpty(shopVo)) {
                 shopService.insertByBo(shopBo);
             } else {
-                shopService.updateByBo(shopBo);
                 shopBo.setShopId(shopVo.getShopId());
+                shopService.updateByBo(shopBo);
+
             }
             return shopBo.getShopId();
         }

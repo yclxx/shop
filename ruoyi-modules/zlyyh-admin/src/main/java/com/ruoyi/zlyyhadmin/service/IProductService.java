@@ -62,5 +62,5 @@ public interface IProductService {
      * 批量下架商品
      * @param ids
      */
-    void updateProducts(Collection<Long> ids);
+    void updateProducts(Collection<Long> ids,String productType);
 }

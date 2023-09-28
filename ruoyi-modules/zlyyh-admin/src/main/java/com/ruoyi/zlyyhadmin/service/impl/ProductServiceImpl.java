@@ -364,11 +364,12 @@ public class ProductServiceImpl implements IProductService {
      * @param ids
      */
     @Override
-    public void updateProducts(Collection<Long> ids) {
+    public void updateProducts(Collection<Long> ids,String productType) {
         for (Long id : ids) {
             ProductBo productBo = new ProductBo();
             productBo.setProductId(id);
             productBo.setStatus("1");
+            productBo.setProductType(productType);
             updateByBo(productBo);
         }
 
