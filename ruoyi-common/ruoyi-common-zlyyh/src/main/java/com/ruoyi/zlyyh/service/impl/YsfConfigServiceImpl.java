@@ -31,7 +31,7 @@ public class YsfConfigServiceImpl implements YsfConfigService {
         return "";
     }
 
-    @Cacheable(cacheNames = CacheNames.ysfConfig, key = "'-1-'+#key")
+    //@Cacheable(cacheNames = CacheNames.ysfConfig, key = "'-1-'+#key")
     @Override
     public String queryValueByKeys(String key) {
         try {
