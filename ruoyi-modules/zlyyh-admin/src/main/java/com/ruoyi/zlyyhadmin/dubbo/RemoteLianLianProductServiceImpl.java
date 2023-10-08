@@ -36,7 +36,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -118,8 +117,8 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                             //没有则跳出循环
                             if (BigDecimal.valueOf(pageNum).multiply(BigDecimal.TEN).compareTo(total) > 0) {
                                 break;
-                            } else {
-                                TimeUnit.SECONDS.sleep(1);
+                            //} else {
+                            //    TimeUnit.SECONDS.sleep(1);
                             }
                             pageNum += 1;
                         }
