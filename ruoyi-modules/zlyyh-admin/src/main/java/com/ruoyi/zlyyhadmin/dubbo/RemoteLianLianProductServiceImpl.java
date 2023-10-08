@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyhadmin.dubbo;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONArray;
@@ -9,6 +10,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.redis.utils.RedisUtils;
+import com.ruoyi.resource.api.RemoteFileService;
+import com.ruoyi.resource.api.domain.SysFile;
 import com.ruoyi.system.api.RemoteLianLianProductService;
 import com.ruoyi.zlyyh.domain.CategorySupplier;
 import com.ruoyi.zlyyh.domain.LianlianCity;
@@ -23,6 +26,7 @@ import com.ruoyi.zlyyhadmin.domain.vo.LianLianProductVo;
 import com.ruoyi.zlyyhadmin.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.dubbo.config.annotation.DubboService;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -30,6 +34,8 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
@@ -57,6 +63,8 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
     private final IShopService shopService;
     private final IShopProductService shopProductService;
     private final ILianlianCityService lianlianCityService;
+    @DubboReference
+    private RemoteFileService remoteFileService;
     private final BigDecimal HUNDRED = new BigDecimal(100);
 
     /**
@@ -154,23 +162,6 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 }
             }
 
-            // 查询产品图文详情(文案)
-            String htmlContent = null;
-            String spxz = null;
-            JSONObject htmlObject = LianLianUtils.getProductDetail(channelId, secret, productDetailHtml, lianProductVo.getProductId().toString());
-            if (htmlObject != null) {
-                htmlContent = htmlObject.getString("htmlContent");
-                if (StringUtils.isNotEmpty(htmlContent)) { // 获取商品须知
-                    Document doc = Jsoup.parse(htmlContent);
-                    Elements elementsByClass = doc.getElementsByClass("body-center body-center-border-bottom");
-                    Element body = doc.body();
-                    body.html(elementsByClass.html());
-                    // 获取联联商品购买须知内容
-                    spxz = doc.outerHtml();
-                }
-            }
-
-
             JSONArray jsonArray = JSONArray.parseArray(lianProductVo.getItemList());
             List<LianLianProductItem> productItems = jsonArray.toJavaList(LianLianProductItem.class);
             for (LianLianProductItem item : productItems) {
@@ -213,7 +204,6 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 } else if (lianProductVo.getItemStock().equals(1)) {
                     product.setTotalCount(item.getStock());//库存
                 }
-                product.setDescription(spxz);
                 //product.setVipAmount(item.getChannelPrice());
                 ProductInfo productInfo = new ProductInfo();
                 productInfo.setTitle(lianProductVo.getTitle());
@@ -225,7 +215,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 // 使用时间
                 productInfo.setTicketTimeRule(lianProductVo.getValidBeginDate() + "-" + lianProductVo.getValidEndDate());
                 productInfo.setBrandName(lianProductVo.getOnlyName());
-                productInfo.setItemBuyNote(spxz);
+                //productInfo.setItemBuyNote(spxz);
                 productInfo.setItemContentGroup(JSONObject.toJSONString(productItems).replace("&", ""));
                 // 将原先海报地址改为套餐图片
                 productInfo.setItemContentImage(lianProductVo.getFaceImg());
@@ -246,6 +236,27 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                     //将状态改成下架
                     product.setStatus("1");
                 }
+                // 查询产品图文详情(文案)
+                String htmlContent = null;
+                String spxz = null;
+                JSONObject htmlObject = LianLianUtils.getProductDetail(channelId, secret, productDetailHtml, lianProductVo.getProductId().toString());
+                if (htmlObject != null) {
+                    htmlContent = htmlObject.getString("htmlContent");
+                    if (StringUtils.isNotEmpty(htmlContent)) { // 获取商品须知
+                        Document doc = Jsoup.parse(htmlContent);
+                        Elements elementsByClass = doc.getElementsByClass("body-center body-center-border-bottom");
+                        Element body = doc.body();
+                        body.html(elementsByClass.html());
+                        // 获取联联商品购买须知内容
+                        spxz = doc.outerHtml();
+                        String fileName = product.getProductId() + ".html";
+                        InputStream inputStream = new ByteArrayInputStream(spxz.getBytes());
+                        byte[] bytes = IoUtil.readBytes(inputStream);
+                        SysFile upload = remoteFileService.upload(fileName, fileName, "text/html;charset:utf-8", bytes);
+                        spxz = upload.getUrl();
+                    }
+                }
+                product.setDescription(spxz);
                 // 商品扩展信息
                 //commodity.setCommodityInfo(commodityInfo);
                 //不存在则新增

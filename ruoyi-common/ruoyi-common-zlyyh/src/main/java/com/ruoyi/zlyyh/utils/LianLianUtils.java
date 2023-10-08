@@ -232,15 +232,16 @@ public class LianLianUtils {
 
     public static void main(String[] args) {
         // 账号
-        String channelId = "10018";
+        String channelId = "10370";
         // 域名
-        String secret = "Ab7DHJ5vF4jtnvkUxXjIwQ==";
+        String secret = "MGc8SsdBt5t/SslKtQgwdA==";
         // 地址
-        String basePath = "https://adapter-channel.llzby.top";
+        String basePath = "https://channel-api.lianlianlvyou.com";
 
-        String api = "/ll/channel/order/getOrderInfo";
+        String api = "/ll/channel/product/getProductList";
 
-        JSONObject returnLog = getOrderDetails(channelId, secret, basePath + api, "1710576264179134464", "");
-        log.info("订单详情展示：{}", returnLog);
+        getProductList(channelId, secret, basePath + api, "140100", 1);
+        //JSONObject returnLog = getProductList(channelId, secret, basePath + api, "140100",1);
+        //log.info("订单详情展示：{}", returnLog);
     }
 }

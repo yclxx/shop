@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyhadmin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONArray;
@@ -15,6 +16,8 @@ import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.CacheUtils;
+import com.ruoyi.resource.api.RemoteFileService;
+import com.ruoyi.resource.api.domain.SysFile;
 import com.ruoyi.zlyyh.domain.CategoryProduct;
 import com.ruoyi.zlyyh.domain.CommercialTenantProduct;
 import com.ruoyi.zlyyh.domain.Product;
@@ -31,6 +34,7 @@ import com.ruoyi.zlyyhadmin.domain.vo.LianLianProductItem;
 import com.ruoyi.zlyyhadmin.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -38,6 +42,8 @@ import org.jsoup.select.Elements;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Collection;
@@ -63,6 +69,8 @@ public class ProductServiceImpl implements IProductService {
     private final IShopProductService shopProductService;
     private final IProductInfoService productInfoService;
     private final YsfConfigService ysfConfigService;
+    @DubboReference
+    private RemoteFileService remoteFileService;
 
     /**
      * 查询商品
@@ -423,9 +431,9 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public void lianProductCall(JSONObject param) {
         String secret = ysfConfigService.queryValueByKeys("LianLian.secret");
-        log.info("新联联商品上架下架售罄通知接收参数解密前：{}", param);
+        log.info("新联联商品更新通知接收参数解密前：{}", param);
         String decryptedData = LianLianUtils.aesDecryptBack(param, secret);
-        log.info("新联联商品上架下架售罄通知接收参数解密后：{}", decryptedData);
+        log.info("新联联商品更新通知接收参数解密后：{}", decryptedData);
         if (ObjectUtil.isNotEmpty(decryptedData)) {
             BigDecimal HUNDRED = new BigDecimal(100);
             JSONObject jsonObject = JSONObject.parseObject(decryptedData);
@@ -457,7 +465,7 @@ public class ProductServiceImpl implements IProductService {
 
                 String channelId = ysfConfigService.queryValueByKey(product.getPlatformKey(), "LianLian.channelId");
                 String basePath = ysfConfigService.queryValueByKey(product.getPlatformKey(), "LianLian.basePath");
-                 //产品图文详情
+                //产品图文详情
                 String detailHtml = ysfConfigService.queryValueByKey(product.getPlatformKey(), "LianLian.detailHtml");
 
                 // 查询产品图文详情(文案)
@@ -473,6 +481,11 @@ public class ProductServiceImpl implements IProductService {
                         body.html(elementsByClass.html());
                         // 获取联联商品购买须知内容
                         spxz = doc.outerHtml();
+                        String fileName = product.getProductId() + ".html";
+                        InputStream inputStream = new ByteArrayInputStream(spxz.getBytes());
+                        byte[] bytes = IoUtil.readBytes(inputStream);
+                        SysFile upload = remoteFileService.upload(fileName, fileName, "text/html;charset:utf-8", bytes);
+                        spxz = upload.getUrl();
                     }
                 }
                 product.setDescription(spxz);
