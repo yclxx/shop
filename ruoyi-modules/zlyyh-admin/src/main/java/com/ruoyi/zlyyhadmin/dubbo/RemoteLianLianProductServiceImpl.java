@@ -28,10 +28,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.dubbo.config.annotation.DubboService;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
@@ -243,14 +239,14 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 if (htmlObject != null) {
                     htmlContent = htmlObject.getString("htmlContent");
                     if (StringUtils.isNotEmpty(htmlContent)) { // 获取商品须知
-                        Document doc = Jsoup.parse(htmlContent);
-                        Elements elementsByClass = doc.getElementsByClass("body-center body-center-border-bottom");
-                        Element body = doc.body();
-                        body.html(elementsByClass.html());
-                        // 获取联联商品购买须知内容
-                        spxz = doc.outerHtml();
+                        //Document doc = Jsoup.parse(htmlContent);
+                        //Elements elementsByClass = doc.getElementsByClass("body-center body-center-border-bottom");
+                        //Element body = doc.body();
+                        //body.html(elementsByClass.html());
+                        //// 获取联联商品购买须知内容
+                        //spxz = doc.outerHtml();
                         String fileName = product.getProductId() + ".html";
-                        InputStream inputStream = new ByteArrayInputStream(spxz.getBytes());
+                        InputStream inputStream = new ByteArrayInputStream(htmlContent.getBytes());
                         byte[] bytes = IoUtil.readBytes(inputStream);
                         SysFile upload = remoteFileService.upload(fileName, fileName, "text/html;charset:utf-8", bytes);
                         spxz = upload.getUrl();
