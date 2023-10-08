@@ -71,7 +71,10 @@ public class OrderFoodInfo extends BaseEntity {
      */
     private Integer refundAmount;
     /**
-     * 订单状态。当前只有PAID一个状态
+     * 订单状态。
+     * 美食套餐当前只有 PAID 一个状态，联联商品为纯数字
+     * 联联订单状态 110:支付中 111:已支付 210:已预约 310:已核销 311:核销异常
+     * 410:退款中 411:退款不退佣金 412:已退款 510:赔付中 511:赔付成功 610:已过期
      */
     private String orderStatus;
     /**

@@ -231,4 +231,9 @@ public interface IOrderService {
      * @return 订单信息
      */
     OrderVo queryByExternalOrderNumber(String externalOrderNumber);
+
+    /**
+     * 联联通知回调统一分配方法
+     */
+    void lianOrderBack(JSONObject param, Integer number);
 }

@@ -13,4 +13,6 @@ import org.apache.ibatis.annotations.Param;
  */
 public interface YsfConfigMapper extends BaseMapperPlus<YsfConfigMapper, YsfConfig, YsfConfigVo> {
     String queryValueByKey(@Param("platformId") Long platformId, @Param("key") String key);
+
+    String queryValueByKeys(@Param("key") String key);
 }

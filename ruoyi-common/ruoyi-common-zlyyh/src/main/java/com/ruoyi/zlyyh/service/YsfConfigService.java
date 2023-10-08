@@ -12,4 +12,9 @@ public interface YsfConfigService {
      * @return 参数值
      */
     String queryValueByKey(Long platformId, String key);
+
+    /**
+     * 获取全平台统一公共参数
+     */
+    String queryValueByKeys(String key);
 }

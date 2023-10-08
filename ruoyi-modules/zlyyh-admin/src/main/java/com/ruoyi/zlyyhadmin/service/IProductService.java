@@ -1,5 +1,6 @@
 package com.ruoyi.zlyyhadmin.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.zlyyh.domain.Product;
 import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyh.domain.bo.ProductBo;
@@ -70,4 +71,8 @@ public interface IProductService {
      * @param ids
      */
     void updateProducts(Collection<Long> ids,String productType);
+
+    void lianProductCall(JSONObject param);
+
+    void lianProductStatusCall(JSONObject param);
 }

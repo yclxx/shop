@@ -2,8 +2,6 @@ package com.ruoyi.zlyyh.domain.vo;
 
 import com.alibaba.excel.annotation.ExcelIgnoreUnannotated;
 import com.alibaba.excel.annotation.ExcelProperty;
-import com.ruoyi.common.excel.annotation.ExcelDictFormat;
-import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
 
 
@@ -50,17 +48,10 @@ public class YsfConfigVo {
     private String configValue;
 
     /**
-     * 是否缓存
+     * 是否全局参数
      */
-    @ExcelProperty(value = "是否缓存", converter = ExcelDictConvert.class)
-    @ExcelDictFormat(dictType = "redis_cache_config")
-    private Long isCache;
-
-    /**
-     * 缓存时间
-     */
-    @ExcelProperty(value = "缓存时间")
-    private Long cacheTime;
+    @ExcelProperty(value = "是否全局")
+    private String isAll;
 
     /**
      * 备注

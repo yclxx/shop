@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyhadmin.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.utils.BeanCopyUtils;
 import com.ruoyi.common.core.utils.ColumnUtil;
@@ -28,6 +29,7 @@ import javax.validation.constraints.NotNull;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 商品控制器
@@ -130,5 +132,36 @@ public class ProductController extends BaseController {
     public R<Void> setProductDayCount(@NotEmpty(message = "主键不能为空") @PathVariable String dayCount, @RequestBody ProductBo bo) {
         RedisUtils.setCacheObject(ZlyyhUtils.getProductDayCount() + bo.getProductId(), dayCount);
         return R.ok();
+    }
+
+
+    /**
+     * 联联产品更新
+     */
+    @PostMapping("/ignore/lianOrderCodeCall")
+    public Map<String, Object> lianOrderCodeCall(@RequestBody JSONObject param) {
+        iProductService.lianProductCall(param);
+        return getMap();
+    }
+
+    /**
+     * 联联产品状态通知(上架/下架/售空)
+     *
+     * @param param
+     * @return
+     */
+    @PostMapping("/ignore/lianProductStatusCall")
+    public Map<String, Object> lianProductStatusCall(@RequestBody JSONObject param) {
+        iProductService.lianProductStatusCall(param);
+        return getMap();
+    }
+
+    private Map<String, Object> getMap() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("code", "200");
+        map.put("data", null);
+        map.put("message", "请求响应成功!");
+        map.put("success", true);
+        return map;
     }
 }

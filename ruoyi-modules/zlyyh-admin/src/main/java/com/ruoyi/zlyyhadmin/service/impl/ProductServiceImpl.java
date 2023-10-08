@@ -3,6 +3,8 @@ package com.ruoyi.zlyyhadmin.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -16,15 +18,28 @@ import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.zlyyh.domain.CategoryProduct;
 import com.ruoyi.zlyyh.domain.CommercialTenantProduct;
 import com.ruoyi.zlyyh.domain.Product;
+import com.ruoyi.zlyyh.domain.ProductInfo;
 import com.ruoyi.zlyyh.domain.bo.*;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.ProductMapper;
+import com.ruoyi.zlyyh.param.LianLianParam;
+import com.ruoyi.zlyyh.service.YsfConfigService;
+import com.ruoyi.zlyyh.utils.LianLianUtils;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
+import com.ruoyi.zlyyhadmin.domain.bo.LianLianProductBo;
+import com.ruoyi.zlyyhadmin.domain.vo.LianLianProductItem;
 import com.ruoyi.zlyyhadmin.service.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +50,7 @@ import java.util.Map;
  * @author yzgnet
  * @date 2023-03-21
  */
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class ProductServiceImpl implements IProductService {
@@ -45,6 +61,8 @@ public class ProductServiceImpl implements IProductService {
     private final IProductTicketService productTicketService;
     private final IProductTicketSessionService productTicketSessionService;
     private final IShopProductService shopProductService;
+    private final IProductInfoService productInfoService;
+    private final YsfConfigService ysfConfigService;
 
     /**
      * 查询商品
@@ -396,5 +414,145 @@ public class ProductServiceImpl implements IProductService {
         }
 
     }
+
+    /**
+     * 联联产品更新通知
+     *
+     * @param param
+     */
+    @Override
+    public void lianProductCall(JSONObject param) {
+        String secret = ysfConfigService.queryValueByKeys("LianLian.secret");
+        log.info("新联联商品上架下架售罄通知接收参数解密前：{}", param);
+        String decryptedData = LianLianUtils.aesDecryptBack(param, secret);
+        log.info("新联联商品上架下架售罄通知接收参数解密后：{}", decryptedData);
+        if (ObjectUtil.isNotEmpty(decryptedData)) {
+            BigDecimal HUNDRED = new BigDecimal(100);
+            JSONObject jsonObject = JSONObject.parseObject(decryptedData);
+            LianLianProductBo lianProduct = jsonObject.toJavaObject(LianLianProductBo.class);
+            List<LianLianProductItem> items = JSONArray.parseArray(lianProduct.getItemList(), LianLianProductItem.class);
+            for (LianLianProductItem item : items) {
+                ProductInfoVo productInfoVo = productInfoService.queryByItemId(item.getItemId().toString());
+                Product product = baseMapper.selectById(productInfoVo.getProductId());
+                // 处理价格单位
+                item.setChannelPrice(item.getChannelPrice().divide(HUNDRED, 2, RoundingMode.HALF_UP)); // 渠道结算价
+                item.setSalePrice(item.getSalePrice().divide(HUNDRED, 2, RoundingMode.HALF_UP)); // 售价
+                item.setOriginPrice(item.getOriginPrice().divide(HUNDRED, 2, RoundingMode.HALF_UP));// 原价
+                //主体信息
+                if (lianProduct.getOnlyName().equals(item.getSubTitle())) {
+                    product.setProductName(lianProduct.getOnlyName());//产品名称
+                } else {
+                    product.setProductName(lianProduct.getOnlyName() + " " + item.getSubTitle());//产品名称
+                }
+                product.setProductImg(lianProduct.getFaceImg());//产品图片
+                product.setProductSubhead(lianProduct.getTitle());//产品副标题
+                product.setOriginalAmount(item.getOriginPrice());//产品原价
+                product.setSellAmount(item.getSalePrice());//产品售价
+                if (lianProduct.getItemStock().equals(0)) {
+                    product.setTotalCount(Long.valueOf(lianProduct.getStockAmount()));//库存
+                } else if (lianProduct.getItemStock().equals(1)) {
+                    product.setTotalCount(item.getStock());//库存
+                }
+
+
+                String channelId = ysfConfigService.queryValueByKey(product.getPlatformKey(), "LianLian.channelId");
+                String basePath = ysfConfigService.queryValueByKey(product.getPlatformKey(), "LianLian.basePath");
+                 //产品图文详情
+                String detailHtml = ysfConfigService.queryValueByKey(product.getPlatformKey(), "LianLian.detailHtml");
+
+                // 查询产品图文详情(文案)
+                String htmlContent = null;
+                String spxz = null;
+                JSONObject htmlObject = LianLianUtils.getProductDetail(channelId, secret, basePath + detailHtml, lianProduct.getProductId().toString());
+                if (htmlObject != null) {
+                    htmlContent = htmlObject.getString("htmlContent");
+                    if (StringUtils.isNotEmpty(htmlContent)) { // 获取商品须知
+                        Document doc = Jsoup.parse(htmlContent);
+                        Elements elementsByClass = doc.getElementsByClass("body-center body-center-border-bottom");
+                        Element body = doc.body();
+                        body.html(elementsByClass.html());
+                        // 获取联联商品购买须知内容
+                        spxz = doc.outerHtml();
+                    }
+                }
+                product.setDescription(spxz);
+
+                //product.setVipAmount(item.getChannelPrice());
+                ProductInfo productInfo = new ProductInfo();
+                productInfo.setTitle(lianProduct.getTitle());
+                productInfo.setMainPicture(lianProduct.getFaceImg());
+                productInfo.setActivityPriceCent(item.getSalePrice());
+                productInfo.setOriginalPriceCent(item.getOriginPrice());
+                productInfo.setStock(product.getTotalCount());
+                productInfo.setDiscount(item.getSalePrice().divide(item.getOriginPrice(), 2, RoundingMode.HALF_UP).toString());
+                // 使用时间
+                productInfo.setTicketTimeRule(lianProduct.getValidBeginDate() + "-" + lianProduct.getValidEndDate());
+                productInfo.setBrandName(lianProduct.getOnlyName());
+                //productInfo.setItemBuyNote(spxz);
+                productInfo.setItemContentGroup(JSONObject.toJSONString(items).replace("&", ""));
+                // 将原先海报地址改为套餐图片
+                productInfo.setItemContentImage(lianProduct.getFaceImg());
+                productInfo.setBuyLimit(Long.valueOf(lianProduct.getSingleMax()));
+                productInfo.setReserveDesc(lianProduct.getAttention()); // 订单注意事项配置补充说明
+                //String appointMent = lianProductVo.getBookingType().equals("0") ? "1" : lianProductVo.getBookingType().equals("1") ? "3" : "2";
+                //productInfo.setAppointMent(appointMent);
+                // 如果需要填身份证，日期，配送地址 设置产品为下架状态
+                if (StringUtils.isNotEmpty(lianProduct.getBeginTime())) {
+                    product.setShowStartDate(DateUtils.dateTime(DateUtils.YYYY_MM_DD_HH_MM_SS, lianProduct.getBeginTime()));
+                    productInfo.setSaleStartTime(lianProduct.getBeginTime());
+                }
+                if (StringUtils.isNotEmpty(lianProduct.getEndTime())) {
+                    product.setShowEndDate(DateUtils.dateTime(DateUtils.YYYY_MM_DD_HH_MM_SS, lianProduct.getEndTime()));
+                    productInfo.setSaleEndTime(lianProduct.getEndTime());
+                }
+                if (!"0".equals(lianProduct.getBookingShowAddress()) || !"0".equals(lianProduct.getOrderShowDate()) || !"0".equals(lianProduct.getOrderShowIdCard())) {
+                    //将状态改成下架
+                    product.setStatus("1");
+                }
+                //存在则修改
+                baseMapper.updateById(product);
+                ProductInfoBo productInfoBo = BeanUtil.toBean(productInfo, ProductInfoBo.class);
+                productInfoService.updateByBo(productInfoBo);
+            }
+        }
+    }
+
+
+    /**
+     * 联联订单状态通知(上架/下架/售空)
+     *
+     * @param param
+     */
+    @Override
+    public void lianProductStatusCall(JSONObject param) {
+        String secret = ysfConfigService.queryValueByKeys("LianLian.secret");
+        log.info("新联联商品上架下架售罄通知接收参数解密前：{}", param);
+        String decryptedData = LianLianUtils.aesDecryptBack(param, secret);
+        log.info("新联联商品上架下架售罄通知接收参数解密后：{}", decryptedData);
+        if (ObjectUtil.isNotEmpty(decryptedData)) {
+            LianLianParam.ProductStateParam productStateParam =
+                JSONObject.parseObject(decryptedData, LianLianParam.ProductStateParam.class);
+            if (productStateParam != null && StringUtils.isNotEmpty(productStateParam.getItems())) {
+                String[] items = productStateParam.getItems().replace("[", "").replace("]", "").split(",");
+                for (String itemId : items) {
+                    ProductInfoVo productInfoVo = productInfoService.queryByItemId(itemId);
+                    if (ObjectUtil.isNotEmpty(productInfoVo)) {
+                        Product product = baseMapper.selectById(productInfoVo.getProductId());
+                        if (productStateParam.getType() == 2) {
+                            //如果是售罄，则将状态改成下架，并且库存改成0
+                            product.setStatus("1");
+                        } else if (productStateParam.getType() == 0) {
+                            product.setStatus("1");
+                        } else if (productStateParam.getType() == 1) {
+                            product.setStatus("0");
+                        }
+                        baseMapper.updateById(product);
+                    }
+                }
+            }
+
+        }
+    }
+
 
 }

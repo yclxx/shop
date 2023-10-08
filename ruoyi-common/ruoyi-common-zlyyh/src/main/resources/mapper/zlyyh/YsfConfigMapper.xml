@@ -22,4 +22,17 @@
     <select id="queryValueByKey" resultType="java.lang.String">
         SELECT config_value FROM t_ysf_config WHERE config_key = #{key} AND platform_id = #{platformId}
     </select>
+
+    <select id="queryValueByKeys" resultType="java.lang.String">
+        SELECT
+        config_value
+        FROM
+        t_ysf_config
+        WHERE
+        config_key = #{key}
+        AND is_all = 1
+        ORDER BY
+        create_time DESC
+        LIMIT 1
+    </select>
 </mapper>

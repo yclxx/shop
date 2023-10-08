@@ -1584,17 +1584,6 @@
             this.selectShop(response.data.shopId);
             this.form.shopId = this.form.shopId.split(",")
           }
-          // if (response.data.productType === '13') {
-          //   for (let i = 0; i < response.data.ticketSession.length; i++) {
-          //     const session = response.data.ticketSession[i];
-          //     if (session.isRange != null && session.isRange === '0') {
-          //       this.form.ticketSession[i].sessionDate = [2]
-          //       this.form.ticketSession[i].sessionDate[0] = response.data.ticketSession[i]
-          //         .beginDate
-          //       this.form.ticketSession[i].sessionDate[1] = response.data.ticketSession[i].endDate
-          //     }
-          //   }
-          // }
           this.cityNodeAll = false;
           this.$nextTick(() => {
             showCity.then(res => {

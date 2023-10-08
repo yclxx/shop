@@ -61,6 +61,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
 
     /**
      * 获取联联产品数据
+     *
      * @param platformKey
      */
     @Override
@@ -94,7 +95,6 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                             //分页 请求产品列表
                             JSONObject decryptedData = LianLianUtils.getProductList(channelId, secret, productList, city.getCityCode(), pageNum);
                             if (decryptedData == null) {
-                                //Thread.sleep(1000);
                                 log.info("获取联联产品接口失败");
                                 break;
                             }
@@ -130,15 +130,8 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
         log.info("结束执行联联产品列表定时任务.");
     }
 
-    public static void main(String[] args) {
-        //Integer total = 64;
-        //BigDecimal pageNumDecimal = BigDecimal.valueOf(7);
-        //System.out.println(BigDecimal.valueOf(total).divide(pageNumDecimal, RoundingMode.DOWN));
-        System.out.println();
-    }
-
     /**
-     * 插入商品
+     * 获取联联商品
      */
     void saveLianLianProduct(String channelId, String secret, String productDetailHtml, String productDetail, Long platformKey, JSONObject jsonObject) {
         LianLianProductVo lianProductVo = jsonObject.toJavaObject(LianLianProductVo.class);
@@ -161,7 +154,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 }
             }
 
-            //得到产品详情（图文详情）
+            // 查询产品图文详情(文案)
             String htmlContent = null;
             String spxz = null;
             JSONObject htmlObject = LianLianUtils.getProductDetail(channelId, secret, productDetailHtml, lianProductVo.getProductId().toString());
@@ -180,16 +173,14 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
 
             JSONArray jsonArray = JSONArray.parseArray(lianProductVo.getItemList());
             List<LianLianProductItem> productItems = jsonArray.toJavaList(LianLianProductItem.class);
-            //处理一下 productItems 中的价格，原来价格是分，处理为元
-            //拿到套餐中价格最低的套餐
-            //LianLianProductItem item = productItems.stream().min(Comparator.comparing(LianLianProductItem::getSalePrice)).get();
             for (LianLianProductItem item : productItems) {
-                item.setChannelPrice(item.getChannelPrice().divide(HUNDRED, 2, RoundingMode.HALF_UP));
-                item.setSalePrice(item.getSalePrice().divide(HUNDRED, 2, RoundingMode.HALF_UP));
-                item.setOriginPrice(item.getOriginPrice().divide(HUNDRED, 2, RoundingMode.HALF_UP));
+                // 处理价格单位
+                item.setChannelPrice(item.getChannelPrice().divide(HUNDRED, 2, RoundingMode.HALF_UP)); // 渠道结算价
+                item.setSalePrice(item.getSalePrice().divide(HUNDRED, 2, RoundingMode.HALF_UP)); // 售价
+                item.setOriginPrice(item.getOriginPrice().divide(HUNDRED, 2, RoundingMode.HALF_UP));// 原价
                 // 根据第三方产品编号查询产品是否存在，如果存在则更新，不存在新增
                 Product product = productService.queryByExternalProductId(lianProductVo.getProductId().toString(), "14", platformKey);
-                //这里计算利润是否高于0.5元
+                // 计算产品利润是否高于0.5元
                 if (item.getSalePrice().subtract(item.getChannelPrice()).compareTo(new BigDecimal("0.5")) < 0) {
                     if (ObjectUtil.isNotNull(product)) {
                         product.setStatus("0");
@@ -207,7 +198,11 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 product.setProductAffiliation("0");
                 product.setProductType("14");
                 product.setPickupMethod("1");
-                product.setProductName(lianProductVo.getOnlyName() + " " + item.getSubTitle());//产品名称
+                if (lianProductVo.getOnlyName().equals(item.getSubTitle())) {
+                    product.setProductName(lianProductVo.getOnlyName());//产品名称
+                } else {
+                    product.setProductName(lianProductVo.getOnlyName() + " " + item.getSubTitle());//产品名称
+                }
                 product.setProductImg(lianProductVo.getFaceImg());//产品图片
                 product.setProductSubhead(lianProductVo.getTitle());//产品副标题
                 product.setShowOriginalAmount("1");
@@ -219,29 +214,22 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                     product.setTotalCount(item.getStock());//库存
                 }
                 product.setDescription(spxz);
-                product.setVipAmount(item.getChannelPrice());
+                //product.setVipAmount(item.getChannelPrice());
                 ProductInfo productInfo = new ProductInfo();
-                //productInfo.setProductId(product.getProductId());
                 productInfo.setTitle(lianProductVo.getTitle());
                 productInfo.setMainPicture(lianProductVo.getFaceImg());
                 productInfo.setActivityPriceCent(item.getSalePrice());
                 productInfo.setOriginalPriceCent(item.getOriginPrice());
                 productInfo.setStock(product.getTotalCount());
                 productInfo.setDiscount(item.getSalePrice().divide(item.getOriginPrice(), 2, RoundingMode.HALF_UP).toString());
-                //productInfo.setFxPrice(item.getChannelPrice());//结算价
                 // 使用时间
                 productInfo.setTicketTimeRule(lianProductVo.getValidBeginDate() + "-" + lianProductVo.getValidEndDate());
                 productInfo.setBrandName(lianProductVo.getOnlyName());
-                //productInfo.setRemark(htmlContent);
                 productInfo.setItemBuyNote(spxz);
                 productInfo.setItemContentGroup(JSONObject.toJSONString(productItems).replace("&", ""));
                 // 将原先海报地址改为套餐图片
                 productInfo.setItemContentImage(lianProductVo.getFaceImg());
                 productInfo.setBuyLimit(Long.valueOf(lianProductVo.getSingleMax()));
-                //productInfo.setSource("营商宝");
-                //productInfo.setBookingShowAddress(lianProductVo.getBookingShowAddress()); 是否需要填写配送地址
-                //productInfo.setOrderShowIdCard(lianProductVo.getOrderShowIdCard()); 是否需要身份证
-                //productInfo.setOrderShowDate(lianProductVo.getOrderShowDate()); 是否需要填写使用日期
                 productInfo.setReserveDesc(lianProductVo.getAttention()); // 订单注意事项配置补充说明
                 //String appointMent = lianProductVo.getBookingType().equals("0") ? "1" : lianProductVo.getBookingType().equals("1") ? "3" : "2";
                 //productInfo.setAppointMent(appointMent);
@@ -264,15 +252,18 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 if (product.getProductId() == null) {
                     product.setProductId(IdUtil.getSnowflakeNextId());
                     product.setProductType("14");
+                    // 联联产品id
                     product.setExternalProductId(lianProductVo.getProductId().toString());
+                    // 联联套餐id
                     productInfo.setItemId(item.getItemId().toString());
+                    productInfo.setItemPrice(item.getChannelPrice());
                     product.setStatus("0");//上架
                     if (lianProductVo.getSingleMin() > 1) {//如果单次最小购买量大于1
                         //将状态改成下架
                         product.setStatus("1");
                     }
                     ProductBo productBo = BeanUtil.toBean(product, ProductBo.class);
-                    productService.insert(productBo);
+                    productService.insertByBo(productBo);
                     productInfo.setProductId(productBo.getProductId());
                     ProductInfoBo productInfoBo = BeanUtil.toBean(productInfo, ProductInfoBo.class);
                     productInfoService.insertByBo(productInfoBo);
@@ -308,6 +299,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                         }
                     }
                 }
+                productService.setProductCity(product.getProductId());
             }
         }
     }

@@ -35,6 +35,7 @@ import com.ruoyi.zlyyh.enumd.DateType;
 import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayBizMethod;
 import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayParams;
 import com.ruoyi.zlyyh.mapper.*;
+import com.ruoyi.zlyyh.param.LianLianParam;
 import com.ruoyi.zlyyh.properties.CtripConfig;
 import com.ruoyi.zlyyh.properties.YsfFoodProperties;
 import com.ruoyi.zlyyh.properties.utils.YsfDistributionPropertiesUtils;
@@ -363,9 +364,14 @@ public class OrderServiceImpl implements IOrderService {
             } else if ("13".equals(order.getOrderType())) {
                 // 演出票订单，创建核销码
                 codeService.insertByOrder(order.getNumber());
-                //} else if ("14".equals(order.getOrderType())) {
-                // 联联订单发码
-                //codeService.insertByOrder(order.getNumber());
+                // 记录联联订单的发码数据
+            } else if ("14".equals(order.getOrderType())) {
+                OrderFoodInfo lianFoodInfo = orderFoodInfoMapper.selectById(order.getNumber());
+                if (ObjectUtil.isEmpty(lianFoodInfo)) {
+                    lianlianCreateOrder(order, productVo, userVo);
+                } else {
+                    lianLianOrderCode(order);
+                }
             } else if ("15".equals(order.getOrderType())) {
                 payCtripFoodOrder(order.getExternalOrderNumber());
             } else {
@@ -659,6 +665,29 @@ public class OrderServiceImpl implements IOrderService {
             orderFoodInfo.setUserName("匿名");
             orderFoodInfoMapper.insert(orderFoodInfo);
         }
+        // 联联订单处理
+        if ("14".equals(productVo.getProductType())) {
+            // 账户id
+            String channelId = ysfConfigService.queryValueByKey(platformVo.getPlatformKey(), "LianLian.channelId");
+            // 密钥
+            String secret = ysfConfigService.queryValueByKey(platformVo.getPlatformKey(), "LianLian.secret");
+            // 域名
+            String basePath = ysfConfigService.queryValueByKey(platformVo.getPlatformKey(), "LianLian.basePath");
+            // 创建订单访问权限地址
+            String validToken = ysfConfigService.queryValueByKey(platformVo.getPlatformKey(), "LianLian.validToken");
+            //先查商品详情
+            ProductInfoVo productInfoVo = productInfoService.queryById(productVo.getProductId());
+            // 验证订单创建条件
+            JSONObject result = LianLianUtils.getValidToken(channelId, secret, basePath + validToken, order.getNumber().toString(),
+                productInfoVo.getItemPrice(), productVo.getExternalProductId(), productInfoVo.getItemId(), userVo.getMobile());
+            if (ObjectUtil.isEmpty(result)) {//请求失败
+                log.error("联联创建第{}单时失败，失败原因：{}", order.getNumber(), result.getString("message"));
+                throw new ServiceException(result.getString("该产品库存不足，请购买其他产品"));
+            } else {
+                validToken = result.getString("validToken");
+                RedisUtils.setCacheObject(order.getNumber().toString(), validToken, Duration.ofMinutes(2));
+            }
+        }
         //美食订单在这里处理
         if ("15".equals(productVo.getProductType())) {
             //先查出美食商品详情
@@ -724,40 +753,6 @@ public class OrderServiceImpl implements IOrderService {
                 }
                 unionPayChannelService.createUnionPayOrder(externalProductId, order);
             }
-            // 联联订单处理
-            //if ("14".equals(productVo.getProductType())) {
-            //    // 账户id
-            //    String channelId = ysfConfigService.queryValueByKey(platformVo.getPlatformKey(), "LianLian.channelId");
-            //    // 密钥
-            //    String secret = ysfConfigService.queryValueByKey(platformVo.getPlatformKey(), "LianLian.secret");
-            //    // 域名
-            //    String basePath = ysfConfigService.queryValueByKey(platformVo.getPlatformKey(), "LianLian.basePath");
-            //    // 创建订单访问权限
-            //    String validToken = ysfConfigService.queryValueByKey(platformVo.getPlatformKey(), "LianLian.validToken");
-            //    // 创建订单访问权限
-            //    String createOrder = ysfConfigService.queryValueByKey(platformVo.getPlatformKey(), "LianLian.createOrder");
-            //    //先查出联联商品详情
-            //    ProductInfoVo productInfoVo = productInfoService.queryById(productVo.getProductId());
-            //    JSONObject result = LianLianUtils.getValidToken(channelId, secret, basePath + validToken, order.getNumber().toString(),
-            //        productVo.getExternalProductId(), productInfoVo.getItemId(), userVo.getUserName(), userVo.getMobile());
-            //    if (!"200".equals(result.getString("code"))) {//请求失败
-            //        //logger.error("联联创建第{}单时失败，失败原因：{}", order.getNumber(), result.getString("message"));
-            //        throw new ServiceException(result.getString("message"));
-            //    }
-            //    JSONObject data = result.getJSONObject("data");
-            //    String encryptedData = LianLianUtils.aesDecrypt(data.getString("encryptedData"), secret);
-            //    JSONObject validTokenReturn = JSONObject.parseObject(encryptedData);
-            //    if (ObjectUtil.isNotEmpty(validTokenReturn)) {
-            //        validToken = validTokenReturn.getString("validToken");
-            //    }
-            //    JSONObject lianLianOrder = LianLianUtils.createOrder(channelId, secret, basePath + createOrder, order.getNumber().toString(), validToken,
-            //        productVo.getExternalProductId(), productInfoVo.getItemId(), userVo.getUserName(), userVo.getMobile());
-            //    if (ObjectUtil.isNotEmpty(lianLianOrder)) {
-            //        String channelOrderId = lianLianOrder.getString("channelOrderId");
-            //        order.setExternalOrderNumber(channelOrderId);
-            //        order.setSendStatus("0");
-            //    }
-            //}
             // 保存订单 后续如需改动成缓存订单，需注释
             order = insertOrder(order);
             orderInfoMapper.insert(orderInfo);
@@ -944,36 +939,190 @@ public class OrderServiceImpl implements IOrderService {
         }
     }
 
-    /**
-     * 联联订单接口
-     */
-    private void lianLianOrder(Order order, Long platformKey) {
+    private void lianlianCreateOrder(Order order, ProductVo productVo, UserVo userVo) {
+        String validToken = RedisUtils.getCacheObject(order.getNumber().toString());
         // 账户id
-        String channelId = ysfConfigService.queryValueByKey(platformKey, "LianLian.channelId");
+        String channelId = ysfConfigService.queryValueByKey(order.getPlatformKey(), "LianLian.channelId");
         // 密钥
-        String secret = ysfConfigService.queryValueByKey(platformKey, "LianLian.secret");
+        String secret = ysfConfigService.queryValueByKey(order.getPlatformKey(), "LianLian.secret");
         // 域名
-        String basePath = ysfConfigService.queryValueByKey(platformKey, "LianLian.basePath");
+        String basePath = ysfConfigService.queryValueByKey(order.getPlatformKey(), "LianLian.basePath");
+        // 创建订单访问权限地址
+        String validTokenUrl = ysfConfigService.queryValueByKey(order.getPlatformKey(), "LianLian.validToken");
+        // 创建订单地址
+        String createOrder = ysfConfigService.queryValueByKey(order.getPlatformKey(), "LianLian.createOrder");
+        if (StringUtils.isNotEmpty(validToken)) {
+            //先查商品详情
+            ProductInfoVo productInfoVo = productInfoService.queryById(productVo.getProductId());
+            JSONObject lianLianOrder = LianLianUtils.createOrder(channelId, secret, basePath + createOrder, order.getNumber().toString(),
+                productInfoVo.getItemPrice(), validToken, productVo.getExternalProductId(), productInfoVo.getItemId(), userVo.getMobile());
+            if (ObjectUtil.isNotEmpty(lianLianOrder)) {
+                String channelOrderId = lianLianOrder.getString("channelOrderId");
+                order.setExternalOrderNumber(channelOrderId);
+                order.setSendStatus("2");
+                lianLianOrderCode(order);
+            }
+        } else {
+            //先查商品详情
+            ProductInfoVo productInfoVo = productInfoService.queryById(productVo.getProductId());
+            // 验证订单创建条件
+            JSONObject result = LianLianUtils.getValidToken(channelId, secret, basePath + validTokenUrl, order.getNumber().toString(),
+                productInfoVo.getItemPrice(), productVo.getExternalProductId(), productInfoVo.getItemId(), userVo.getMobile());
+            if (ObjectUtil.isEmpty(result)) {//请求失败
+                log.error("联联创建第{}单时失败，失败原因：{}", order.getNumber(), result.getString("message"));
+                throw new ServiceException(result.getString("该产品库存不足，请购买其他产品"));
+            } else {
+                validToken = result.getString("validToken");
+            }
+            if (StringUtils.isNotEmpty(validToken)) {
+                //先查商品详情
+                JSONObject lianLianOrder = LianLianUtils.createOrder(channelId, secret, basePath + createOrder, order.getNumber().toString(),
+                    productInfoVo.getItemPrice(), validToken, productVo.getExternalProductId(), productInfoVo.getItemId(), userVo.getMobile());
+                if (ObjectUtil.isNotEmpty(lianLianOrder)) {
+                    String channelOrderId = lianLianOrder.getString("channelOrderId");
+                    order.setExternalOrderNumber(channelOrderId);
+                    order.setSendStatus("0");
+                    lianLianOrderCode(order);
+                }
+            }
+        }
+        baseMapper.updateById(order);
+    }
+
+
+    /**
+     * 联联订单发码记录
+     */
+    private void lianLianOrderCode(Order order) {
+        // 账户id
+        String channelId = ysfConfigService.queryValueByKey(order.getPlatformKey(), "LianLian.channelId");
+        // 密钥
+        String secret = ysfConfigService.queryValueByKey(order.getPlatformKey(), "LianLian.secret");
+        // 域名
+        String basePath = ysfConfigService.queryValueByKey(order.getPlatformKey(), "LianLian.basePath");
         // 订单详情
-        String orderDetails = ysfConfigService.queryValueByKey(platformKey, "LianLian.orderDetails");
+        String orderDetails = ysfConfigService.queryValueByKey(order.getPlatformKey(), "LianLian.orderDetails");
+        ProductVo productVo = productMapper.selectVoById(order.getProductId());
         JSONObject details = LianLianUtils.getOrderDetails(channelId, secret, basePath + orderDetails, order.getNumber().toString(), order.getExternalOrderNumber());
         if (ObjectUtil.isNotEmpty(details)) {
             order.setExternalOrderNumber(details.getString("channelOrderId"));
             order.setSendStatus("2");//发放状态改为发放成功
-
             //创建或更新联联订单信息
             JSONArray orderList = details.getJSONArray("orderDetailList");
+            List<OrderFoodInfo> orderFoodInfoList = new ArrayList<>();
             if (ObjectUtil.isNotEmpty(orderList)) {
                 for (int i = 0; i < orderList.size(); i++) {
                     JSONObject orderItem = orderList.getJSONObject(i);
                     OrderFoodInfo orderFoodInfo = new OrderFoodInfo();
                     orderFoodInfo.setNumber(order.getNumber());
-                    orderFoodInfo.setBizOrderId(orderItem.getString(""));
-                    orderFoodInfo.setBizOrderId(orderItem.getString(""));
-                    orderFoodInfo.setBizOrderId(orderItem.getString(""));
+                    // 第三方订单号
+                    orderFoodInfo.setBizOrderId(orderItem.getString("orderId"));
+                    String status = orderItem.getString("status");
+                    if (StringUtils.isNotEmpty(status)) {
+                        // 联联订单状态 110:支付中 111:已支付 210:已预约 310:已核销 311:核销异常
+                        // 410:退款中 411:退款不退佣金 412:已退款 510:赔付中 511:赔付成功 610:已过期
+                        orderFoodInfo.setOrderStatus(status);
+                        if (status.equals("110") || status.equals("111") || status.equals("210")) {
+                            orderFoodInfo.setVoucherStatus("EFFECTIVE");
+                        } else if (status.equals("310")) {
+                            orderFoodInfo.setVoucherStatus("USED");
+                        } else {
+                            orderFoodInfo.setRefundAmount(1);
+                            orderFoodInfo.setVoucherStatus("CANCELED");
+                        }
+                    }
+                    orderFoodInfo.setTotalAmount(1);
+                    orderFoodInfo.setUsedAmount(1);
+                    String code = orderItem.getString("code");
+                    String qrCodeImgUrl = orderItem.getString("qrCodeImgUrl");
+                    if (StringUtils.isNotEmpty(code) || StringUtils.isNotEmpty(qrCodeImgUrl)) {
+                        orderFoodInfo.setTicketCode(code);
+                        orderFoodInfo.setTicketCodeUrl(qrCodeImgUrl);
+                    } else {
+                        order.setSendStatus("1");
+                    }
+                    if (ObjectUtil.isNotEmpty(productVo)) {
+                        if (ObjectUtil.isNotEmpty(productVo.getShowEndDate())) {
+                            orderFoodInfo.setExpireTime(DateUtils.parseDateToStr(DateUtils.YYYY_MM_DD_HH_MM_SS, productVo.getShowEndDate()));
+                        }
+                    }
+                    orderFoodInfo.setEffectTime(DateUtils.getTime());
+                    orderFoodInfoList.add(orderFoodInfo);
                 }
             }
+            orderFoodInfoMapper.insertOrUpdateBatch(orderFoodInfoList);
+            baseMapper.updateById(order);
         }
+    }
+
+    /**
+     * 订单回调通知处理
+     *
+     * @param number 订单接口
+     */
+    @Override
+    public void lianOrderBack(JSONObject param, Integer number) {
+        String security = ysfConfigService.queryValueByKeys("LianLian.secret");
+        String decryptedData = LianLianUtils.aesDecryptBack(param, security);
+        log.info("联联订单通知接收参数解密后：{}", decryptedData);
+        switch (number) {
+            // 订单自动发码回调
+            case 1:
+                if (StringUtils.isNotEmpty(decryptedData)) {
+                    JSONObject jsonObject = JSONObject.parseObject(decryptedData);
+                    if (ObjectUtil.isNotEmpty(jsonObject)) {
+                        String externalOrderNumber = jsonObject.getString("channelOrderId");
+                        OrderVo orderVo = this.queryByExternalOrderNumber(externalOrderNumber);
+                        Order order = BeanCopyUtils.copy(orderVo, Order.class);
+                        //更新订单 联联订单自动发码回调
+                        this.lianLianOrderCode(order);
+                    }
+                }
+                break;
+            case 2:
+                // 订单退款回调
+                if (StringUtils.isNotEmpty(decryptedData)) {
+                    LianLianParam.OrderReturnParam orderReturnParam =
+                        JSONObject.parseObject(decryptedData, LianLianParam.OrderReturnParam.class);
+                    this.lianOrderReturn(orderReturnParam);
+                }
+                break;
+            case 3:
+                // 订单核销
+                if (StringUtils.isNotEmpty(decryptedData)) {
+                    LianLianParam.OrderCheckParam orderCheckParam =
+                        JSONObject.parseObject(decryptedData, LianLianParam.OrderCheckParam.class);
+                    this.lianOrderCall(orderCheckParam);
+                }
+                break;
+        }
+    }
+
+    /**
+     * 联联订单退款通知
+     */
+
+    private void lianOrderReturn(LianLianParam.OrderReturnParam orderReturnParam) {
+        Order order = baseMapper.selectById(orderReturnParam.getThirdOrderId());
+        OrderFoodInfo orderFoodInfo = orderFoodInfoMapper.selectById(orderReturnParam.getThirdOrderId());
+        order.setStatus("5");
+        orderFoodInfo.setVoucherStatus("CANCELED");
+        orderFoodInfo.setOrderStatus("412");
+        orderFoodInfoMapper.updateById(orderFoodInfo);
+        baseMapper.updateById(order);
+    }
+
+    /**
+     * 联联订单核销通知
+     */
+    private void lianOrderCall(LianLianParam.OrderCheckParam orderCheckParam) {
+        //Order order = baseMapper.selectById(orderCheckParam.getThirdOrderId());
+        //baseMapper.updateById(order);
+
+        OrderFoodInfo orderFoodInfo = orderFoodInfoMapper.selectById(orderCheckParam.getThirdOrderId());
+        orderFoodInfo.setVoucherStatus("CANCELED");
+        orderFoodInfo.setOrderStatus("310");
+        orderFoodInfoMapper.updateById(orderFoodInfo);
     }
 
     /**
@@ -1154,6 +1303,17 @@ public class OrderServiceImpl implements IOrderService {
         } else if ("11".equals(orderVo.getOrderType()) || "12".equals(orderVo.getOrderType())) {
             List<OrderUnionSendVo> orderUnionSendVos = orderUnionSendService.queryListByNumber(number);
             orderVo.setOrderUnionSendVos(orderUnionSendVos);
+        } else if ("14".equals(orderVo.getOrderType())) {
+            // 联联
+            OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(orderVo.getNumber());
+            if (StringUtils.isEmpty(orderFoodInfoVo.getTicketCode())) {
+                Order order = BeanCopyUtils.copy(orderVo, Order.class);
+                if (ObjectUtil.isNotEmpty(order)) {
+                    lianLianOrderCode(order);
+                    orderFoodInfoVo = orderFoodInfoMapper.selectVoById(orderVo.getNumber());
+                }
+            }
+            orderVo.setOrderFoodInfoVo(orderFoodInfoVo);
         } else if ("15".equals(orderVo.getOrderType())) {
             // 携程商品
             OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(orderVo.getNumber());
@@ -1276,6 +1436,35 @@ public class OrderServiceImpl implements IOrderService {
                 YsfFoodUtils.cancelOrder(appId, orderVo.getExternalOrderNumber(), rsaPrivateKey, refundUrl);
             }
             refundMapper.insert(refund);
+            return;
+        } else if (orderType.equals("14")) {
+            // 联联订单，先查询再处理
+            OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(orderVo.getNumber());
+            if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && !orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
+                throw new ServiceException("该订单无法申请退款");
+            }
+            //如果电子券为未使用状态 走退款接口
+            if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
+                //请求美食退款订单接口
+                if ("1".equals(orderVo.getCancelStatus())) {
+                    throw new ServiceException("退款已提交,不可重复申请");
+                }
+                // 账户id
+                String channelId = ysfConfigService.queryValueByKey(order.getPlatformKey(), "LianLian.channelId");
+                // 密钥
+                String secret = ysfConfigService.queryValueByKey(order.getPlatformKey(), "LianLian.secret");
+                // 域名
+                String basePath = ysfConfigService.queryValueByKey(order.getPlatformKey(), "LianLian.basePath");
+                // 订单退款地址
+                String lianRefund = ysfConfigService.queryValueByKey(order.getPlatformKey(), "LianLian.refund");
+                JSONObject refundJson = LianLianUtils.refund(channelId, secret, basePath + lianRefund, order.getExternalOrderNumber(), orderFoodInfoVo.getBizOrderId());
+                if (ObjectUtil.isNotEmpty(refundJson)) {
+                    order.setCancelStatus("0");
+                    order.setStatus("4");
+                    baseMapper.updateById(order);
+                    refundMapper.insert(refund);
+                }
+            }
             return;
         } else if (orderType.equals("15")) {
             //如果是美食订单 先查询订单

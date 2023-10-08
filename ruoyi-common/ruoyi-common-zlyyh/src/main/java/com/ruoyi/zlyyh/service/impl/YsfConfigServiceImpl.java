@@ -30,4 +30,19 @@ public class YsfConfigServiceImpl implements YsfConfigService {
         }
         return "";
     }
+
+    @Cacheable(cacheNames = CacheNames.ysfConfig, key = "'-1-'+#key")
+    @Override
+    public String queryValueByKeys(String key) {
+        try {
+            if (null != key) {
+                String result = ysfConfigMapper.queryValueByKeys(key);
+                if (StringUtils.isNotBlank(result)) {
+                    return result;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return "";
+    }
 }

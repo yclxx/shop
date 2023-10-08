@@ -41,6 +41,18 @@ public class ProductInfoServiceImpl implements IProductInfoService {
     }
 
     /**
+     * 查询商品扩展
+     * @param itemId
+     * @return
+     */
+    @Override
+    public ProductInfoVo queryByItemId(String itemId) {
+        LambdaQueryWrapper<ProductInfo> lqw = Wrappers.lambdaQuery();
+        lqw.eq(ProductInfo::getItemId,itemId);
+        return baseMapper.selectVoOne(lqw);
+    }
+
+    /**
      * 查询商品拓展列表
      */
     @Override

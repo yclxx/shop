@@ -30,8 +30,8 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="是否缓存" prop="isCache">
-        <el-select v-model="queryParams.isCache" placeholder="请选择是否缓存" clearable>
+      <el-form-item label="是否全局" prop="isAll">
+        <el-select v-model="queryParams.isAll" placeholder="请选择是否全局" clearable>
           <el-option
             v-for="dict in dict.type.redis_cache_config"
             :key="dict.value"
@@ -39,14 +39,6 @@
             :value="dict.value"
           />
         </el-select>
-      </el-form-item>
-      <el-form-item label="缓存时间" prop="cacheTime">
-        <el-input
-          v-model="queryParams.cacheTime"
-          placeholder="请输入缓存时间"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -110,12 +102,12 @@
       <el-table-column label="参数名称" align="center" prop="configName"/>
       <el-table-column label="参数键名" align="center" prop="configKey"/>
       <el-table-column label="参数键值" align="center" prop="configValue"/>
-      <el-table-column label="是否缓存" align="center" prop="isCache">
+      <el-table-column label="是否全局" align="center" prop="isAll">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.redis_cache_config" :value="scope.row.isCache"/>
+          <dict-tag :options="dict.type.redis_cache_config" :value="scope.row.isAll"/>
         </template>
       </el-table-column>
-      <el-table-column label="缓存时间" align="center" prop="cacheTime"/>
+      <!--      <el-table-column label="缓存时间" align="center" prop="cacheTime"/>-->
       <el-table-column label="备注" align="center" prop="remark"/>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
@@ -150,9 +142,6 @@
     <!-- 添加或修改云闪付参数配置对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <!--<el-form-item label="平台id" prop="platformId">-->
-        <!--  <el-input v-model="form.platformId" placeholder="请输入平台id"/>-->
-        <!--</el-form-item>-->
         <el-form-item label="平台标识" prop="platformId">
           <el-select v-model="form.platformId">
             <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id"/>
@@ -167,18 +156,15 @@
         <el-form-item label="参数键值" prop="configValue">
           <el-input v-model="form.configValue" type="textarea" placeholder="请输入内容"/>
         </el-form-item>
-        <el-form-item label="是否缓存" prop="isCache">
-          <el-radio-group v-model="form.isCache">
+        <el-form-item label="是否全局" prop="isAll">
+          <el-radio-group v-model="form.isAll">
             <el-radio
               v-for="dict in dict.type.redis_cache_config"
               :key="dict.value"
-              :label="parseInt(dict.value)"
+              :label="dict.value"
             >{{ dict.label }}
             </el-radio>
           </el-radio-group>
-        </el-form-item>
-        <el-form-item label="缓存时间" prop="cacheTime">
-          <el-input v-model="form.cacheTime" placeholder="请输入参数键名"/>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"/>
@@ -229,9 +215,7 @@ export default {
         platformId: undefined,
         configName: undefined,
         configKey: undefined,
-        configValue: undefined,
-        isCache: undefined,
-        cacheTime: undefined,
+        configValue: undefined
       },
       // 表单参数
       form: {},
@@ -251,6 +235,9 @@ export default {
         ],
         configValue: [
           {required: true, message: "参数键值不能为空", trigger: "blur"}
+        ],
+        isAll: [
+          {required: true, message: "是否全局不能为空", trigger: "blur"}
         ]
       }
     };
@@ -297,8 +284,7 @@ export default {
         configName: undefined,
         configKey: undefined,
         configValue: undefined,
-        isCache: undefined,
-        cacheTime: undefined,
+        isAll: undefined,
         createBy: undefined,
         createTime: undefined,
         updateBy: undefined,

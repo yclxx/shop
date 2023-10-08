@@ -41,13 +41,9 @@ public class YsfConfig extends BaseEntity {
      */
     private String configValue;
     /**
-     * 是否缓存
+     * 是否全局
      */
-    private Long isCache;
-    /**
-     * 缓存时间
-     */
-    private Long cacheTime;
+    private String isAll;
     /**
      * 备注
      */

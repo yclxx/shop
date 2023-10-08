@@ -4,6 +4,7 @@ import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.exception.ServiceException;
+import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.zlyyh.param.LianLianParam;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +12,8 @@ import org.springframework.util.Base64Utils;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+import java.math.BigDecimal;
+import java.util.Collections;
 
 @Slf4j
 public class LianLianUtils {
@@ -50,6 +53,19 @@ public class LianLianUtils {
         return null;
     }
 
+    public static String aesDecryptBack(JSONObject param, String security) {
+        LianLianParam lianLianParam = JSONObject.toJavaObject(param.getJSONObject("data"), LianLianParam.class);
+        //获取加密数据
+        String encryptedData = lianLianParam.getEncryptedData();
+        String sign = Md5Utils.encrypt(encryptedData + lianLianParam.getTimestamp().toString());
+        if (sign.equals(lianLianParam.getSign())) {
+            //校验签名通过,解密 encryptedData
+            encryptedData = LianLianUtils.aesDecrypt(encryptedData, security);
+            return encryptedData;
+        }
+        return null;
+    }
+
 
     /**
      * 查询产品列表
@@ -64,7 +80,7 @@ public class LianLianUtils {
         productListParam.setPageNum(pageNum);
         productListParam.setPageSize(10);
         String encryptedData = JSONObject.toJSONString(productListParam);
-        return sendLianLianHttp(channelId, secret, url, encryptedData, false);
+        return sendLianLianHttp(channelId, secret, url, encryptedData, true);
     }
 
     /**
@@ -77,7 +93,7 @@ public class LianLianUtils {
         LianLianParam.ProductDetailParam productDetailParam = new LianLianParam.ProductDetailParam();
         productDetailParam.setProductId(productId);
         String encryptedData = JSONObject.toJSONString(productDetailParam);
-        return sendLianLianHttp(channelId, secret, url, encryptedData, false);
+        return sendLianLianHttp(channelId, secret, url, encryptedData, true);
     }
 
     /**
@@ -92,7 +108,7 @@ public class LianLianUtils {
         productInfoParam.setChannelId(channelId);
         productInfoParam.setProductId(productId);
         String encryptedData = JSONObject.toJSONString(productInfoParam);
-        return sendLianLianHttp(channelId, secret, url, encryptedData, false);
+        return sendLianLianHttp(channelId, secret, url, encryptedData, true);
     }
 
     /**
@@ -102,18 +118,21 @@ public class LianLianUtils {
      * @param itemId    联联套餐id
      * @return
      */
-    public static JSONObject getValidToken(String channelId, String secret, String url, String number,
-                                           String productId, String itemId, String customerName, String customerPhoneNumber) {
+    public static JSONObject getValidToken(String channelId, String secret, String url, String number, BigDecimal settlePrice,
+                                           String productId, String itemId, String customerPhoneNumber) {
         LianLianParam.CheckOrderParam checkOrderParam = new LianLianParam.CheckOrderParam();
         checkOrderParam.setThirdPartyOrderNo(number);
         checkOrderParam.setProductId(Integer.valueOf(productId));
         checkOrderParam.setItemId(itemId);//套餐id
-        checkOrderParam.setCustomerName(customerName);
         checkOrderParam.setCustomerPhoneNumber(customerPhoneNumber);
         checkOrderParam.setQuantity(1);
         checkOrderParam.setPayType(1);
+        checkOrderParam.setLocationId("1");
+        checkOrderParam.setCustomerName("匿名");
+        checkOrderParam.setPurchaseTime(DateUtils.getTime());
+        checkOrderParam.setSettlePrice(settlePrice.multiply(BigDecimal.valueOf(100)).stripTrailingZeros().toPlainString());
         String encryptedData = JSONObject.toJSONString(checkOrderParam);
-        return sendLianLianHttp(channelId, secret, url, encryptedData, false);
+        return sendLianLianHttp(channelId, secret, url, encryptedData, true);
     }
 
     /**
@@ -123,19 +142,22 @@ public class LianLianUtils {
      * @param itemId    联联套餐id
      * @return
      */
-    public static JSONObject createOrder(String channelId, String secret, String url, String number, String validToken,
-                                         String productId, String itemId, String customerName, String customerPhoneNumber) {
+    public static JSONObject createOrder(String channelId, String secret, String url, String number, BigDecimal settlePrice,
+                                         String validToken, String productId, String itemId, String customerPhoneNumber) {
         LianLianParam.CreateOrderParam createOrderParam = new LianLianParam.CreateOrderParam();
         createOrderParam.setValidToken(validToken);
         createOrderParam.setThirdPartyOrderNo(number);
         createOrderParam.setProductId(Integer.valueOf(productId));
         createOrderParam.setItemId(itemId);
-        createOrderParam.setCustomerName(customerName);
+        createOrderParam.setLocationId("1");
+        createOrderParam.setCustomerName("匿名");
+        createOrderParam.setPurchaseTime(DateUtils.getTime());
+        createOrderParam.setSettlePrice(settlePrice.multiply(BigDecimal.valueOf(100)).stripTrailingZeros().toPlainString());
         createOrderParam.setCustomerPhoneNumber(customerPhoneNumber);
         createOrderParam.setQuantity(1);
         createOrderParam.setPayType(1);//余额
         String encryptedData = JSONObject.toJSONString(createOrderParam);
-        return sendLianLianHttp(channelId, secret, url, encryptedData, false);
+        return sendLianLianHttp(channelId, secret, url, encryptedData, true);
     }
 
     /**
@@ -147,9 +169,19 @@ public class LianLianUtils {
         queryParam.setChannelOrderId(channelOrderId);//渠道订单号
         queryParam.setChannelId(channelId);
         String encryptedData = JSONObject.toJSONString(queryParam);
-        return sendLianLianHttp(channelId, secret, url, encryptedData, false);
+        return sendLianLianHttp(channelId, secret, url, encryptedData, true);
     }
 
+    /**
+     * 订单退款接口
+     */
+    public static JSONObject refund(String channelId, String secret, String url, String channelOrderId, String orderId) {
+        LianLianParam.ApplyRefundParam applyRefundParam = new LianLianParam.ApplyRefundParam();
+        applyRefundParam.setChannelOrderNo(channelOrderId);//渠道订单号
+        applyRefundParam.setOrderNoList(Collections.singletonList(orderId));//子订单号
+        String encryptedData = JSONObject.toJSONString(applyRefundParam);
+        return sendLianLianHttp(channelId, secret, url, encryptedData, true);
+    }
 
     public static JSONObject sendLianLianHttp(String channelId, String secret, String url, String encryptedData, boolean showLog) {
         if (showLog) {
@@ -182,15 +214,6 @@ public class LianLianUtils {
         return null;
     }
 
-    public static JSONObject sendOtherLLianReq(String channelId, String secret, String url, String encryptedData) {
-        String result = httpSend(channelId, secret, url, encryptedData);
-        if (!StringUtils.isEmpty(result)) {
-            //格式化result
-            return JSONObject.parseObject(result);
-        }
-        return null;
-    }
-
     private static String httpSend(String channelId, String secret, String url, String encryptedData) {
         //加密encryptedData
         encryptedData = aesEncrypt(encryptedData, secret);
@@ -207,40 +230,6 @@ public class LianLianUtils {
         return HttpUtil.createPost(url).body(JSONObject.toJSONString(param)).execute().body();
     }
 
-    /**
-     * 发送http请求
-     */
-    public static JSONObject httpSends(String channelId, String secret, String encryptedData, String url, boolean showLog) {
-        if (showLog) {
-            log.info("联联接口请求参数，api=>{},encryptedData=>{}", url, encryptedData);
-        }
-        String result = httpSend(channelId, secret, encryptedData, url);
-        if (!StringUtils.isEmpty(result)) {
-            // 格式化result
-            JSONObject jsonObject = JSONObject.parseObject(result);
-            if ("200".equals(jsonObject.getString("code"))) { // 请求成功
-                JSONObject data = jsonObject.getJSONObject("data");
-                if (data != null) {
-                    // 所有的返回数据都在 encryptedData 或者 securityData
-                    encryptedData = data.getString("encryptedData");
-                    if (StringUtils.isEmpty(encryptedData)) {
-                        // 如果 encryptedData 为空，则从securityData中拿加密的数据
-                        encryptedData = data.getString("securityData");
-                    }
-                    // 对encryptedData进行解密
-                    encryptedData = aesDecrypt(encryptedData, secret);
-                    if (showLog) {
-                        log.info("联联接口返回结果解密后数据 => {}", encryptedData);
-                    }
-                    // 解密后的数据
-                    return JSON.parseObject(encryptedData);
-                }
-            }
-            log.error("联联接口请求失败，api=>{},encryptedData=>{},result=>{}", url, encryptedData, result);
-        }
-        return null;
-    }
-
     public static void main(String[] args) {
         // 账号
         String channelId = "10018";
@@ -249,9 +238,9 @@ public class LianLianUtils {
         // 地址
         String basePath = "https://adapter-channel.llzby.top";
 
-        String api = "/ll/channel/product/getProductList";
+        String api = "/ll/channel/order/getOrderInfo";
 
-        JSONObject productList = getProductList(channelId, secret, basePath + api, "510100", 1);
-        log.info("产品列表展示：{}", productList);
+        JSONObject returnLog = getOrderDetails(channelId, secret, basePath + api, "1710576264179134464", "");
+        log.info("订单详情展示：{}", returnLog);
     }
 }

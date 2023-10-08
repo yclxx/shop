@@ -300,56 +300,38 @@ public class OrderController {
     }
 
     /**
-     * 联联订单退款
+     * 联联自动发码订单回调接口
      *
      * @param param
      * @return
      */
-    //@PostMapping("/lLianOrderReturn")
-    //public R lLianOrderReturn(@RequestBody JSONObject param) {
-    //    log.info("联联订单退款通知接收参数解密前：{}", param);
-    //    String decryptedData = this.aesDecrypt(param, "");
-    //    log.info("联联订单退款通知接收参数解密后：{}", decryptedData);
-    //    if (StringUtils.isNotEmpty(decryptedData)) {
-    //        LianLianParam.OrderReturnParam orderReturnParam =
-    //            JSON.parseObject(decryptedData, LianLianParam.OrderReturnParam.class);
-    //        //生成退款单，并记录联联退款记录
-    //        //orderService.returnLLianOrderNew(orderReturnParam);
-    //    }
-    //    return R.ok();
-    //}
-    //
+    @PostMapping("/ignore/lianOrderCodeCall")
+    public R lianOrderCodeCall(@RequestBody JSONObject param) {
+        log.info("新联联自动发码订单回调通知接收参数解密前：{}", param);
+        orderService.lianOrderBack(param, 1);
+        return R.ok();
+    }
 
     /**
-     * 联联订单核销(新接口)
+     * 联联订单退款 回调
+     *
+     * @param param
+     * @return
      */
-    //@PostMapping("/lLianOrderCallNew")
-    //public R lLianOrderCallNew(@RequestBody JSONObject param) {
-    //    log.info("新联联订单核销回调通知接收参数解密前：{}", param);
-    //    String decryptedData = this.aesDecrypt(param,"");
-    //    log.info("新联联订单核销回调通知接收参数解密后：{}", decryptedData);
-    //    if (StringUtils.isNotEmpty(decryptedData)) {
-    //        LianLianParam.OrderCheckParam orderCheckParam =
-    //            JSON.parseObject(decryptedData, LianLianParam.OrderCheckParam.class);
-    //        //更新订单为核销状态
-    //        orderService.updateLLianOrderNew(orderCheckParam);
-    //    }
-    //    return R.ok();
-    //}
+    @PostMapping("/ignore/lianOrderReturn")
+    public R lianOrderReturn(@RequestBody JSONObject param) {
+        log.info("联联订单退款通知接收参数解密前：{}", param);
+        orderService.lianOrderBack(param, 2);
+        return R.ok();
+    }
 
     /**
-     * 联联接口回调数据统一处理 (新接口)
+     * 联联订单核销
      */
-    //private String aesDecrypt(JSONObject param, String security) {
-    //    LianLianParam lianLianParam = JSON.toJavaObject(param.getJSONObject("data"), LianLianParam.class);
-    //    //获取加密数据
-    //    String encryptedData = lianLianParam.getEncryptedData();
-    //    String sign = Md5Utils.encrypt(encryptedData + lianLianParam.getTimestamp().toString());
-    //    if (sign.equals(lianLianParam.getSign())) {
-    //        //校验签名通过,解密 encryptedData
-    //        encryptedData = LianLianUtils.aesDecrypt(encryptedData, security);
-    //        return encryptedData;
-    //    }
-    //    return null;
-    //}
+    @PostMapping("/ignore/lianOrderCall")
+    public R lianOrderCall(@RequestBody JSONObject param) {
+        log.info("新联联订单核销回调通知接收参数解密前：{}", param);
+        orderService.lianOrderBack(param, 3);
+        return R.ok();
+    }
 }

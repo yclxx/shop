@@ -1,10 +1,9 @@
 package com.ruoyi.zlyyhadmin.service;
 
-import com.ruoyi.zlyyh.domain.ProductInfo;
-import com.ruoyi.zlyyh.domain.vo.ProductInfoVo;
-import com.ruoyi.zlyyh.domain.bo.ProductInfoBo;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.zlyyh.domain.bo.ProductInfoBo;
+import com.ruoyi.zlyyh.domain.vo.ProductInfoVo;
 
 import java.util.Collection;
 import java.util.List;
@@ -21,6 +20,11 @@ public interface IProductInfoService {
      * 查询商品拓展
      */
     ProductInfoVo queryById(Long productId);
+
+    /**
+     * 查询产品扩展
+     */
+    ProductInfoVo queryByItemId(String itemId);
 
     /**
      * 查询商品拓展列表

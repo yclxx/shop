@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 云闪付参数配置Service业务层处理
@@ -77,14 +76,13 @@ public class YsfConfigServiceImpl implements IYsfConfigService {
     }
 
     private LambdaQueryWrapper<YsfConfig> buildQueryWrapper(YsfConfigBo bo) {
-        Map<String, Object> params = bo.getParams();
+        //Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<YsfConfig> lqw = Wrappers.lambdaQuery();
         lqw.eq(bo.getPlatformId() != null, YsfConfig::getPlatformId, bo.getPlatformId());
         lqw.like(StringUtils.isNotBlank(bo.getConfigName()), YsfConfig::getConfigName, bo.getConfigName());
         lqw.eq(StringUtils.isNotBlank(bo.getConfigKey()), YsfConfig::getConfigKey, bo.getConfigKey());
         lqw.eq(StringUtils.isNotBlank(bo.getConfigValue()), YsfConfig::getConfigValue, bo.getConfigValue());
-        lqw.eq(bo.getIsCache() != null, YsfConfig::getIsCache, bo.getIsCache());
-        lqw.eq(bo.getCacheTime() != null, YsfConfig::getCacheTime, bo.getCacheTime());
+        lqw.orderByDesc(YsfConfig::getCreateTime);
         return lqw;
     }
 
@@ -95,7 +93,7 @@ public class YsfConfigServiceImpl implements IYsfConfigService {
     @Override
     public Boolean insertByBo(YsfConfigBo bo) {
         YsfConfig add = BeanUtil.toBean(bo, YsfConfig.class);
-        validEntityBeforeSave(add);
+        //validEntityBeforeSave(add);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setConfigId(add.getConfigId());
@@ -110,16 +108,16 @@ public class YsfConfigServiceImpl implements IYsfConfigService {
     @Override
     public Boolean updateByBo(YsfConfigBo bo) {
         YsfConfig update = BeanUtil.toBean(bo, YsfConfig.class);
-        validEntityBeforeSave(update);
+        //validEntityBeforeSave(update);
         return baseMapper.updateById(update) > 0;
     }
 
     /**
      * 保存前的数据校验
      */
-    private void validEntityBeforeSave(YsfConfig entity) {
+    //private void validEntityBeforeSave(YsfConfig entity) {
         //TODO 做一些数据校验,如唯一约束
-    }
+    //}
 
     /**
      * 批量删除云闪付参数配置

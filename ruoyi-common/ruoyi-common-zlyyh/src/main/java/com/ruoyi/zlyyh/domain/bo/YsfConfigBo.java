@@ -23,44 +23,36 @@ public class YsfConfigBo extends BaseEntity {
     /**
      * 参数主键
      */
-    @NotNull(message = "参数主键不能为空", groups = { EditGroup.class })
+    @NotNull(message = "参数主键不能为空", groups = {EditGroup.class})
     private Long configId;
 
     /**
      * 平台id
      */
-    @NotNull(message = "平台id不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotNull(message = "平台id不能为空", groups = {AddGroup.class, EditGroup.class})
     private Long platformId;
 
     /**
      * 参数名称
      */
-    @NotBlank(message = "参数名称不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotBlank(message = "参数名称不能为空", groups = {AddGroup.class, EditGroup.class})
     private String configName;
 
     /**
      * 参数键名
      */
-    @NotBlank(message = "参数键名不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotBlank(message = "参数键名不能为空", groups = {AddGroup.class, EditGroup.class})
     private String configKey;
 
     /**
      * 参数键值
      */
-    @NotBlank(message = "参数键值不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotBlank(message = "参数键值不能为空", groups = {AddGroup.class, EditGroup.class})
     private String configValue;
 
-    /**
-     * 是否缓存
-     */
-    //@NotNull(message = "是否缓存不能为空", groups = { AddGroup.class, EditGroup.class })
-    private Long isCache;
+    @NotBlank(message = "是否全局不能为空", groups = {AddGroup.class, EditGroup.class})
+    private String isAll;
 
-    /**
-     * 缓存时间
-     */
-    //@NotNull(message = "缓存时间不能为空", groups = { AddGroup.class, EditGroup.class })
-    private Long cacheTime;
 
     /**
      * 备注
