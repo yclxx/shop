@@ -62,7 +62,7 @@ public class OssClient {
                 .withClientConfiguration(clientConfig)
                 .withCredentials(credentialsProvider)
                 .disableChunkedEncoding();
-            if (!StringUtils.containsAny(properties.getEndpoint(), OssConstant.CLOUD_SERVICE)){
+            if (!StringUtils.containsAny(properties.getEndpoint(), OssConstant.CLOUD_SERVICE)) {
                 // minio 使用https限制使用域名访问 需要此配置 站点填域名
                 build.enablePathStyleAccess();
             }
@@ -103,7 +103,7 @@ public class OssClient {
         }
         try {
             ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentType(contentType);
+            metadata.setContentType(contentType + ";charset=UTF-8");
             metadata.setContentLength(inputStream.available());
             PutObjectRequest putObjectRequest = new PutObjectRequest(properties.getBucketName(), path, inputStream, metadata);
             // 设置上传对象的 Acl 为公共读
@@ -154,7 +154,7 @@ public class OssClient {
         String endpoint = properties.getEndpoint();
         String header = OssConstant.IS_HTTPS.equals(properties.getIsHttps()) ? "https://" : "http://";
         // 云服务商直接返回
-        if (StringUtils.containsAny(endpoint, OssConstant.CLOUD_SERVICE)){
+        if (StringUtils.containsAny(endpoint, OssConstant.CLOUD_SERVICE)) {
             if (StringUtils.isNotBlank(domain)) {
                 return header + domain;
             }
@@ -177,7 +177,6 @@ public class OssClient {
         }
         return path + suffix;
     }
-
 
     public String getConfigKey() {
         return configKey;
@@ -213,7 +212,6 @@ public class OssClient {
     public AccessPolicyType getAccessPolicy() {
         return AccessPolicyType.getByType(properties.getAccessPolicy());
     }
-
 
     private static String getPolicy(String bucketName, PolicyType policyType) {
         StringBuilder builder = new StringBuilder();
