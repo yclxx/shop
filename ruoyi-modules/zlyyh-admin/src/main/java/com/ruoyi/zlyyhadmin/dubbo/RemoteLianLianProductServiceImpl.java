@@ -117,8 +117,8 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                             //没有则跳出循环
                             if (BigDecimal.valueOf(pageNum).multiply(BigDecimal.TEN).compareTo(total) > 0) {
                                 break;
-                            //} else {
-                            //    TimeUnit.SECONDS.sleep(1);
+                                //} else {
+                                //    TimeUnit.SECONDS.sleep(1);
                             }
                             pageNum += 1;
                         }
@@ -208,12 +208,12 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 productInfo.setStock(product.getTotalCount());
                 productInfo.setDiscount(item.getSalePrice().divide(item.getOriginPrice(), 2, RoundingMode.HALF_UP).toString());
                 // 使用时间
-                productInfo.setTicketTimeRule(lianProductVo.getValidBeginDate() + "-" + lianProductVo.getValidEndDate());
+                //productInfo.setTicketTimeRule(lianProductVo.getValidBeginDate() + "-" + lianProductVo.getValidEndDate());
                 productInfo.setBrandName(lianProductVo.getOnlyName());
                 //productInfo.setItemBuyNote(spxz);
                 productInfo.setItemContentGroup(JSONObject.toJSONString(productItems).replace("&", ""));
                 // 将原先海报地址改为套餐图片
-                productInfo.setItemContentImage(lianProductVo.getFaceImg());
+                //productInfo.setItemContentImage(lianProductVo.getFaceImg());
                 productInfo.setBuyLimit(Long.valueOf(lianProductVo.getSingleMax()));
                 productInfo.setReserveDesc(lianProductVo.getAttention()); // 订单注意事项配置补充说明
                 //String appointMent = lianProductVo.getBookingType().equals("0") ? "1" : lianProductVo.getBookingType().equals("1") ? "3" : "2";
@@ -341,6 +341,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
             shopBo.setFormattedAddress(shop.getAddress());
             shopBo.setPlatformKey(platformKey);
             shopBo.setCitycode(shop.getCityCode());
+            shopBo.setAddress(shop.getAddress());
             shopBo.setLongitude(longitude);
             shopBo.setLatitude(latitude);
             shopService.insertByBo(shopBo);
