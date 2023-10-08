@@ -1,10 +1,9 @@
 package com.ruoyi.zlyyhadmin.service;
 
-import com.ruoyi.zlyyh.domain.ShopProduct;
-import com.ruoyi.zlyyh.domain.vo.ShopProductVo;
-import com.ruoyi.zlyyh.domain.bo.ShopProductBo;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.zlyyh.domain.bo.ShopProductBo;
+import com.ruoyi.zlyyh.domain.vo.ShopProductVo;
 
 import java.util.Collection;
 import java.util.List;
@@ -60,4 +59,10 @@ public interface IShopProductService {
 
     List<Long> queryByProductId(Long productId);
 
+    /**
+     * 查询商品城市
+     * @param productId 商品ID
+     * @return 城市编码，多个之间英文逗号隔开
+     */
+    String queryCityCode(Long productId);
 }

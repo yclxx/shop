@@ -113,7 +113,7 @@ public class ProductUtils {
             }
             return R.fail("每周" + sendDate + "开始", null == appProductVo ? productVo : appProductVo);
         }
-        if (StringUtils.isNotBlank(productVo.getShowCity()) && !"ALL".equalsIgnoreCase(productVo.getShowCity())) {
+        if ("1".equals(productVo.getCheckPayCity()) && StringUtils.isNotBlank(productVo.getShowCity()) && !"ALL".equalsIgnoreCase(productVo.getShowCity())) {
             if (StringUtils.isBlank(cityCode)) {
                 if (null != appProductVo) {
                     appProductVo.setProductStatus("4");

@@ -28,7 +28,6 @@ import org.springframework.stereotype.Service;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * 商品Service业务层处理
@@ -136,7 +135,7 @@ public class ProductServiceImpl implements IProductService {
     public List<ProductVo> queryProductList(ProductBo bo) {
         LambdaQueryWrapper<Product> lqw = new LambdaQueryWrapper<>();
         lqw.eq(StringUtils.isNotBlank(bo.getStatus()), Product::getStatus, bo.getStatus());
-        lqw.eq(StringUtils.isNotBlank(bo.getSearchStatus()),Product::getSearchStatus,bo.getSearchStatus());
+        lqw.eq(StringUtils.isNotBlank(bo.getSearchStatus()), Product::getSearchStatus, bo.getSearchStatus());
         lqw.and(lq -> lq.ge(Product::getShowEndDate, DateUtils.dateTimeNow()).or(e -> e.isNull(Product::getShowEndDate)));
         lqw.and(lq -> lq.ge(Product::getSellEndDate, DateUtils.dateTimeNow()).or(e -> e.isNull(Product::getSellEndDate)));
         return baseMapper.selectVoList(lqw);
@@ -200,14 +199,35 @@ public class ProductServiceImpl implements IProductService {
         return lqw;
     }
 
+    /**
+     * 设置商品城市
+     *
+     * @param productId 商品编号
+     */
+    public void setProductCity(Long productId) {
+        if (null == productId) {
+            return;
+        }
+        // 查询商品门店
+        String s = shopProductService.queryCityCode(productId);
+        if (StringUtils.isBlank(s)) {
+            return;
+        }
+        Product product = new Product();
+        product.setProductId(productId);
+        // 修改商品城市
+        product.setShowCity(s);
+        baseMapper.updateById(product);
+    }
+
     private void processCategory(Long productId, String categoryId, boolean update) {
         if (null == productId) {
             return;
         }
-        if (update) {
-            categoryProductService.remove(new LambdaQueryWrapper<CategoryProduct>().eq(CategoryProduct::getProductId, productId));
-        }
         if (ObjectUtil.isNotEmpty(categoryId)) {
+            if (update) {
+                categoryProductService.remove(new LambdaQueryWrapper<CategoryProduct>().eq(CategoryProduct::getProductId, productId));
+            }
             String[] split = categoryId.split(",");
             for (String s : split) {
                 CategoryProductBo categoryProduct = new CategoryProductBo();
@@ -222,10 +242,10 @@ public class ProductServiceImpl implements IProductService {
         if (null == productId) {
             return;
         }
-        if (update) {
-            commercialTenantProductService.remove(new LambdaQueryWrapper<CommercialTenantProduct>().eq(CommercialTenantProduct::getProductId, productId));
-        }
         if (ObjectUtil.isNotEmpty(commercialTenantProductId)) {
+            if (update) {
+                commercialTenantProductService.remove(new LambdaQueryWrapper<CommercialTenantProduct>().eq(CommercialTenantProduct::getProductId, productId));
+            }
             String[] split = commercialTenantProductId.split(",");
             for (String s : split) {
                 CommercialTenantProductBo commercialTenantProductBo = new CommercialTenantProductBo();
@@ -271,6 +291,7 @@ public class ProductServiceImpl implements IProductService {
                 shopProductService.insertByBo(shopBo);
             }
         }
+        setProductCity(add.getProductId());
         return flag;
     }
 
@@ -293,7 +314,6 @@ public class ProductServiceImpl implements IProductService {
         }
         return flag;
     }
-
 
     /**
      * 修改商品
@@ -329,6 +349,7 @@ public class ProductServiceImpl implements IProductService {
                 shopProductService.insertByBo(shopBo);
             }
         }
+        setProductCity(update.getProductId());
         return flag;
     }
 
@@ -361,10 +382,11 @@ public class ProductServiceImpl implements IProductService {
 
     /**
      * 根据id批量下架商品
+     *
      * @param ids
      */
     @Override
-    public void updateProducts(Collection<Long> ids,String productType) {
+    public void updateProducts(Collection<Long> ids, String productType) {
         for (Long id : ids) {
             ProductBo productBo = new ProductBo();
             productBo.setProductId(id);

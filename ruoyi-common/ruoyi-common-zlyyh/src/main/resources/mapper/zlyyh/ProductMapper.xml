@@ -69,6 +69,7 @@
         <result property="unionProductId" column="union_product_id"/>
         <result property="usedStartTime" column="used_start_time"/>
         <result property="usedEndTime" column="used_end_time"/>
+        <result property="checkPayCity" column="check_pay_city"/>
     </resultMap>
 
 

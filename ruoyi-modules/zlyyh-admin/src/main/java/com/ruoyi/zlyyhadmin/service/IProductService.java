@@ -54,6 +54,13 @@ public interface IProductService {
     Boolean updateByBo(ProductBo bo);
 
     /**
+     * 设置商品城市
+     *
+     * @param productId 商品编号
+     */
+    void setProductCity(Long productId);
+
+    /**
      * 校验并批量删除商品信息
      */
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);

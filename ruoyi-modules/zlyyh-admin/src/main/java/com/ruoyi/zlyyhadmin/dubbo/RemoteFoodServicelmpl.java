@@ -211,6 +211,7 @@ public class RemoteFoodServicelmpl implements RemoteFoodService {
                             productInfoBo.setProductId(productBo.getProductId());
                             productInfoService.insertByBo(productInfoBo);
                         }
+                        productId = productBo.getProductId();
                         productHashMap.put(commodityId, productBo.getProductId());
                         //关联商品商户
                         setCommercialTenantProduct(commercialTenant.getCommercialTenantId(), productBo.getProductId());
@@ -222,6 +223,7 @@ public class RemoteFoodServicelmpl implements RemoteFoodService {
                         //关联门店商户
                         setProductShop(productId, shopId);
                     }
+                    productService.setProductCity(productId);
                 }
             }
             if (pageIndexProduct * pageSize >= totalProduct) {

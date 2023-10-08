@@ -10,12 +10,16 @@ import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.SpringUtils;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.system.api.RemoteCtripFoodService;
-import com.ruoyi.zlyyh.domain.bo.*;
-import com.ruoyi.zlyyh.domain.vo.*;
+import com.ruoyi.zlyyh.domain.bo.ProductBo;
+import com.ruoyi.zlyyh.domain.bo.ProductInfoBo;
+import com.ruoyi.zlyyh.domain.bo.ShopBo;
+import com.ruoyi.zlyyh.domain.bo.ShopProductBo;
+import com.ruoyi.zlyyh.domain.vo.ProductInfoVo;
+import com.ruoyi.zlyyh.domain.vo.ProductVo;
+import com.ruoyi.zlyyh.domain.vo.ShopProductVo;
+import com.ruoyi.zlyyh.domain.vo.ShopVo;
 import com.ruoyi.zlyyh.properties.CtripConfig;
-import com.ruoyi.zlyyh.properties.YsfFoodProperties;
 import com.ruoyi.zlyyh.utils.CtripUtils;
-import com.ruoyi.zlyyh.utils.YsfFoodUtils;
 import com.ruoyi.zlyyhadmin.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +34,6 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -164,6 +167,7 @@ public class RemoteCtripFoodServiceImpl implements RemoteCtripFoodService {
                             productInfoBo.setProductId(productBo.getProductId());
                             productInfoService.insertByBo(productInfoBo);
                         }
+                        productId = productBo.getProductId();
                         productHashMap.put(xcProductId, productBo.getProductId());
                         //关联门店商品
                         setProductShop(productBo.getProductId(), shopId);
@@ -171,6 +175,7 @@ public class RemoteCtripFoodServiceImpl implements RemoteCtripFoodService {
                         //关联商品门店
                         setProductShop(productId, shopId);
                     }
+                    productService.setProductCity(productId);
                 }
             }
 

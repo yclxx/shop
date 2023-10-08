@@ -379,6 +379,11 @@ public class ProductVo implements Serializable {
      */
     private Date usedEndTime;
 
+    /**
+     * 是否校验用户购买城市
+     */
+    private String checkPayCity;
+
     private ProductTicketVo ticket;
 
     private List<ProductTicketSessionVo> ticketSession;

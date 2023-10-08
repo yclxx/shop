@@ -1,6 +1,6 @@
 <template>
   <div class="app-container home" style="width: 100%; height: 100%;">
-    <img src="../assets/images/index.jpg" width="100%" height="100%"/>
+    <!-- <img src="../assets/images/index.jpg" width="100%" height="100%"/> -->
   </div>
 </template>
 

@@ -323,6 +323,11 @@ public class ProductBo extends BaseEntity {
     private Date usedEndTime;
 
     /**
+     * 是否校验用户购买城市
+     */
+    private String checkPayCity;
+
+    /**
      * 演出票商品信息
      */
     private ProductTicketBo ticket;

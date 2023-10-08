@@ -48,7 +48,7 @@
       // 是否显示提示
       isShowTip: {
         type: Boolean,
-        default: true
+        default: false
       }
     },
     data() {

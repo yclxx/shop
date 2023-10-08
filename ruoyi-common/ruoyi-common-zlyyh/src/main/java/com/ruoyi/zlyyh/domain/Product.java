@@ -276,4 +276,9 @@ public class Product extends BaseEntity {
      * 可使用结束时间
      */
     private Date usedEndTime;
+
+    /**
+     * 是否校验用户购买城市
+     */
+    private String checkPayCity;
 }

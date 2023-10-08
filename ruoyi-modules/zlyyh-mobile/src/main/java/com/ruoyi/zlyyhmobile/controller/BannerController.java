@@ -1,5 +1,6 @@
 package com.ruoyi.zlyyhmobile.controller;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.utils.DateUtils;
@@ -36,6 +37,10 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/banner/ignore")
 public class BannerController extends BaseController {
+
+    public static void main(String[] args) {
+        System.out.println(DateUtil.format(new Date(1695624314862L), "yyyy-MM-dd HH:mm:ss"));
+    }
 
     private final IBannerService iBannerService;
 

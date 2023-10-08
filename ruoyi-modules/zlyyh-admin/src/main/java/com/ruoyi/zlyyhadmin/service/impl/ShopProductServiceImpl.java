@@ -1,25 +1,24 @@
 package com.ruoyi.zlyyhadmin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.ruoyi.common.core.utils.StringUtils;
-import com.ruoyi.common.mybatis.core.page.PageQuery;
-import com.ruoyi.common.mybatis.core.page.TableDataInfo;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.ruoyi.zlyyh.domain.Shop;
-import com.ruoyi.zlyyh.domain.ShopMerchant;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ruoyi.common.mybatis.core.page.PageQuery;
+import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.zlyyh.domain.ShopProduct;
+import com.ruoyi.zlyyh.domain.bo.ShopProductBo;
+import com.ruoyi.zlyyh.domain.vo.ShopProductVo;
+import com.ruoyi.zlyyh.mapper.ShopProductMapper;
 import com.ruoyi.zlyyhadmin.service.IShopProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.ruoyi.zlyyh.domain.bo.ShopProductBo;
-import com.ruoyi.zlyyh.domain.vo.ShopProductVo;
-import com.ruoyi.zlyyh.domain.ShopProduct;
-import com.ruoyi.zlyyh.mapper.ShopProductMapper;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Collection;
 import java.util.stream.Collectors;
 
 /**
@@ -132,5 +131,14 @@ public class ShopProductServiceImpl implements IShopProductService {
         LambdaQueryWrapper<ShopProduct> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(ShopProduct::getProductId, productId);
         return baseMapper.selectList(queryWrapper).stream().map(ShopProduct::getShopId).collect(Collectors.toList());
+    }
+
+    @Override
+    public String queryCityCode(Long productId) {
+        List<String> result = baseMapper.queryCityCode(productId);
+        if(ObjectUtil.isEmpty(result)){
+            return null;
+        }
+        return CollUtil.join(result,",");
     }
 }

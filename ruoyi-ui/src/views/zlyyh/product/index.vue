@@ -446,25 +446,32 @@
                 <el-form-item label="商品图片" prop="productImg">
                   <image-upload v-model="form.productImg" :limit="1" />
                 </el-form-item>
-              </el-col>
-              <el-col :span="16" v-if="form.productAffiliation && form.productAffiliation == '0'">
-                <el-form-item label="商品详情">
-                  <editor v-model="form.description" :min-height="192" />
+                <el-form-item label="校验城市" prop="checkPayCity">
+                  <span slot="label">
+                    校验城市
+                    <dict-tooltip :options="dict.type.t_product_check_pay_city"></dict-tooltip>
+                  </span>
+                  <el-radio-group v-model="form.checkPayCity">
+                    <el-radio v-for="dict in dict.type.t_product_check_pay_city" :key="dict.value" :label="dict.value">
+                      {{ dict.label }}
+                    </el-radio>
+                  </el-radio-group>
                 </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row>
-              <el-col :span="8">
                 <el-form-item label="限制城市" prop="showCity">
                   <span slot="label">
                     限制城市
-                    <el-tooltip content="限制哪些城市的用户可以看到可以购买" placement="top">
+                    <el-tooltip content="限制哪些城市的用户可以看到" placement="top">
                       <i class="el-icon-question"></i>
                     </el-tooltip>
                   </span>
                   <el-checkbox v-model="cityNodeAll" @change="selectAll">全部</el-checkbox>
                   <el-tree @check="handleNodeClick" class="tree-border" :data="cityOptions" show-checkbox ref="city"
                     node-key="id" empty-text="加载中,请稍后" :props="defaultProps"></el-tree>
+                </el-form-item>
+              </el-col>
+              <el-col :span="16" v-if="form.productAffiliation && form.productAffiliation == '0'">
+                <el-form-item label="商品详情">
+                  <editor v-model="form.description" :min-height="192" />
                 </el-form-item>
               </el-col>
             </el-row>
@@ -858,7 +865,7 @@
                   </el-date-picker>
                 </template>
               </el-table-column>
-<!--              <el-table-column label="预约日期" align="left" prop="sessionDate">
+              <!--              <el-table-column label="预约日期" align="left" prop="sessionDate">
                 <template slot-scope="scope">
                   <el-date-picker v-model="scope.row.sessionDate" type="daterange" align="left" unlink-panels
                     range-separator="至" value-format="yyyy-MM-dd" start-placeholder="开始日期" end-placeholder="结束日期">
@@ -867,20 +874,14 @@
               </el-table-column> -->
               <el-table-column label="预约开始日期" align="left" prop="beginDate">
                 <template slot-scope="scope">
-                  <el-date-picker
-                    v-model="scope.row.beginDate"
-                    type="date"
-                    value-format="yyyy-MM-dd"
+                  <el-date-picker v-model="scope.row.beginDate" type="date" value-format="yyyy-MM-dd"
                     placeholder="请选择预约开始日期">
                   </el-date-picker>
                 </template>
               </el-table-column>
               <el-table-column label="预约结束日期" align="left" prop="endDate">
                 <template slot-scope="scope">
-                  <el-date-picker
-                    v-model="scope.row.endDate"
-                    type="date"
-                    value-format="yyyy-MM-dd"
+                  <el-date-picker v-model="scope.row.endDate" type="date" value-format="yyyy-MM-dd"
                     placeholder="请选择预约结束日期">
                   </el-date-picker>
                 </template>
@@ -981,7 +982,7 @@
     dicts: ['t_product_to_type', 't_product_status', 't_product_affiliation', 't_product_assign_date', 't_product_type',
       't_product_show_original_amount', 't_product_pickup_method', 't_grad_period_date_list', 't_product_search',
       't_search_status', 't_product_pay_user', 't_show_index', 't_product_send_account_type', 't_cus_refund',
-      'sys_normal_disable',
+      'sys_normal_disable', 't_product_check_pay_city',
       't_product_union_pay'
     ],
     data() {
@@ -1436,6 +1437,7 @@
           vipAmount: undefined,
           toType: "0",
           showIndex: '0',
+          checkPayCity: '0',
           appId: undefined,
           url: undefined,
           status: "0",

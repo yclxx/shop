@@ -568,6 +568,13 @@ public class OrderServiceImpl implements IOrderService {
         if (!system && !"0".equals(productVo.getSearch())) {
             throw new ServiceException("商品不可购买[请求校验不通过]");
         }
+        // 校验产品状态 名额
+        R<ProductVo> checkProductCountResult = ProductUtils.checkProduct(productVo, bo.getCityCode());
+        if (R.isError(checkProductCountResult)) {
+            throw new ServiceException(checkProductCountResult.getMsg());
+        }
+        // 校验用户是否达到参与上限
+        ProductUtils.checkUserCount(productVo, userVo.getUserId());
         // 生成订单
         Order order = new Order();
         order.setNumber(IdUtil.getSnowflakeNextId());
@@ -668,13 +675,6 @@ public class OrderServiceImpl implements IOrderService {
             orderFoodInfo.setUserName("匿名");
             orderFoodInfoMapper.insert(orderFoodInfo);
         }
-        // 校验产品状态 名额
-        R<ProductVo> checkProductCountResult = ProductUtils.checkProduct(productVo, bo.getCityCode());
-        if (R.isError(checkProductCountResult)) {
-            throw new ServiceException(checkProductCountResult.getMsg());
-        }
-        // 校验用户是否达到参与上限
-        ProductUtils.checkUserCount(productVo, userVo.getUserId());
         // 设置领取缓存
         this.setOrderCountCache(platformVo.getPlatformKey(), bo.getUserId(), productVo.getProductId(), productVo.getSellEndDate());
         try {
