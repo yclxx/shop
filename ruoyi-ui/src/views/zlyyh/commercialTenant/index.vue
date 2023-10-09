@@ -92,6 +92,8 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right">
         <template slot-scope="scope">
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="dialogVisible = true"
+            v-hasPermi="['zlyyh:commercialTenant:edit']">门店维护</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['zlyyh:commercialTenant:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
@@ -173,9 +175,58 @@
               </el-select>
             </el-form-item>
           </el-col>
+          <el-col :span="8">
+            <el-form-item label="共享" prop="isShare" label-width="95px">
+              <el-select v-model="form.isShare" placeholder="请选择是否共享">
+                <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value"
+                  :label="dict.label" :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="供应商" prop="supplier" label-width="95px">
+                <el-input v-model="form.supplier" placeholder="请输入供应商" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="收款账户" prop="account" label-width="95px">
+                <el-input v-model="form.account" placeholder="请输入收款账户" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="性质" prop="nature" label-width="95px">
+              <el-select v-model="form.nature" placeholder="请选择性质">
+                <el-option v-for="dict in dict.type.nature_type" :key="dict.value"
+                  :label="dict.label" :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="活动类型" prop="activity" label-width="95px">
+              <el-select v-model="form.activity" placeholder="请选择活动类型">
+                <el-option v-for="dict in dict.type.activity_type" :key="dict.value"
+                  :label="dict.label" :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="发票类型" prop="invoice" label-width="95px">
+              <el-select v-model="form.invoice" placeholder="请选择发票类型">
+                <el-option v-for="dict in dict.type.invoice_type" :key="dict.value"
+                  :label="dict.label" :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
           <el-col :span="24">
             <el-form-item label="标签" prop="tags">
-              <el-input v-model="form.tags" type="textarea" placeholder="请输入内容" />
+              <el-select v-model="form.tags" multiple placeholder="请选择标签">
+                <el-option
+                  v-for="item in tagsList"
+                  :key="item.tagsId"
+                  :label="item.tagsName"
+                  :value="item.tagsName">
+                </el-option>
+              </el-select>
             </el-form-item>
           </el-col>
         </el-row>
@@ -185,12 +236,13 @@
               <image-upload :limit="1" v-model="form.commercialTenantImg" />
             </el-form-item>
           </el-col>
+          <el-col :span="10">
+            <el-form-item label="营业执照" prop="license">
+              <image-upload :limit="1" v-model="form.license" />
+            </el-form-item>
+          </el-col>
         </el-row>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
-      </div>
     </el-dialog>
   </div>
 </template>
@@ -203,20 +255,15 @@
     addCommercialTenant,
     updateCommercialTenant
   } from "@/api/zlyyh/commercialTenant";
-  import {
-    selectListPlatform
-  } from "@/api/zlyyh/platform";
-  import {
-    selectListProduct
-  } from "@/api/zlyyh/product";
-  import {
-    selectListCategory
-  } from "@/api/zlyyh/category";
-
+  import { selectListPlatform } from "@/api/zlyyh/platform";
+  import { selectListProduct } from "@/api/zlyyh/product";
+  import { selectListCategory } from "@/api/zlyyh/category";
+  import { exportTags } from "@/api/zlyyh/tags";
 
   export default {
     name: "CommercialTenant",
-    dicts: ['t_commercial_tenant_index_show', 't_commercial_tenant_status'],
+    dicts: ['t_commercial_tenant_index_show', 't_commercial_tenant_status',
+      'nature_type','invoice_type','activity_type','sys_yes_no'],
     data() {
       return {
         //栏目下拉列表
@@ -252,6 +299,8 @@
         title: "",
         // 是否显示弹出层
         open: false,
+        // 标签
+        tagsList: [],
         // 查询参数
         queryParams: {
           pageNum: 1,
@@ -322,6 +371,7 @@
       this.getPlatformSelectList();
       this.getProductSelectList();
       this.getCategorySelectList();
+      this.getTagsList();
     },
     methods: {
       /** 查询商户列表 */
@@ -396,7 +446,14 @@
           createTime: undefined,
           updateBy: undefined,
           updateTime: undefined,
-          platformKey: undefined
+          platformKey: undefined,
+          isShare: undefined,
+          supplier: undefined,
+          license: undefined,
+          nature: undefined,
+          invoice: undefined,
+          account: undefined,
+          activity: undefined
         };
         this.resetForm("form");
       },
@@ -431,6 +488,10 @@
         const commercialTenantId = row.commercialTenantId || this.ids
         getCommercialTenant(commercialTenantId).then(response => {
           this.loading = false;
+          debugger
+          if(response.data.tags != undefined && response.data.tags != null && response.data.tags != '') {
+            response.data.tags = response.data.tags.split(',');
+          }
           this.form = response.data;
           this.open = true;
           this.title = "修改商户";
@@ -441,6 +502,10 @@
         this.$refs["form"].validate(valid => {
           if (valid) {
             this.buttonLoading = true;
+            debugger
+            if(this.form.tags != undefined && this.form.tags != null && this.form.tags != '') {
+              this.form.tags = this.form.tags.join(',')
+            }
             if (this.form.commercialTenantId != null) {
               updateCommercialTenant(this.form).then(response => {
                 this.$modal.msgSuccess("修改成功");
@@ -473,6 +538,12 @@
           this.$modal.msgSuccess("删除成功");
         }).catch(() => {}).finally(() => {
           this.loading = false;
+        });
+      },
+      /** 查询标签 */
+      getTagsList() {
+        exportTags().then(response => {
+          this.tagsList = response.data;
         });
       },
       /** 导出按钮操作 */

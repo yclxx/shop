@@ -23,6 +23,7 @@ import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
 import com.ruoyi.zlyyh.mapper.CommercialTenantProductMapper;
 import com.ruoyi.zlyyh.mapper.ShopMapper;
+import com.ruoyi.zlyyh.mapper.TagsShopMapper;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.domain.bo.ShopImportDataBo;
 import com.ruoyi.zlyyhadmin.service.IBusinessDistrictShopService;
@@ -55,6 +56,7 @@ import java.util.stream.Collectors;
 public class ShopServiceImpl implements IShopService {
 
     private final ShopMapper baseMapper;
+    private final TagsShopMapper tagsShopMapper;
     private final CommercialTenantMapper commercialTenantMapper;
     private final IShopMerchantService shopMerchantService;
     private final CommercialTenantProductMapper commercialTenantProductMapper;
@@ -128,6 +130,10 @@ public class ShopServiceImpl implements IShopService {
     @Override
     public ShopVo queryById(Long shopId) {
         ShopVo shopVo = baseMapper.selectVoById(shopId);
+        List<Long> tags = tagsShopMapper.selectByShopId(shopVo.getShopId());
+        if (ObjectUtil.isNotEmpty(tags)) {
+            shopVo.setTagsList(tags);
+        }
         BusinessDistrictShopBo businessDistrictShopBo = new BusinessDistrictShopBo();
         businessDistrictShopBo.setShopId(shopId);
         List<BusinessDistrictShopVo> businessDistrictShopVos = businessDistrictShopService.queryList(businessDistrictShopBo);
@@ -203,6 +209,7 @@ public class ShopServiceImpl implements IShopService {
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setShopId(add.getShopId());
+            setTagsShop(bo.getTagsList(), add.getShopId());
 //            changeGeoCache(add.getShopId());
         }
         return flag;
@@ -219,6 +226,7 @@ public class ShopServiceImpl implements IShopService {
         if (flag) {
             bo.setShopId(add.getShopId());
             processBusiness(bo.getShopId(), bo.getBusinessDistrictId(), false);
+            setTagsShop(bo.getTagsList(), add.getShopId());
         }
         return flag;
     }
@@ -235,6 +243,7 @@ public class ShopServiceImpl implements IShopService {
 //        changeGeoCache(update.getShopId());
         if (flag) {
             processBusiness(bo.getShopId(), bo.getBusinessDistrictId(), true);
+            setTagsShop(bo.getTagsList(), bo.getShopId());
         }
         return flag;
     }
@@ -251,6 +260,8 @@ public class ShopServiceImpl implements IShopService {
             delShopProduct(id);
             //删除与商圈相关信息
             delShopBusinessDistrictId(id);
+            // 删除标签
+            tagsShopMapper.deleteByShopId(id);
         }
         return baseMapper.deleteBatchIds(ids) > 0;
     }
@@ -460,6 +471,19 @@ public class ShopServiceImpl implements IShopService {
         return baseMapper.selectVoOne(queryWrapper);
     }
 
+    private void setTagsShop(List<Long> tagsList, Long shopId) {
+        if (ObjectUtil.isNotEmpty(tagsList)) {
+            tagsShopMapper.deleteByShopId(shopId);
+            List<TagsShop> tagsShops = new ArrayList<>();
+            tagsList.forEach(o -> {
+                TagsShop tagsShop = new TagsShop();
+                tagsShop.setShopId(shopId);
+                tagsShop.setTagsId(o);
+                tagsShops.add(tagsShop);
+            });
+            tagsShopMapper.insertBatch(tagsShops);
+        }
+    }
 
 //    private void changeGeoCache(Long shopId) {
 //        Shop shop = baseMapper.selectById(shopId);
