@@ -437,6 +437,7 @@ public class ProductServiceImpl implements IProductService {
             List<LianLianProductItem> items = JSONArray.parseArray(lianProduct.getItemList(), LianLianProductItem.class);
             for (LianLianProductItem item : items) {
                 ProductInfoVo productInfoVo = productInfoService.queryByItemId(item.getItemId().toString());
+                if (ObjectUtil.isEmpty(productInfoVo)) continue;
                 Product product = baseMapper.selectById(productInfoVo.getProductId());
                 // 处理价格单位
                 item.setChannelPrice(item.getChannelPrice().divide(HUNDRED, 2, RoundingMode.HALF_UP)); // 渠道结算价
