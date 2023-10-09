@@ -385,35 +385,65 @@ public class ShopServiceImpl implements IShopService {
     }
 
     private void getAddressCode(ShopBo bo) {
-        if (StringUtils.isBlank(bo.getAddress())) {
-            return;
-        }
-        String key = "importShop:" + bo.getAddress();
-        JSONObject addressInfo = RedisUtils.getCacheObject(key);
-        if (ObjectUtil.isEmpty(addressInfo)) {
-            addressInfo = AddressUtils.getAddressInfo(bo.getAddress());
-        }
-        if (ObjectUtil.isNotEmpty(addressInfo)) {
-            bo.setFormattedAddress(addressInfo.getString("formatted_address"));
-            bo.setProvince(addressInfo.getString("province"));
-            bo.setCity(addressInfo.getString("city"));
-            bo.setDistrict(addressInfo.getString("district"));
-            String adcode = addressInfo.getString("adcode");
-            String procode = adcode.substring(0, 2) + "0000";
-            String citycode = adcode.substring(0, 4) + "00";
-            bo.setProcode(procode);
-            bo.setCitycode(citycode);
-            bo.setAdcode(adcode);
-            if (ObjectUtil.isEmpty(bo.getLatitude()) || ObjectUtil.isEmpty(bo.getLongitude())) {
-                String location = addressInfo.getString("location");
-                String[] split = location.split(",");
-                String longitude = split[0];
-                String latitude = split[1];
-                bo.setLongitude(new BigDecimal(longitude));
-                bo.setLatitude(new BigDecimal(latitude));
+        //根据经纬度查询地址信息
+        if (ObjectUtil.isNotEmpty(bo.getLongitude()) && ObjectUtil.isNotEmpty(bo.getLatitude()) && bo.getLatitude().compareTo(BigDecimal.ZERO)>0 && bo.getLongitude().compareTo(BigDecimal.ZERO)>0){
+            String key = "importShop:" + bo.getLongitude() + "," + bo.getLatitude();
+
+            JSONObject addressInfo = RedisUtils.getCacheObject(key);
+            String location =  bo.getLongitude() + "," + bo.getLatitude();
+            if (ObjectUtil.isEmpty(addressInfo)) {
+                addressInfo = AddressUtils.getLocationCity(location);
             }
-            RedisUtils.setCacheObject(key, addressInfo, Duration.ofDays(2));
+            if (ObjectUtil.isNotEmpty(addressInfo)) {
+                bo.setFormattedAddress(addressInfo.getString("formatted_address"));
+                bo.setProvince(addressInfo.getString("province"));
+                bo.setCity(addressInfo.getString("city"));
+                bo.setDistrict(addressInfo.getString("district"));
+                String adcode = addressInfo.getString("adcode");
+                String procode = adcode.substring(0, 2) + "0000";
+                String citycode = adcode.substring(0, 4) + "00";
+                bo.setProcode(procode);
+                bo.setCitycode(citycode);
+                bo.setAdcode(adcode);
+
+                RedisUtils.setCacheObject(key, addressInfo, Duration.ofDays(2));
+            }
+
+
+        } else {
+            //如果没传经纬度则按照地址来获取相关信息
+            if (StringUtils.isBlank(bo.getAddress())) {
+                return;
+            }
+            String key = "importShop:" + bo.getAddress();
+            JSONObject addressInfo = RedisUtils.getCacheObject(key);
+            if (ObjectUtil.isEmpty(addressInfo)) {
+                addressInfo = AddressUtils.getAddressInfo(bo.getAddress());
+            }
+            if (ObjectUtil.isNotEmpty(addressInfo)) {
+                bo.setFormattedAddress(addressInfo.getString("formatted_address"));
+                bo.setProvince(addressInfo.getString("province"));
+                bo.setCity(addressInfo.getString("city"));
+                bo.setDistrict(addressInfo.getString("district"));
+                String adcode = addressInfo.getString("adcode");
+                String procode = adcode.substring(0, 2) + "0000";
+                String citycode = adcode.substring(0, 4) + "00";
+                bo.setProcode(procode);
+                bo.setCitycode(citycode);
+                bo.setAdcode(adcode);
+                if (ObjectUtil.isEmpty(bo.getLatitude()) || ObjectUtil.isEmpty(bo.getLongitude())) {
+                    String location = addressInfo.getString("location");
+                    String[] split = location.split(",");
+                    String longitude = split[0];
+                    String latitude = split[1];
+                    bo.setLongitude(new BigDecimal(longitude));
+                    bo.setLatitude(new BigDecimal(latitude));
+                }
+                RedisUtils.setCacheObject(key, addressInfo, Duration.ofDays(2));
+            }
+
         }
+
     }
 
     @Override

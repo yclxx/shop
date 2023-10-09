@@ -1,13 +1,21 @@
 package com.ruoyi.common.core.utils.ip;
 
+import cn.hutool.core.lang.Dict;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
+import com.ruoyi.common.core.exception.ServiceException;
+import com.ruoyi.common.core.utils.JsonUtils;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,7 +27,8 @@ import java.util.regex.Pattern;
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class AddressUtils {
-
+    private static final String MAP_LOCATION_URL = "https://restapi.amap.com/v3/geocode/regeo";
+    private static final String GAO_DE_MAP_KEY = "ed8652067f054abb156de40a110a08ea";
     /**
      * 获取地址的详细信息，经纬度等
      *
@@ -90,4 +99,53 @@ public class AddressUtils {
 
         return data;
     }
+
+    public static JSONObject getLocationCity(String location) {
+        if (ObjectUtil.isEmpty(location)){
+            throw new ServiceException("未获取到您的位置信息，请打开位置授权");
+        }
+        JSONObject result = new JSONObject();
+        //通过经纬度查询详细地址  经度在前
+        String query = "key=" + GAO_DE_MAP_KEY + "&location=" + location;
+        String s = HttpUtil.createGet(MAP_LOCATION_URL).body(query).execute().body();
+        Dict dict = null;
+        try {
+            dict = JsonUtils.parseMap(s);
+        } catch (Exception e) {
+            log.error("获取经纬度异常,返回参数" + s, e);
+        }
+        if (null != dict) {
+            // 成功
+            if ("1".equals(dict.getStr("status"))) {
+                Map<String, Object> regeocode = dict.get("regeocode", null);
+                Dict reg = new Dict(regeocode);
+                Map<String, Object> ac = reg.get("addressComponent", null);
+                Dict addressComponent = new Dict(ac);
+                String adcode = addressComponent.getStr("adcode");
+                log.info("调用高德地图获取地址经纬度信息处理后结果：{}", s);
+                if (!"[]".equals(adcode) && !"100000".equals(adcode)) {
+
+                    result.put("adcode", adcode);
+                    result.put("city", addressComponent.getStr("city"));
+                    result.put("province", addressComponent.getStr("province"));
+                    result.put("district", addressComponent.getStr("district"));
+                    result.put("formatted_address", regeocode.get("formatted_address"));
+
+                    return result;
+                }
+            }
+        } else {
+            throw new ServiceException("获取经纬度失败");
+
+        }
+        return null;
+    }
+
+
+    public static void main(String[] args) {
+        System.out.println(getLocationCity("121,30"));
+
+    }
+
+
 }
