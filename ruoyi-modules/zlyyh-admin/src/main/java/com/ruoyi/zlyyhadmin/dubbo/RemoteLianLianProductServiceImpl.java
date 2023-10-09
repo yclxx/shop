@@ -177,28 +177,29 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 }
                 if (product == null) {
                     product = new Product();
+                    product.setProductAffiliation("0");
+                    product.setProductType("14");
+                    product.setPickupMethod("1");
+                    product.setShowOriginalAmount("1");
                 }
 
                 //主体信息
                 product.setPlatformKey(platformKey);
-                product.setProductAffiliation("0");
-                product.setProductType("14");
-                product.setPickupMethod("1");
+
                 if (lianProductVo.getOnlyName().equals(item.getSubTitle())) {
                     product.setProductName(lianProductVo.getOnlyName());//产品名称
                 } else {
                     product.setProductName(lianProductVo.getOnlyName() + " " + item.getSubTitle());//产品名称
                 }
-                product.setProductImg(lianProductVo.getFaceImg());//产品图片
-                product.setProductSubhead(lianProductVo.getTitle());//产品副标题
-                product.setShowOriginalAmount("1");
-                product.setOriginalAmount(item.getOriginPrice());//产品原价
-                product.setSellAmount(item.getSalePrice());//产品售价
                 if (lianProductVo.getItemStock().equals(0)) {
                     product.setTotalCount(Long.valueOf(lianProductVo.getStockAmount()));//库存
                 } else if (lianProductVo.getItemStock().equals(1)) {
                     product.setTotalCount(item.getStock());//库存
                 }
+                product.setProductImg(lianProductVo.getFaceImg());//产品图片
+                product.setProductSubhead(lianProductVo.getTitle());//产品副标题
+                product.setOriginalAmount(item.getOriginPrice());//产品原价
+                product.setSellAmount(item.getSalePrice());//产品售价
                 //product.setVipAmount(item.getChannelPrice());
                 ProductInfo productInfo = new ProductInfo();
                 productInfo.setTitle(lianProductVo.getTitle());
