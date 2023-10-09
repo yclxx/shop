@@ -18,8 +18,14 @@ import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.*;
-import com.ruoyi.zlyyh.domain.bo.*;
-import com.ruoyi.zlyyh.domain.vo.*;
+import com.ruoyi.zlyyh.domain.bo.BusinessDistrictShopBo;
+import com.ruoyi.zlyyh.domain.bo.ShopBo;
+import com.ruoyi.zlyyh.domain.bo.ShopImportBo;
+import com.ruoyi.zlyyh.domain.bo.ShopMerchantBo;
+import com.ruoyi.zlyyh.domain.vo.BusinessDistrictShopVo;
+import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
+import com.ruoyi.zlyyh.domain.vo.ShopMerchantVo;
+import com.ruoyi.zlyyh.domain.vo.ShopVo;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
 import com.ruoyi.zlyyh.mapper.CommercialTenantProductMapper;
 import com.ruoyi.zlyyh.mapper.ShopMapper;
@@ -185,6 +191,10 @@ public class ShopServiceImpl implements IShopService {
                     .or().like(Shop::getCitycode, bo.getProvince())
                     .or().like(Shop::getAdcode, bo.getProvince())
             );
+        }
+        if (StringUtils.isNotEmpty(bo.getBusinessDistrictId())) {
+            String sql = "SELECT shop_id FROM t_business_district_shop WHERE business_district_id = " + bo.getBusinessDistrictId();
+            lqw.apply("shop_id IN (" + sql + ")");
         }
         lqw.eq(StringUtils.isNotBlank(bo.getStatus()), Shop::getStatus, bo.getStatus());
         lqw.eq(bo.getPlatformKey() != null, Shop::getPlatformKey, bo.getPlatformKey());
@@ -397,11 +407,11 @@ public class ShopServiceImpl implements IShopService {
 
     private void getAddressCode(ShopBo bo) {
         //根据经纬度查询地址信息
-        if (ObjectUtil.isNotEmpty(bo.getLongitude()) && ObjectUtil.isNotEmpty(bo.getLatitude()) && bo.getLatitude().compareTo(BigDecimal.ZERO)>0 && bo.getLongitude().compareTo(BigDecimal.ZERO)>0){
+        if (ObjectUtil.isNotEmpty(bo.getLongitude()) && ObjectUtil.isNotEmpty(bo.getLatitude()) && bo.getLatitude().compareTo(BigDecimal.ZERO) > 0 && bo.getLongitude().compareTo(BigDecimal.ZERO) > 0) {
             String key = "importShop:" + bo.getLongitude() + "," + bo.getLatitude();
 
             JSONObject addressInfo = RedisUtils.getCacheObject(key);
-            String location =  bo.getLongitude() + "," + bo.getLatitude();
+            String location = bo.getLongitude() + "," + bo.getLatitude();
             if (ObjectUtil.isEmpty(addressInfo)) {
                 addressInfo = AddressUtils.getLocationCity(location);
             }

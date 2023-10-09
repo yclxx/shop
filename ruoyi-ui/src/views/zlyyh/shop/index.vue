@@ -212,7 +212,7 @@
             <el-form-item label="共享" prop="isShare">
               <el-select v-model="form.isShare" placeholder="请选择是否共享" style="width: 90%;">
                 <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label"
-                  :value="dict.value"></el-option>
+                           :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -230,7 +230,7 @@
             <el-form-item label="性质" prop="nature">
               <el-select v-model="form.nature" placeholder="请选择性质" style="width: 90%;">
                 <el-option v-for="dict in dict.type.nature_type" :key="dict.value" :label="dict.label"
-                  :value="dict.value"></el-option>
+                           :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -238,7 +238,7 @@
             <el-form-item label="活动类型" prop="activity">
               <el-select v-model="form.activity" placeholder="请选择活动类型" style="width: 90%;">
                 <el-option v-for="dict in dict.type.activity_type" :key="dict.value" :label="dict.label"
-                  :value="dict.value"></el-option>
+                           :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -246,7 +246,7 @@
             <el-form-item label="发票类型" prop="invoice">
               <el-select v-model="form.invoice" placeholder="请选择发票类型" style="width: 90%;">
                 <el-option v-for="dict in dict.type.invoice_type" :key="dict.value" :label="dict.label"
-                  :value="dict.value"></el-option>
+                           :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -280,7 +280,6 @@
               <el-input disabled v-model="form.latitude" placeholder="纬度,点击下方地图获取" />
             </el-form-item>
           </el-col>
-
         </el-row>
         <el-form-item label="poi地址">
           <span slot="label">
