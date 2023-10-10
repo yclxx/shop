@@ -231,7 +231,7 @@ public class ProductBo extends BaseEntity {
     private Long shopGroupId;
 
     /**
-     * 门店组ID
+     * 门店ID
      */
     private String shopId;
 

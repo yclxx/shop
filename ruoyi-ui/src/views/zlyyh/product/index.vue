@@ -606,15 +606,6 @@
           </el-tab-pane>
           <el-tab-pane label="扩展信息" name="expand" key="expand" :style="{height: tableHeight}">
             <el-row>
-<!--              <el-col :span="8">-->
-<!--                <el-form-item label="门店" prop="shopId">-->
-<!--                  <el-select v-model="form.shopId" placeholder="请输入门店名称搜索" multiple filterable remote reserve-keyword-->
-<!--                    :remote-method="selectShopLists" clearable style="width: 100%;">-->
-<!--                    <el-option v-for="item in shopList" :key="item.id" :value="item.id" :label="item.label">-->
-<!--                    </el-option>-->
-<!--                  </el-select>-->
-<!--                </el-form-item>-->
-<!--              </el-col>-->
               <el-col :span="8">
                 <el-form-item label="商户" prop="commercialTenantId">
                   <el-select v-model="form.commercialTenantId" placeholder="请选择商户" filterable clearable multiple
@@ -666,7 +657,10 @@
               </el-col>
               <el-col :span="8">
                 <el-form-item label="标签" prop="tags">
-                  <el-input v-model="form.tags" placeholder="请输入内容" />
+                  <el-select v-model="form.tags" multiple placeholder="请选择标签" style="width: 90%;">
+                    <el-option v-for="item in tagsList" :key="item.tagsId" :label="item.tagsName" :value="item.tagsId">
+                    </el-option>
+                  </el-select>
                 </el-form-item>
               </el-col>
               <el-col :span="8">
@@ -730,197 +724,11 @@
           </el-tab-pane>
           <el-tab-pane label="演出票信息" name="ticket" key="ticket"
             v-if="form.ticket && (form.productType == '13' || isUpdate)">
-            <el-row>
-              <el-col :span="8">
-                <el-form-item label="票形式" :required="true">
-                  <el-select v-model="form.ticket.ticketForm" placeholder="请选择票形式" style="width: 100%;">
-                    <el-option v-for="item in ticketFormList" :key="item.value" :label="item.label"
-                      :value="item.value" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="8">
-                <el-form-item label="身份信息" :required="true">
-                  <el-select v-model="form.ticket.ticketCard" placeholder="请选择身份信息" style="width: 100%;">
-                    <el-option v-for="item in ticketCardList" :key="item.value" :label="item.label"
-                      :value="item.value" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="8">
-                <el-form-item label="不支持退" :required="true">
-                  <el-select v-model="form.ticket.ticketNonsupport" placeholder="请选择不支持退" style="width: 100%;">
-                    <el-option v-for="item in ticketStatusList" :key="item.value" :label="item.label"
-                      :value="item.value" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row>
-              <el-col :span="8">
-                <el-form-item label="电子发票" :required="true">
-                  <el-select v-model="form.ticket.ticketInvoice" placeholder="请选择电子发票" style="width: 100%;">
-                    <el-option v-for="item in ticketStatusList" :key="item.value" :label="item.label"
-                      :value="item.value" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="8">
-                <el-form-item label="过期退" :required="true">
-                  <el-select v-model="form.ticket.ticketExpired" placeholder="请选择过期退" style="width: 100%;">
-                    <el-option v-for="item in ticketStatusList" :key="item.value" :label="item.label"
-                      :value="item.value" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="8">
-                <el-form-item label="随时退" :required="true">
-                  <el-select v-model="form.ticket.ticketAnyTime" placeholder="请选择随时退" style="width: 100%;">
-                    <el-option v-for="item in ticketStatusList" :key="item.value" :label="item.label"
-                      :value="item.value" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row>
-              <el-col :span="8">
-                <el-form-item label="选座方式" :required="true">
-                  <el-select v-model="form.ticket.ticketChooseSeat" placeholder="请选择快递方式" style="width: 100%;">
-                    <el-option v-for="item in ticketChooseSeatList" :key="item.value" :label="item.label"
-                      :value="item.value" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="8">
-                <el-form-item label="快递方式" :required="true">
-                  <el-select v-model="form.ticket.ticketPostWay" placeholder="请选择快递方式" style="width: 100%;">
-                    <el-option v-for="item in ticketPostWayList" :key="item.value" :label="item.label"
-                      :value="item.value" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="8" v-if="form.ticket.ticketPostWay === '2'">
-                <el-form-item label="邮费">
-                  <el-input v-model="form.ticket.ticketPostage" placeholder="请输入邮费" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row>
-              <el-col :span="16">
-                <el-form-item label="须知" prop="ticketNotice">
-                  <editor v-model="form.ticket.ticketNotice" :min-height="192" />
-                </el-form-item>
-              </el-col>
-            </el-row>
+            <ProductTicket :ticket="form.ticket"/>
           </el-tab-pane>
           <el-tab-pane label="场次与票种" name="session" key="session"
             v-if="form.ticket && (form.productType == '13' || isUpdate)">
-            <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="addSessionRow()">新增场次与票种
-            </el-button>
-            <el-table :data="form.ticketSession" :rules="rules" ref="table" style="width: 100%" default-expand-all>
-              <el-table-column type="expand">
-                <template slot-scope="props">
-                  <el-table :data="props.row.ticketLine">
-                    <el-table-column :render-header="renderHeader" label="票种名称" align="center" prop="lineTitle">
-                      <template slot-scope="scope">
-                        <el-input v-model="scope.row.lineTitle" placeholder="请输入票种名称" />
-                      </template>
-                    </el-table-column>
-                    <el-table-column :render-header="renderHeader" label="外部产品编号" align="center" prop="lineTitle">
-                      <template slot-scope="scope">
-                        <el-input v-model="scope.row.otherId" placeholder="请输入外部产品编号" />
-                      </template>
-                    </el-table-column>
-                    <el-table-column :render-header="renderHeader" label="市场价格" align="center" prop="linePrice">
-                      <template slot-scope="scope">
-                        <el-input v-model="scope.row.linePrice" placeholder="请输入市场价格" />
-                      </template>
-                    </el-table-column>
-                    <el-table-column :render-header="renderHeader" label="售价" align="center" prop="lineSettlePrice">
-                      <template slot-scope="scope">
-                        <el-input v-model="scope.row.lineSettlePrice" placeholder="请输入售价" />
-                      </template>
-                    </el-table-column>
-                    <el-table-column :render-header="renderHeader" label="总数量" align="center" prop="lineNumber">
-                      <template slot-scope="scope">
-                        <el-input v-model="scope.row.lineNumber" placeholder="请输入总数量" />
-                      </template>
-                    </el-table-column>
-                    <el-table-column :render-header="renderHeader" label="单次购买上限" align="center" prop="lineUpperLimit">
-                      <template slot-scope="scope">
-                        <el-input v-model="scope.row.lineUpperLimit" placeholder="请输入单次购买上限" />
-                      </template>
-                    </el-table-column>
-                    <el-table-column :render-header="renderHeader" label="状态" align="center" prop="lineStatus">
-                      <template slot-scope="scope">
-                        <el-select v-model="scope.row.lineStatus" placeholder="请选择状态">
-                          <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
-                            :value="dict.value"></el-option>
-                        </el-select>
-                      </template>
-                    </el-table-column>
-                    <el-table-column label="操作" align="center">
-                      <template slot-scope="scope">
-                        <el-button size="mini" type="text" icon="el-icon-delete"
-                          @click="delLineRow(props.row,scope.row)" v-hasPermi="['zlyyh:productTicketSession:remove']">删除
-                        </el-button>
-                      </template>
-                    </el-table-column>
-                  </el-table>
-                </template>
-              </el-table-column>
-              <el-table-column :render-header="renderHeader" label="场次名称" align="center" prop="lineTitle">
-                <template slot-scope="scope">
-                  <el-input v-model="scope.row.session" placeholder="请输入场次名称" />
-                </template>
-              </el-table-column>
-              <el-table-column :render-header="renderHeader" label="状态" align="center" prop="lineStatus">
-                <template slot-scope="scope">
-                  <el-select v-model="scope.row.status" placeholder="请选择状态">
-                    <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
-                      :value="dict.value"></el-option>
-                  </el-select>
-                </template>
-              </el-table-column>
-              <el-table-column :render-header="renderHeader" label="是否预约范围" align="center" prop="isRange">
-                <template slot-scope="scope">
-                  <el-select v-model="scope.row.isRange" placeholder="请选择状态">
-                    <el-option v-for="dict in ticketStatusList" :key="dict.value" :label="dict.label"
-                      :value="dict.value"></el-option>
-                  </el-select>
-                </template>
-              </el-table-column>
-              <el-table-column label="观影时间" align="center" prop="date">
-                <template slot-scope="scope">
-                  <el-date-picker clearable v-model="scope.row.date" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-                    placeholder="请选择日期">
-                  </el-date-picker>
-                </template>
-              </el-table-column>
-              <el-table-column label="预约开始日期" align="left" prop="beginDate">
-                <template slot-scope="scope">
-                  <el-date-picker v-model="scope.row.beginDate" type="date" value-format="yyyy-MM-dd"
-                    placeholder="请选择预约开始日期">
-                  </el-date-picker>
-                </template>
-              </el-table-column>
-              <el-table-column label="预约结束日期" align="left" prop="endDate">
-                <template slot-scope="scope">
-                  <el-date-picker v-model="scope.row.endDate" type="date" value-format="yyyy-MM-dd"
-                    placeholder="请选择预约结束日期">
-                  </el-date-picker>
-                </template>
-              </el-table-column>
-              <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-                <template slot-scope="scope">
-                  <el-button type="primary" plain size="mini" @click="addLineRow(scope.row)">新增票种
-                  </el-button>
-                  <el-button size="mini" type="text" icon="el-icon-delete" @click="delSessionRow(scope.row)"
-                    v-hasPermi="['zlyyh:productTicketSession:remove']">删除
-                  </el-button>
-                </template>
-              </el-table-column>
-            </el-table>
+            <ProductSession :ticketSession="form.ticketSession"/>
           </el-tab-pane>
         </el-tabs>
       </el-form>
@@ -975,22 +783,20 @@
     productShowCityTreeSelect,
     selectCityList
   } from "@/api/zlyyh/area"
-  // import {
-  //   selectShopList,
-  //   selectShopListById
-  // } from "@/api/zlyyh/shop";
   import { selectListPlatform } from "@/api/zlyyh/platform"
   import { listSelectMerchant } from "@/api/zlyyh/merchant"
   import { selectListMerchant } from "@/api/zlyyh/commercialTenant"
   import { selectListDistributor } from "@/api/zlyyh/distributor"
   import { selectListCategory } from "@/api/zlyyh/category"
-  import { isArray } from "@/utils/validate.js"
   import item from "@/layout/components/Sidebar/Item.vue";
   import Shop from "@/views/zlyyh/shop/productShop.vue";
+  import ProductTicket from "@/views/zlyyh/product/productTicket.vue";
+  import ProductSession from "@/views/zlyyh/product/productSession.vue";
+  import {exportTags} from "@/api/zlyyh/tags";
 
   export default {
     name: "Product",
-    components: {Shop},
+    components: {Shop,ProductTicket,ProductSession},
     computed: {
       item() {
         return item
@@ -1026,9 +832,10 @@
         total: 0,
         // 商品表格数据
         productList: [],
+        // 标签列表
+        tagsList: [],
         platformList: [],
         merchantList: [],
-        // shopList: [],
         commercialTenantList: [],
         cityList: [],
         categoryList: [],
@@ -1116,7 +923,6 @@
           description: undefined,
           providerLogo: undefined,
           providerName: undefined,
-          tags: undefined,
           showCity: undefined,
           merchantId: undefined,
           shopGroupId: undefined,
@@ -1239,65 +1045,7 @@
             trigger: "blur"
           }],
         },
-        isUpdate: false,
-        ticketChooseSeatList: [{
-            value: '1',
-            label: '在线选座'
-          },
-          {
-            value: '2',
-            label: '先到先得'
-          },
-          {
-            value: '3',
-            label: '无座'
-          },
-          {
-            value: '4',
-            label: '实体票'
-          }
-        ],
-        ticketFormList: [{
-            value: '1',
-            label: '电子票'
-          },
-          {
-            value: '2',
-            label: '实体票'
-          }
-        ],
-        ticketCardList: [{
-            value: '0',
-            label: '必须填写'
-          },
-          {
-            value: '1',
-            label: '无需填写'
-          }
-        ],
-        ticketStatusList: [{
-            value: '0',
-            label: '是'
-          },
-          {
-            value: '1',
-            label: '否'
-          },
-        ],
-        ticketPostWayList: [{
-            value: '0',
-            label: '无需邮寄'
-          },
-          {
-            value: '1',
-            label: '包邮'
-          },
-          {
-            value: '2',
-            label: '另付邮费'
-          },
-        ],
-        shopParams: undefined
+        isUpdate: false
       };
     },
     created() {
@@ -1309,7 +1057,6 @@
       listSelectMerchant({}).then(res => {
         this.merchantList = res.data;
       })
-      // this.selectShopLists();
       let merchantParams = {
         status: "0"
       }
@@ -1328,33 +1075,9 @@
       }).then(res => {
         this.distributorList = res.data;
       })
+      this.getTagsList();
     },
     methods: {
-      // selectShopLists(query) {
-      //   if (query !== undefined) {
-      //     this.shopParams = {
-      //       status: "0",
-      //       shopName: query,
-      //       pageSize: 100
-      //     }
-      //   } else {
-      //     this.shopParams = {
-      //       status: "0",
-      //       pageSize: 100
-      //     }
-      //   }
-      //   selectShopList(this.shopParams).then(res => {
-      //     this.shopList = res.data;
-      //   })
-      // },
-      // selectShop(query) {
-      //   let params = {
-      //     ids: query
-      //   }
-      //   selectShopListById(params).then(res => {
-      //     this.shopList = res.data;
-      //   })
-      // },
       selectAll(val) {
         if (this.cityNodeAll) {
           // 	设置目前勾选的节点，使用此方法必须设置 node-key 属性
@@ -1602,10 +1325,6 @@
           if (this.form && this.form.commercialTenantId) {
             this.form.commercialTenantId = this.form.commercialTenantId.split(",")
           }
-          // if (this.form && this.form.shopId && this.form.productType == '13') {
-          //   this.selectShop(response.data.shopId);
-          //   this.form.shopId = this.form.shopId.split(",")
-          // }
           this.cityNodeAll = false;
           this.$nextTick(() => {
             showCity.then(res => {
@@ -1678,11 +1397,6 @@
             if (this.form.commercialTenantId) {
               this.form.commercialTenantId = this.form.commercialTenantId.toString();
             }
-            // if (this.form.shopId && this.form.shopId.length > 0 && isArray(this.form.shopId)) {
-            //   this.form.shopId = this.form.shopId.join(",");
-            // } else {
-            //   this.form.shopId = undefined
-            // }
             if (this.form.productId != null) {
               updateProduct(this.form).then(response => {
                 this.$modal.msgSuccess("修改成功");
@@ -1723,62 +1437,8 @@
           ...this.queryParams
         }, `product_${new Date().getTime()}.xlsx`)
       },
-      // 新增行
-      addSessionRow() {
-        if (this.form.ticketSession.length === 3) {
-          this.$modal.msg("场次已达上限。");
-          return;
-        }
-        const row = {
-          productId: undefined,
-          sessionId: undefined,
-          session: undefined,
-          status: undefined,
-          date: undefined,
-          ticketLine: [],
-        };
-        this.form.ticketSession.push(row)
-        this.addLineRow(row);
-      },
-      // 删除行
-      delSessionRow(row) {
-        const index = this.form.ticketSession.indexOf(row)
-        this.form.ticketSession.splice(index, 1);
-      },
-      // 新增行
-      addLineRow(row) {
-        if (row.ticketLine.length === 3) {
-          this.$modal.msg("票种已达上限。");
-          return;
-        }
-        const rows = {
-          lineId: undefined,
-          productId: undefined,
-          otherId: undefined,
-          sessionId: undefined,
-          lineTitle: undefined,
-          linePrice: undefined,
-          lineSettlePrice: undefined,
-          lineNumber: undefined,
-          lineUpperLimit: undefined,
-          lineStatus: undefined
-        };
-        row.ticketLine.push(rows);
-      }, // 删除行
-      delLineRow(row1, row2) {
-        const index = row1.ticketLine.indexOf(row2)
-        row1.ticketLine.splice(index, 1);
-      },
       // 演出票数据校验
       checkTicketSession(ticketSession) {
-        // if (this.form.shopId.length <= 0) {
-        //   this.$modal.msgWarning("商品类型为演出时，门店不能为空");
-        //   return 0;
-        // }
-        // if (this.form.shopId.length >= 2) {
-        //   this.$modal.msgWarning("商品类型为演出时，门店暂时只能有一个");
-        //   return 0;
-        // }
         if (this.form.ticket.ticketForm === undefined) {
           this.$modal.msgWarning("票形式不能为空！");
           return 0;
@@ -1891,16 +1551,11 @@
           }
         }
       },
-      renderHeader(h, {
-        column
-      }) {
-        let currentLabel = column.label;
-        return h('span', {}, [
-          h('span', {
-            style: 'color:red'
-          }, '* '),
-          h('span', {}, currentLabel)
-        ])
+      // 查询标签
+      getTagsList() {
+        exportTags().then(response => {
+          this.tagsList = response.data;
+        });
       },
     }
   };

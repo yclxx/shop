@@ -95,6 +95,8 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right">
         <template slot-scope="scope">
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleProductByShop(scope.row)"
+            v-hasPermi="['zlyyh:shop:merNoEdit']">商品维护</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleMerNoEdit(scope.row)"
             v-hasPermi="['zlyyh:shop:merNoEdit']">商户号配置</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
@@ -416,6 +418,9 @@
         </div>
       </el-dialog>
     </el-dialog>
+    <el-dialog title="门店商品" :visible.sync="isProduct" width="90%">
+      <Product v-bind:shopId=shopId></Product>
+    </el-dialog>
   </div>
 </template>
 
@@ -434,26 +439,15 @@
     addShopMerchant,
     updateShopMerchant
   } from "@/api/zlyyh/shopMerchant";
-  import {
-    selectListMerchant
-  } from "@/api/zlyyh/commercialTenant";
-  import {
-    selectListBusinessDistrict
-  } from "@/api/zlyyh/businessDistrict";
-  import {
-    selectListPlatform
-  } from "@/api/zlyyh/platform";
-  import {
-    selectListProduct
-  } from "@/api/zlyyh/product";
-  import {
-    getToken
-  } from "@/utils/auth";
+  import { selectListMerchant } from "@/api/zlyyh/commercialTenant";
+  import { selectListBusinessDistrict } from "@/api/zlyyh/businessDistrict";
+  import { selectListPlatform } from "@/api/zlyyh/platform";
+  import { selectListProduct } from "@/api/zlyyh/product";
+  import { getToken } from "@/utils/auth";
   import "@riophae/vue-treeselect/dist/vue-treeselect.css";
   import Treeselect from "@riophae/vue-treeselect";
-  import {
-    exportTags
-  } from "@/api/zlyyh/tags";
+  import { exportTags } from "@/api/zlyyh/tags";
+  import Product from "@/views/zlyyh/product/info.vue";
 
   export default {
     name: "Shop",
@@ -461,11 +455,13 @@
       't_grad_period_date_list', 'nature_type', 'invoice_type', 'activity_type', 'sys_yes_no'
     ],
     components: {
-      Treeselect
+      Treeselect,
+      Product
     },
     data() {
       let self = this
       return {
+        shopId: undefined,
         // 部门树选项
         deptOptions: undefined,
         shopMerchatOpen: false,
@@ -475,6 +471,8 @@
         commercialTenantList: [],
         //商品下拉列表
         productList: [],
+        // 商品展示页面
+        isProduct: false,
         // 按钮loading
         buttonLoading: false,
         // 遮罩层
@@ -614,53 +612,11 @@
             message: "ID不能为空",
             trigger: "blur"
           }],
-          // commercialTenantId: [
-          //   { required: true, message: "商户ID不能为空", trigger: "blur" }
-          // ],
           shopName: [{
             required: true,
             message: "门店名称不能为空",
             trigger: "blur"
           }],
-          // shopTel: [
-          //   { required: true, message: "门店电话不能为空", trigger: "blur" }
-          // ],
-          // businessHours: [
-          //   { required: true, message: "营业时间不能为空", trigger: "blur" }
-          // ],
-          // address: [
-          //   { required: true, message: "门店地址不能为空", trigger: "blur" }
-          // ],
-          // status: [
-          //   { required: true, message: "状态不能为空", trigger: "change" }
-          // ],
-          // formattedAddress: [
-          //   { required: true, message: "结构化地址信息不能为空", trigger: "blur" }
-          // ],
-          // province: [
-          //   { required: true, message: "省份名不能为空", trigger: "blur" }
-          // ],
-          // city: [
-          //   { required: true, message: "城市名不能为空", trigger: "blur" }
-          // ],
-          // district: [
-          //   { required: true, message: "地址所在区不能为空", trigger: "blur" }
-          // ],
-          // procode: [
-          //   { required: true, message: "省份编码不能为空", trigger: "blur" }
-          // ],
-          // citycode: [
-          //   { required: true, message: "城市编码不能为空", trigger: "blur" }
-          // ],
-          // adcode: [
-          //   { required: true, message: "区域编码不能为空", trigger: "blur" }
-          // ],
-          // longitude: [
-          //   { required: true, message: "经度不能为空", trigger: "blur" }
-          // ],
-          // latitude: [
-          //   { required: true, message: "纬度不能为空", trigger: "blur" }
-          // ],
           platformKey: [{
             required: true,
             message: "平台不能为空",
@@ -728,9 +684,6 @@
               message: "状态不能为空",
               trigger: "change"
             }],
-            // remark: [
-            //   { required: true, message: "备注不能为空", trigger: "blur" }
-            // ],
           }
         },
       };
@@ -1014,6 +967,11 @@
             this.$refs.upload.submit();
           }
         });
+      },
+      // 商品维护
+      handleProductByShop(row) {
+        this.shopId =  row.shopId;
+        this.isProduct = true;
       },
       //商户号配置按钮
       handleMerNoEdit(row) {
