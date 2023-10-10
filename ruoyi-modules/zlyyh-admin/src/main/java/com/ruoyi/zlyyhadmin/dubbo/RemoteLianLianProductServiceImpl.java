@@ -1,6 +1,8 @@
 package com.ruoyi.zlyyhadmin.dubbo;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.TimeInterval;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -28,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.dubbo.config.annotation.DubboService;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
@@ -67,6 +70,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
      *
      * @param platformKey
      */
+    @Async
     @Override
     public void selectLianLianProductList(Long platformKey) {
         // 账户id
@@ -82,6 +86,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
         // 产品图文详情
         String detailHtml = ysfConfigService.queryValueByKey(platformKey, "LianLian.detailHtml");
         log.info("开始执行联联产品列表定时任务.");
+        TimeInterval timer = DateUtil.timer();
         int cityPageNum = 0;
         try {
             String productList = basePath + queryProductList;
@@ -130,7 +135,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
         } catch (Exception e) {
             log.info("联联商品更新定时任务异常:{}", e.getMessage());
         }
-        log.info("结束执行联联产品列表定时任务.");
+        log.info("结束执行联联产品列表定时任务,耗时：{}分钟", timer.intervalMinute());
     }
 
     /**
