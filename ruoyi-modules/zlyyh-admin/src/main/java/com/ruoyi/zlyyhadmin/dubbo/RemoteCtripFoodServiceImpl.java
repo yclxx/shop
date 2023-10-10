@@ -120,6 +120,10 @@ public class RemoteCtripFoodServiceImpl implements RemoteCtripFoodService {
                     e.printStackTrace();
                 }
                 JSONArray products = shopProductList.getJSONArray("products");
+                //非空判断
+                if (ObjectUtil.isEmpty(products)){
+                    continue;
+                }
                 for (int j = 0; j < products.size(); j++) {
                     JSONObject productJSONObject = products.getJSONObject(j);
                     String xcProductId = productJSONObject.getString("productId");
