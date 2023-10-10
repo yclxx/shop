@@ -18,10 +18,7 @@ import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.*;
-import com.ruoyi.zlyyh.domain.bo.BusinessDistrictShopBo;
-import com.ruoyi.zlyyh.domain.bo.ShopBo;
-import com.ruoyi.zlyyh.domain.bo.ShopImportBo;
-import com.ruoyi.zlyyh.domain.bo.ShopMerchantBo;
+import com.ruoyi.zlyyh.domain.bo.*;
 import com.ruoyi.zlyyh.domain.vo.BusinessDistrictShopVo;
 import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
 import com.ruoyi.zlyyh.domain.vo.ShopMerchantVo;
@@ -158,6 +155,60 @@ public class ShopServiceImpl implements IShopService {
     /**
      * 查询门店列表
      */
+    public TableDataInfo<ShopVo> queryPageLists(ShopBo bo, PageQuery pageQuery) {
+        LambdaQueryWrapper<Shop> lqw = Wrappers.lambdaQuery();
+        lqw.eq(bo.getCommercialTenantId() != null, Shop::getCommercialTenantId, bo.getCommercialTenantId());
+        if (StringUtils.isNotBlank(bo.getShopName())) {
+            lqw.and(lq ->
+                lq.like(Shop::getShopName, bo.getShopName()).or().like(Shop::getAddress, bo.getShopName())
+                    .or().like(Shop::getFormattedAddress, bo.getShopName())
+            );
+        }
+        if (StringUtils.isNotBlank(bo.getProvince())) {
+            lqw.and(lq ->
+                lq.like(Shop::getProvince, bo.getProvince()).or().like(Shop::getCity, bo.getProvince())
+                    .or().like(Shop::getDistrict, bo.getProvince())
+                    .or().like(Shop::getProcode, bo.getProvince())
+                    .or().like(Shop::getCitycode, bo.getProvince())
+                    .or().like(Shop::getAdcode, bo.getProvince())
+            );
+        }
+        if (ObjectUtil.isNotEmpty(bo.getSort()) && bo.getSort().equals(0L)) {
+            if (ObjectUtil.isNotEmpty(bo.getProductId())) {
+                String sql = "SELECT shop_id FROM t_shop_product WHERE product_id =  " + bo.getProductId();
+                lqw.apply("shop_id IN (" + sql + ")");
+            }
+        }
+        if (ObjectUtil.isNotEmpty(bo.getSort()) && bo.getSort().equals(1L)) {
+            if (ObjectUtil.isNotEmpty(bo.getProductId())) {
+                String sql = "SELECT shop_id FROM t_shop_product WHERE product_id =  " + bo.getProductId();
+                lqw.apply("shop_id NOT IN (" + sql + ")");
+            }
+        }
+        if (ObjectUtil.isNotEmpty(bo.getSort()) && bo.getSort().equals(3L)) {
+            if (StringUtils.isNotEmpty(bo.getBusinessDistrictId())) {
+                String sql = "SELECT shop_id FROM t_business_district_shop WHERE business_district_id = " + bo.getBusinessDistrictId();
+                lqw.apply("shop_id IN (" + sql + ")");
+            } else {
+                String sql = "SELECT shop_id FROM t_business_district_shop WHERE business_district_id = " + bo.getBusinessDistrictId();
+                lqw.apply("shop_id NOT IN (" + sql + ")");
+            }
+        } else if (ObjectUtil.isNotEmpty(bo.getSort()) && bo.getSort().equals(4L)) {
+            if (StringUtils.isNotEmpty(bo.getBusinessDistrictId())) {
+                String sql = "SELECT shop_id FROM t_business_district_shop WHERE business_district_id = " + bo.getBusinessDistrictId();
+                lqw.apply("shop_id NOT IN (" + sql + ")");
+            }
+        }
+
+        lqw.eq(StringUtils.isNotBlank(bo.getStatus()), Shop::getStatus, bo.getStatus());
+        lqw.eq(bo.getPlatformKey() != null, Shop::getPlatformKey, bo.getPlatformKey());
+        Page<ShopVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+        return TableDataInfo.build(result);
+    }
+
+    /**
+     * 查询门店列表
+     */
     @Override
     public TableDataInfo<ShopVo> queryPageList(ShopBo bo, PageQuery pageQuery) {
         LambdaQueryWrapper<Shop> lqw = buildQueryWrapper(bo);
@@ -192,10 +243,6 @@ public class ShopServiceImpl implements IShopService {
                     .or().like(Shop::getAdcode, bo.getProvince())
             );
         }
-        if (StringUtils.isNotEmpty(bo.getBusinessDistrictId())) {
-            String sql = "SELECT shop_id FROM t_business_district_shop WHERE business_district_id = " + bo.getBusinessDistrictId();
-            lqw.apply("shop_id IN (" + sql + ")");
-        }
         lqw.eq(StringUtils.isNotBlank(bo.getStatus()), Shop::getStatus, bo.getStatus());
         lqw.eq(bo.getPlatformKey() != null, Shop::getPlatformKey, bo.getPlatformKey());
         return lqw;
@@ -220,6 +267,12 @@ public class ShopServiceImpl implements IShopService {
         if (flag) {
             bo.setShopId(add.getShopId());
             setTagsShop(bo.getTagsList(), add.getShopId());
+            if (ObjectUtil.isNotEmpty(bo.getProductId())) {
+                ShopProductBo shopProductBo = new ShopProductBo();
+                shopProductBo.setShopId(add.getShopId());
+                shopProductBo.setProductId(bo.getProductId());
+                shopProductService.insertByBo(shopProductBo);
+            }
 //            changeGeoCache(add.getShopId());
         }
         return flag;
@@ -270,7 +323,7 @@ public class ShopServiceImpl implements IShopService {
             delShopProduct(id);
             //删除与商圈相关信息
             delShopBusinessDistrictId(id);
-            // 删除标签
+            // 删除删除门店同时删除门店对应的标签
             tagsShopMapper.deleteByShopId(id);
         }
         return baseMapper.deleteBatchIds(ids) > 0;

@@ -296,7 +296,7 @@ import {deptTreeSelect} from "@/api/system/user";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 import Treeselect from "@riophae/vue-treeselect";
 import {selectListPage} from "@/api/zlyyh/page";
-import Shop from "@/views/zlyyh/shop/info.vue";
+import Shop from "@/views/zlyyh/shop/businessShop.vue";
 
 export default {
   name: "BusinessDistrict",

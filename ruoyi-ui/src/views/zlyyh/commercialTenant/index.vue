@@ -92,8 +92,6 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right">
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="dialogVisible = true"
-            v-hasPermi="['zlyyh:commercialTenant:edit']">门店维护</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['zlyyh:commercialTenant:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"

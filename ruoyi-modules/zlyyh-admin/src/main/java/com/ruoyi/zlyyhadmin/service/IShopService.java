@@ -31,6 +31,10 @@ public interface IShopService {
     ShopVo queryById(Long shopId);
 
     /**
+     * 查询门店列表(特殊查询条件使用)
+     */
+    TableDataInfo<ShopVo> queryPageLists(ShopBo bo, PageQuery pageQuery);
+    /**
      * 查询门店列表
      */
     TableDataInfo<ShopVo> queryPageList(ShopBo bo, PageQuery pageQuery);

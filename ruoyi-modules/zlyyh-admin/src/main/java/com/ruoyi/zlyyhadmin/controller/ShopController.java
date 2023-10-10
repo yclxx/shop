@@ -48,6 +48,14 @@ public class ShopController extends BaseController {
     private final IShopService iShopService;
 
     /**
+     * 特殊查询条件
+     */
+    @GetMapping("/lists")
+    public TableDataInfo<ShopVo> lists(ShopBo bo, PageQuery pageQuery) {
+        return iShopService.queryPageLists(bo, pageQuery);
+    }
+
+    /**
      * 查询门店列表
      */
     @SaCheckPermission("zlyyh:shop:list")

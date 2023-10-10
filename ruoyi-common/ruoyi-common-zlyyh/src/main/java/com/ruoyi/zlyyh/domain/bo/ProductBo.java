@@ -326,6 +326,19 @@ public class ProductBo extends BaseEntity {
      * 是否校验用户购买城市
      */
     private String checkPayCity;
+    /**
+     * 支持优惠券
+     */
+    private String isCoupon;
+    /**
+     * 是否分享
+     */
+    private String isShare;
+    /**
+     * 供应商
+     */
+    private String supplier;
+
 
     /**
      * 演出票商品信息

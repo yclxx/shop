@@ -108,10 +108,10 @@ public class ProductServiceImpl implements IProductService {
             List<ProductTicketSessionVo> ticketSessionVos = productTicketSessionService.queryLists(sessionBo);
             productVo.setTicketSession(ticketSessionVos);
         }
-        List<Long> shopIds = shopProductService.queryByProductId(productId);
-        if (!shopIds.isEmpty()) {
-            productVo.setShopId(StringUtils.join(shopIds, ","));
-        }
+        //List<Long> shopIds = shopProductService.queryByProductId(productId);
+        //if (!shopIds.isEmpty()) {
+        //    productVo.setShopId(StringUtils.join(shopIds, ","));
+        //}
         return productVo;
     }
 
@@ -304,15 +304,15 @@ public class ProductServiceImpl implements IProductService {
             processCommercialTenantProduct(bo.getProductId(), bo.getCommercialTenantId(), false);
         }
         // 处理门店与产品关联表
-        if (StringUtils.isNotEmpty(bo.getShopId())) {
-            String[] split = bo.getShopId().split(",");
-            for (String s : split) {
-                ShopProductBo shopBo = new ShopProductBo();
-                shopBo.setProductId(bo.getProductId());
-                shopBo.setShopId(Long.valueOf(s));
-                shopProductService.insertByBo(shopBo);
-            }
-        }
+        //if (StringUtils.isNotEmpty(bo.getShopId())) {
+        //    String[] split = bo.getShopId().split(",");
+        //    for (String s : split) {
+        //        ShopProductBo shopBo = new ShopProductBo();
+        //        shopBo.setProductId(bo.getProductId());
+        //        shopBo.setShopId(Long.valueOf(s));
+        //        shopProductService.insertByBo(shopBo);
+        //    }
+        //}
         setProductCity(add.getProductId());
         return flag;
     }
@@ -361,16 +361,16 @@ public class ProductServiceImpl implements IProductService {
             }
         }
         // 处理门店与产品关联表
-        if (StringUtils.isNotEmpty(bo.getShopId())) {
-            shopProductService.deleteByProductId(bo.getProductId());
-            String[] split = bo.getShopId().split(",");
-            for (String s : split) {
-                ShopProductBo shopBo = new ShopProductBo();
-                shopBo.setProductId(bo.getProductId());
-                shopBo.setShopId(Long.valueOf(s));
-                shopProductService.insertByBo(shopBo);
-            }
-        }
+        //if (StringUtils.isNotEmpty(bo.getShopId())) {
+        //    shopProductService.deleteByProductId(bo.getProductId());
+        //    String[] split = bo.getShopId().split(",");
+        //    for (String s : split) {
+        //        ShopProductBo shopBo = new ShopProductBo();
+        //        shopBo.setProductId(bo.getProductId());
+        //        shopBo.setShopId(Long.valueOf(s));
+        //        shopProductService.insertByBo(shopBo);
+        //    }
+        //}
         setProductCity(update.getProductId());
         return flag;
     }

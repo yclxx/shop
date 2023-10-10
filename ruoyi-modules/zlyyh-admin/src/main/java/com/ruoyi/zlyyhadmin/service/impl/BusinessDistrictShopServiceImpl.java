@@ -1,29 +1,27 @@
 package com.ruoyi.zlyyhadmin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
-import com.ruoyi.common.core.constant.CacheNames;
-import com.ruoyi.common.core.utils.StringUtils;
-import com.ruoyi.common.mybatis.core.page.PageQuery;
-import com.ruoyi.common.mybatis.core.page.TableDataInfo;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.ruoyi.zlyyh.domain.CategoryProduct;
-import com.ruoyi.zlyyh.domain.ShopProduct;
-import com.ruoyi.zlyyh.utils.PermissionUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
+import com.ruoyi.common.core.constant.CacheNames;
+import com.ruoyi.common.mybatis.core.page.PageQuery;
+import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.zlyyh.domain.BusinessDistrictShop;
+import com.ruoyi.zlyyh.domain.bo.BusinessDistrictShopBo;
+import com.ruoyi.zlyyh.domain.vo.BusinessDistrictShopVo;
+import com.ruoyi.zlyyh.mapper.BusinessDistrictShopMapper;
 import com.ruoyi.zlyyhadmin.service.IBusinessDistrictShopService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
-import com.ruoyi.zlyyh.domain.bo.BusinessDistrictShopBo;
-import com.ruoyi.zlyyh.domain.vo.BusinessDistrictShopVo;
-import com.ruoyi.zlyyh.domain.BusinessDistrictShop;
-import com.ruoyi.zlyyh.mapper.BusinessDistrictShopMapper;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Collection;
 
 /**
  * 商圈门店关联Service业务层处理
@@ -123,5 +121,43 @@ public class BusinessDistrictShopServiceImpl implements IBusinessDistrictShopSer
     @Override
     public Boolean remove(LambdaQueryWrapper<BusinessDistrictShop> queryWrapper) {
         return SqlHelper.retBool(baseMapper.delete(queryWrapper));
+    }
+
+    @Override
+    public Boolean addShopByProduct(BusinessDistrictShopBo bo) {
+        List<BusinessDistrictShop> add = new ArrayList<>();
+        if (ObjectUtil.isNotEmpty(bo.getShopIds()) && ObjectUtil.isNotEmpty(bo.getBusinessDistrictId())) {
+            bo.getShopIds().forEach(o -> {
+                BusinessDistrictShop shopProduct = new BusinessDistrictShop();
+                shopProduct.setShopId(o);
+                shopProduct.setBusinessDistrictId(bo.getBusinessDistrictId());
+                add.add(shopProduct);
+            });
+            return baseMapper.insertBatch(add);
+        } else if (ObjectUtil.isNotEmpty(bo.getBusinessDistrictIds()) && ObjectUtil.isNotEmpty(bo.getShopId())) {
+            bo.getBusinessDistrictIds().forEach(o -> {
+                BusinessDistrictShop shopProduct = new BusinessDistrictShop();
+                shopProduct.setShopId(bo.getShopId());
+                shopProduct.setBusinessDistrictId(o);
+                add.add(shopProduct);
+            });
+            return baseMapper.insertBatch(add);
+        }
+        return false;
+    }
+
+    @Override
+    public int delByShopProduct(BusinessDistrictShopBo bo) {
+        LambdaQueryWrapper<BusinessDistrictShop> wrapper = Wrappers.lambdaQuery();
+        if (ObjectUtil.isNotEmpty(bo.getShopIds()) && ObjectUtil.isNotEmpty(bo.getBusinessDistrictId())) {
+            wrapper.eq(BusinessDistrictShop::getBusinessDistrictId,bo.getBusinessDistrictId());
+            wrapper.in(BusinessDistrictShop::getShopId,bo.getShopIds());
+            return baseMapper.delete(wrapper);
+        } else if (ObjectUtil.isNotEmpty(bo.getBusinessDistrictIds()) && ObjectUtil.isNotEmpty(bo.getShopId())) {
+            wrapper.eq(BusinessDistrictShop::getShopId,bo.getShopId());
+            wrapper.in(BusinessDistrictShop::getBusinessDistrictId,bo.getBusinessDistrictIds());
+            return baseMapper.delete(wrapper);
+        }
+        return 0;
     }
 }
