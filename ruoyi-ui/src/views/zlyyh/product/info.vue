@@ -668,7 +668,10 @@
               </el-col>
               <el-col :span="8">
                 <el-form-item label="标签" prop="tags">
-                  <el-input v-model="form.tags" placeholder="请输入内容"/>
+                  <el-select v-model="form.tagsList" multiple placeholder="请选择标签" style="width: 90%;">
+                    <el-option v-for="item in tagsList" :key="item.tagsId" :label="item.tagsName" :value="item.tagsId">
+                    </el-option>
+                  </el-select>
                 </el-form-item>
               </el-col>
               <el-col :span="8">
@@ -695,8 +698,14 @@
                 </el-form-item>
               </el-col>
               <el-col :span="8">
+                <!--                <el-form-item label="供应商" prop="supplier">-->
+                <!--                  <el-input v-model="form.supplier" placeholder="请输入供应商"/>-->
+                <!--                </el-form-item>-->
                 <el-form-item label="供应商" prop="supplier">
-                  <el-input v-model="form.supplier" placeholder="请输入供应商"/>
+                  <el-select v-model="form.supplier" placeholder="请选择供应商">
+                    <el-option v-for="dict in supplierList" :key="dict.id" :label="dict.label"
+                               :value="dict.id"></el-option>
+                  </el-select>
                 </el-form-item>
               </el-col>
             </el-row>
@@ -797,6 +806,8 @@ import {selectListCategory} from "@/api/zlyyh/category"
 import item from "@/layout/components/Sidebar/Item.vue";
 import ProductTicket from "@/views/zlyyh/product/productTicket.vue";
 import ProductSession from "@/views/zlyyh/product/productSession.vue";
+import {exportTags} from "@/api/zlyyh/tags";
+import {selectSupplier} from "@/api/zlyyh/supplier";
 
 export default {
   name: "Product",
@@ -847,6 +858,8 @@ export default {
       total: 0,
       // 商品表格数据
       productList: [],
+      // 标签列表
+      tagsList: [],
       platformList: [],
       merchantList: [],
       commercialTenantList: [],
@@ -889,6 +902,8 @@ export default {
       //城市列表
       cityOptions: [],
       distributorList: [],
+      // 供应商
+      supplierList: [],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -1087,6 +1102,8 @@ export default {
     }).then(res => {
       this.distributorList = res.data;
     })
+    this.getTagsList();
+    this.selectSupplierList();
   },
   methods: {
     selectAll(val) {
@@ -1219,7 +1236,7 @@ export default {
         description: undefined,
         providerLogo: undefined,
         providerName: undefined,
-        tags: undefined,
+        tagsList: undefined,
         showCity: undefined,
         merchantId: undefined,
         shopId: undefined,
@@ -1405,6 +1422,7 @@ export default {
           if (this.form.commercialTenantId) {
             this.form.commercialTenantId = this.form.commercialTenantId.toString();
           }
+          this.form.shopId = this.shopId;
           if (this.form.productId != null) {
             updateProduct(this.form).then(response => {
               this.$modal.msgSuccess("修改成功");
@@ -1559,7 +1577,23 @@ export default {
           }
         }
       }
-    }
+    },
+    // 查询标签
+    getTagsList() {
+      const param = {
+        'tagsType': '0'
+      }
+      exportTags(param).then(response => {
+        this.tagsList = response.data;
+      });
+    },
+    /** 查询供应商 */
+    selectSupplierList() {
+      selectSupplier(this.form).then(response => {
+        this.supplierList = response.data;
+      }).finally(() => {
+      });
+    },
   }
 };
 </script>

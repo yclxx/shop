@@ -59,7 +59,6 @@ public class TagsServiceImpl implements ITagsService {
     }
 
     private LambdaQueryWrapper<Tags> buildQueryWrapper(TagsBo bo) {
-        Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<Tags> lqw = Wrappers.lambdaQuery();
         lqw.like(StringUtils.isNotBlank(bo.getTagsName()), Tags::getTagsName, bo.getTagsName());
         lqw.eq(StringUtils.isNotBlank(bo.getTagsType()), Tags::getTagsType, bo.getTagsType());

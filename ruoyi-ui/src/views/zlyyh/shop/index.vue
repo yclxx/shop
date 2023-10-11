@@ -220,7 +220,10 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="供应商" prop="supplier" style="width: 92%;">
-              <el-input v-model="form.supplier" placeholder="请输入供应商" />
+              <el-select v-model="form.supplier" placeholder="请选择供应商" style="width: 100%;">
+                <el-option v-for="dict in supplierList" :key="dict.id" :label="dict.label"
+                           :value="dict.id"></el-option>
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -448,6 +451,7 @@
   import Treeselect from "@riophae/vue-treeselect";
   import { exportTags } from "@/api/zlyyh/tags";
   import Product from "@/views/zlyyh/product/info.vue";
+  import {selectSupplier} from "@/api/zlyyh/supplier";
 
   export default {
     name: "Shop",
@@ -489,6 +493,8 @@
         total: 0,
         // 门店表格数据
         shopList: [],
+        // 供应商
+        supplierList: [],
         //商圈列表 选择商圈
         businessDistrictList: [],
         // 标签列表 选择标签
@@ -695,6 +701,7 @@
       this.getBusinessDistrictList();
       this.getProductSelectList();
       this.getTagsList();
+      this.selectSupplierList();
     },
     methods: {
       poiChange(index) {
@@ -1057,8 +1064,18 @@
       },
       /** 查询标签 */
       getTagsList() {
-        exportTags().then(response => {
+        const param = {
+          'tagsType': '2'
+        }
+        exportTags(param).then(response => {
           this.tagsList = response.data;
+        });
+      },
+      /** 查询供应商 */
+      selectSupplierList() {
+        selectSupplier(this.form).then(response => {
+          this.supplierList = response.data;
+        }).finally(() => {
         });
       },
       /** 删除按钮操作 */

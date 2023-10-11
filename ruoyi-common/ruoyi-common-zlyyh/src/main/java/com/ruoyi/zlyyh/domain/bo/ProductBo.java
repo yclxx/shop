@@ -211,9 +211,11 @@ public class ProductBo extends BaseEntity {
     private String providerName;
 
     /**
-     * 标签,英文逗号隔开
+     * 标签,英文逗号隔开(已废弃，暂时保留)
      */
     private String tags;
+
+    private List<Long> tagsList;
 
     /**
      * 展示城市：ALL-全部、否则城市行政区号，多个之间用英文逗号隔开

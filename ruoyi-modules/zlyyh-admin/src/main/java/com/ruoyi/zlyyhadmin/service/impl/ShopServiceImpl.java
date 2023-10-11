@@ -463,11 +463,6 @@ public class ShopServiceImpl implements IShopService {
         String key;
         //根据经纬度查询地址信息
         if (ObjectUtil.isNotEmpty(bo.getLongitude()) && ObjectUtil.isNotEmpty(bo.getLatitude()) && bo.getLatitude().compareTo(BigDecimal.ZERO) > 0 && bo.getLongitude().compareTo(BigDecimal.ZERO) > 0) {
-            String key = "importShop:" + bo.getLongitude() + "," + bo.getLatitude();
-
-            JSONObject addressInfo = RedisUtils.getCacheObject(key);
-            String location = bo.getLongitude() + "," + bo.getLatitude();
-        if (ObjectUtil.isNotEmpty(bo.getLongitude()) && ObjectUtil.isNotEmpty(bo.getLatitude()) && bo.getLatitude().compareTo(BigDecimal.ZERO) > 0 && bo.getLongitude().compareTo(BigDecimal.ZERO) > 0) {
             key = "importShop:" + bo.getLongitude() + "," + bo.getLatitude();
             addressInfo = RedisUtils.getCacheObject(key);
             String location = bo.getLongitude() + "," + bo.getLatitude();
@@ -507,9 +502,7 @@ public class ShopServiceImpl implements IShopService {
             if (StringUtils.isNotBlank(key)) {
                 RedisUtils.setCacheObject(key, addressInfo, Duration.ofDays(5));
             }
-
         }
-
     }
 
     @Override
@@ -552,6 +545,7 @@ public class ShopServiceImpl implements IShopService {
         queryWrapper.last("limit 1");
         return baseMapper.selectVoOne(queryWrapper);
     }
+
 
     private void setTagsShop(List<Long> tagsList, Long shopId) {
         if (ObjectUtil.isNotEmpty(tagsList)) {

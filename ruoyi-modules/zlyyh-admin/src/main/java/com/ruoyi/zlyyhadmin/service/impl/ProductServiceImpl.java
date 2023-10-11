@@ -18,13 +18,11 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.resource.api.RemoteFileService;
 import com.ruoyi.resource.api.domain.SysFile;
-import com.ruoyi.zlyyh.domain.CategoryProduct;
-import com.ruoyi.zlyyh.domain.CommercialTenantProduct;
-import com.ruoyi.zlyyh.domain.Product;
-import com.ruoyi.zlyyh.domain.ProductInfo;
+import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.*;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.ProductMapper;
+import com.ruoyi.zlyyh.mapper.TagsProductMapper;
 import com.ruoyi.zlyyh.param.LianLianParam;
 import com.ruoyi.zlyyh.service.YsfConfigService;
 import com.ruoyi.zlyyh.utils.LianLianUtils;
@@ -42,6 +40,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +64,7 @@ public class ProductServiceImpl implements IProductService {
     private final IShopProductService shopProductService;
     private final IProductInfoService productInfoService;
     private final YsfConfigService ysfConfigService;
+    private final TagsProductMapper tagsProductMapper;
     @DubboReference
     private RemoteFileService remoteFileService;
 
@@ -107,6 +107,10 @@ public class ProductServiceImpl implements IProductService {
             sessionBo.setProductId(productId);
             List<ProductTicketSessionVo> ticketSessionVos = productTicketSessionService.queryLists(sessionBo);
             productVo.setTicketSession(ticketSessionVos);
+        }
+        List<Long> tags = tagsProductMapper.selectByProductId(productId);
+        if (ObjectUtil.isNotEmpty(tags)) {
+            productVo.setTagsList(tags);
         }
         //List<Long> shopIds = shopProductService.queryByProductId(productId);
         //if (!shopIds.isEmpty()) {
@@ -315,6 +319,17 @@ public class ProductServiceImpl implements IProductService {
             shopBo.setShopId(Long.valueOf(bo.getShopId()));
             shopProductService.insertByBo(shopBo);
         }
+        // 处理标签
+        if (ObjectUtil.isNotEmpty(bo.getTagsList())) {
+            List<TagsProduct> addTagsProduct = new ArrayList<>();
+            for (Long aLong : bo.getTagsList()) {
+                TagsProduct tagsProduct = new TagsProduct();
+                tagsProduct.setProductId(add.getProductId());
+                tagsProduct.setTagsId(aLong);
+                addTagsProduct.add(tagsProduct);
+            }
+            tagsProductMapper.insertBatch(addTagsProduct);
+        }
         setProductCity(add.getProductId());
         return flag;
     }
@@ -368,6 +383,18 @@ public class ProductServiceImpl implements IProductService {
             shopBo.setProductId(bo.getProductId());
             shopBo.setShopId(Long.valueOf(bo.getShopId()));
             shopProductService.insertByBo(shopBo);
+        }
+        // 处理标签
+        if (ObjectUtil.isNotEmpty(bo.getTagsList())) {
+            tagsProductMapper.deleteByProductId(bo.getProductId());
+            List<TagsProduct> addTagsProduct = new ArrayList<>();
+            for (Long aLong : bo.getTagsList()) {
+                TagsProduct tagsProduct = new TagsProduct();
+                tagsProduct.setProductId(bo.getProductId());
+                tagsProduct.setTagsId(aLong);
+                addTagsProduct.add(tagsProduct);
+            }
+            tagsProductMapper.insertBatch(addTagsProduct);
         }
         setProductCity(update.getProductId());
         return flag;

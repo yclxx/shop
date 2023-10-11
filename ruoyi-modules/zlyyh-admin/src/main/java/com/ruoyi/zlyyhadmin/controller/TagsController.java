@@ -5,23 +5,21 @@ import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
 import com.ruoyi.common.core.web.controller.BaseController;
-import com.ruoyi.common.excel.utils.ExcelUtil;
 import com.ruoyi.common.log.annotation.Log;
 import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
+import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.zlyyh.domain.bo.TagsBo;
+import com.ruoyi.zlyyh.domain.vo.TagsVo;
 import com.ruoyi.zlyyhadmin.service.ITagsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.ruoyi.zlyyh.domain.vo.TagsVo;
-import com.ruoyi.zlyyh.domain.bo.TagsBo;
-import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 
-import java.util.List;
-import java.util.Arrays;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * 标签控制器
@@ -50,10 +48,8 @@ public class TagsController extends BaseController {
     /**
      * 查询标签列表
      */
-    //@SaCheckPermission("zlyyh:tags:l")
-    //@Log(title = "标签", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
-    public R<List<TagsVo>> export(TagsBo bo, HttpServletResponse response) {
+    public R<List<TagsVo>> export(TagsBo bo) {
         List<TagsVo> list = iTagsService.queryList(bo);
         return R.ok(list);
     }

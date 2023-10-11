@@ -182,8 +182,11 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="供应商" prop="supplier" label-width="95px">
-                <el-input v-model="form.supplier" placeholder="请输入供应商" />
+            <el-form-item label="供应商" prop="supplier">
+              <el-select v-model="form.supplier" placeholder="请选择供应商" style="width: 100%;">
+                <el-option v-for="dict in supplierList" :key="dict.id" :label="dict.label"
+                           :value="dict.id"></el-option>
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -241,6 +244,10 @@
           </el-col>
         </el-row>
       </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
+        <el-button @click="cancel">取 消</el-button>
+      </div>
     </el-dialog>
   </div>
 </template>
@@ -257,6 +264,7 @@
   import { selectListProduct } from "@/api/zlyyh/product";
   import { selectListCategory } from "@/api/zlyyh/category";
   import { exportTags } from "@/api/zlyyh/tags";
+  import {selectSupplier} from "@/api/zlyyh/supplier";
 
   export default {
     name: "CommercialTenant",
@@ -271,6 +279,8 @@
         },
         //商品下拉列表
         productList: [],
+        // 供应商
+        supplierList: [],
         //生效时间范围
         startTime: [],
         //失效时间范围
@@ -370,6 +380,7 @@
       this.getProductSelectList();
       this.getCategorySelectList();
       this.getTagsList();
+      this.selectSupplierList();
     },
     methods: {
       /** 查询商户列表 */
@@ -486,7 +497,6 @@
         const commercialTenantId = row.commercialTenantId || this.ids
         getCommercialTenant(commercialTenantId).then(response => {
           this.loading = false;
-          debugger
           if(response.data.tags != undefined && response.data.tags != null && response.data.tags != '') {
             response.data.tags = response.data.tags.split(',');
           }
@@ -500,7 +510,6 @@
         this.$refs["form"].validate(valid => {
           if (valid) {
             this.buttonLoading = true;
-            debugger
             if(this.form.tags != undefined && this.form.tags != null && this.form.tags != '') {
               this.form.tags = this.form.tags.join(',')
             }
@@ -540,8 +549,18 @@
       },
       /** 查询标签 */
       getTagsList() {
-        exportTags().then(response => {
+        const param = {
+          'tagsType': '3'
+        }
+        exportTags(param).then(response => {
           this.tagsList = response.data;
+        });
+      },
+      /** 查询供应商 */
+      selectSupplierList() {
+        selectSupplier(this.form).then(response => {
+          this.supplierList = response.data;
+        }).finally(() => {
         });
       },
       /** 导出按钮操作 */
