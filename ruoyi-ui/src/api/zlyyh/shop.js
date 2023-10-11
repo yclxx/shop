@@ -17,6 +17,15 @@ export function listShops(query) {
   })
 }
 
+// 查询门店列表标签 分页
+export function selectShop(query) {
+  return request({
+    url: '/zlyyh-admin/shop/selectShop',
+    method: 'get',
+    params: query
+  })
+}
+
 // 查询门店详细
 export function getShop(shopId) {
   return request({
