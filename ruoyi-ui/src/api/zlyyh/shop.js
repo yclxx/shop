@@ -8,6 +8,14 @@ export function listShop(query) {
     params: query
   })
 }
+// 特殊查询条件
+export function listShops(query) {
+  return request({
+    url: '/zlyyh-admin/shop/lists',
+    method: 'get',
+    params: query
+  })
+}
 
 // 查询门店详细
 export function getShop(shopId) {

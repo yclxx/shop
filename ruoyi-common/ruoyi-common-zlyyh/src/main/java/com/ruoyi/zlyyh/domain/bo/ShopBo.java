@@ -177,6 +177,39 @@ public class ShopBo extends BaseEntity {
      * 推荐类型：0-不推荐，1-商圈精选，2-品牌精选
      */
     private String pushType;
+    /**
+     * 是否共享
+     */
+    private String is_share;
+    /**
+     * 供应商（与supplierShopId无关系）
+     */
+    private String supplier;
+    /**
+     * 营业执照
+     */
+    private String license;
+    /**
+     * 性质
+     */
+    private String nature;
+    /**
+     * 发票类型
+     */
+    private String invoice;
+    /**
+     * 收款账户
+     */
+    private String account;
+    /**
+     * 活动类型
+     */
+    private String activity;
+
+    /**
+     * 标签
+     */
+    private List<Long> tagsList;
 
     /**
      * 供应商门店id

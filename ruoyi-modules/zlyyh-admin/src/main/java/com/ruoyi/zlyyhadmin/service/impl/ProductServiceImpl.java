@@ -108,10 +108,10 @@ public class ProductServiceImpl implements IProductService {
             List<ProductTicketSessionVo> ticketSessionVos = productTicketSessionService.queryLists(sessionBo);
             productVo.setTicketSession(ticketSessionVos);
         }
-        List<Long> shopIds = shopProductService.queryByProductId(productId);
-        if (!shopIds.isEmpty()) {
-            productVo.setShopId(StringUtils.join(shopIds, ","));
-        }
+        //List<Long> shopIds = shopProductService.queryByProductId(productId);
+        //if (!shopIds.isEmpty()) {
+        //    productVo.setShopId(StringUtils.join(shopIds, ","));
+        //}
         return productVo;
     }
 
@@ -201,7 +201,6 @@ public class ProductServiceImpl implements IProductService {
         lqw.eq(StringUtils.isNotBlank(bo.getDescription()), Product::getDescription, bo.getDescription());
         lqw.eq(StringUtils.isNotBlank(bo.getProviderLogo()), Product::getProviderLogo, bo.getProviderLogo());
         lqw.like(StringUtils.isNotBlank(bo.getProviderName()), Product::getProviderName, bo.getProviderName());
-        lqw.eq(StringUtils.isNotBlank(bo.getTags()), Product::getTags, bo.getTags());
         if (StringUtils.isNotEmpty(bo.getShowCity())) {
             lqw.and(lq -> lq.like(Product::getShowCity, bo.getShowCity()).or(e -> e.eq(Product::getShowCity, "ALL")));
         }
@@ -216,6 +215,9 @@ public class ProductServiceImpl implements IProductService {
         lqw.eq(StringUtils.isNotBlank(bo.getShowIndex()), Product::getShowIndex, bo.getShowIndex());
         lqw.eq(bo.getPlatformKey() != null, Product::getPlatformKey, bo.getPlatformKey());
         lqw.eq(bo.getSort() != null, Product::getSort, bo.getSort());
+        if (ObjectUtil.isNotEmpty(bo.getShopId())) {
+            lqw.apply("product_id IN (select product_id from t_shop_product where shop_id = " + bo.getShopId() + ")");
+        }
         lqw.between(params.get("beginStartDate") != null && params.get("endStartDate") != null, Product::getShowStartDate, params.get("beginStartDate"), params.get("endStartDate"));
         lqw.between(params.get("beginEndDate") != null && params.get("endEndDate") != null, Product::getShowEndDate, params.get("beginEndDate"), params.get("endEndDate"));
         return lqw;
@@ -242,6 +244,9 @@ public class ProductServiceImpl implements IProductService {
         baseMapper.updateById(product);
     }
 
+    /**
+     * 商品分类处理
+     */
     private void processCategory(Long productId, String categoryId, boolean update) {
         if (null == productId) {
             return;
@@ -305,13 +310,10 @@ public class ProductServiceImpl implements IProductService {
         }
         // 处理门店与产品关联表
         if (StringUtils.isNotEmpty(bo.getShopId())) {
-            String[] split = bo.getShopId().split(",");
-            for (String s : split) {
-                ShopProductBo shopBo = new ShopProductBo();
-                shopBo.setProductId(bo.getProductId());
-                shopBo.setShopId(Long.valueOf(s));
-                shopProductService.insertByBo(shopBo);
-            }
+            ShopProductBo shopBo = new ShopProductBo();
+            shopBo.setProductId(bo.getProductId());
+            shopBo.setShopId(Long.valueOf(bo.getShopId()));
+            shopProductService.insertByBo(shopBo);
         }
         setProductCity(add.getProductId());
         return flag;
@@ -362,14 +364,10 @@ public class ProductServiceImpl implements IProductService {
         }
         // 处理门店与产品关联表
         if (StringUtils.isNotEmpty(bo.getShopId())) {
-            shopProductService.deleteByProductId(bo.getProductId());
-            String[] split = bo.getShopId().split(",");
-            for (String s : split) {
-                ShopProductBo shopBo = new ShopProductBo();
-                shopBo.setProductId(bo.getProductId());
-                shopBo.setShopId(Long.valueOf(s));
-                shopProductService.insertByBo(shopBo);
-            }
+            ShopProductBo shopBo = new ShopProductBo();
+            shopBo.setProductId(bo.getProductId());
+            shopBo.setShopId(Long.valueOf(bo.getShopId()));
+            shopProductService.insertByBo(shopBo);
         }
         setProductCity(update.getProductId());
         return flag;

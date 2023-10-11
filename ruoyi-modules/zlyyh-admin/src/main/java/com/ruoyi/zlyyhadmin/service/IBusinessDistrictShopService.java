@@ -1,12 +1,11 @@
 package com.ruoyi.zlyyhadmin.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.ruoyi.zlyyh.domain.BusinessDistrictShop;
-import com.ruoyi.zlyyh.domain.CategoryProduct;
-import com.ruoyi.zlyyh.domain.vo.BusinessDistrictShopVo;
-import com.ruoyi.zlyyh.domain.bo.BusinessDistrictShopBo;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.zlyyh.domain.BusinessDistrictShop;
+import com.ruoyi.zlyyh.domain.bo.BusinessDistrictShopBo;
+import com.ruoyi.zlyyh.domain.vo.BusinessDistrictShopVo;
 
 import java.util.Collection;
 import java.util.List;
@@ -52,4 +51,8 @@ public interface IBusinessDistrictShopService {
     Integer deleteWithValidByShopId(Long shopId);
 
     Boolean remove(LambdaQueryWrapper<BusinessDistrictShop> queryWrapper);
+
+    Boolean addShopByProduct(BusinessDistrictShopBo bo);
+
+    int delByShopProduct(BusinessDistrictShopBo bo);
 }

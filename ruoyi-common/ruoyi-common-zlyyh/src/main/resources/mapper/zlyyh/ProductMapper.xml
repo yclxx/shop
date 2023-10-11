@@ -70,6 +70,9 @@
         <result property="usedStartTime" column="used_start_time"/>
         <result property="usedEndTime" column="used_end_time"/>
         <result property="checkPayCity" column="check_pay_city"/>
+        <result property="isCoupon" column="is_coupon"/>
+        <result property="isShare" column="is_share"/>
+        <result property="supplier" column="supplier"/>
     </resultMap>
 
 

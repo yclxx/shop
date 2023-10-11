@@ -19,10 +19,14 @@ import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.*;
-import com.ruoyi.zlyyh.domain.vo.*;
+import com.ruoyi.zlyyh.domain.vo.BusinessDistrictShopVo;
+import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
+import com.ruoyi.zlyyh.domain.vo.ShopMerchantVo;
+import com.ruoyi.zlyyh.domain.vo.ShopVo;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
 import com.ruoyi.zlyyh.mapper.CommercialTenantProductMapper;
 import com.ruoyi.zlyyh.mapper.ShopMapper;
+import com.ruoyi.zlyyh.mapper.TagsShopMapper;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.domain.bo.ShopImportDataBo;
 import com.ruoyi.zlyyhadmin.service.IBusinessDistrictShopService;
@@ -55,6 +59,7 @@ import java.util.stream.Collectors;
 public class ShopServiceImpl implements IShopService {
 
     private final ShopMapper baseMapper;
+    private final TagsShopMapper tagsShopMapper;
     private final CommercialTenantMapper commercialTenantMapper;
     private final IShopMerchantService shopMerchantService;
     private final CommercialTenantProductMapper commercialTenantProductMapper;
@@ -128,6 +133,10 @@ public class ShopServiceImpl implements IShopService {
     @Override
     public ShopVo queryById(Long shopId) {
         ShopVo shopVo = baseMapper.selectVoById(shopId);
+        List<Long> tags = tagsShopMapper.selectByShopId(shopVo.getShopId());
+        if (ObjectUtil.isNotEmpty(tags)) {
+            shopVo.setTagsList(tags);
+        }
         BusinessDistrictShopBo businessDistrictShopBo = new BusinessDistrictShopBo();
         businessDistrictShopBo.setShopId(shopId);
         List<BusinessDistrictShopVo> businessDistrictShopVos = businessDistrictShopService.queryList(businessDistrictShopBo);
@@ -141,6 +150,60 @@ public class ShopServiceImpl implements IShopService {
             }
         }
         return shopVo;
+    }
+
+    /**
+     * 查询门店列表
+     */
+    public TableDataInfo<ShopVo> queryPageLists(ShopBo bo, PageQuery pageQuery) {
+        LambdaQueryWrapper<Shop> lqw = Wrappers.lambdaQuery();
+        lqw.eq(bo.getCommercialTenantId() != null, Shop::getCommercialTenantId, bo.getCommercialTenantId());
+        if (StringUtils.isNotBlank(bo.getShopName())) {
+            lqw.and(lq ->
+                lq.like(Shop::getShopName, bo.getShopName()).or().like(Shop::getAddress, bo.getShopName())
+                    .or().like(Shop::getFormattedAddress, bo.getShopName())
+            );
+        }
+        if (StringUtils.isNotBlank(bo.getProvince())) {
+            lqw.and(lq ->
+                lq.like(Shop::getProvince, bo.getProvince()).or().like(Shop::getCity, bo.getProvince())
+                    .or().like(Shop::getDistrict, bo.getProvince())
+                    .or().like(Shop::getProcode, bo.getProvince())
+                    .or().like(Shop::getCitycode, bo.getProvince())
+                    .or().like(Shop::getAdcode, bo.getProvince())
+            );
+        }
+        if (ObjectUtil.isNotEmpty(bo.getSort()) && bo.getSort().equals(0L)) {
+            if (ObjectUtil.isNotEmpty(bo.getProductId())) {
+                String sql = "SELECT shop_id FROM t_shop_product WHERE product_id =  " + bo.getProductId();
+                lqw.apply("shop_id IN (" + sql + ")");
+            }
+        }
+        if (ObjectUtil.isNotEmpty(bo.getSort()) && bo.getSort().equals(1L)) {
+            if (ObjectUtil.isNotEmpty(bo.getProductId())) {
+                String sql = "SELECT shop_id FROM t_shop_product WHERE product_id =  " + bo.getProductId();
+                lqw.apply("shop_id NOT IN (" + sql + ")");
+            }
+        }
+        if (ObjectUtil.isNotEmpty(bo.getSort()) && bo.getSort().equals(3L)) {
+            if (StringUtils.isNotEmpty(bo.getBusinessDistrictId())) {
+                String sql = "SELECT shop_id FROM t_business_district_shop WHERE business_district_id = " + bo.getBusinessDistrictId();
+                lqw.apply("shop_id IN (" + sql + ")");
+            } else {
+                String sql = "SELECT shop_id FROM t_business_district_shop WHERE business_district_id = " + bo.getBusinessDistrictId();
+                lqw.apply("shop_id NOT IN (" + sql + ")");
+            }
+        } else if (ObjectUtil.isNotEmpty(bo.getSort()) && bo.getSort().equals(4L)) {
+            if (StringUtils.isNotEmpty(bo.getBusinessDistrictId())) {
+                String sql = "SELECT shop_id FROM t_business_district_shop WHERE business_district_id = " + bo.getBusinessDistrictId();
+                lqw.apply("shop_id NOT IN (" + sql + ")");
+            }
+        }
+
+        lqw.eq(StringUtils.isNotBlank(bo.getStatus()), Shop::getStatus, bo.getStatus());
+        lqw.eq(bo.getPlatformKey() != null, Shop::getPlatformKey, bo.getPlatformKey());
+        Page<ShopVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+        return TableDataInfo.build(result);
     }
 
     /**
@@ -203,6 +266,13 @@ public class ShopServiceImpl implements IShopService {
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setShopId(add.getShopId());
+            setTagsShop(bo.getTagsList(), add.getShopId());
+            if (ObjectUtil.isNotEmpty(bo.getProductId())) {
+                ShopProductBo shopProductBo = new ShopProductBo();
+                shopProductBo.setShopId(add.getShopId());
+                shopProductBo.setProductId(bo.getProductId());
+                shopProductService.insertByBo(shopProductBo);
+            }
 //            changeGeoCache(add.getShopId());
         }
         return flag;
@@ -219,6 +289,7 @@ public class ShopServiceImpl implements IShopService {
         if (flag) {
             bo.setShopId(add.getShopId());
             processBusiness(bo.getShopId(), bo.getBusinessDistrictId(), false);
+            setTagsShop(bo.getTagsList(), add.getShopId());
         }
         return flag;
     }
@@ -235,6 +306,7 @@ public class ShopServiceImpl implements IShopService {
 //        changeGeoCache(update.getShopId());
         if (flag) {
             processBusiness(bo.getShopId(), bo.getBusinessDistrictId(), true);
+            setTagsShop(bo.getTagsList(), bo.getShopId());
         }
         return flag;
     }
@@ -251,6 +323,8 @@ public class ShopServiceImpl implements IShopService {
             delShopProduct(id);
             //删除与商圈相关信息
             delShopBusinessDistrictId(id);
+            // 删除删除门店同时删除门店对应的标签
+            tagsShopMapper.deleteByShopId(id);
         }
         return baseMapper.deleteBatchIds(ids) > 0;
     }
@@ -389,6 +463,11 @@ public class ShopServiceImpl implements IShopService {
         String key;
         //根据经纬度查询地址信息
         if (ObjectUtil.isNotEmpty(bo.getLongitude()) && ObjectUtil.isNotEmpty(bo.getLatitude()) && bo.getLatitude().compareTo(BigDecimal.ZERO) > 0 && bo.getLongitude().compareTo(BigDecimal.ZERO) > 0) {
+            String key = "importShop:" + bo.getLongitude() + "," + bo.getLatitude();
+
+            JSONObject addressInfo = RedisUtils.getCacheObject(key);
+            String location = bo.getLongitude() + "," + bo.getLatitude();
+        if (ObjectUtil.isNotEmpty(bo.getLongitude()) && ObjectUtil.isNotEmpty(bo.getLatitude()) && bo.getLatitude().compareTo(BigDecimal.ZERO) > 0 && bo.getLongitude().compareTo(BigDecimal.ZERO) > 0) {
             key = "importShop:" + bo.getLongitude() + "," + bo.getLatitude();
             addressInfo = RedisUtils.getCacheObject(key);
             String location = bo.getLongitude() + "," + bo.getLatitude();
@@ -428,7 +507,9 @@ public class ShopServiceImpl implements IShopService {
             if (StringUtils.isNotBlank(key)) {
                 RedisUtils.setCacheObject(key, addressInfo, Duration.ofDays(5));
             }
+
         }
+
     }
 
     @Override
@@ -473,6 +554,20 @@ public class ShopServiceImpl implements IShopService {
         queryWrapper.eq(Shop::getSupplierShopId, supplierShopId);
         queryWrapper.last("limit 1");
         return baseMapper.selectVoOne(queryWrapper);
+    }
+
+    private void setTagsShop(List<Long> tagsList, Long shopId) {
+        if (ObjectUtil.isNotEmpty(tagsList)) {
+            tagsShopMapper.deleteByShopId(shopId);
+            List<TagsShop> tagsShops = new ArrayList<>();
+            tagsList.forEach(o -> {
+                TagsShop tagsShop = new TagsShop();
+                tagsShop.setShopId(shopId);
+                tagsShop.setTagsId(o);
+                tagsShops.add(tagsShop);
+            });
+            tagsShopMapper.insertBatch(tagsShops);
+        }
     }
 
 //    private void changeGeoCache(Long shopId) {

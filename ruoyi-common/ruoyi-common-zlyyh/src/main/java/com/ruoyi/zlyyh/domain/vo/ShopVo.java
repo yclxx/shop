@@ -1,8 +1,5 @@
 package com.ruoyi.zlyyh.domain.vo;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.Date;
 import com.alibaba.excel.annotation.ExcelIgnoreUnannotated;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.ruoyi.common.core.annotation.Sensitive;
@@ -10,8 +7,11 @@ import com.ruoyi.common.core.enums.SensitiveStrategy;
 import com.ruoyi.common.excel.annotation.ExcelDictFormat;
 import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
-import java.util.Date;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
 
 
 /**
@@ -197,7 +197,7 @@ public class ShopVo implements Serializable {
     private String shopType;
 
     /**
-     *距离 千米
+     * 距离 千米
      */
     private BigDecimal distance;
 
@@ -212,7 +212,36 @@ public class ShopVo implements Serializable {
      */
     @ExcelProperty(value = "推荐类型：0-不推荐，1-商圈精选，2-品牌精选")
     private String pushType;
+    /**
+     * 是否共享
+     */
+    private String is_share;
+    /**
+     * 供应商（与supplierShopId无关系）
+     */
+    private String supplier;
+    /**
+     * 营业执照
+     */
+    private String license;
+    /**
+     * 性质
+     */
+    private String nature;
+    /**
+     * 发票类型
+     */
+    private String invoice;
+    /**
+     * 收款账户
+     */
+    private String account;
+    /**
+     * 活动类型
+     */
+    private String activity;
 
+    private List<Long> tagsList;
 
     /**
      * 部门id
