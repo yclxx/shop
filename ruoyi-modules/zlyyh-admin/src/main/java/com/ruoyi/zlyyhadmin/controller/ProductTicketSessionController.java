@@ -81,7 +81,7 @@ public class ProductTicketSessionController extends BaseController {
     /**
      * 修改演出场次
      */
-    @SaCheckPermission("zlyyh:productTicke·tSession:edit")
+    @SaCheckPermission("zlyyh:productTicketSession:edit")
     @Log(title = "演出场次", businessType = BusinessType.UPDATE)
     @PutMapping()
     public R<Void> edit(@Validated(EditGroup.class) @RequestBody ProductTicketSessionBo bo) {
