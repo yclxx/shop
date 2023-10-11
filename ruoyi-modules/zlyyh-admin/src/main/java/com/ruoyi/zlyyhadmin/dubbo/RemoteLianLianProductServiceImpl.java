@@ -20,7 +20,6 @@ import com.ruoyi.zlyyh.domain.LianlianCity;
 import com.ruoyi.zlyyh.domain.Product;
 import com.ruoyi.zlyyh.domain.ProductInfo;
 import com.ruoyi.zlyyh.domain.bo.*;
-import com.ruoyi.zlyyh.domain.vo.ShopVo;
 import com.ruoyi.zlyyh.param.LianLianParam;
 import com.ruoyi.zlyyh.utils.LianLianUtils;
 import com.ruoyi.zlyyhadmin.domain.vo.LianLianProductItem;
@@ -311,7 +310,9 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                         }
                     }
                 }
-                productService.setProductCity(product.getProductId());
+                if (ObjectUtil.isNotEmpty(product.getProductId())) {
+                    productService.setProductCity(product.getProductId());
+                }
             }
         }
     }
@@ -333,12 +334,10 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
             }
             BigDecimal longitude = new BigDecimal(shop.getLongitude());
             BigDecimal latitude = new BigDecimal(shop.getLatitude());
-            //先查询是不是已经存在了店铺
-            List<ShopVo> shopVos = shopService.queryByCommercialTenantId(shop.getId(), platformKey, longitude, latitude);
-            if (!shopVos.isEmpty()) { // 有店则跳过
-                continue;
-            }
+            // 删除原有门店
+            shopService.deleteByCommercialTenantId(shop.getId());
 
+            // 新增门店
             ShopBo shopBo = new ShopBo();
             shopBo.setShopId(IdUtil.getSnowflakeNextId());
             shopBo.setCommercialTenantId(shop.getId());

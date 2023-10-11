@@ -57,6 +57,15 @@ public class ShopController extends BaseController {
     }
 
     /**
+     * 查询门店列表分页
+     */
+    @GetMapping("/selectShop")
+    public R<List<SelectListEntity>> selectShop(ShopBo bo, PageQuery pageQuery) {
+        TableDataInfo<ShopVo> shopVoList = iShopService.queryPageList(bo, pageQuery);
+        return R.ok(BeanCopyUtils.copyListToSelectListVo(shopVoList.getRows(), ColumnUtil.getFieldName(ShopVo::getShopId), ColumnUtil.getFieldName(ShopVo::getShopName), null));
+    }
+
+    /**
      * 查询门店下拉列表
      */
     @GetMapping("/selectShopList")
