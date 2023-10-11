@@ -1315,12 +1315,12 @@
           this.shopParams = {
             status: "0",
             shopName: query,
-            pageSize: 100
+            pageSize: 5
           }
         } else {
           this.shopParams = {
             status: "0",
-            pageSize: 100
+            pageSize: 5
           }
         }
         selectShopList(this.shopParams).then(res => {
