@@ -22,6 +22,7 @@ import com.ruoyi.zlyyh.domain.vo.OrderUnionPayVo;
 import com.ruoyi.zlyyh.domain.vo.OrderVo;
 import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayParams;
 import com.ruoyi.zlyyh.mapper.OrderUnionSendMapper;
+import com.ruoyi.zlyyh.properties.CtripConfig;
 import com.ruoyi.zlyyh.properties.YsfFoodProperties;
 import com.ruoyi.zlyyh.properties.utils.YsfDistributionPropertiesUtils;
 import com.ruoyi.zlyyh.utils.CtripUtils;
@@ -53,7 +54,7 @@ import java.util.List;
 @DubboService
 public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
     private static final YsfFoodProperties YSF_FOOD_PROPERTIES = SpringUtils.getBean(YsfFoodProperties.class);
-    private static final com.ruoyi.zlyyh.properties.CtripConfig CtripConfig = SpringUtils.getBean(com.ruoyi.zlyyh.properties.CtripConfig.class);
+    private static final CtripConfig ctripConfig = SpringUtils.getBean(CtripConfig.class);
     @Autowired
     private LockTemplate lockTemplate;
     @Autowired
@@ -129,9 +130,9 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
             return YsfFoodUtils.cancelOrder(YSF_FOOD_PROPERTIES.getAppId(), externalOrderNumber, YSF_FOOD_PROPERTIES.getRsaPrivateKey(), YSF_FOOD_PROPERTIES.getRefundUrl());
         } else if ("15".equals(orderType)) {
             String accessToken = CtripUtils.getAccessToken();
-            String refundCtripUrl = CtripConfig.getUrl() + "?AID=" + CtripConfig.getAid() + "&SID=" + CtripConfig.getSid() +
-                "&ICODE=" + CtripConfig.getCancelOrderCode() + "&Token=" + accessToken;
-            return CtripUtils.cancelOrder(externalOrderNumber, CtripConfig.getPartnerType(), refundCtripUrl);
+            String refundCtripUrl = ctripConfig.getUrl() + "?AID=" + ctripConfig.getAid() + "&SID=" + ctripConfig.getSid() +
+                "&ICODE=" + ctripConfig.getCancelOrderCode() + "&Token=" + accessToken;
+            return CtripUtils.cancelOrder(externalOrderNumber, ctripConfig.getPartnerType(), refundCtripUrl);
         }
         return null;
     }
