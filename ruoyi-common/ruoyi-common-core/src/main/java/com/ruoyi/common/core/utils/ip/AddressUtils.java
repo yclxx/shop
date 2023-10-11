@@ -2,10 +2,8 @@ package com.ruoyi.common.core.utils.ip;
 
 import cn.hutool.core.lang.Dict;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.RandomUtil;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.JsonUtils;
@@ -13,8 +11,6 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.Duration;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,13 +25,14 @@ import java.util.regex.Pattern;
 public class AddressUtils {
     private static final String MAP_LOCATION_URL = "https://restapi.amap.com/v3/geocode/regeo";
     private static final String GAO_DE_MAP_KEY = "ed8652067f054abb156de40a110a08ea";
+
     /**
      * 获取地址的详细信息，经纬度等
      *
      * @param address 需要获取经纬度的地址信息
      * @return 返回结果
      */
-    public static JSONObject getAddressInfo(String address) throws JSONException {
+    public static JSONObject getAddressInfo(String address) {
         // 地址非法字符处理
         String regEx = "[\t\r\n`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。， 、？]";
         //可以在中括号内加上任何想要替换的字符，实际上是一个正则表达式
@@ -48,7 +45,7 @@ public class AddressUtils {
         String url = "https://restapi.amap.com/v3/geocode/geo";
         // key 来自个人注册的高德地图开放平台用户创建的，如果有问题，请直接自行去高德地图注册个人用户，或者企业用户
         // 基于企业用户认证信息太多，目前key取自个人用户
-        String params = "?key=ed8652067f054abb156de40a110a08ea&address=" + address;
+        String params = "?key=" + GAO_DE_MAP_KEY + "&address=" + address;
 
         String s = HttpUtil.get(url + params);
         log.info("调用高德地图获取地址经纬度信息返回结果：{}", s);
@@ -101,7 +98,7 @@ public class AddressUtils {
     }
 
     public static JSONObject getLocationCity(String location) {
-        if (ObjectUtil.isEmpty(location)){
+        if (ObjectUtil.isEmpty(location)) {
             throw new ServiceException("未获取到您的位置信息，请打开位置授权");
         }
         JSONObject result = new JSONObject();
@@ -140,12 +137,4 @@ public class AddressUtils {
         }
         return null;
     }
-
-
-    public static void main(String[] args) {
-        System.out.println(getLocationCity("121,30"));
-
-    }
-
-
 }

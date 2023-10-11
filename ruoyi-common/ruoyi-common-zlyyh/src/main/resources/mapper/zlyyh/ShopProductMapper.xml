@@ -18,7 +18,8 @@
         select DISTINCT s.citycode
         from t_shop_product sp
                  left join t_shop s on sp.shop_id = s.shop_id
-        where product_id = #{productId}
+        where sp.product_id = #{productId}
+        and s.citycode is not null
     </select>
 
 

@@ -333,6 +333,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
         return jsonObject.getParams();
     }
 
+    @Async
     @Override
     public void userLog() throws InterruptedException {
         Date yesterday = DateUtil.yesterday();

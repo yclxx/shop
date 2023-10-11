@@ -1,6 +1,8 @@
 package com.ruoyi.zlyyhadmin.dubbo;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.TimeInterval;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -18,7 +20,6 @@ import com.ruoyi.zlyyh.domain.LianlianCity;
 import com.ruoyi.zlyyh.domain.Product;
 import com.ruoyi.zlyyh.domain.ProductInfo;
 import com.ruoyi.zlyyh.domain.bo.*;
-import com.ruoyi.zlyyh.domain.vo.ShopVo;
 import com.ruoyi.zlyyh.param.LianLianParam;
 import com.ruoyi.zlyyh.utils.LianLianUtils;
 import com.ruoyi.zlyyhadmin.domain.vo.LianLianProductItem;
@@ -28,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.dubbo.config.annotation.DubboService;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
@@ -67,6 +69,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
      *
      * @param platformKey
      */
+    @Async
     @Override
     public void selectLianLianProductList(Long platformKey) {
         // 账户id
@@ -82,6 +85,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
         // 产品图文详情
         String detailHtml = ysfConfigService.queryValueByKey(platformKey, "LianLian.detailHtml");
         log.info("开始执行联联产品列表定时任务.");
+        TimeInterval timer = DateUtil.timer();
         int cityPageNum = 0;
         try {
             String productList = basePath + queryProductList;
@@ -130,7 +134,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
         } catch (Exception e) {
             log.info("联联商品更新定时任务异常:{}", e.getMessage());
         }
-        log.info("结束执行联联产品列表定时任务.");
+        log.info("结束执行联联产品列表定时任务,耗时：{}分钟", timer.intervalMinute());
     }
 
     /**
@@ -306,7 +310,9 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                         }
                     }
                 }
-                productService.setProductCity(product.getProductId());
+                if (ObjectUtil.isNotEmpty(product.getProductId())) {
+                    productService.setProductCity(product.getProductId());
+                }
             }
         }
     }
@@ -328,12 +334,10 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
             }
             BigDecimal longitude = new BigDecimal(shop.getLongitude());
             BigDecimal latitude = new BigDecimal(shop.getLatitude());
-            //先查询是不是已经存在了店铺
-            List<ShopVo> shopVos = shopService.queryByCommercialTenantId(shop.getId(), platformKey, longitude, latitude);
-            if (!shopVos.isEmpty()) { // 有店则跳过
-                continue;
-            }
+            // 删除原有门店
+            shopService.deleteByCommercialTenantId(shop.getId());
 
+            // 新增门店
             ShopBo shopBo = new ShopBo();
             shopBo.setShopId(IdUtil.getSnowflakeNextId());
             shopBo.setCommercialTenantId(shop.getId());
