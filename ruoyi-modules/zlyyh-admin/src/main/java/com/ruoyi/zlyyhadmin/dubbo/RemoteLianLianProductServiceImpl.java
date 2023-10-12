@@ -335,12 +335,13 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
             BigDecimal longitude = new BigDecimal(shop.getLongitude());
             BigDecimal latitude = new BigDecimal(shop.getLatitude());
             // 删除原有门店
-            shopService.deleteByCommercialTenantId(shop.getId());
+            shopService.deleteByCommercialTenantId(shop.getId()); // 此方法下次使用之后，必须删除
+            shopService.deleteBySupplierShopId(shop.getId());
 
             // 新增门店
             ShopBo shopBo = new ShopBo();
             shopBo.setShopId(IdUtil.getSnowflakeNextId());
-            shopBo.setCommercialTenantId(shop.getId());
+            shopBo.setSupplierShopId(shop.getId().toString());
             shopBo.setShopName(shop.getName());
             shopBo.setShopTel(StringUtils.isEmpty(checkCellphone(shop.getPhoneNumber())) ? checkTelephone(shop.getPhoneNumber()) : checkCellphone(shop.getPhoneNumber()));
             shopBo.setFormattedAddress(shop.getAddress());
