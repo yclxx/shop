@@ -75,6 +75,8 @@
               <el-input v-model="form.platformName" placeholder="请输入平台名称" />
             </el-form-item>
           </el-col>
+        </el-row>
+        <el-row>
           <el-col :span="12">
             <el-form-item label="支付商户号" prop="merchantId">
               <el-select v-model="form.merchantId" style="width: 100%;" placeholder="请选择商户号">
@@ -87,31 +89,31 @@
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
-            <el-form-item label="appId" prop="appId">
-              <el-input v-model="form.appId" placeholder="请输入appId" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="密钥" prop="secret">
-              <el-input v-model="form.secret" placeholder="请输入密钥" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="对称密钥" prop="symmetricKey">
-              <el-input v-model="form.symmetricKey" placeholder="请输入对称密钥" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="小程序标题" prop="platformTitle">
-              <el-input v-model="form.platformTitle" placeholder="请输入小程序标题" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="小程序ID" prop="encryptAppId">
-              <el-input v-model="form.encryptAppId" placeholder="请输入小程序ID" />
-            </el-form-item>
-          </el-col>
+<!--          <el-col :span="12">-->
+<!--            <el-form-item label="appId" prop="appId">-->
+<!--              <el-input v-model="form.appId" placeholder="请输入appId" />-->
+<!--            </el-form-item>-->
+<!--          </el-col>-->
+<!--          <el-col :span="12">-->
+<!--            <el-form-item label="密钥" prop="secret">-->
+<!--              <el-input v-model="form.secret" placeholder="请输入密钥" />-->
+<!--            </el-form-item>-->
+<!--          </el-col>-->
+<!--          <el-col :span="12">-->
+<!--            <el-form-item label="对称密钥" prop="symmetricKey">-->
+<!--              <el-input v-model="form.symmetricKey" placeholder="请输入对称密钥" />-->
+<!--            </el-form-item>-->
+<!--          </el-col>-->
+<!--          <el-col :span="12">-->
+<!--            <el-form-item label="小程序标题" prop="platformTitle">-->
+<!--              <el-input v-model="form.platformTitle" placeholder="请输入小程序标题" />-->
+<!--            </el-form-item>-->
+<!--          </el-col>-->
+<!--          <el-col :span="12">-->
+<!--            <el-form-item label="小程序ID" prop="encryptAppId">-->
+<!--              <el-input v-model="form.encryptAppId" placeholder="请输入小程序ID" />-->
+<!--            </el-form-item>-->
+<!--          </el-col>-->
           <el-col :span="12">
             <el-form-item label="会员权限" prop="unionPayVip">
               <el-select v-model="form.unionPayVip" style="width: 100%;" placeholder="请选择云闪付会员权限">
@@ -120,6 +122,8 @@
               </el-select>
             </el-form-item>
           </el-col>
+        </el-row>
+        <el-row>
           <el-col :span="12">
             <el-form-item label="状态" prop="status">
               <el-select v-model="form.status" style="width: 100%;" placeholder="请选择状态">
@@ -133,6 +137,8 @@
               <treeselect v-model="form.sysDeptId" :options="deptOptions" :show-count="true" placeholder="请选择公共部门" />
             </el-form-item>
           </el-col>
+        </el-row>
+        <el-row>
           <el-col :span="12">
             <el-form-item label="管理部门" prop="manangerDeptId">
               <treeselect v-model="form.manangerDeptId" :options="deptOptions" :show-count="true"
@@ -144,21 +150,79 @@
               <el-input v-model="form.serviceTel" placeholder="请输入客服电话" />
             </el-form-item>
           </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="供应商" prop="supportSupplier">
+              <el-select v-model="form.supportSupplier" multiple placeholder="请选择供应商" style="width: 100%">
+                <el-option
+                  v-for="item in supplierList"
+                  :key="item.id"
+                  :label="item.label"
+                  :value="item.id">
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
           <el-col :span="12">
             <el-form-item label="客服时间" prop="serviceTime">
               <el-input v-model="form.serviceTime" placeholder="请输入客服服务时间" />
             </el-form-item>
           </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="支持端" prop="supportChannel">
+              <el-checkbox-group v-model="form.supportChannel">
+                <el-checkbox v-for="item in supportChannelList" :label="item.label" :key="item.value">{{item.label}}</el-checkbox>
+              </el-checkbox-group>
+            </el-form-item>
+          </el-col>
+        </el-row>
+<!--        <el-row>-->
+<!--          <el-table ref="table" style="width: 100%">-->
+<!--            <el-col :span="12">-->
+<!--              <el-form-item label="appId" prop="appId">-->
+<!--                <el-input v-model="form.appId" placeholder="请输入appId" />-->
+<!--              </el-form-item>-->
+<!--            </el-col>-->
+<!--            <el-col :span="12">-->
+<!--              <el-form-item label="密钥" prop="secret">-->
+<!--                <el-input v-model="form.secret" placeholder="请输入密钥" />-->
+<!--              </el-form-item>-->
+<!--            </el-col>-->
+<!--            <el-col :span="12">-->
+<!--              <el-form-item label="对称密钥" prop="symmetricKey">-->
+<!--                <el-input v-model="form.symmetricKey" placeholder="请输入对称密钥" />-->
+<!--              </el-form-item>-->
+<!--            </el-col>-->
+<!--            <el-col :span="12">-->
+<!--              <el-form-item label="小程序标题" prop="platformTitle">-->
+<!--                <el-input v-model="form.platformTitle" placeholder="请输入小程序标题" />-->
+<!--              </el-form-item>-->
+<!--            </el-col>-->
+<!--            <el-col :span="12">-->
+<!--              <el-form-item label="小程序ID" prop="encryptAppId">-->
+<!--                <el-input v-model="form.encryptAppId" placeholder="请输入小程序ID" />-->
+<!--              </el-form-item>-->
+<!--            </el-col>-->
+<!--          </el-table>-->
+<!--        </el-row>-->
+        <el-row>
           <el-col :span="24">
             <el-form-item label="rsa签名私钥" prop="rsaPrivateKey">
               <el-input v-model="form.rsaPrivateKey" type="textarea" placeholder="请输入rsa签名私钥" />
             </el-form-item>
           </el-col>
+        </el-row>
+        <el-row>
           <el-col :span="24">
             <el-form-item label="rsa签名公钥" prop="rsaPublicKey">
               <el-input v-model="form.rsaPublicKey" type="textarea" placeholder="请输入rsa签名公钥" />
             </el-form-item>
           </el-col>
+        </el-row>
+        <el-row>
           <el-col :span="24">
             <el-form-item label="活动城市">
               <el-checkbox v-model="cityNodeAll" @change="selectAll">不限制城市</el-checkbox>
@@ -196,6 +260,7 @@
   } from "@/api/system/user";
   import Treeselect from "@riophae/vue-treeselect";
   import "@riophae/vue-treeselect/dist/vue-treeselect.css";
+  import {selectSupplier} from "@/api/zlyyh/supplier";
 
   export default {
     name: "Platform",
@@ -227,6 +292,14 @@
         platformList: [],
         merchantList: [],
         cityOptions: [],
+        supplierList: [],
+        supportChannelList: [{
+          label: '云闪付',
+          value: '0'
+        }, {
+          label: '微信小程序',
+          value: '1'
+        }],
         // 弹出层标题
         title: "",
         // 是否显示弹出层
@@ -311,6 +384,7 @@
     created() {
       this.getList();
       this.getDeptTree();
+      this.selectSupplierList();
     },
     methods: {
       /** 查询部门下拉树结构 */
@@ -364,6 +438,8 @@
           delFlag: undefined,
           sysDeptId: undefined,
           manangerDeptId: undefined,
+          supportChannel: undefined,
+          supportSupplier: 'ALL',
         };
         this.resetForm("form");
       },
@@ -429,6 +505,12 @@
           this.open = true;
           this.title = "修改平台信息";
           this.cityNodeAll = false;
+          if (this.form.supportSupplier && this.form.supportSupplier !== 'ALL') {
+            this.form.supportSupplier = this.form.supportSupplier.split(',');
+          }
+          if (this.form.supportChannel) {
+            this.form.supportChannel = this.form.supportChannel.split(',');
+          }
           this.$nextTick(() => {
             platformCity.then(res => {
               let checkedKeys = res.data.checkedKeys;
@@ -460,6 +542,12 @@
               this.form.platformCity = "ALL";
             } else {
               this.form.platformCity = this.getCityAllCheckedKeys().toString();
+            }
+            if (this.form.supportSupplier && this.form.supportSupplier !== 'ALL') {
+              this.form.supportSupplier = this.form.supportSupplier.join(',');
+            }
+            if (this.form.supportChannel) {
+              this.form.supportChannel = this.form.supportChannel.join(',');
             }
             if (!this.insert) {
               updatePlatform(this.form).then(response => {
@@ -509,7 +597,14 @@
       },
       handleCheckedTreeNodeAll(value) {
         this.$refs.city.setCheckedNodes(value ? this.cityOptions : []);
-      }
+      },
+      /** 查询供应商 */
+      selectSupplierList() {
+        selectSupplier(this.form).then(response => {
+          this.supplierList = response.data;
+        }).finally(() => {
+        });
+      },
     }
   };
 </script>

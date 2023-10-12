@@ -102,4 +102,12 @@ public class Platform extends BaseEntity {
      * 云闪付62会员权限：0-无权限，1-有权限
      */
     private String unionPayVip;
+    /**
+     * 支持端
+     */
+    private String supportChannel;
+    /**
+     * 供应商
+     */
+    private String supportSupplier;
 }
