@@ -70,6 +70,8 @@ public interface IShopService {
 
     int deleteByCommercialTenantId(Long commercialTenantId);
 
+    int deleteBySupplierShopId(Long supplierShopId);
+
     ShopVo queryByNameAndCommercialTenantId(String name,Long commercialTenantId);
 
     ShopVo queryByNameAndSupplierId(String name,String supplierShopId);

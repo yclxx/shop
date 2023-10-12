@@ -529,6 +529,13 @@ public class ShopServiceImpl implements IShopService {
     }
 
     @Override
+    public int deleteBySupplierShopId(Long supplierShopId) {
+        LambdaQueryWrapper<Shop> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(Shop::getSupplierShopId, supplierShopId);
+        return baseMapper.delete(queryWrapper);
+    }
+
+    @Override
     public ShopVo queryByNameAndCommercialTenantId(String name, Long commercialTenantId) {
         LambdaQueryWrapper<Shop> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(Shop::getCommercialTenantId, commercialTenantId);
