@@ -293,4 +293,8 @@ public class Product extends BaseEntity {
      * 供应商
      */
     private String supplier;
+    /**
+     * 支持端
+     */
+    private String supportChannel;
 }

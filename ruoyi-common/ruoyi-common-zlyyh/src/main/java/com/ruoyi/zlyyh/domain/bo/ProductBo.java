@@ -340,7 +340,10 @@ public class ProductBo extends BaseEntity {
      * 供应商
      */
     private String supplier;
-
+    /**
+     * 支持端
+     */
+    private String supportChannel;
 
     /**
      * 演出票商品信息

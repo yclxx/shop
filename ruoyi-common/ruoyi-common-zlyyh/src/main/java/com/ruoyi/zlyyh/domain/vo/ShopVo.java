@@ -240,6 +240,10 @@ public class ShopVo implements Serializable {
      * 活动类型
      */
     private String activity;
+    /**
+     * 支持端
+     */
+    private String supportChannel;
 
     private List<Long> tagsList;
 

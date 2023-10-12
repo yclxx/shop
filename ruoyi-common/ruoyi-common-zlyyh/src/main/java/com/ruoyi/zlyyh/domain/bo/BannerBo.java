@@ -115,4 +115,8 @@ public class BannerBo extends BaseEntity {
      * 周几能领：1-周日，2-周一，3-周二...7-周六，多个之间用英文逗号隔开
      */
     private String weekDate;
+    /**
+     * 支持端
+     */
+    private String supportChannel;
 }

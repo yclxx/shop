@@ -624,6 +624,16 @@
                   </el-select>
                 </el-form-item>
               </el-col>
+              <el-col :span="8">
+                <el-form-item label="支持端" prop="supportChannel">
+                  <el-checkbox-group v-model="form.supportChannel">
+                    <el-checkbox
+                      v-for="item in dict.type.channel_type" :key="item.value" :label="item.value">
+                      {{ item.label }}
+                    </el-checkbox>
+                  </el-checkbox-group>
+                </el-form-item>
+              </el-col>
             </el-row>
             <el-row>
               <el-col :span="8">
@@ -809,8 +819,7 @@
     dicts: ['t_product_to_type', 't_product_status', 't_product_affiliation', 't_product_assign_date', 't_product_type',
       't_product_show_original_amount', 't_product_pickup_method', 't_grad_period_date_list', 't_product_search',
       't_search_status', 't_product_pay_user', 't_show_index', 't_product_send_account_type', 't_cus_refund',
-      'sys_normal_disable', 't_product_check_pay_city',
-      't_product_union_pay', 'sys_yes_no'
+      'sys_normal_disable', 't_product_check_pay_city', 't_product_union_pay', 'sys_yes_no', 'channel_type'
     ],
     data() {
       return {
@@ -1234,6 +1243,7 @@
           isCoupon: undefined,
           isShare: undefined,
           supplier: undefined,
+          supportChannel: [],
           ticket: {
             ticketChooseSeat: undefined,
             ticketForm: undefined,
@@ -1332,6 +1342,11 @@
           if (this.form && this.form.commercialTenantId) {
             this.form.commercialTenantId = this.form.commercialTenantId.split(",")
           }
+          if (response.data.supportChannel) {
+            this.form.supportChannel = response.data.supportChannel.split(",")
+          } else {
+            this.form.supportChannel = []
+          }
           this.cityNodeAll = false;
           this.$nextTick(() => {
             showCity.then(res => {
@@ -1403,6 +1418,9 @@
             }
             if (this.form.commercialTenantId) {
               this.form.commercialTenantId = this.form.commercialTenantId.toString();
+            }
+            if (this.form.supportChannel) {
+              this.form.supportChannel = this.form.supportChannel.join(",")
             }
             if (this.form.productId != null) {
               updateProduct(this.form).then(response => {

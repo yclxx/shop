@@ -2,18 +2,15 @@ package com.ruoyi.zlyyh.domain.bo;
 
 import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
+import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import javax.validation.constraints.*;
-
-import java.util.Date;
-
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
-
-import com.ruoyi.common.core.web.domain.BaseEntity;
 
 /**
  * 门店业务对象
@@ -210,7 +207,10 @@ public class ShopBo extends BaseEntity {
      * 标签
      */
     private List<Long> tagsList;
-
+    /**
+     * 支持端
+     */
+    private String supportChannel;
     /**
      * 供应商门店id
      */
@@ -227,9 +227,4 @@ public class ShopBo extends BaseEntity {
     private Long sysUserId;
 
     private String businessDistrictId;
-
-    /**
-     * 最大查询数量
-     */
-    private Integer pageSize;
 }

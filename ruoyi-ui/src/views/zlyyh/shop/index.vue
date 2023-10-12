@@ -263,6 +263,16 @@
               </el-select>
             </el-form-item>
           </el-col>
+          <el-col :span="12">
+            <el-form-item label="支持端" prop="supportChannel">
+              <el-checkbox-group v-model="form.supportChannel">
+                <el-checkbox
+                  v-for="item in dict.type.channel_type" :key="item.value" :label="item.value">
+                  {{ item.label }}
+                </el-checkbox>
+              </el-checkbox-group>
+            </el-form-item>
+          </el-col>
           <el-col :span="10">
             <el-form-item label="营业执照" prop="license">
               <image-upload :limit="1" v-model="form.license" />
@@ -456,7 +466,7 @@
   export default {
     name: "Shop",
     dicts: ['t_shop_status', 't_shop_merchant_type', 't_shop_merchant_status', 't_product_assign_date',
-      't_grad_period_date_list', 'nature_type', 'invoice_type', 'activity_type', 'sys_yes_no'
+      't_grad_period_date_list', 'nature_type', 'invoice_type', 'activity_type', 'sys_yes_no','channel_type'
     ],
     components: {
       Treeselect,
@@ -854,7 +864,8 @@
           invoice: undefined,
           account: undefined,
           activity: undefined,
-          tagsList: undefined
+          tagsList: undefined,
+          supportChannel: []
         };
         this.resetForm("form");
       },
@@ -893,6 +904,11 @@
           if (this.form && this.form.businessDistrictId) {
             this.form.businessDistrictId = this.form.businessDistrictId.split(",")
           }
+          if (response.data.supportChannel) {
+            this.form.supportChannel = response.data.supportChannel.split(",")
+          } else {
+            this.form.supportChannel = []
+          }
         });
       },
       /** 提交按钮 */
@@ -902,6 +918,9 @@
             this.buttonLoading = true;
             if (this.form.businessDistrictId) {
               this.form.businessDistrictId = this.form.businessDistrictId.toString();
+            }
+            if (this.form.supportChannel) {
+              this.form.supportChannel = this.form.supportChannel.join(",")
             }
             if (this.form.shopId != null) {
               updateShop(this.form).then(response => {
