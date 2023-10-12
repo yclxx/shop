@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * 平台信息业务对象
@@ -35,7 +36,6 @@ public class PlatformBo extends BaseEntity {
     /**
      * 小程序标题
      */
-    @NotBlank(message = "小程序标题不能为空", groups = { AddGroup.class, EditGroup.class })
     private String platformTitle;
 
     /**
@@ -47,25 +47,21 @@ public class PlatformBo extends BaseEntity {
     /**
      * appId
      */
-    @NotBlank(message = "appId不能为空", groups = { AddGroup.class, EditGroup.class })
     private String appId;
 
     /**
      * 小程序ID
      */
-    @NotBlank(message = "小程序ID不能为空", groups = { AddGroup.class, EditGroup.class })
     private String encryptAppId;
 
     /**
      * 密钥
      */
-    @NotBlank(message = "密钥不能为空", groups = { AddGroup.class, EditGroup.class })
     private String secret;
 
     /**
      * 对称密钥
      */
-    @NotBlank(message = "对称密钥不能为空", groups = { AddGroup.class, EditGroup.class })
     private String symmetricKey;
 
     /**
@@ -96,7 +92,6 @@ public class PlatformBo extends BaseEntity {
     /**
      * 默认支付商户
      */
-    @NotNull(message = "默认支付商户不能为空", groups = { AddGroup.class, EditGroup.class })
     private Long merchantId;
 
     /**
@@ -126,4 +121,6 @@ public class PlatformBo extends BaseEntity {
      * 供应商
      */
     private String supportSupplier;
+
+    private List<PlatformChannelBo> platformChannel;
 }

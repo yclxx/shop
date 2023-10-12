@@ -144,4 +144,6 @@ public class PlatformVo implements Serializable {
      * 供应商
      */
     private String supportSupplier;
+
+    private List<PlatformChannelVo> platformChannel;
 }
