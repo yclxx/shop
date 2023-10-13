@@ -10,6 +10,7 @@ import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.vo.PlatformVo;
 import com.ruoyi.zlyyh.enumd.DateType;
+import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.servlet.http.HttpServletRequest;
@@ -84,6 +85,17 @@ public class ZlyyhUtils {
      */
     public static String getAdCode() {
         return ServletUtils.getHeader(ZlyyhConstants.AD_CODE);
+    }
+
+    /**
+     * 用户真实所在城市 精确到区 例如 330105
+     */
+    public static PlatformEnumd getPlatformType() {
+        String header = ServletUtils.getHeader(ZlyyhConstants.PLATFORM_TYPE);
+        if (StringUtils.isBlank(header)) {
+            return PlatformEnumd.MP_YSF;
+        }
+        return PlatformEnumd.getPlatformEnumd(header);
     }
 
     /**

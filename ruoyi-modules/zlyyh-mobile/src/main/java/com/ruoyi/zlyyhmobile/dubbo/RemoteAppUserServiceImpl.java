@@ -33,6 +33,7 @@ import com.ruoyi.zlyyh.mapper.UserMapper;
 import com.ruoyi.zlyyh.properties.utils.YsfPropertiesUtils;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyh.utils.YsfUtils;
+import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.bo.UserRecordLog;
 import com.ruoyi.zlyyhmobile.service.IOrderService;
 import com.ruoyi.zlyyhmobile.service.IPlatformService;
@@ -71,7 +72,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
      */
     @Override
     public YsfEntity getYsfEntity(String code, boolean getMobile, Long platformKey) {
-        PlatformVo platformVo = platformService.queryById(platformKey);
+        PlatformVo platformVo = platformService.queryById(platformKey, ZlyyhUtils.getPlatformType());
         if (null == platformVo) {
             throw new ServiceException("请求错误，请退出重试！[platform is null]");
         }

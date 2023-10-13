@@ -15,6 +15,7 @@ import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.*;
+import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.bo.CreateOrderTicketBo;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
 import com.ruoyi.zlyyhmobile.event.SendCouponEvent;
@@ -51,7 +52,6 @@ public class OrderTicketServiceImpl implements OrderTicketService {
     private final CodeMapper codeMapper;
     private final IUnionPayChannelService unionPayChannelService;
 
-
     /**
      * 创建订单
      *
@@ -60,7 +60,7 @@ public class OrderTicketServiceImpl implements OrderTicketService {
      */
     @Override
     public CreateOrderResult createTicketOrder(CreateOrderTicketBo bo) {
-        PlatformVo platformVo = platformService.queryById(bo.getPlatformKey());
+        PlatformVo platformVo = platformService.queryById(bo.getPlatformKey(), ZlyyhUtils.getPlatformType());
         if (null == platformVo) {
             throw new ServiceException("请求失败，请退出重试");
         }
