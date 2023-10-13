@@ -16,6 +16,7 @@ import com.ruoyi.zlyyhadmin.service.IShopProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -112,6 +113,44 @@ public class ShopProductServiceImpl implements IShopProductService {
     }
 
     @Override
+    public Boolean addShopByProduct(ShopProductBo bo) {
+        List<ShopProduct> add = new ArrayList<>();
+        if (ObjectUtil.isNotEmpty(bo.getShopIds()) && ObjectUtil.isNotEmpty(bo.getProductId())) {
+            bo.getShopIds().forEach(o -> {
+                ShopProduct shopProduct = new ShopProduct();
+                shopProduct.setShopId(o);
+                shopProduct.setProductId(bo.getProductId());
+                add.add(shopProduct);
+            });
+            return baseMapper.insertBatch(add);
+        } else if (ObjectUtil.isNotEmpty(bo.getProductIds()) && ObjectUtil.isNotEmpty(bo.getShopId())) {
+            bo.getProductIds().forEach(o -> {
+                ShopProduct shopProduct = new ShopProduct();
+                shopProduct.setShopId(bo.getShopId());
+                shopProduct.setProductId(o);
+                add.add(shopProduct);
+            });
+            return baseMapper.insertBatch(add);
+        }
+        return false;
+    }
+
+    @Override
+    public int delByShopProduct(ShopProductBo bo) {
+        LambdaQueryWrapper<ShopProduct> wrapper = Wrappers.lambdaQuery();
+        if (ObjectUtil.isNotEmpty(bo.getShopIds()) && ObjectUtil.isNotEmpty(bo.getProductId())) {
+            wrapper.eq(ShopProduct::getProductId,bo.getProductId());
+            wrapper.in(ShopProduct::getShopId,bo.getShopIds());
+            return baseMapper.delete(wrapper);
+        } else if (ObjectUtil.isNotEmpty(bo.getProductIds()) && ObjectUtil.isNotEmpty(bo.getShopId())) {
+            wrapper.eq(ShopProduct::getShopId,bo.getShopId());
+            wrapper.in(ShopProduct::getProductId,bo.getProductIds());
+            return baseMapper.delete(wrapper);
+        }
+        return 0;
+    }
+
+    @Override
     public Integer deleteWithValidByShopId(Long shopId) {
         return baseMapper.delete(new LambdaQueryWrapper<ShopProduct>().eq(ShopProduct::getShopId, shopId));
     }
@@ -136,9 +175,9 @@ public class ShopProductServiceImpl implements IShopProductService {
     @Override
     public String queryCityCode(Long productId) {
         List<String> result = baseMapper.queryCityCode(productId);
-        if(ObjectUtil.isEmpty(result)){
+        if (ObjectUtil.isEmpty(result)) {
             return null;
         }
-        return CollUtil.join(result,",");
+        return CollUtil.join(result, ",");
     }
 }

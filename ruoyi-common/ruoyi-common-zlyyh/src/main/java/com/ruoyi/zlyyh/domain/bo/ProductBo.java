@@ -211,9 +211,11 @@ public class ProductBo extends BaseEntity {
     private String providerName;
 
     /**
-     * 标签,英文逗号隔开
+     * 标签,英文逗号隔开(已废弃，暂时保留)
      */
     private String tags;
+
+    private List<Long> tagsList;
 
     /**
      * 展示城市：ALL-全部、否则城市行政区号，多个之间用英文逗号隔开
@@ -231,7 +233,7 @@ public class ProductBo extends BaseEntity {
     private Long shopGroupId;
 
     /**
-     * 门店组ID
+     * 门店ID
      */
     private String shopId;
 
@@ -326,6 +328,22 @@ public class ProductBo extends BaseEntity {
      * 是否校验用户购买城市
      */
     private String checkPayCity;
+    /**
+     * 支持优惠券
+     */
+    private String isCoupon;
+    /**
+     * 是否分享
+     */
+    private String isShare;
+    /**
+     * 供应商
+     */
+    private String supplier;
+    /**
+     * 支持端
+     */
+    private String supportChannel;
 
     /**
      * 演出票商品信息

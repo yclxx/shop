@@ -22,7 +22,7 @@
       </el-form-item>
       <el-form-item label="平台" prop="platformKey">
         <el-select v-model="queryParams.platformKey" placeholder="请选择平台标识" clearable>
-          <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id" />
+          <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id"/>
         </el-select>
       </el-form-item>
 
@@ -41,7 +41,8 @@
           size="mini"
           @click="handleAdd"
           v-hasPermi="['zlyyh:businessDistrict:add']"
-        >新增</el-button>
+        >新增
+        </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
@@ -52,7 +53,8 @@
           :disabled="single"
           @click="handleUpdate"
           v-hasPermi="['zlyyh:businessDistrict:edit']"
-        >修改</el-button>
+        >修改
+        </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
@@ -63,7 +65,8 @@
           :disabled="multiple"
           @click="handleDelete"
           v-hasPermi="['zlyyh:businessDistrict:remove']"
-        >删除</el-button>
+        >删除
+        </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
@@ -73,17 +76,18 @@
           size="mini"
           @click="handleExport"
           v-hasPermi="['zlyyh:businessDistrict:export']"
-        >导出</el-button>
+        >导出
+        </el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="businessDistrictList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
+      <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="ID" align="center" prop="businessDistrictId" v-if="true"/>
       <el-table-column label="商圈图片" align="left" prop="businessDistrictImg" width="100">
         <template slot-scope="scope">
-          <image-preview :src="scope.row.businessDistrictImg" :width="50" :height="50" />
+          <image-preview :src="scope.row.businessDistrictImg" :width="50" :height="50"/>
         </template>
       </el-table-column>
       <el-table-column label="商圈信息" align="left" prop="businessMobile" width="150">
@@ -101,9 +105,9 @@
       </el-table-column>
       <el-table-column label="城市信息" align="left" prop="address" width="180">
         <template slot-scope="scope">
-          <span>省份：{{ scope.row.province }}({{scope.row.procode}})</span><br>
-          <span>城市：{{ scope.row.city }}({{scope.row.citycode}})</span><br>
-          <span>县市：{{ scope.row.district }}({{scope.row.adcode}})</span>
+          <span>省份：{{ scope.row.province }}({{ scope.row.procode }})</span><br>
+          <span>城市：{{ scope.row.city }}({{ scope.row.citycode }})</span><br>
+          <span>县市：{{ scope.row.district }}({{ scope.row.adcode }})</span>
         </template>
       </el-table-column>
       <el-table-column label="经纬度" align="left" prop="address" width="150">
@@ -119,24 +123,34 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="自定义区域" align="center" prop="businessDistrictScope" width="150" />
-      <el-table-column label="平台" width="100" align="center" prop="platformKey" :formatter="platformFormatter" />
+      <el-table-column label="自定义区域" align="center" prop="businessDistrictScope" width="150"/>
+      <el-table-column label="平台" width="100" align="center" prop="platformKey" :formatter="platformFormatter"/>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right">
         <template slot-scope="scope">
           <el-button
             size="mini"
             type="text"
             icon="el-icon-edit"
+            @click="handleShop(scope.row)"
+            v-hasPermi="['zlyyh:businessDistrict:shop']"
+          >门店维护
+          </el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['zlyyh:businessDistrict:edit']"
-          >修改</el-button>
+          >修改
+          </el-button>
           <el-button
             size="mini"
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
             v-hasPermi="['zlyyh:businessDistrict:remove']"
-          >删除</el-button>
+          >删除
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -155,24 +169,25 @@
         <el-row>
           <el-col :span="8">
             <el-form-item label="平台" prop="platformKey">
-              <el-select v-model="form.platformKey" placeholder="请选择平台标识" @change="getPlatformPageSelectList" clearable>
-                <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id" />
+              <el-select v-model="form.platformKey" placeholder="请选择平台标识" @change="getPlatformPageSelectList"
+                         clearable>
+                <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id"/>
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="8" >
+          <el-col :span="8">
             <el-form-item label="商圈名称" prop="businessDistrictName" style="width: 94%;">
-              <el-input v-model="form.businessDistrictName" placeholder="请输入商圈名称" />
+              <el-input v-model="form.businessDistrictName" placeholder="请输入商圈名称"/>
             </el-form-item>
           </el-col>
-          <el-col :span="8" >
+          <el-col :span="8">
             <el-form-item label="电话" prop="businessMobile" style="width: 94%;">
-              <el-input v-model="form.businessMobile"  placeholder="请输入电话" />
+              <el-input v-model="form.businessMobile" placeholder="请输入电话"/>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="营业时间" prop="businessHours" style="width: 94%;">
-              <el-input v-model="form.businessHours"  placeholder="请输入营业时间" />
+              <el-input v-model="form.businessHours" placeholder="请输入营业时间"/>
             </el-form-item>
           </el-col>
 
@@ -183,48 +198,52 @@
                   v-for="dict in dict.type.sys_normal_disable"
                   :key="dict.value"
                   :label="dict.value"
-                >{{dict.label}}</el-radio>
+                >{{ dict.label }}
+                </el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
 
         </el-row>
-        <el-row >
+        <el-row>
           <el-col :span="12">
             <el-form-item label="商圈图片" prop="businessDistrictImg">
-              <image-upload :limit="1" v-model="form.businessDistrictImg" />
+              <image-upload :limit="1" v-model="form.businessDistrictImg"/>
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-form-item label="地址" prop="address">
-          <el-input v-model="form.address" placeholder="请输入地址" />
+          <el-input v-model="form.address" placeholder="请输入地址"/>
         </el-form-item>
 
         <el-form-item label="结构化地址" prop="formattedAddress" label-width="100px">
-          <el-input v-model="form.formattedAddress" placeholder="请输入结构化地址信息省份＋城市＋区县＋城镇＋乡村＋街道＋门牌号码" />
+          <el-input v-model="form.formattedAddress"
+                    placeholder="请输入结构化地址信息省份＋城市＋区县＋城镇＋乡村＋街道＋门牌号码"/>
         </el-form-item>
 
         <el-row>
           <el-col :span="12">
             <el-form-item label="经度" prop="longitude">
-              <el-input disabled v-model="form.longitude" placeholder="经度,点击下方地图获取" />
+              <el-input disabled v-model="form.longitude" placeholder="经度,点击下方地图获取"/>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="纬度" prop="latitude">
-              <el-input disabled v-model="form.latitude" placeholder="纬度,点击下方地图获取" />
+              <el-input disabled v-model="form.latitude" placeholder="纬度,点击下方地图获取"/>
             </el-form-item>
           </el-col>
         </el-row>
         <el-form-item label="自定义区" prop="businessDistrictScope" label-width="100px">
           <span slot="label">
             自定义区
-            <el-tooltip content="基于高德地图,经纬度之间用,隔开 每组经纬度之间用;隔开 例如：经度,纬度;经度,纬度;经度,纬度;经度,纬度" placement="top">
+            <el-tooltip
+              content="基于高德地图,经纬度之间用,隔开 每组经纬度之间用;隔开 例如：经度,纬度;经度,纬度;经度,纬度;经度,纬度"
+              placement="top">
               <i class="el-icon-question"></i>
             </el-tooltip>
           </span>
-          <el-input v-model="form.businessDistrictScope" type="textarea" placeholder="请输入内容" />
+          <el-input v-model="form.businessDistrictScope" type="textarea" placeholder="请输入内容"/>
         </el-form-item>
 
         <el-form-item label="poi地址">
@@ -234,8 +253,9 @@
               <i class="el-icon-question"></i>
             </el-tooltip>
           </span>
-          <el-select v-model="poiAddress" style="width: 100%;" @change="poiChange" placeholder="选择poi地址（poi地址只做地址辅助选项,保存的是商户店址）" clearable>
-            <el-option v-for="(poi,index) in pois" :key="index" :label="poi.address" :value="index" />
+          <el-select v-model="poiAddress" style="width: 100%;" @change="poiChange"
+                     placeholder="选择poi地址（poi地址只做地址辅助选项,保存的是商户店址）" clearable>
+            <el-option v-for="(poi,index) in pois" :key="index" :label="poi.address" :value="index"/>
           </el-select>
         </el-form-item>
         <el-row>
@@ -251,33 +271,38 @@
           </el-col>
         </el-row>
 
-
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+    <el-dialog title="商圈门店" :visible.sync="ShopVisible" width="90%">
+      <Shop v-bind:businessDistrictId=businessDistrictId></Shop>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { listBusinessDistrict, getBusinessDistrict, delBusinessDistrict, addBusinessDistrict, updateBusinessDistrict } from "@/api/zlyyh/businessDistrict";
 import {
-  selectListPlatform
-} from "@/api/zlyyh/platform";
-import {
-  deptTreeSelect
-} from "@/api/system/user";
+  listBusinessDistrict,
+  getBusinessDistrict,
+  delBusinessDistrict,
+  addBusinessDistrict,
+  updateBusinessDistrict
+} from "@/api/zlyyh/businessDistrict";
+import {selectListPlatform} from "@/api/zlyyh/platform";
+import {deptTreeSelect} from "@/api/system/user";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 import Treeselect from "@riophae/vue-treeselect";
-import {
-  selectListPage
-} from "@/api/zlyyh/page";
+import {selectListPage} from "@/api/zlyyh/page";
+import Shop from "@/views/zlyyh/shop/businessShop.vue";
+
 export default {
   name: "BusinessDistrict",
   dicts: ['sys_normal_disable'],
   components: {
+    Shop,
     Treeselect
   },
   data() {
@@ -307,6 +332,9 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      // 门店相关数据
+      ShopVisible: false,
+      businessDistrictId: undefined,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -355,7 +383,7 @@ export default {
             })
           }
         }
-      }, ],
+      },],
       events: {
         click(e) {
           let {
@@ -370,7 +398,7 @@ export default {
             radius: 1000,
             extensions: 'all'
           })
-          geocoder.getAddress([lng, lat], function(status, result) {
+          geocoder.getAddress([lng, lat], function (status, result) {
             if (status === 'complete' && result.info === 'OK') {
               if (result && result.regeocode) {
                 self.form.address = result.regeocode.formattedAddress
@@ -384,9 +412,9 @@ export default {
                 self.form.city = ad.city
                 self.form.district = ad.district
                 //省行政编码最后面4个0
-                self.form.procode =ad.adcode.substring(0,2)+'0000'
+                self.form.procode = ad.adcode.substring(0, 2) + '0000'
                 //市编码最后2个0
-                self.form.citycode = ad.adcode.substring(0,4)+'00';
+                self.form.citycode = ad.adcode.substring(0, 4) + '00';
                 //区县编码
                 self.form.adcode = ad.adcode;
                 self.$nextTick()
@@ -400,33 +428,33 @@ export default {
       // 表单校验
       rules: {
         businessDistrictId: [
-          { required: true, message: "ID不能为空", trigger: "blur" }
+          {required: true, message: "ID不能为空", trigger: "blur"}
         ],
         businessDistrictName: [
-          { required: true, message: "商圈名称不能为空", trigger: "blur" }
+          {required: true, message: "商圈名称不能为空", trigger: "blur"}
         ],
         businessDistrictImg: [
-          { required: true, message: "商圈图片不能为空", trigger: "blur" }
+          {required: true, message: "商圈图片不能为空", trigger: "blur"}
         ],
         address: [
-          { required: true, message: "地址不能为空", trigger: "blur" }
+          {required: true, message: "地址不能为空", trigger: "blur"}
         ],
         status: [
-          { required: true, message: "状态不能为空", trigger: "change" }
+          {required: true, message: "状态不能为空", trigger: "change"}
         ],
         formattedAddress: [
-          { required: true, message: "结构化地址不能为空", trigger: "blur" }
+          {required: true, message: "结构化地址不能为空", trigger: "blur"}
         ],
 
         longitude: [
-          { required: true, message: "经度", trigger: "blur" }
+          {required: true, message: "经度", trigger: "blur"}
         ],
         latitude: [
-          { required: true, message: "纬度", trigger: "blur" }
+          {required: true, message: "纬度", trigger: "blur"}
         ],
 
         platformKey: [
-          { required: true, message: "平台标识不能为空", trigger: "blur" }
+          {required: true, message: "平台标识不能为空", trigger: "blur"}
         ],
 
       }
@@ -450,7 +478,7 @@ export default {
         radius: 1000,
         extensions: 'all'
       })
-      geocoder.getAddress([poi.location.lng, poi.location.lat], function(status, result) {
+      geocoder.getAddress([poi.location.lng, poi.location.lat], function (status, result) {
         if (status === 'complete' && result.info === 'OK') {
           if (result && result.regeocode) {
 
@@ -462,9 +490,9 @@ export default {
             self.form.city = ad.city
             self.form.district = ad.district
             //省行政编码最后面4个0
-            self.form.procode =ad.adcode.substring(0,2)+'0000'
+            self.form.procode = ad.adcode.substring(0, 2) + '0000'
             //市编码最后2个0
-            self.form.citycode = ad.adcode.substring(0,4)+'00';
+            self.form.citycode = ad.adcode.substring(0, 4) + '00';
             //区县编码
             self.form.adcode = ad.adcode;
             self.$nextTick()
@@ -584,7 +612,7 @@ export default {
     // 多选框选中数据
     handleSelectionChange(selection) {
       this.ids = selection.map(item => item.businessDistrictId)
-      this.single = selection.length!==1
+      this.single = selection.length !== 1
       this.multiple = !selection.length
     },
     /** 新增按钮操作 */
@@ -604,6 +632,11 @@ export default {
         this.open = true;
         this.title = "修改商圈";
       });
+    },
+    /** 门店维护 */
+    handleShop(row) {
+      this.ShopVisible = true;
+      this.businessDistrictId = row.businessDistrictId || this.ids
     },
     /** 提交按钮 */
     submitForm() {

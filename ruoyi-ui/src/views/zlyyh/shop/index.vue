@@ -95,6 +95,8 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right">
         <template slot-scope="scope">
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleProductByShop(scope.row)"
+            v-hasPermi="['zlyyh:shop:merNoEdit']">商品维护</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleMerNoEdit(scope.row)"
             v-hasPermi="['zlyyh:shop:merNoEdit']">商户号配置</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
@@ -141,7 +143,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="平台" prop="platformKey">
-              <el-select v-model="form.platformKey" placeholder="请选择平台标识" clearable>
+              <el-select v-model="form.platformKey" placeholder="请选择平台标识" clearable style="width: 90%;">
                 <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id" />
               </el-select>
             </el-form-item>
@@ -153,14 +155,14 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="展示开始时间" prop="showStartDate">
-              <el-date-picker clearable v-model="form.showStartDate" type="datetime" style="width: 100%;"
+              <el-date-picker clearable v-model="form.showStartDate" type="datetime" style="width: 90%;"
                 value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择展示开始时间">
               </el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="展示结束时间" prop="showEndDate">
-              <el-date-picker clearable v-model="form.showEndDate" type="datetime" style="width: 100%;"
+              <el-date-picker clearable v-model="form.showEndDate" type="datetime" style="width: 90%;"
                 value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择展示结束时间" default-time="23:59:59">
               </el-date-picker>
             </el-form-item>
@@ -168,7 +170,7 @@
           <el-col :span="12">
             <el-form-item label="展示区间" prop="sellTime">
               <el-time-picker is-range v-model="form.sellTime" range-separator="-" start-placeholder="开始时间"
-                end-placeholder="结束时间" placeholder="选择时间范围" style="width: 100%;" value-format="HH:mm:ss">
+                end-placeholder="结束时间" placeholder="选择时间范围" style="width: 90%;" value-format="HH:mm:ss">
               </el-time-picker>
             </el-form-item>
           </el-col>
@@ -184,7 +186,7 @@
 
           <el-col :span="12">
             <el-form-item label="指定周几" prop="assignDate">
-              <el-select v-model="form.assignDate" placeholder="请选择指定周几" style="width: 100%;">
+              <el-select v-model="form.assignDate" placeholder="请选择指定周几" style="width: 90%;">
                 <el-option v-for="dict in dict.type.t_product_assign_date" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
               </el-select>
@@ -193,7 +195,7 @@
           <el-col :span="12">
             <!-- v-if="form.assignDate == '1'" -->
             <el-form-item label="周几能领" prop="weekDate" v-if="form.assignDate == '1'">
-              <el-select v-model="form.weekDate" placeholder="请选择星期" style="width: 100%;" multiple clearable>
+              <el-select v-model="form.weekDate" placeholder="请选择星期" style="width: 90%;" multiple clearable>
                 <el-option v-for="dict in dict.type.t_grad_period_date_list" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
               </el-select>
@@ -202,10 +204,78 @@
           <el-col :span="12">
             <el-form-item label="商圈" prop="businessDistrictId">
               <el-select v-model="form.businessDistrictId" placeholder="请选择商圈" filterable clearable multiple
-                style="width: 100%;">
+                style="width: 90%;">
                 <el-option v-for="item in businessDistrictList" :key="item.id" :value="item.id" :label="item.label">
                 </el-option>
               </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="共享" prop="isShare">
+              <el-select v-model="form.isShare" placeholder="请选择是否共享" style="width: 90%;">
+                <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label"
+                           :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="供应商" prop="supplier" style="width: 92%;">
+              <el-select v-model="form.supplier" placeholder="请选择供应商" style="width: 100%;">
+                <el-option v-for="dict in supplierList" :key="dict.id" :label="dict.label"
+                           :value="dict.id"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="收款账户" prop="account" style="width: 92%;">
+              <el-input v-model="form.account" placeholder="请输入收款账户" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="性质" prop="nature">
+              <el-select v-model="form.nature" placeholder="请选择性质" style="width: 90%;">
+                <el-option v-for="dict in dict.type.nature_type" :key="dict.value" :label="dict.label"
+                           :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="活动类型" prop="activity">
+              <el-select v-model="form.activity" placeholder="请选择活动类型" style="width: 90%;">
+                <el-option v-for="dict in dict.type.activity_type" :key="dict.value" :label="dict.label"
+                           :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="发票类型" prop="invoice">
+              <el-select v-model="form.invoice" placeholder="请选择发票类型" style="width: 90%;">
+                <el-option v-for="dict in dict.type.invoice_type" :key="dict.value" :label="dict.label"
+                           :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="标签" prop="tags">
+              <el-select v-model="form.tagsList" multiple placeholder="请选择标签" style="width: 90%;">
+                <el-option v-for="item in tagsList" :key="item.tagsId" :label="item.tagsName" :value="item.tagsId">
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="支持端" prop="supportChannel">
+              <el-checkbox-group v-model="form.supportChannel">
+                <el-checkbox
+                  v-for="item in dict.type.channel_type" :key="item.value" :label="item.value">
+                  {{ item.label }}
+                </el-checkbox>
+              </el-checkbox-group>
+            </el-form-item>
+          </el-col>
+          <el-col :span="10">
+            <el-form-item label="营业执照" prop="license">
+              <image-upload :limit="1" v-model="form.license" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -225,7 +295,6 @@
               <el-input disabled v-model="form.latitude" placeholder="纬度,点击下方地图获取" />
             </el-form-item>
           </el-col>
-
         </el-row>
         <el-form-item label="poi地址">
           <span slot="label">
@@ -234,7 +303,7 @@
               <i class="el-icon-question"></i>
             </el-tooltip>
           </span>
-          <el-select v-model="poiAddress" style="width: 100%;" @change="poiChange"
+          <el-select v-model="poiAddress" style="width: 90%;" @change="poiChange"
             placeholder="选择poi地址（poi地址只做地址辅助选项,保存的是商户店址）" clearable>
             <el-option v-for="(poi,index) in pois" :key="index" :label="poi.address" :value="index" />
           </el-select>
@@ -245,7 +314,7 @@
           </el-amap-search-box>
           <el-col :span="24">
             <el-amap vid="amapDemo" :center="center" :zoom="zoom" :plugin="plugin" :events="events"
-              style="width: 100%;height: 400px;">
+              style="width: 90%;height: 400px;">
               <el-amap-marker v-for="(marker, index) in markers" :position="marker" :key="'marker' + index"
                 :events="events"></el-amap-marker>
             </el-amap>
@@ -262,12 +331,12 @@
     <el-dialog title="门店导入" :visible.sync="importOpen" width="500px" append-to-body>
       <el-form ref="importForm" :model="importForm" :rules="rules" label-width="80px">
         <el-form-item label="平台" prop="platformKey">
-          <el-select style="width: 100%;" v-model="importForm.platformKey" placeholder="请选择平台标识" clearable>
+          <el-select style="width: 90%;" v-model="importForm.platformKey" placeholder="请选择平台标识" clearable>
             <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="商品" prop="productIds">
-          <el-select style="width: 100%;" v-model="importForm.productId" placeholder="请选择商品" clearable>
+          <el-select style="width: 90%;" v-model="importForm.productId" placeholder="请选择商品" clearable>
             <el-option v-for="item in productList" :key="item.id" :label="item.label" :value="item.id">
               <span style="float: left">{{ item.label }}</span>
             </el-option>
@@ -362,6 +431,9 @@
         </div>
       </el-dialog>
     </el-dialog>
+    <el-dialog title="门店商品" :visible.sync="isProduct" width="90%">
+      <Product v-bind:shopId=shopId></Product>
+    </el-dialog>
   </div>
 </template>
 
@@ -380,36 +452,30 @@
     addShopMerchant,
     updateShopMerchant
   } from "@/api/zlyyh/shopMerchant";
-  import {
-    selectListMerchant
-  } from "@/api/zlyyh/commercialTenant";
-  import {
-    selectListBusinessDistrict
-  } from "@/api/zlyyh/businessDistrict";
-  import {
-    selectListPlatform
-  } from "@/api/zlyyh/platform";
-  import {
-    selectListProduct
-  } from "@/api/zlyyh/product";
-  import {
-    getToken
-  } from "@/utils/auth";
+  import { selectListMerchant } from "@/api/zlyyh/commercialTenant";
+  import { selectListBusinessDistrict } from "@/api/zlyyh/businessDistrict";
+  import { selectListPlatform } from "@/api/zlyyh/platform";
+  import { selectListProduct } from "@/api/zlyyh/product";
+  import { getToken } from "@/utils/auth";
   import "@riophae/vue-treeselect/dist/vue-treeselect.css";
   import Treeselect from "@riophae/vue-treeselect";
-
+  import { exportTags } from "@/api/zlyyh/tags";
+  import Product from "@/views/zlyyh/product/info.vue";
+  import {selectSupplier} from "@/api/zlyyh/supplier";
 
   export default {
     name: "Shop",
     dicts: ['t_shop_status', 't_shop_merchant_type', 't_shop_merchant_status', 't_product_assign_date',
-      't_grad_period_date_list'
+      't_grad_period_date_list', 'nature_type', 'invoice_type', 'activity_type', 'sys_yes_no','channel_type'
     ],
     components: {
-      Treeselect
+      Treeselect,
+      Product
     },
     data() {
       let self = this
       return {
+        shopId: undefined,
         // 部门树选项
         deptOptions: undefined,
         shopMerchatOpen: false,
@@ -419,6 +485,8 @@
         commercialTenantList: [],
         //商品下拉列表
         productList: [],
+        // 商品展示页面
+        isProduct: false,
         // 按钮loading
         buttonLoading: false,
         // 遮罩层
@@ -435,10 +503,12 @@
         total: 0,
         // 门店表格数据
         shopList: [],
+        // 供应商
+        supplierList: [],
         //商圈列表 选择商圈
         businessDistrictList: [],
-
-
+        // 标签列表 选择标签
+        tagsList: [],
         pois: [],
         poiAddress: '',
         address: {},
@@ -558,53 +628,11 @@
             message: "ID不能为空",
             trigger: "blur"
           }],
-          // commercialTenantId: [
-          //   { required: true, message: "商户ID不能为空", trigger: "blur" }
-          // ],
           shopName: [{
             required: true,
             message: "门店名称不能为空",
             trigger: "blur"
           }],
-          // shopTel: [
-          //   { required: true, message: "门店电话不能为空", trigger: "blur" }
-          // ],
-          // businessHours: [
-          //   { required: true, message: "营业时间不能为空", trigger: "blur" }
-          // ],
-          // address: [
-          //   { required: true, message: "门店地址不能为空", trigger: "blur" }
-          // ],
-          // status: [
-          //   { required: true, message: "状态不能为空", trigger: "change" }
-          // ],
-          // formattedAddress: [
-          //   { required: true, message: "结构化地址信息不能为空", trigger: "blur" }
-          // ],
-          // province: [
-          //   { required: true, message: "省份名不能为空", trigger: "blur" }
-          // ],
-          // city: [
-          //   { required: true, message: "城市名不能为空", trigger: "blur" }
-          // ],
-          // district: [
-          //   { required: true, message: "地址所在区不能为空", trigger: "blur" }
-          // ],
-          // procode: [
-          //   { required: true, message: "省份编码不能为空", trigger: "blur" }
-          // ],
-          // citycode: [
-          //   { required: true, message: "城市编码不能为空", trigger: "blur" }
-          // ],
-          // adcode: [
-          //   { required: true, message: "区域编码不能为空", trigger: "blur" }
-          // ],
-          // longitude: [
-          //   { required: true, message: "经度不能为空", trigger: "blur" }
-          // ],
-          // latitude: [
-          //   { required: true, message: "纬度不能为空", trigger: "blur" }
-          // ],
           platformKey: [{
             required: true,
             message: "平台不能为空",
@@ -672,9 +700,6 @@
               message: "状态不能为空",
               trigger: "change"
             }],
-            // remark: [
-            //   { required: true, message: "备注不能为空", trigger: "blur" }
-            // ],
           }
         },
       };
@@ -685,6 +710,8 @@
       this.getMerSelectList();
       this.getBusinessDistrictList();
       this.getProductSelectList();
+      this.getTagsList();
+      this.selectSupplierList();
     },
     methods: {
       poiChange(index) {
@@ -830,6 +857,15 @@
           updateTime: undefined,
           platformKey: undefined,
           businessDistrict: undefined,
+          isShare: undefined,
+          supplier: undefined,
+          license: undefined,
+          nature: undefined,
+          invoice: undefined,
+          account: undefined,
+          activity: undefined,
+          tagsList: undefined,
+          supportChannel: []
         };
         this.resetForm("form");
       },
@@ -868,6 +904,11 @@
           if (this.form && this.form.businessDistrictId) {
             this.form.businessDistrictId = this.form.businessDistrictId.split(",")
           }
+          if (response.data.supportChannel) {
+            this.form.supportChannel = response.data.supportChannel.split(",")
+          } else {
+            this.form.supportChannel = []
+          }
         });
       },
       /** 提交按钮 */
@@ -877,6 +918,9 @@
             this.buttonLoading = true;
             if (this.form.businessDistrictId) {
               this.form.businessDistrictId = this.form.businessDistrictId.toString();
+            }
+            if (this.form.supportChannel) {
+              this.form.supportChannel = this.form.supportChannel.join(",")
             }
             if (this.form.shopId != null) {
               updateShop(this.form).then(response => {
@@ -949,6 +993,11 @@
             this.$refs.upload.submit();
           }
         });
+      },
+      // 商品维护
+      handleProductByShop(row) {
+        this.shopId =  row.shopId;
+        this.isProduct = true;
       },
       //商户号配置按钮
       handleMerNoEdit(row) {
@@ -1030,6 +1079,22 @@
               });
             }
           }
+        });
+      },
+      /** 查询标签 */
+      getTagsList() {
+        const param = {
+          'tagsType': '2'
+        }
+        exportTags(param).then(response => {
+          this.tagsList = response.data;
+        });
+      },
+      /** 查询供应商 */
+      selectSupplierList() {
+        selectSupplier(this.form).then(response => {
+          this.supplierList = response.data;
+        }).finally(() => {
         });
       },
       /** 删除按钮操作 */

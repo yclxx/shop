@@ -87,6 +87,42 @@ public class CommercialTenantVo implements Serializable {
     private Long platformKey;
 
     /**
+     * 是否共享
+     */
+    @ExcelProperty(value = "是否共享")
+    private String is_share;
+    /**
+     * 供应商
+     */
+    @ExcelProperty(value = "供应商")
+    private String supplier;
+    /**
+     * 营业执照
+     */
+    @ExcelProperty(value = "营业执照")
+    private String license;
+    /**
+     * 性质
+     */
+    @ExcelProperty(value = "性质")
+    private String nature;
+    /**
+     * 发票类型
+     */
+    @ExcelProperty(value = "发票类型")
+    private String invoice;
+    /**
+     * 收款账户
+     */
+    @ExcelProperty(value = "收款账户")
+    private String account;
+    /**
+     * 活动类型
+     */
+    @ExcelProperty(value = "活动类型")
+    private String activity;
+
+    /**
      * 第三方品牌ID
      */
     private Long brandId;

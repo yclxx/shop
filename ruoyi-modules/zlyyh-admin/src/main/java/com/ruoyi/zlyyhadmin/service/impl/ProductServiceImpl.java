@@ -18,13 +18,11 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.resource.api.RemoteFileService;
 import com.ruoyi.resource.api.domain.SysFile;
-import com.ruoyi.zlyyh.domain.CategoryProduct;
-import com.ruoyi.zlyyh.domain.CommercialTenantProduct;
-import com.ruoyi.zlyyh.domain.Product;
-import com.ruoyi.zlyyh.domain.ProductInfo;
+import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.*;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.ProductMapper;
+import com.ruoyi.zlyyh.mapper.TagsProductMapper;
 import com.ruoyi.zlyyh.param.LianLianParam;
 import com.ruoyi.zlyyh.service.YsfConfigService;
 import com.ruoyi.zlyyh.utils.LianLianUtils;
@@ -42,6 +40,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +64,7 @@ public class ProductServiceImpl implements IProductService {
     private final IShopProductService shopProductService;
     private final IProductInfoService productInfoService;
     private final YsfConfigService ysfConfigService;
+    private final TagsProductMapper tagsProductMapper;
     @DubboReference
     private RemoteFileService remoteFileService;
 
@@ -108,10 +108,14 @@ public class ProductServiceImpl implements IProductService {
             List<ProductTicketSessionVo> ticketSessionVos = productTicketSessionService.queryLists(sessionBo);
             productVo.setTicketSession(ticketSessionVos);
         }
-        List<Long> shopIds = shopProductService.queryByProductId(productId);
-        if (!shopIds.isEmpty()) {
-            productVo.setShopId(StringUtils.join(shopIds, ","));
+        List<Long> tags = tagsProductMapper.selectByProductId(productId);
+        if (ObjectUtil.isNotEmpty(tags)) {
+            productVo.setTagsList(tags);
         }
+        //List<Long> shopIds = shopProductService.queryByProductId(productId);
+        //if (!shopIds.isEmpty()) {
+        //    productVo.setShopId(StringUtils.join(shopIds, ","));
+        //}
         return productVo;
     }
 
@@ -201,7 +205,6 @@ public class ProductServiceImpl implements IProductService {
         lqw.eq(StringUtils.isNotBlank(bo.getDescription()), Product::getDescription, bo.getDescription());
         lqw.eq(StringUtils.isNotBlank(bo.getProviderLogo()), Product::getProviderLogo, bo.getProviderLogo());
         lqw.like(StringUtils.isNotBlank(bo.getProviderName()), Product::getProviderName, bo.getProviderName());
-        lqw.eq(StringUtils.isNotBlank(bo.getTags()), Product::getTags, bo.getTags());
         if (StringUtils.isNotEmpty(bo.getShowCity())) {
             lqw.and(lq -> lq.like(Product::getShowCity, bo.getShowCity()).or(e -> e.eq(Product::getShowCity, "ALL")));
         }
@@ -216,6 +219,9 @@ public class ProductServiceImpl implements IProductService {
         lqw.eq(StringUtils.isNotBlank(bo.getShowIndex()), Product::getShowIndex, bo.getShowIndex());
         lqw.eq(bo.getPlatformKey() != null, Product::getPlatformKey, bo.getPlatformKey());
         lqw.eq(bo.getSort() != null, Product::getSort, bo.getSort());
+        if (ObjectUtil.isNotEmpty(bo.getShopId())) {
+            lqw.apply("product_id IN (select product_id from t_shop_product where shop_id = " + bo.getShopId() + ")");
+        }
         lqw.between(params.get("beginStartDate") != null && params.get("endStartDate") != null, Product::getShowStartDate, params.get("beginStartDate"), params.get("endStartDate"));
         lqw.between(params.get("beginEndDate") != null && params.get("endEndDate") != null, Product::getShowEndDate, params.get("beginEndDate"), params.get("endEndDate"));
         return lqw;
@@ -242,6 +248,9 @@ public class ProductServiceImpl implements IProductService {
         baseMapper.updateById(product);
     }
 
+    /**
+     * 商品分类处理
+     */
     private void processCategory(Long productId, String categoryId, boolean update) {
         if (null == productId) {
             return;
@@ -305,13 +314,21 @@ public class ProductServiceImpl implements IProductService {
         }
         // 处理门店与产品关联表
         if (StringUtils.isNotEmpty(bo.getShopId())) {
-            String[] split = bo.getShopId().split(",");
-            for (String s : split) {
-                ShopProductBo shopBo = new ShopProductBo();
-                shopBo.setProductId(bo.getProductId());
-                shopBo.setShopId(Long.valueOf(s));
-                shopProductService.insertByBo(shopBo);
+            ShopProductBo shopBo = new ShopProductBo();
+            shopBo.setProductId(bo.getProductId());
+            shopBo.setShopId(Long.valueOf(bo.getShopId()));
+            shopProductService.insertByBo(shopBo);
+        }
+        // 处理标签
+        if (ObjectUtil.isNotEmpty(bo.getTagsList())) {
+            List<TagsProduct> addTagsProduct = new ArrayList<>();
+            for (Long aLong : bo.getTagsList()) {
+                TagsProduct tagsProduct = new TagsProduct();
+                tagsProduct.setProductId(add.getProductId());
+                tagsProduct.setTagsId(aLong);
+                addTagsProduct.add(tagsProduct);
             }
+            tagsProductMapper.insertBatch(addTagsProduct);
         }
         setProductCity(add.getProductId());
         return flag;
@@ -362,14 +379,22 @@ public class ProductServiceImpl implements IProductService {
         }
         // 处理门店与产品关联表
         if (StringUtils.isNotEmpty(bo.getShopId())) {
-            shopProductService.deleteByProductId(bo.getProductId());
-            String[] split = bo.getShopId().split(",");
-            for (String s : split) {
-                ShopProductBo shopBo = new ShopProductBo();
-                shopBo.setProductId(bo.getProductId());
-                shopBo.setShopId(Long.valueOf(s));
-                shopProductService.insertByBo(shopBo);
+            ShopProductBo shopBo = new ShopProductBo();
+            shopBo.setProductId(bo.getProductId());
+            shopBo.setShopId(Long.valueOf(bo.getShopId()));
+            shopProductService.insertByBo(shopBo);
+        }
+        // 处理标签
+        if (ObjectUtil.isNotEmpty(bo.getTagsList())) {
+            tagsProductMapper.deleteByProductId(bo.getProductId());
+            List<TagsProduct> addTagsProduct = new ArrayList<>();
+            for (Long aLong : bo.getTagsList()) {
+                TagsProduct tagsProduct = new TagsProduct();
+                tagsProduct.setProductId(bo.getProductId());
+                tagsProduct.setTagsId(aLong);
+                addTagsProduct.add(tagsProduct);
             }
+            tagsProductMapper.insertBatch(addTagsProduct);
         }
         setProductCity(update.getProductId());
         return flag;

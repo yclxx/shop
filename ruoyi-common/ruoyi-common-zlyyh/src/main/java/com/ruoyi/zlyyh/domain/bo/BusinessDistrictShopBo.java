@@ -2,13 +2,12 @@ package com.ruoyi.zlyyh.domain.bo;
 
 import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
+import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import javax.validation.constraints.*;
 
-import java.util.Date;
-
-import com.ruoyi.common.core.web.domain.BaseEntity;
+import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * 商圈门店关联业务对象
@@ -38,6 +37,9 @@ public class BusinessDistrictShopBo extends BaseEntity {
      */
     @NotNull(message = "门店ID不能为空", groups = { AddGroup.class, EditGroup.class })
     private Long shopId;
+
+    private List<Long> shopIds;
+    private List<Long> businessDistrictIds;
 
 
 }
