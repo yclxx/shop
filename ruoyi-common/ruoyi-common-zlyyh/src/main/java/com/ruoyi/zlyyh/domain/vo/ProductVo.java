@@ -247,10 +247,12 @@ public class ProductVo implements Serializable {
     private String providerName;
 
     /**
-     * 标签,英文逗号隔开
+     * 标签,英文逗号隔开(已废弃，暂时保留)
      */
     @ExcelProperty(value = "标签")
     private String tags;
+
+    private List<Long> tagsList;
 
     /**
      * 展示城市：ALL-全部、否则城市行政区号，多个之间用英文逗号隔开
@@ -383,6 +385,22 @@ public class ProductVo implements Serializable {
      * 是否校验用户购买城市
      */
     private String checkPayCity;
+    /**
+     * 支持优惠券
+     */
+    private String isCoupon;
+    /**
+     * 是否分享
+     */
+    private String isShare;
+    /**
+     * 供应商
+     */
+    private String supplier;
+    /**
+     * 支持端
+     */
+    private String supportChannel;
 
     private ProductTicketVo ticket;
 

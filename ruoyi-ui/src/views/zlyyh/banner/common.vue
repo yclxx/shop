@@ -264,6 +264,16 @@
             </el-form-item>
           </el-col>
           <el-col :span="24">
+            <el-form-item label="支持端" prop="supportChannel">
+              <el-checkbox-group v-model="form.supportChannel">
+                <el-checkbox
+                  v-for="item in dict.type.channel_type" :key="item.value" :label="item.value">
+                  {{ item.label }}
+                </el-checkbox>
+              </el-checkbox-group>
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
             <el-form-item label="展示城市" prop="showCity">
               <el-checkbox v-model="cityNodeAll" @change="selectAll">全部</el-checkbox>
               <el-tree @check="handleNodeClick" class="tree-border" :data="cityOptions" show-checkbox default-expand-all
@@ -303,7 +313,7 @@
   export default {
     name: "common",
     dicts: ['t_banner_show_dimension', 't_banner_type', 't_banner_status', 't_banner_to_type', 't_product_assign_date',
-      't_grad_period_date_list'
+      't_grad_period_date_list', 'channel_type'
     ],
     props: {
       bannerType: {
@@ -584,6 +594,7 @@
           assignDate: '0',
           weekDate: '',
           showCity: undefined,
+          supportChannel: [],
           platformKey: undefined,
           createBy: undefined,
           createTime: undefined,
@@ -633,6 +644,11 @@
           if (this.form && this.form.weekDate) {
             this.form.weekDate = this.form.weekDate.split(",");
           }
+          if (response.data.supportChannel) {
+            this.form.supportChannel = response.data.supportChannel.split(",")
+          } else {
+            this.form.supportChannel = []
+          }
           this.getPlatformPageSelectList()
           this.$nextTick(() => {
             showCity.then(res => {
@@ -668,6 +684,9 @@
             }
             if (this.form.weekDate) {
               this.form.weekDate = this.form.weekDate.join(',');
+            }
+            if (this.form.supportChannel) {
+              this.form.supportChannel = this.form.supportChannel.join(",")
             }
             if (this.form.bannerId != null) {
               updateBanner(this.form).then(response => {

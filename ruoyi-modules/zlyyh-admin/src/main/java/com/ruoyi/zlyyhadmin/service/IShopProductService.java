@@ -46,6 +46,10 @@ public interface IShopProductService {
      */
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
 
+    Boolean addShopByProduct(ShopProductBo bo);
+
+    int delByShopProduct(ShopProductBo bo);
+
     /**
      * 根据门店id删除门店商品关联信息
      * @param shopId

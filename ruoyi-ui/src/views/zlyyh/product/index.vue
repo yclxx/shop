@@ -144,6 +144,9 @@
           <el-button v-if="scope.row.productType == '13'" size="mini" type="text" icon="el-icon-edit"
             @click="handleTicketSessionLine(scope.row)" v-hasPermi="['zlyyh:product:ticket']">场次与票种
           </el-button>
+          <el-button size="mini" type="text" icon="el-icon-edit"
+            @click="handleShop(scope.row)" v-hasPermi="['zlyyh:product:shop']">门店维护
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -604,15 +607,6 @@
           <el-tab-pane label="扩展信息" name="expand" key="expand" :style="{height: tableHeight}">
             <el-row>
               <el-col :span="8">
-                <el-form-item label="门店" prop="shopId">
-                  <el-select v-model="form.shopId" placeholder="请输入门店名称搜索" multiple filterable remote reserve-keyword
-                    :remote-method="selectShopLists" clearable style="width: 100%;">
-                    <el-option v-for="item in shopList" :key="item.id" :value="item.id" :label="item.label">
-                    </el-option>
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="8">
                 <el-form-item label="商户" prop="commercialTenantId">
                   <el-select v-model="form.commercialTenantId" placeholder="请选择商户" filterable clearable multiple
                     style="width: 100%;">
@@ -631,6 +625,18 @@
                 </el-form-item>
               </el-col>
               <el-col :span="8">
+                <el-form-item label="支持端" prop="supportChannel">
+                  <el-checkbox-group v-model="form.supportChannel">
+                    <el-checkbox
+                      v-for="item in dict.type.channel_type" :key="item.value" :label="item.value">
+                      {{ item.label }}
+                    </el-checkbox>
+                  </el-checkbox-group>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="8">
                 <el-form-item label="跳转类型" prop="toType">
                   <span slot="label">
                     跳转类型
@@ -642,16 +648,18 @@
                   </el-select>
                 </el-form-item>
               </el-col>
-              <el-col :span="8" v-if="form.toType == '3'">
-                <el-form-item label="小程序ID" prop="appId">
-                  <el-input v-model="form.appId" placeholder="请输入小程序ID" />
-                </el-form-item>
-              </el-col>
               <el-col :span="8" v-if="form.toType != '4' && form.toType != '0'">
                 <el-form-item label="页面地址" prop="url">
                   <el-input v-model="form.url" placeholder="请输入页面地址" />
                 </el-form-item>
               </el-col>
+              <el-col :span="8" v-if="form.toType == '3'">
+                <el-form-item label="小程序ID" prop="appId">
+                  <el-input v-model="form.appId" placeholder="请输入小程序ID" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
               <el-col :span="8">
                 <el-form-item label="提供方名称" prop="providerName">
                   <el-input v-model="form.providerName" placeholder="请输入活动提供方名称" />
@@ -659,7 +667,10 @@
               </el-col>
               <el-col :span="8">
                 <el-form-item label="标签" prop="tags">
-                  <el-input v-model="form.tags" placeholder="请输入内容" />
+                  <el-select v-model="form.tagsList" multiple placeholder="请选择标签" style="width: 90%;">
+                    <el-option v-for="item in tagsList" :key="item.tagsId" :label="item.tagsName" :value="item.tagsId">
+                    </el-option>
+                  </el-select>
                 </el-form-item>
               </el-col>
               <el-col :span="8">
@@ -667,14 +678,42 @@
                   <el-input v-model="form.btnText" placeholder="请输入按钮名称" />
                 </el-form-item>
               </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="8">
+                <el-form-item label="共享" prop="isShare">
+                  <el-select v-model="form.isShare" placeholder="请选择是否共享">
+                    <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label"
+                               :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="支持优惠券" prop="isCoupon">
+                  <el-select v-model="form.isCoupon" placeholder="请选择是否支持优惠券">
+                    <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label"
+                               :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="供应商" prop="supplier">
+                  <el-select v-model="form.supplier" placeholder="请选择供应商">
+                    <el-option v-for="dict in supplierList" :key="dict.id" :label="dict.label"
+                               :value="dict.id"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
               <el-col :span="8">
                 <el-form-item label="分享标题" prop="shareTitle">
-                  <el-input v-model="form.shareTitle" placeholder="请输入分享标题" />
+                  <el-input v-model="form.shareTitle" placeholder="请输入分享标题"/>
                 </el-form-item>
               </el-col>
               <el-col :span="8">
                 <el-form-item label="分享描述" prop="shareName">
-                  <el-input v-model="form.shareName" type="textarea" placeholder="请输入内容" />
+                  <el-input v-model="form.shareName" type="textarea" placeholder="请输入内容"/>
                 </el-form-item>
               </el-col>
             </el-row>
@@ -738,6 +777,9 @@
         <el-button @click="dayCountCancel">取 消</el-button>
       </div>
     </el-dialog>
+    <el-dialog title="商品门店" :visible.sync="ShopVisible" width="90%">
+      <Shop v-bind:productId=productId></Shop>
+    </el-dialog>
   </div>
 </template>
 
@@ -748,42 +790,27 @@
     delProduct,
     addProduct,
     updateProduct,
-    setProductDayCount
-  } from "@/api/zlyyh/product";
-  import {
-    selectListPlatform
-  } from "@/api/zlyyh/platform"
-  import {
-    listSelectMerchant
-  } from "@/api/zlyyh/merchant"
-  import {
-    selectListMerchant
-  } from "@/api/zlyyh/commercialTenant"
-  import {
-    selectListDistributor
-  } from "@/api/zlyyh/distributor"
-  import {
-    selectListCategory
-  } from "@/api/zlyyh/category"
+    setProductDayCount} from "@/api/zlyyh/product";
   import {
     treeselect as cityTreeselect,
     productShowCityTreeSelect,
     selectCityList
   } from "@/api/zlyyh/area"
-  import {
-    selectShop,
-    selectShopListById
-  } from "@/api/zlyyh/shop";
+  import { selectListPlatform } from "@/api/zlyyh/platform"
+  import { listSelectMerchant } from "@/api/zlyyh/merchant"
+  import { selectListMerchant } from "@/api/zlyyh/commercialTenant"
+  import { selectListDistributor } from "@/api/zlyyh/distributor"
+  import { selectListCategory } from "@/api/zlyyh/category"
   import item from "@/layout/components/Sidebar/Item.vue";
-  import {
-    isArray
-  } from "@/utils/validate.js"
+  import Shop from "@/views/zlyyh/shop/productShop.vue";
   import ProductTicket from "@/views/zlyyh/product/productTicket.vue";
   import ProductSession from "@/views/zlyyh/product/productSession.vue";
+  import {exportTags} from "@/api/zlyyh/tags";
+  import {selectSupplier} from "@/api/zlyyh/supplier";
 
   export default {
     name: "Product",
-    components: {ProductTicket,ProductSession},
+    components: {Shop,ProductTicket,ProductSession},
     computed: {
       item() {
         return item
@@ -792,16 +819,18 @@
     dicts: ['t_product_to_type', 't_product_status', 't_product_affiliation', 't_product_assign_date', 't_product_type',
       't_product_show_original_amount', 't_product_pickup_method', 't_grad_period_date_list', 't_product_search',
       't_search_status', 't_product_pay_user', 't_show_index', 't_product_send_account_type', 't_cus_refund',
-      'sys_normal_disable', 't_product_check_pay_city',
-      't_product_union_pay'
+      'sys_normal_disable', 't_product_check_pay_city', 't_product_union_pay', 'sys_yes_no', 'channel_type'
     ],
     data() {
       return {
         tableHeight: document.documentElement.scrollHeight - 245 + "px",
         activeName: "basicCoupon",
         tabNameList: ["basicCoupon", "couponCount", "expand", "ticket", "session"],
+        productId: undefined,
         // 按钮loading
         buttonLoading: false,
+        // 商品门店
+        ShopVisible: false,
         // 遮罩层
         loading: true,
         // 选中数组
@@ -816,9 +845,10 @@
         total: 0,
         // 商品表格数据
         productList: [],
+        // 标签列表
+        tagsList: [],
         platformList: [],
         merchantList: [],
-        shopList: [],
         commercialTenantList: [],
         cityList: [],
         categoryList: [],
@@ -859,6 +889,8 @@
         //城市列表
         cityOptions: [],
         distributorList: [],
+        // 供应商
+        supplierList: [],
         // 弹出层标题
         title: "",
         // 是否显示弹出层
@@ -906,7 +938,6 @@
           description: undefined,
           providerLogo: undefined,
           providerName: undefined,
-          tags: undefined,
           showCity: undefined,
           merchantId: undefined,
           shopGroupId: undefined,
@@ -1029,65 +1060,7 @@
             trigger: "blur"
           }],
         },
-        isUpdate: false,
-        ticketChooseSeatList: [{
-            value: '1',
-            label: '在线选座'
-          },
-          {
-            value: '2',
-            label: '先到先得'
-          },
-          {
-            value: '3',
-            label: '无座'
-          },
-          {
-            value: '4',
-            label: '实体票'
-          }
-        ],
-        ticketFormList: [{
-            value: '1',
-            label: '电子票'
-          },
-          {
-            value: '2',
-            label: '实体票'
-          }
-        ],
-        ticketCardList: [{
-            value: '0',
-            label: '必须填写'
-          },
-          {
-            value: '1',
-            label: '无需填写'
-          }
-        ],
-        ticketStatusList: [{
-            value: '0',
-            label: '是'
-          },
-          {
-            value: '1',
-            label: '否'
-          },
-        ],
-        ticketPostWayList: [{
-            value: '0',
-            label: '无需邮寄'
-          },
-          {
-            value: '1',
-            label: '包邮'
-          },
-          {
-            value: '2',
-            label: '另付邮费'
-          },
-        ],
-        shopParams: undefined
+        isUpdate: false
       };
     },
     created() {
@@ -1099,7 +1072,6 @@
       listSelectMerchant({}).then(res => {
         this.merchantList = res.data;
       })
-      this.selectShopLists();
       let merchantParams = {
         status: "0"
       }
@@ -1118,33 +1090,10 @@
       }).then(res => {
         this.distributorList = res.data;
       })
+      this.getTagsList();
+      this.selectSupplierList();
     },
     methods: {
-      selectShopLists(query) {
-        if (query !== undefined) {
-          this.shopParams = {
-            status: "0",
-            shopName: query,
-            pageSize: 5
-          }
-        } else {
-          this.shopParams = {
-            status: "0",
-            pageSize: 5
-          }
-        }
-        selectShop(this.shopParams).then(res => {
-          this.shopList = res.data;
-        })
-      },
-      selectShop(query) {
-        let params = {
-          ids: query
-        }
-        selectShopListById(params).then(res => {
-          this.shopList = res.data;
-        })
-      },
       selectAll(val) {
         if (this.cityNodeAll) {
           // 	设置目前勾选的节点，使用此方法必须设置 node-key 属性
@@ -1275,10 +1224,9 @@
           providerLogo: undefined,
           providerName: undefined,
           tags: undefined,
+          tagsList: undefined,
           showCity: undefined,
           merchantId: undefined,
-          shopId: undefined,
-          //shopGroupId: undefined,
           commercialTenantId: undefined,
           categoryId: undefined,
           btnText: undefined,
@@ -1292,6 +1240,10 @@
           delFlag: undefined,
           platformKey: undefined,
           sort: undefined,
+          isCoupon: undefined,
+          isShare: undefined,
+          supplier: undefined,
+          supportChannel: [],
           ticket: {
             ticketChooseSeat: undefined,
             ticketForm: undefined,
@@ -1390,9 +1342,10 @@
           if (this.form && this.form.commercialTenantId) {
             this.form.commercialTenantId = this.form.commercialTenantId.split(",")
           }
-          if (this.form && this.form.shopId && this.form.productType == '13') {
-            this.selectShop(response.data.shopId);
-            this.form.shopId = this.form.shopId.split(",")
+          if (response.data.supportChannel) {
+            this.form.supportChannel = response.data.supportChannel.split(",")
+          } else {
+            this.form.supportChannel = []
           }
           this.cityNodeAll = false;
           this.$nextTick(() => {
@@ -1424,6 +1377,10 @@
         };
         this.$tab.openPage("配置[" + row.productName + "]的场次与票种", '/zlyyh/productTicketSession/index/' + productId,
           params);
+      },
+      handleShop(row) {
+        this.productId = row.productId;
+        this.ShopVisible = true;
       },
       //所有菜单节点数据
       getCityAllCheckedKeys() {
@@ -1462,10 +1419,8 @@
             if (this.form.commercialTenantId) {
               this.form.commercialTenantId = this.form.commercialTenantId.toString();
             }
-            if (this.form.shopId && this.form.shopId.length > 0 && isArray(this.form.shopId)) {
-              this.form.shopId = this.form.shopId.join(",");
-            } else {
-              this.form.shopId = undefined
+            if (this.form.supportChannel) {
+              this.form.supportChannel = this.form.supportChannel.join(",")
             }
             if (this.form.productId != null) {
               updateProduct(this.form).then(response => {
@@ -1509,15 +1464,6 @@
       },
       // 演出票数据校验
       checkTicketSession(ticketSession) {
-        debugger
-        if (this.form.shopId.length <= 0) {
-          this.$modal.msgWarning("商品类型为演出时，门店不能为空");
-          return 0;
-        }
-        if (this.form.shopId.length >= 2) {
-          this.$modal.msgWarning("商品类型为演出时，门店暂时只能有一个");
-          return 0;
-        }
         if (this.form.ticket.ticketForm === undefined) {
           this.$modal.msgWarning("票形式不能为空！");
           return 0;
@@ -1629,6 +1575,22 @@
             }
           }
         }
+      },
+      // 查询标签
+      getTagsList() {
+        const param = {
+          'tagsType': '0'
+        }
+        exportTags(param).then(response => {
+          this.tagsList = response.data;
+        });
+      },
+      /** 查询供应商 */
+      selectSupplierList() {
+        selectSupplier(this.form).then(response => {
+          this.supplierList = response.data;
+        }).finally(() => {
+        });
       },
     }
   };

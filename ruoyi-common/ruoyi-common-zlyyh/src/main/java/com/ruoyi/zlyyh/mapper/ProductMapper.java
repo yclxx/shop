@@ -16,6 +16,4 @@ import com.ruoyi.zlyyh.domain.vo.ProductVo;
     @DataColumn(key = "deptName", value = "sys_dept_id"),
     @DataColumn(key = "userName", value = "sys_user_id")
 })
-public interface ProductMapper extends BaseMapperPlus<ProductMapper, Product, ProductVo> {
-
-}
+public interface ProductMapper extends BaseMapperPlus<ProductMapper, Product, ProductVo> {}

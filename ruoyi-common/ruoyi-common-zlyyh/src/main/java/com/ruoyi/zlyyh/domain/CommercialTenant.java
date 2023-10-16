@@ -19,7 +19,7 @@ import java.util.Date;
 @TableName("t_commercial_tenant")
 public class CommercialTenant extends BaseEntity {
 
-    private static final long serialVersionUID=1L;
+    private static final long serialVersionUID = 1L;
 
     /**
      * 商户ID
@@ -54,6 +54,34 @@ public class CommercialTenant extends BaseEntity {
      * 状态（0正常 1停用）
      */
     private String status;
+    /**
+     * 是否共享
+     */
+    private String is_share;
+    /**
+     * 供应商
+     */
+    private String supplier;
+    /**
+     * 营业执照
+     */
+    private String license;
+    /**
+     * 性质
+     */
+    private String nature;
+    /**
+     * 发票类型
+     */
+    private String invoice;
+    /**
+     * 收款账户
+     */
+    private String account;
+    /**
+     * 活动类型
+     */
+    private String activity;
     /**
      * 第三方品牌ID
      */

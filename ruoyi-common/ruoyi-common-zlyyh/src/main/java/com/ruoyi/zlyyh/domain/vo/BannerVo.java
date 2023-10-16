@@ -132,4 +132,10 @@ public class BannerVo {
      */
     @ExcelProperty(value = "周几显示")
     private String weekDate;
+
+    /**
+     * 支持端
+     */
+    @ExcelProperty(value = "支持端")
+    private String supportChannel;
 }

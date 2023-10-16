@@ -1,16 +1,13 @@
 package com.ruoyi.zlyyh.domain;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import java.io.Serializable;
-import java.util.Date;
-import java.math.BigDecimal;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import com.ruoyi.common.core.web.domain.BaseEntity;
 
 /**
  * 门店对象 t_shop
@@ -142,6 +139,38 @@ public class Shop extends BaseEntity {
      * 推荐类型：0-不推荐，1-商圈精选，2-品牌精选
      */
     private String pushType;
+    /**
+     * 是否共享
+     */
+    private String is_share;
+    /**
+     * 供应商（与supplierShopId无关系）
+     */
+    private String supplier;
+    /**
+     * 营业执照
+     */
+    private String license;
+    /**
+     * 性质
+     */
+    private String nature;
+    /**
+     * 发票类型
+     */
+    private String invoice;
+    /**
+     * 收款账户
+     */
+    private String account;
+    /**
+     * 活动类型
+     */
+    private String activity;
+    /**
+     * 支持端
+     */
+    private String supportChannel;
     /**
      * 供应商门店id
      */

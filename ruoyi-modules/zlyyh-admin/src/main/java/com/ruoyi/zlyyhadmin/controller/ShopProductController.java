@@ -4,26 +4,24 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
-import com.ruoyi.common.core.validate.QueryGroup;
 import com.ruoyi.common.core.web.controller.BaseController;
 import com.ruoyi.common.excel.utils.ExcelUtil;
 import com.ruoyi.common.log.annotation.Log;
 import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
+import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.zlyyh.domain.bo.ShopProductBo;
+import com.ruoyi.zlyyh.domain.vo.ShopProductVo;
 import com.ruoyi.zlyyhadmin.service.IShopProductService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.ruoyi.zlyyh.domain.vo.ShopProductVo;
-import com.ruoyi.zlyyh.domain.bo.ShopProductBo;
-import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 
-import java.util.List;
-import java.util.Arrays;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * 商品门店关联控制器
@@ -101,5 +99,21 @@ public class ShopProductController extends BaseController {
     @DeleteMapping("/{ids}")
     public R<Void> remove(@NotEmpty(message = "主键不能为空") @PathVariable Long[] ids) {
         return toAjax(iShopProductService.deleteWithValidByIds(Arrays.asList(ids), true));
+    }
+
+    /**
+     * 为商品批量添加门店
+     */
+    @PostMapping("addShopByProduct")
+    public R<Void> addShopByProduct(@RequestBody ShopProductBo bo) {
+        return toAjax(iShopProductService.addShopByProduct(bo));
+    }
+
+    /**
+     * 为商品批量删除门店
+     */
+    @PostMapping("delByShopProduct")
+    public R<Void> delByShopProduct(@RequestBody ShopProductBo bo) {
+        return toAjax(iShopProductService.delByShopProduct(bo));
     }
 }
