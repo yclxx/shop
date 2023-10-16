@@ -180,5 +180,7 @@ public class HistoryOrderBo extends BaseEntity {
 
     private String cusRefund;
 
+    private String verificationStatus;
+
 
 }

@@ -199,4 +199,6 @@ public class ShopBo extends BaseEntity {
      * 最大查询数量
      */
     private Integer pageSize;
+
+    private Long categoryId;
 }

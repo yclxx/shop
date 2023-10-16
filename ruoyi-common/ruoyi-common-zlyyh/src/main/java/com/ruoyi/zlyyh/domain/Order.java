@@ -207,4 +207,9 @@ public class Order extends BaseEntity {
      * 规格名称
      */
     private String productSkuName;
+
+    /**
+     * 核销状态0-未核销 1-已核销 2-已失效
+     */
+    private String verificationStatus;
 }

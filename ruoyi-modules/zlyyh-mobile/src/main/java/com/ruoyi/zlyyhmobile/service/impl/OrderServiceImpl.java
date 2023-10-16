@@ -900,6 +900,14 @@ public class OrderServiceImpl implements IOrderService {
             }
             orderFoodInfo.setVoucherId(voucherId);
             orderFoodInfo.setTicketCode(ticketCode);
+            //根据票券状态更新订单的核销状态
+            if ("EFFECTIVE".equals(voucherStatus)){
+                order.setVerificationStatus("0");
+            }else if ("USED".equals(voucherStatus)){
+                order.setVerificationStatus("1");
+            }else if ("CANCELED".equals(voucherStatus)){
+                order.setVerificationStatus("2");
+            }
             orderFoodInfo.setVoucherStatus(voucherStatus);
             orderFoodInfo.setEffectTime(effectTime);
             orderFoodInfo.setExpireTime(expireTime);
@@ -1024,11 +1032,14 @@ public class OrderServiceImpl implements IOrderService {
                         orderFoodInfo.setOrderStatus(status);
                         if (status.equals("110") || status.equals("111") || status.equals("210")) {
                             orderFoodInfo.setVoucherStatus("EFFECTIVE");
+                            order.setVerificationStatus("0");
                         } else if (status.equals("310")) {
                             orderFoodInfo.setVoucherStatus("USED");
+                            order.setVerificationStatus("1");
                         } else {
                             orderFoodInfo.setRefundAmount(1);
                             orderFoodInfo.setVoucherStatus("CANCELED");
+                            order.setVerificationStatus("2");
                         }
                     }
                     orderFoodInfo.setTotalAmount(1);
@@ -1106,6 +1117,7 @@ public class OrderServiceImpl implements IOrderService {
         Order order = baseMapper.selectById(orderReturnParam.getThirdOrderId());
         OrderFoodInfo orderFoodInfo = orderFoodInfoMapper.selectById(orderReturnParam.getThirdOrderId());
         order.setStatus("5");
+        order.setVerificationStatus("2");
         orderFoodInfo.setVoucherStatus("CANCELED");
         orderFoodInfo.setOrderStatus("412");
         orderFoodInfoMapper.updateById(orderFoodInfo);
@@ -1120,8 +1132,12 @@ public class OrderServiceImpl implements IOrderService {
         //baseMapper.updateById(order);
 
         OrderFoodInfo orderFoodInfo = orderFoodInfoMapper.selectById(orderCheckParam.getThirdOrderId());
-        orderFoodInfo.setVoucherStatus("CANCELED");
+        Order order = baseMapper.selectById(orderCheckParam.getThirdOrderId());
+        orderFoodInfo.setVoucherStatus("USED");
         orderFoodInfo.setOrderStatus("310");
+        //订单表核销状态更改为已失效
+        order.setVerificationStatus("2");
+        baseMapper.updateById(order);
         orderFoodInfoMapper.updateById(orderFoodInfo);
     }
 
@@ -1975,7 +1991,7 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     /**
-     * 美食订单支付回调
+     * 携程订单支付回调
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -2014,14 +2030,18 @@ public class OrderServiceImpl implements IOrderService {
             order.setSendStatus("2");
             orderFoodInfo.setTicketCode(code);
             orderFoodInfo.setVoucherId(codeId);
+            //把订单里的核销状态加入
             if (resultJson.getString("status").equals("0")) {
+                order.setVerificationStatus("0");
                 orderFoodInfo.setVoucherStatus("EFFECTIVE");
 
             } else if (resultJson.getString("status").equals("3")) {
                 orderFoodInfo.setVoucherStatus("USED");
                 orderFoodInfo.setUsedAmount(1);
+                order.setVerificationStatus("1");
             } else {
                 orderFoodInfo.setVoucherStatus("CANCELED");
+                order.setVerificationStatus("2");
             }
 
             if (ObjectUtil.isNotEmpty(orderPushInfo)) {
@@ -2159,6 +2179,7 @@ public class OrderServiceImpl implements IOrderService {
             if ("8".equals(state)) {
                 //退款成功
                 historyOrder.setCancelStatus("1");
+                historyOrder.setVerificationStatus("2");
                 historyOrderMapper.updateById(historyOrder);
             }
             return;
@@ -2171,6 +2192,7 @@ public class OrderServiceImpl implements IOrderService {
         if ("8".equals(state)) {
             //退款成功
             order.setCancelStatus("1");
+            order.setVerificationStatus("2");
             updateOrder(order);
         }
     }
@@ -2511,6 +2533,7 @@ public class OrderServiceImpl implements IOrderService {
         lqw.eq(bo.getProductId() != null, Order::getProductId, bo.getProductId());
         lqw.eq(bo.getUserId() != null, Order::getUserId, bo.getUserId());
         lqw.eq(StringUtils.isNotBlank(bo.getPickupMethod()), Order::getPickupMethod, bo.getPickupMethod());
+        lqw.eq(StringUtils.isNotBlank(bo.getVerificationStatus()), Order::getVerificationStatus, bo.getVerificationStatus());
         if (StringUtils.isNotBlank(bo.getStatus())) {
             lqw.in(Order::getStatus, bo.getStatus().split(","));
         }

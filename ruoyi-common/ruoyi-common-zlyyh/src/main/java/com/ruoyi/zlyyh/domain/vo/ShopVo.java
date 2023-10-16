@@ -11,7 +11,7 @@ import com.ruoyi.common.excel.annotation.ExcelDictFormat;
 import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
 import java.util.Date;
-
+import java.util.List;
 
 
 /**
@@ -228,6 +228,8 @@ public class ShopVo implements Serializable {
 
 
     private String businessDistrictId;
+
+    List<ProductVo> productList;
 
 
 }

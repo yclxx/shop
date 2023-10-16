@@ -161,4 +161,6 @@ public class HistoryOrder extends BaseEntity {
      * 用户id
      */
     private Long sysUserId;
+
+    private String verificationStatus;
 }

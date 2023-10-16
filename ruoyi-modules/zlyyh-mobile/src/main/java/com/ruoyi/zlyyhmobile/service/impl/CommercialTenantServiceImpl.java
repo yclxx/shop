@@ -286,19 +286,18 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
 
     private void setProduct(CommercialTenantVo next, Long platformKey, String weekDate, String cityCode, Long shopId) {
         // 如果是今日特惠 商品根据星期查
-        List<ProductVo> productVos = productService.queryListByCommercialId(platformKey, next.getCommercialTenantId(), weekDate, cityCode);
-        if (ObjectUtil.isNotEmpty(productVos)) {
-            Map<String, List<ProductVo>> collect = productVos.stream().collect(Collectors.groupingBy(ProductVo::getProductType));
-
-            next.setProductCouponList(collect.get("0"));
-            next.setProductActivityList(collect.get("2"));
-            if (shopId != null) {
-                //如果传了shopId 查询商品门店关联表
-                List<ProductVo> productVos1 = productService.queryListByShopId(platformKey, shopId, weekDate, cityCode);
-                Map<String, List<ProductVo>> collect1 = productVos1.stream().collect(Collectors.groupingBy(ProductVo::getProductType));
-                next.setProductFoodList(collect1.get("5"));
-            }
+        if (shopId != null) {
+            //如果传了shopId 查询商品门店关联表 就不按照商品类别分类了 统一进行作展示
+            List<ProductVo> productVos1 = productService.queryListByShopId(platformKey, shopId, weekDate, cityCode);
+            //Map<String, List<ProductVo>> collect1 = productVos1.stream().collect(Collectors.groupingBy(ProductVo::getProductType));
+            next.setProductFoodList(productVos1);
         }
+//        List<ProductVo> productVos = productService.queryListByCommercialId(platformKey, next.getCommercialTenantId(), weekDate, cityCode);
+//        if (ObjectUtil.isNotEmpty(productVos)) {
+//            Map<String, List<ProductVo>> collect = productVos.stream().collect(Collectors.groupingBy(ProductVo::getProductType));
+//            next.setProductCouponList(collect.get("0"));
+//            next.setProductActivityList(collect.get("2"));
+//        }
 
     }
 
