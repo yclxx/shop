@@ -12,6 +12,7 @@ import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.ActionBo;
 import com.ruoyi.zlyyh.domain.vo.ActionVo;
+import com.ruoyi.zlyyhadmin.domain.bo.ProductActionBo;
 import com.ruoyi.zlyyhadmin.service.IActionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -36,7 +37,7 @@ import java.util.List;
 @RequestMapping("/action")
 public class ActionController extends BaseController {
 
-    private final IActionService iActionService;
+    private final IActionService actionService;
 
     /**
      * 查询优惠券批次列表
@@ -44,7 +45,7 @@ public class ActionController extends BaseController {
     @SaCheckPermission("zlyyh:action:list")
     @GetMapping("/list")
     public TableDataInfo<ActionVo> list(ActionBo bo, PageQuery pageQuery) {
-        return iActionService.queryPageList(bo, pageQuery);
+        return actionService.queryPageList(bo, pageQuery);
     }
 
     /**
@@ -54,7 +55,7 @@ public class ActionController extends BaseController {
     @Log(title = "优惠券批次", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(ActionBo bo, HttpServletResponse response) {
-        List<ActionVo> list = iActionService.queryList(bo);
+        List<ActionVo> list = actionService.queryList(bo);
         ExcelUtil.exportExcel(list, "优惠券批次", ActionVo.class, response);
     }
 
@@ -66,7 +67,17 @@ public class ActionController extends BaseController {
     @SaCheckPermission("zlyyh:action:query")
     @GetMapping("/{actionId}")
     public R<ActionVo> getInfo(@NotNull(message = "主键不能为空") @PathVariable Long actionId) {
-        return R.ok(iActionService.queryById(actionId));
+        return R.ok(actionService.queryById(actionId));
+    }
+
+    /**
+     * 创建优惠券
+     */
+    @SaCheckPermission("zlyyh:action:create")
+    @Log(title = "创建优惠券", businessType = BusinessType.INSERT)
+    @PostMapping("/createCoupon")
+    public R<Void> create(@RequestBody ActionBo bo) {
+        return toAjax(actionService.createCoupon(bo.getActionId(), bo.getCouponCount()));
     }
 
     /**
@@ -76,7 +87,15 @@ public class ActionController extends BaseController {
     @Log(title = "优惠券批次", businessType = BusinessType.INSERT)
     @PostMapping()
     public R<Void> add(@Validated(AddGroup.class) @RequestBody ActionBo bo) {
-        return toAjax(iActionService.insertByBo(bo));
+        return toAjax(actionService.insertByBo(bo));
+    }
+
+    /**
+     * 修改优惠券批次商品
+     */
+    @PostMapping("/updateActionProduct")
+    public R<Void> updateActionProduct(@RequestBody ProductActionBo bo) {
+        return toAjax(actionService.updateActionProduct(bo.getProductIds(), bo.getActionId(), bo.getType()));
     }
 
     /**
@@ -86,7 +105,7 @@ public class ActionController extends BaseController {
     @Log(title = "优惠券批次", businessType = BusinessType.UPDATE)
     @PutMapping()
     public R<Void> edit(@Validated(EditGroup.class) @RequestBody ActionBo bo) {
-        return toAjax(iActionService.updateByBo(bo));
+        return toAjax(actionService.updateByBo(bo));
     }
 
     /**
@@ -98,6 +117,6 @@ public class ActionController extends BaseController {
     @Log(title = "优惠券批次", businessType = BusinessType.DELETE)
     @DeleteMapping("/{actionIds}")
     public R<Void> remove(@NotEmpty(message = "主键不能为空") @PathVariable Long[] actionIds) {
-        return toAjax(iActionService.deleteWithValidByIds(Arrays.asList(actionIds), true));
+        return toAjax(actionService.deleteWithValidByIds(Arrays.asList(actionIds), true));
     }
 }

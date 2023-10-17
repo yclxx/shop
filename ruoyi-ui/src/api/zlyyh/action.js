@@ -25,6 +25,23 @@ export function addAction(data) {
     data: data
   })
 }
+// 新增优惠券批次
+export function updateActionProduct(data) {
+  return request({
+    url: '/zlyyh-admin/action/updateActionProduct',
+    method: 'post',
+    data: data
+  })
+}
+
+// 批量生成优惠券
+export function createCoupon(data) {
+  return request({
+    url: '/zlyyh-admin/action/createCoupon',
+    method: 'post',
+    data: data
+  })
+}
 
 // 修改优惠券批次
 export function updateAction(data) {

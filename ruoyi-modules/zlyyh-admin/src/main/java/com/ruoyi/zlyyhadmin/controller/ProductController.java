@@ -18,6 +18,7 @@ import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.zlyyh.domain.bo.ProductBo;
 import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
+import com.ruoyi.zlyyhadmin.domain.bo.ProductJoinParam;
 import com.ruoyi.zlyyhadmin.service.IProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -52,6 +53,13 @@ public class ProductController extends BaseController {
     @SaCheckPermission("zlyyh:product:list")
     @GetMapping("/list")
     public TableDataInfo<ProductVo> list(ProductBo bo, PageQuery pageQuery) {
+        return iProductService.queryPageList(bo, pageQuery);
+    }
+    /**
+     * 查询商品列表
+     */
+    @GetMapping("/joinListProduct")
+    public TableDataInfo<ProductVo> joinListProduct(ProductJoinParam bo, PageQuery pageQuery) {
         return iProductService.queryPageList(bo, pageQuery);
     }
 

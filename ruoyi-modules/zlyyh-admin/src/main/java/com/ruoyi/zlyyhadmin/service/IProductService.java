@@ -6,6 +6,7 @@ import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyh.domain.bo.ProductBo;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.zlyyhadmin.domain.bo.ProductJoinParam;
 
 import java.util.Collection;
 import java.util.List;
@@ -31,6 +32,8 @@ public interface IProductService {
      * 查询商品列表
      */
     TableDataInfo<ProductVo> queryPageList(ProductBo bo, PageQuery pageQuery);
+
+    TableDataInfo<ProductVo> queryPageList(ProductJoinParam bo, PageQuery pageQuery);
 
     /**
      * 查询商品列表
@@ -68,9 +71,10 @@ public interface IProductService {
 
     /**
      * 批量下架商品
+     *
      * @param ids
      */
-    void updateProducts(Collection<Long> ids,String productType);
+    void updateProducts(Collection<Long> ids, String productType);
 
     void lianProductCall(JSONObject param);
 

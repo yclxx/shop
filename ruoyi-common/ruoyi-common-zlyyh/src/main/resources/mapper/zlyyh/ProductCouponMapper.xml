@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.zlyyh.mapper.ProductCouponMapper">
+    <resultMap type="com.ruoyi.zlyyh.domain.ProductCoupon" id="CouponResult">
+        <result property="couponId" column="coupon_id"/>
+        <result property="productId" column="product_id"/>
+    </resultMap>
+    <insert id="insertAll" parameterType="java.util.List">
+        INSERT INTO t_product_coupon ( product_id, coupon_id ) VALUES
+        <foreach collection="list" item="item" separator=",">(#{item.productId}, #{item.couponId})</foreach>
+    </insert>
+</mapper>
