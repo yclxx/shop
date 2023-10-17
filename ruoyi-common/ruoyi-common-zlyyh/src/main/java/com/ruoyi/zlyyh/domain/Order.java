@@ -71,6 +71,10 @@ public class Order extends BaseEntity {
      */
     private BigDecimal outAmount;
     /**
+     * 优惠券id
+     */
+    private Long couponId;
+    /**
      * 支付完成时间
      */
     private Date payTime;

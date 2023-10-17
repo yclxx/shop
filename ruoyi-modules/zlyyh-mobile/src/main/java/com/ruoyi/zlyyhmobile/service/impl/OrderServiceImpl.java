@@ -99,6 +99,7 @@ public class OrderServiceImpl implements IOrderService {
     private final OrderTicketMapper orderTicketMapper;
     private final IUnionPayChannelService unionPayChannelService;
     private final ICodeService codeService;
+    private final CollectiveOrderMapper collectiveOrderMapper;
 
     @Autowired
     private LockTemplate lockTemplate;
@@ -581,6 +582,13 @@ public class OrderServiceImpl implements IOrderService {
         }
         // 校验用户是否达到参与上限
         ProductUtils.checkUserCount(productVo, userVo.getUserId());
+        //此处先生成大订单(此处下单只有一个商品 只需记录价格等信息)
+        CollectiveOrder collectiveOrder = new CollectiveOrder();
+        collectiveOrder.setCollectiveNumber(IdUtil.getSnowflakeNextId());
+        collectiveOrder.setUserId(bo.getUserId());
+        collectiveOrder.setOrderCityCode(bo.getAdcode());
+        collectiveOrder.setOrderCityName(bo.getCityName());
+        collectiveOrder.setPlatformKey(platformVo.getPlatformKey());
         // 生成订单
         Order order = new Order();
         order.setNumber(IdUtil.getSnowflakeNextId());
@@ -743,9 +751,41 @@ public class OrderServiceImpl implements IOrderService {
                     reducedPrice = amount.subtract(productVo.getVipAmount());
                 }
             }
+//            // 如果使用了优惠券
+//            if (ObjectUtil.isNotEmpty(bo.getCouponId())) {
+//                // 查询优惠券
+//                Coupon coupon = appCouponService.selectCouponById(bo.getCouponId());
+//                if (ObjectUtil.isEmpty(coupon)) {
+//                    throw new ServiceException("请求异常，请稍后重试");
+//                }
+//                // 验证优惠券状态，以及使用时间
+//                if (!"1".equals(coupon.getUseStatus())
+//                    || (ObjectUtil.isNotEmpty(coupon.getPeriodOfStart()) && !DateUtils.validTime(coupon.getPeriodOfStart(), 1))
+//                    || (ObjectUtil.isNotEmpty(coupon.getPeriodOfValidity()) && DateUtils.validTime(coupon.getPeriodOfValidity(), 1))) {
+//                    throw new ServiceException("优惠券不可用！");
+//                }
+//
+//                // 最低使用金额
+//                if (amount.compareTo(coupon.getMinAmount()) <= 0) {
+//                    throw new ServiceException("优惠券需订单金额超过" + coupon.getMinAmount() + "元才可用！");
+//                }
+//                // 优惠券状态改变成已绑定
+//                coupon.setUseStatus("2");
+//                coupon.setUseTime(new Date());
+//                coupon.setNumber(number);
+//                appCouponService.updateCoupon(coupon);
+//                reducedPrice = coupon.getCouponAmount();
+//
+//            }
+
             order.setTotalAmount(amount.multiply(new BigDecimal(order.getCount())));
             order.setReducedPrice(reducedPrice.multiply(new BigDecimal(order.getCount())));
             order.setWantAmount(order.getTotalAmount().subtract(order.getReducedPrice()));
+            //添加大订单价格
+            collectiveOrder.setTotalAmount(amount.multiply(new BigDecimal(order.getCount())));
+            collectiveOrder.setReducedPrice(reducedPrice.multiply(new BigDecimal(order.getCount())));
+            collectiveOrder.setWantAmount(order.getTotalAmount().subtract(order.getReducedPrice()));
+
             if ("12".equals(productVo.getProductType()) || "1".equals(productVo.getUnionPay())) {
                 String externalProductId = "1".equals(productVo.getUnionPay()) ? productVo.getUnionProductId() : productVo.getExternalProductId();
                 if (StringUtils.isEmpty(externalProductId)) {

@@ -1,0 +1,103 @@
+package com.ruoyi.zlyyh.domain;
+
+import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import java.io.Serializable;
+import java.util.Date;
+import java.math.BigDecimal;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import com.ruoyi.common.core.web.domain.BaseEntity;
+
+/**
+ * 大订单对象 t_collective_order
+ *
+ * @author yzg
+ * @date 2023-10-16
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@TableName("t_collective_order")
+public class CollectiveOrder extends BaseEntity {
+
+    private static final long serialVersionUID=1L;
+
+    /**
+     * 大订单号
+     */
+    @TableId(value = "collective_number")
+    private Long collectiveNumber;
+    /**
+     * 用户ID
+     */
+    private Long userId;
+    /**
+     * 订单总金额
+     */
+    private BigDecimal totalAmount;
+    /**
+     * 订单优惠金额
+     */
+    private BigDecimal reducedPrice;
+    /**
+     * 需支付金额（订单总金额-优惠金额）
+     */
+    private BigDecimal wantAmount;
+    /**
+     * 实际支付金额
+     */
+    private BigDecimal outAmount;
+    /**
+     * 优惠券id
+     */
+    private Long couponId;
+    /**
+     * 支付完成时间
+     */
+    private Date payTime;
+    /**
+     * 订单失效时间
+     */
+    private Date expireDate;
+    /**
+     * 订单状态 0-待付款 1-支付确认中 2-支付成功 3-已关闭 4-退款处理中,5-退款成功,6-退款失败
+     */
+    private String status;
+    /**
+     * 供应商退款状态0-退款中 1-退款成功 2-退款失败
+     */
+    private String cancelStatus;
+    /**
+     * 下单所在城市
+     */
+    private String orderCityName;
+    /**
+     * 下单所在城市行政区号
+     */
+    private String orderCityCode;
+    /**
+     * 平台标识
+     */
+    private Long platformKey;
+    /**
+     * 删除标志（0代表存在 2代表删除）
+     */
+    @TableLogic
+    private String delFlag;
+    /**
+     * 支付商户号
+     */
+    private Long payMerchant;
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
+
+}

@@ -94,6 +94,11 @@ public class OrderVo implements Serializable {
     private BigDecimal outAmount;
 
     /**
+     * 优惠券id
+     */
+    @ExcelProperty(value = "优惠券id")
+    private Long couponId;
+    /**
      * 支付完成时间
      */
     @ExcelProperty(value = "支付完成时间")
