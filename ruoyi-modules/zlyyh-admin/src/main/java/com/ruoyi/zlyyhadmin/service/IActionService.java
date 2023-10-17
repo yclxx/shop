@@ -37,6 +37,18 @@ public interface IActionService {
     Boolean insertByBo(ActionBo bo);
 
     /**
+     * 创建优惠券
+     */
+    Boolean createCoupon(Long actionId,Long number);
+
+    /**
+     * 修改批次商品关联表
+     *
+     * @return
+     */
+    int updateActionProduct(List<Long> productIds, Long actionId,Integer type);
+
+    /**
      * 修改优惠券批次
      */
     Boolean updateByBo(ActionBo bo);

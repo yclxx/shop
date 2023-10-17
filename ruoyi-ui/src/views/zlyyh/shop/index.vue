@@ -728,7 +728,6 @@
         geocoder.getAddress([poi.location.lng, poi.location.lat], function(status, result) {
           if (status === 'complete' && result.info === 'OK') {
             if (result && result.regeocode) {
-
               // 结构化地址信息
               let ad = result.regeocode.addressComponent;
               self.form.formattedAddress = result.regeocode.formattedAddress;

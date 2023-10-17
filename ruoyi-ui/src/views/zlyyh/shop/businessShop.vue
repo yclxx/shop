@@ -46,7 +46,7 @@
       </el-col>
       <el-col :span="1.5">
         <el-button v-show="isBusiness === false" :loading="buttonLoading" type="primary" plain
-                   icon="el-icon-check" size="mini" :disabled="multiple" @click="handleAddShop">绑定关系
+                   icon="el-icon-check" size="mini" :disabled="multiple" @click="handleAddShop">绑定关联
         </el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
@@ -100,10 +100,7 @@
 
 <script>
 import {listShops} from "@/api/zlyyh/shop";
-import {
-  addShopByProduct,
-  delByShopProduct
-} from "@/api/zlyyh/businessDistrictShop";
+import {addShopByProduct, delByShopProduct} from "@/api/zlyyh/businessDistrictShop";
 import {selectListMerchant} from "@/api/zlyyh/commercialTenant";
 import {selectListPlatform} from "@/api/zlyyh/platform";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";

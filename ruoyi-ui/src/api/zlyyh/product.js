@@ -8,6 +8,14 @@ export function listProduct(query) {
     params: query
   })
 }
+// 商品关联查询列表
+export function joinListProduct(query) {
+  return request({
+    url: '/zlyyh-admin/product/joinListProduct',
+    method: 'get',
+    params: query
+  })
+}
 
 // 查询商品详细
 export function getProduct(productId) {

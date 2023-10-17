@@ -63,12 +63,6 @@
         <el-select v-model="queryParams.platformKey" placeholder="请选择平台标识" clearable>
           <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id"/>
         </el-select>
-        <!--        <el-input-->
-        <!--          v-model="queryParams.platformKey"-->
-        <!--          placeholder="请输入平台标识"-->
-        <!--          clearable-->
-        <!--          @keyup.enter.native="handleQuery"-->
-        <!--        />-->
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -128,13 +122,18 @@
 
     <el-table v-loading="loading" :data="actionList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column label="平台标识" align="center" prop="platformKey" :formatter="platformFormatter"/>
-      <el-table-column label="批次ID" align="center" prop="actionId" v-if="true"/>
+      <el-table-column fixed="left" label="平台标识" align="center" prop="platformKey" :formatter="platformFormatter"/>
       <el-table-column label="批次号" align="center" prop="actionNo"/>
       <el-table-column label="优惠券名称" align="center" prop="couponName"/>
       <el-table-column label="优惠金额" align="center" prop="couponAmount"/>
       <el-table-column label="最低消费金额" align="center" prop="minAmount"/>
-      <el-table-column label="优惠券类型" align="center" prop="couponType"/>
+      <el-table-column label="优惠券类型" align="center" prop="couponType" :formatter="changeCouponType"/>
+      <el-table-column label="状态" align="center" prop="status">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
+        </template>
+      </el-table-column>
+      <el-table-column label="优惠券数量" align="center" prop="couponCount"/>
       <el-table-column label="可使用起始日期" align="center" prop="periodOfStart" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.periodOfStart, '{y}-{m}-{d}') }}</span>
@@ -145,13 +144,6 @@
           <span>{{ parseTime(scope.row.periodOfValidity, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="状态" align="center" prop="status">
-        <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
-        </template>
-      </el-table-column>
-      <el-table-column label="优惠券数量" align="center" prop="couponCount"/>
-      <el-table-column label="优惠券描述" align="center" prop="couponDescription"/>
       <el-table-column label="可兑换起始日期" align="center" prop="conversionStartDate" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.conversionStartDate, '{y}-{m}-{d}') }}</span>
@@ -162,8 +154,24 @@
           <span>{{ parseTime(scope.row.conversionEndDate, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column fixed="right" label="操作" align="center" width="100">
         <template slot-scope="scope">
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-edit"
+            @click="handleProductByAction(scope.row)"
+            v-hasPermi="['zlyyh:action:create']"
+          >商品维护
+          </el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-edit"
+            @click="handleCreate(scope.row)"
+            v-hasPermi="['zlyyh:action:create']"
+          >生成优惠券
+          </el-button>
           <el-button
             size="mini"
             type="text"
@@ -203,7 +211,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="平台" prop="platformKey">
-              <el-select v-model="form.platformKey" placeholder="请选择平台标识" @change="getPlatformPageSelectList"
+              <el-select v-model="form.platformKey" placeholder="请选择平台标识" @change="getPlatformSelectList"
                          clearable>
                 <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id"/>
               </el-select>
@@ -329,16 +337,36 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+    <el-dialog :title="title" :visible.sync="numberOpen" width="20%" append-to-body>
+      <div>
+        <el-form>
+          <el-form-item label="优惠券数量">
+            <el-input v-model="number" type="number" placeholder="请输入数量"/>
+          </el-form-item>
+        </el-form>
+      </div>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="createCoupon">确 定</el-button>
+        <el-button @click="numberOpen = false">取 消</el-button>
+      </div>
+    </el-dialog>
+    <el-dialog title="商品维护" :visible.sync="isProduct" width="90%">
+      <ProductAction v-bind:actionId="actionId"></ProductAction>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import {listAction, getAction, delAction, addAction, updateAction} from "@/api/zlyyh/action";
+import {listAction, getAction, delAction, addAction, updateAction, createCoupon} from "@/api/zlyyh/action";
 import {selectListPlatform} from "@/api/zlyyh/platform";
+import ProductAction from "@/views/zlyyh/product/ProductAction.vue";
 
 export default {
   name: "Action",
   dicts: ['sys_normal_disable'],
+  components: {
+    ProductAction
+  },
   data() {
     return {
       // 按钮loading
@@ -371,6 +399,12 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      numberOpen: false,
+      number: undefined,
+      numberRow: undefined,
+      // 商品信息
+      actionId: undefined,
+      isProduct: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -407,24 +441,12 @@ export default {
         couponType: [
           {required: true, message: "优惠券类型不能为空", trigger: "change"}
         ],
-        periodOfStart: [
-          {required: true, message: "可使用起始日期不能为空", trigger: "blur"}
-        ],
-        periodOfValidity: [
-          {required: true, message: "使用有效截止日期不能为空", trigger: "blur"}
-        ],
         status: [
           {required: true, message: "状态不能为空", trigger: "change"}
         ],
         couponCount: [
           {required: true, message: "优惠券数量不能为空", trigger: "blur"}
-        ],
-        conversionStartDate: [
-          {required: true, message: "可兑换起始日期不能为空", trigger: "blur"}
-        ],
-        conversionEndDate: [
-          {required: true, message: "可兑换截止日期不能为空", trigger: "blur"}
-        ],
+        ]
       }
     };
   },
@@ -433,6 +455,11 @@ export default {
     this.getPlatformSelectList();
   },
   methods: {
+    // 商品维护
+    handleProductByAction(row) {
+      this.actionId = row.actionId;
+      this.isProduct = true;
+    },
     /** 查询优惠券批次列表 */
     getList() {
       this.loading = true;
@@ -532,6 +559,27 @@ export default {
         }
       });
     },
+    handleCreate(row) {
+      this.numberOpen = true;
+      this.numberRow = row;
+    },
+    /** 删除按钮操作 */
+    createCoupon() {
+      const params = {
+        'actionId': this.numberRow.actionId,
+        'couponCount': this.number
+      }
+      this.$modal.confirm('请确认是否生成批次号为"' + this.numberRow.actionNo + '"，共计"' + this.numberRow.couponCount + '"张优惠券的优惠券信息').then(() => {
+        return createCoupon(params);
+      }).then(() => {
+        this.numberOpen = false;
+        this.getList();
+        this.$modal.msgSuccess("生成优惠券成功！");
+      }).catch(() => {
+      }).finally(() => {
+        this.numberOpen = false;
+      });
+    },
     /** 删除按钮操作 */
     handleDelete(row) {
       const actionIds = row.actionId || this.ids;
@@ -565,6 +613,19 @@ export default {
         return name;
       }
       return row.platformKey;
+    },
+    changeCouponType(row) {
+      let couponTypeName = ''
+      this.couponList.forEach(item => {
+        if (row.couponType === item.value) {
+          couponTypeName = item.label;
+        }
+      })
+      if (couponTypeName && couponTypeName.length > 0) {
+        row.couponType = couponTypeName;
+        return couponTypeName;
+      }
+      return row.couponType;
     },
     /** 导出按钮操作 */
     handleExport() {

@@ -28,6 +28,7 @@ import com.ruoyi.zlyyh.service.YsfConfigService;
 import com.ruoyi.zlyyh.utils.LianLianUtils;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.domain.bo.LianLianProductBo;
+import com.ruoyi.zlyyhadmin.domain.bo.ProductJoinParam;
 import com.ruoyi.zlyyhadmin.domain.vo.LianLianProductItem;
 import com.ruoyi.zlyyhadmin.service.*;
 import lombok.RequiredArgsConstructor;
@@ -141,6 +142,36 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public TableDataInfo<ProductVo> queryPageList(ProductBo bo, PageQuery pageQuery) {
         LambdaQueryWrapper<Product> lqw = buildQueryWrapper(bo);
+        Page<ProductVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+        return TableDataInfo.build(result);
+    }
+
+    @Override
+    public TableDataInfo<ProductVo> queryPageList(ProductJoinParam bo, PageQuery pageQuery) {
+        Map<String, Object> params = bo.getParams();
+        LambdaQueryWrapper<Product> lqw = Wrappers.lambdaQuery();
+        lqw.eq(null != bo.getProductId(), Product::getProductId, bo.getProductId());
+        lqw.eq(StringUtils.isNotBlank(bo.getExternalProductId()), Product::getExternalProductId, bo.getExternalProductId());
+        lqw.like(StringUtils.isNotBlank(bo.getProductName()), Product::getProductName, bo.getProductName());
+        lqw.eq(StringUtils.isNotBlank(bo.getProductAffiliation()), Product::getProductAffiliation, bo.getProductAffiliation());
+        lqw.eq(StringUtils.isNotBlank(bo.getProductType()), Product::getProductType, bo.getProductType());
+        lqw.eq(StringUtils.isNotBlank(bo.getPickupMethod()), Product::getPickupMethod, bo.getPickupMethod());
+        lqw.eq(StringUtils.isNotBlank(bo.getStatus()), Product::getStatus, bo.getStatus());
+
+        lqw.between(params.get("beginStartDate") != null && params.get("endStartDate") != null, Product::getShowStartDate, params.get("beginStartDate"), params.get("endStartDate"));
+        lqw.between(params.get("beginEndDate") != null && params.get("endEndDate") != null, Product::getShowEndDate, params.get("beginEndDate"), params.get("endEndDate"));
+        lqw.eq(StringUtils.isNotBlank(bo.getShowIndex()), Product::getShowIndex, bo.getShowIndex());
+        lqw.eq(bo.getPlatformKey() != null, Product::getPlatformKey, bo.getPlatformKey());
+        if (ObjectUtil.isNotEmpty(bo.getActionId())) {
+            if (bo.getSort().equals(1L)) {
+                lqw.apply("product_id IN (SELECT product_id FROM t_product_action WHERE action_id = " + bo.getActionId() + ")");
+            } else {
+                lqw.apply("product_id NOT IN (SELECT product_id FROM t_product_action WHERE action_id = " + bo.getActionId() + ")");
+            }
+        }
+        //if (ObjectUtil.isNotEmpty(bo.getCouponId())) {
+        //    lqw.apply("product_id IN (SELECT product_id FROM t_product_coupon WHERE action_id = " + bo.getCouponId() + ")");
+        //}
         Page<ProductVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
         return TableDataInfo.build(result);
     }
