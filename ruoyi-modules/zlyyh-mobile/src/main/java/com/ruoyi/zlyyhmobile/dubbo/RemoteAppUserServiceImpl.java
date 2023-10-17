@@ -186,7 +186,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
             userChannelVo.setOpenId(openId);
             // 修改openId
             UserChannel userChannel = new UserChannel();
-            userChannel.setId(userChannelVo.getUserId());
+            userChannel.setId(userChannelVo.getId());
             userChannel.setOpenId(openId);
             userChannelMapper.updateById(userChannel);
         }
@@ -273,7 +273,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
                 // 根据openId查询
                 userChannelVo = this.queryByUserId(channel, user.getUserId(), loginEntity.getPlatformKey());
                 if (null == userChannelVo) {
-                    insertUserChannel(user.getUserId(), loginEntity.getMobile(), cityName, cityCode, loginEntity.getPlatformKey());
+                    insertUserChannel(user.getUserId(), loginEntity.getOpenId(), cityName, cityCode, loginEntity.getPlatformKey(), channel);
                 } else {
                     updateUserChannel(null, loginEntity.getOpenId(), userChannelVo.getId());
                 }
@@ -296,12 +296,13 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
      * @param cityName 城市
      * @param cityCode 城市行政区号
      */
-    private void insertUserChannel(Long userId, String openId, String cityName, String cityCode, Long platformKey) {
+    private void insertUserChannel(Long userId, String openId, String cityName, String cityCode, Long platformKey, String channel) {
         // 新增渠道用户
         UserChannel userChannel = new UserChannel();
         userChannel.setUserId(userId);
         userChannel.setOpenId(openId);
         userChannel.setReloadUser("1");
+        userChannel.setChannel(channel);
         userChannel.setRegisterCityName(cityName);
         userChannel.setRegisterCityCode(cityCode);
         userChannel.setPlatformKey(platformKey);
