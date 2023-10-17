@@ -23,10 +23,6 @@ public interface ZlyyhConstants {
      */
     String CITY_CODE = "citycode";
     /**
-     * 渠道
-     */
-    String PLATFORM_TYPE = "platformType";
-    /**
      * 门店缓存key
      */
     String SHOP_GEO_CACHE_KEY = "shopGeoCacheKey";

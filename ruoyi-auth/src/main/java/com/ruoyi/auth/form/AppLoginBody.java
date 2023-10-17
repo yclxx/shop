@@ -12,7 +12,7 @@ import javax.validation.constraints.NotBlank;
  */
 @Data
 @NoArgsConstructor
-public class YsfLoginBody {
+public class AppLoginBody {
 
     /**
      * 授权code

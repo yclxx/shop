@@ -94,7 +94,11 @@ public interface Constants {
     /**
      * 资源映射路径 前缀
      */
-//    public static final String RESOURCE_PREFIX = "/profile";
-    public static final String RESOURCE_PREFIX = "/resource";
+//    String RESOURCE_PREFIX = "/profile";
+    String RESOURCE_PREFIX = "/resource";
 
+    /**
+     * 渠道
+     */
+    String PLATFORM_TYPE = "platformType";
 }

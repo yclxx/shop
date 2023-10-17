@@ -88,14 +88,28 @@ public class ZlyyhUtils {
     }
 
     /**
-     * 用户真实所在城市 精确到区 例如 330105
+     * 平台渠道
      */
     public static PlatformEnumd getPlatformType() {
-        String header = ServletUtils.getHeader(ZlyyhConstants.PLATFORM_TYPE);
+        String header = ServletUtils.getHeader(Constants.PLATFORM_TYPE);
         if (StringUtils.isBlank(header)) {
             return PlatformEnumd.MP_YSF;
         }
         return PlatformEnumd.getPlatformEnumd(header);
+    }
+
+    /**
+     * 用户渠道
+     */
+    public static String getPlatformChannel() {
+        return PlatformEnumd.getPlatformSupportChannel(getPlatformType());
+    }
+
+    /**
+     * 用户渠道
+     */
+    public static String getPlatformChannel(String platformType) {
+        return PlatformEnumd.getPlatformSupportChannel(PlatformEnumd.getPlatformEnumd(platformType));
     }
 
     /**
