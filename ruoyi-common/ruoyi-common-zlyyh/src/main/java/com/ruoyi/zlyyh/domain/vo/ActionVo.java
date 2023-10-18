@@ -97,6 +97,12 @@ public class ActionVo {
     private String couponDescription;
 
     /**
+     * 优惠券图片
+     */
+    @ExcelProperty(value = "优惠券图片")
+    private String couponImage;
+
+    /**
      * 可兑换起始日期
      */
     @ExcelProperty(value = "可兑换起始日期")

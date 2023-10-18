@@ -41,20 +41,20 @@
                         placeholder="请选择使用日期">
         </el-date-picker>
       </el-form-item>
-      <el-form-item label="使用订单号" prop="number">
+      <el-form-item label="订单号" prop="number">
         <el-input
           v-model="queryParams.number"
-          placeholder="请输入使用订单号"
+          placeholder="请输入订单号"
           clearable
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="用户添加时间" prop="userAddTime">
+      <el-form-item label="用户获得时间" prop="userAddTime">
         <el-date-picker clearable
                         v-model="queryParams.userAddTime"
                         type="date"
                         value-format="yyyy-MM-dd"
-                        placeholder="请选择用户添加时间">
+                        placeholder="请选择用户获得时间">
         </el-date-picker>
       </el-form-item>
       <el-form-item label="批次号" prop="actionNo">
@@ -74,12 +74,9 @@
         />
       </el-form-item>
       <el-form-item label="平台标识" prop="platformKey">
-        <el-input
-          v-model="queryParams.platformKey"
-          placeholder="请输入平台标识"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
+        <el-select v-model="form.platformKey" placeholder="请选择平台" filterable clearable style="width: 100%;">
+          <el-option v-for="item in platformList" :key="item.id" :value="item.id" :label="item.label"></el-option>
+        </el-select>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -126,60 +123,69 @@
     </el-row>
 
     <el-table v-loading="loading" :data="couponList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column label="优惠券ID" align="center" prop="couponId" v-if="true"/>
-      <el-table-column label="优惠券名称" align="center" prop="couponName"/>
-      <el-table-column label="优惠券兑换码" align="center" prop="redeemCode"/>
-      <el-table-column label="优惠金额" align="center" prop="couponAmount"/>
-      <el-table-column label="最低消费金额" align="center" prop="minAmount"/>
-      <el-table-column label="优惠券类型" align="center" prop="couponType"/>
-      <el-table-column label="优惠券可使用起始日期" align="center" prop="periodOfStart" width="180">
+      <el-table-column type="selection" align="center"/>
+      <el-table-column fixed="left" label="优惠券兑换码" align="center" prop="redeemCode"/>
+      <el-table-column label="优惠券信息" align="center" prop="couponName" width="180">
+        <template slot-scope="scope">
+          <div v-show="scope.row.couponName">
+            <span>优惠券名称：{{ scope.row.couponName }}</span>
+          </div>
+          <div v-show="scope.row.couponAmount">
+            <span>优惠金额：{{ scope.row.couponAmount }}</span>
+          </div>
+          <div v-show="scope.row.minAmount">
+            <span>最低消费金额：{{ scope.row.minAmount }}</span>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column label="优惠券类型" align="center" prop="couponType" :formatter="changeCouponType"/>
+      <!--<el-table-column label="优惠券名称" align="center" prop="couponName"/>-->
+      <el-table-column label="批次号" align="center" prop="actionNo"/>
+      <!--<el-table-column label="优惠金额" align="center" prop="couponAmount"/>-->
+      <!--<el-table-column label="最低消费金额" align="center" prop="minAmount"/>-->
+      <el-table-column label="使用起始日期" align="center" prop="periodOfStart" width="100">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.periodOfStart, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="使用有效截止日期" align="center" prop="periodOfValidity" width="180">
+      <el-table-column label="使用有效截止日期" align="center" prop="periodOfValidity" width="100">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.periodOfValidity, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="使用日期" align="center" prop="useTime" width="180">
+      <el-table-column label="使用日期" align="center" prop="useTime" width="100">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.useTime, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="使用订单号" align="center"
-                       prop="number"/>
-      <el-table-column label="优惠券创建时间" align="center" prop="genTime" width="180">
-        <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.genTime, '{y}-{m}-{d}') }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="优惠券描述" align="center" prop="couponDescription"/>
-      <el-table-column label="用户添加时间" align="center" prop="userAddTime" width="180">
+      <el-table-column label="订单号" align="center" prop="number"/>
+      <el-table-column label="用户获得时间" align="center" prop="userAddTime" width="100">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.userAddTime, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="批次号" align="center" prop="actionNo"/>
       <el-table-column label="优惠券图片" align="center" prop="couponImage" width="100">
         <template slot-scope="scope">
           <image-preview :src="scope.row.couponImage" :width="50" :height="50"/>
         </template>
       </el-table-column>
-      <el-table-column label="用户ID" align="center" prop="userId"/>
-      <el-table-column label="可兑换起始日期" align="center" prop="conversionStartDate" width="180">
+      <el-table-column label="可兑换起始日期" align="center" prop="conversionStartDate" width="100">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.conversionStartDate, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="可兑换截止日期" align="center" prop="conversionEndDate" width="180">
+      <el-table-column label="可兑换截止日期" align="center" prop="conversionEndDate" width="100">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.conversionEndDate, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="平台标识" align="center" prop="platformKey"/>
-      <el-table-column fixed="right" label="使用状态" align="center" prop="useStatus"/>
+      <el-table-column label="平台标识" align="center" prop="platformKey" :formatter="changePlatform"/>
+      <el-table-column label="创建时间" align="center" prop="genTime" width="100">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.genTime, '{y}-{m}-{d}') }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column fixed="right" label="使用状态" align="center" prop="useStatus" :formatter="changeCouponStatus"/>
     </el-table>
 
     <pagination
@@ -207,10 +213,16 @@
 </template>
 
 <script>
-import {listCoupon, updateCoupon} from "@/api/zlyyh/coupon";
+import {delCoupon, listCoupon, updateCoupon} from "@/api/zlyyh/coupon";
+import Treeselect from "@riophae/vue-treeselect";
+import {selectListPlatform} from "@/api/zlyyh/platform";
 
 export default {
   name: "Coupon",
+  dicts: ['coupon_status'],
+  components: {
+    Treeselect
+  },
   data() {
     return {
       // 按钮loading
@@ -229,6 +241,15 @@ export default {
       total: 0,
       // 优惠券表格数据
       couponList: [],
+      platformList: [],
+      couponTypeList: [{
+        label: '通兑券',
+        value: '1'
+      },
+        {
+          label: '抵扣券',
+          value: '2'
+        }],
       // 弹出层标题
       // 是否显示弹出层
       open: false,
@@ -271,8 +292,50 @@ export default {
   },
   created() {
     this.getList();
+    selectListPlatform({}).then(res => {
+      this.platformList = res.data;
+    })
   },
   methods: {
+    changePlatform(row) {
+      let platformName = ''
+      this.platformList.forEach(item => {
+        if (row.platformKey == item.id) {
+          platformName = item.label;
+        }
+      })
+      if (platformName && platformName.length > 0) {
+        row.platformName = platformName;
+        return platformName;
+      }
+      return row.platformKey;
+    },
+    changeCouponType(row) {
+      let couponTypeName = ''
+      this.couponTypeList.forEach(item => {
+        if (row.couponType === item.value) {
+          couponTypeName = item.label;
+        }
+      })
+      if (couponTypeName && couponTypeName.length > 0) {
+        row.couponType = couponTypeName;
+        return couponTypeName;
+      }
+      return row.couponType;
+    },
+    changeCouponStatus(row) {
+      let couponStatusName = ''
+      this.dict.type.coupon_status.forEach(item => {
+        if (row.useStatus === item.value) {
+          couponStatusName = item.label;
+        }
+      })
+      if (couponStatusName && couponStatusName.length > 0) {
+        row.useStatus = couponStatusName;
+        return couponStatusName;
+      }
+      return row.useStatus;
+    },
     /** 查询优惠券列表 */
     getList() {
       this.loading = true;
@@ -330,9 +393,8 @@ export default {
     },
     /** 批量作废按钮操作 */
     handleRemove(row) {
-      debugger
       const couponIds = row.couponId || this.ids;
-      this.$modal.confirm('请确认是否批量作废选中的的优惠券，仅作废未使用的优惠券').then(() => {
+      this.$modal.confirm('请确认是否作废选中的的优惠券，仅作废未使用的优惠券').then(() => {
         this.loading = true;
         return delCoupon(couponIds);
       }).then(() => {

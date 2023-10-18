@@ -235,7 +235,7 @@
             <el-form-item label="优惠券类型" prop="couponType">
               <el-select v-model="form.couponType" placeholder="请选择优惠券类型">
                 <el-option
-                  v-for="item in couponList"
+                  v-for="item in couponTypeList"
                   :key="item.value"
                   :label="item.label"
                   :value="item.value">
@@ -346,7 +346,7 @@
         </el-form>
       </div>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="createCoupon">确 定</el-button>
+        <el-button :loading="loading" type="primary" @click="createCoupon">确 定</el-button>
         <el-button @click="numberOpen = false">取 消</el-button>
       </div>
     </el-dialog>
@@ -387,7 +387,7 @@ export default {
       actionList: [],
       // 平台下拉列表
       platformList: [],
-      couponList: [{
+      couponTypeList: [{
         label: '通兑券',
         value: '1'
       },
@@ -563,20 +563,22 @@ export default {
       this.numberOpen = true;
       this.numberRow = row;
     },
-    /** 删除按钮操作 */
     createCoupon() {
       const params = {
         'actionId': this.numberRow.actionId,
         'couponCount': this.number
       }
-      this.$modal.confirm('请确认是否生成批次号为"' + this.numberRow.actionNo + '"，共计"' + this.numberRow.couponCount + '"张优惠券的优惠券信息').then(() => {
+      this.loading = true;
+      this.$modal.confirm('请确认是否生成批次号为"' + this.numberRow.actionNo + '"，共计"' + this.number + '"张优惠券的优惠券信息').then(() => {
         return createCoupon(params);
       }).then(() => {
         this.numberOpen = false;
+        this.loading = false;
         this.getList();
         this.$modal.msgSuccess("生成优惠券成功！");
       }).catch(() => {
       }).finally(() => {
+        this.loading = false;
         this.numberOpen = false;
       });
     },
@@ -616,7 +618,7 @@ export default {
     },
     changeCouponType(row) {
       let couponTypeName = ''
-      this.couponList.forEach(item => {
+      this.couponTypeList.forEach(item => {
         if (row.couponType === item.value) {
           couponTypeName = item.label;
         }

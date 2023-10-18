@@ -60,7 +60,9 @@ public class ActionServiceImpl implements IActionService {
      */
     @Override
     public List<ActionVo> queryList(ActionBo bo) {
-        LambdaQueryWrapper<Action> lqw = buildQueryWrapper(bo);
+        LambdaQueryWrapper<Action> lqw = Wrappers.lambdaQuery();
+        lqw.like(ObjectUtil.isNotEmpty(bo.getActionId()), Action::getActionId, bo.getActionId());
+        lqw.like(StringUtils.isNotBlank(bo.getCouponName()), Action::getCouponName, bo.getCouponName());
         return baseMapper.selectVoList(lqw);
     }
 
@@ -106,7 +108,7 @@ public class ActionServiceImpl implements IActionService {
         // 通兑券条件处理
         if (action.getCouponType().equals("1")) {
             Long actionCount = productActionMapper.selectCount(queryWrapper);
-            if (actionCount <= 0) throw new RuntimeException("此批次必须先绑定商品");
+            if (actionCount <= 0) throw new ServiceException("此批次必须先绑定商品");
         }
         List<ProductAction> productActions = productActionMapper.selectList(queryWrapper);
         if (ObjectUtil.isNotEmpty(action.getCouponCount()) && !action.getCouponCount().equals(-1L)) {
