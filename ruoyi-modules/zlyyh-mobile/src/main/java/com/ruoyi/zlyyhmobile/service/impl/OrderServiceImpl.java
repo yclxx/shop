@@ -34,6 +34,7 @@ import com.ruoyi.zlyyh.domain.bo.ProductAmountBo;
 import com.ruoyi.zlyyh.domain.bo.ProductBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.enumd.DateType;
+import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayBizMethod;
 import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayParams;
 import com.ruoyi.zlyyh.mapper.*;
@@ -492,7 +493,7 @@ public class OrderServiceImpl implements IOrderService {
                             int number = Integer.parseInt(cacheObject.toString());
                             // 满足条件,发送云闪付服务消息.
                             if (number >= num) {
-                                PlatformVo platformVo = platformService.queryById(order.getPlatformKey());
+                                PlatformVo platformVo = platformService.queryById(order.getPlatformKey(), PlatformEnumd.MP_YSF);
                                 if (null != platformVo) {
                                     String backendToken = YsfUtils.getBackendToken(platformVo.getAppId(), platformVo.getSecret(), false, platformVo.getPlatformKey());
                                     this.ysfForewarningMessage(order.getPlatformKey(), backendToken, "errorDescDetails", "errorTemplateValue");
@@ -537,7 +538,7 @@ public class OrderServiceImpl implements IOrderService {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public CreateOrderResult createOrder(CreateOrderBo bo, boolean system) {
-        PlatformVo platformVo = platformService.queryById(bo.getPlatformKey());
+        PlatformVo platformVo = platformService.queryById(bo.getPlatformKey(), ZlyyhUtils.getPlatformType());
         if (null == platformVo) {
             throw new ServiceException("请求失败，请退出重试");
         }
@@ -1091,7 +1092,6 @@ public class OrderServiceImpl implements IOrderService {
         }
         baseMapper.updateById(order);
     }
-
 
     /**
      * 联联订单发码记录
@@ -1737,7 +1737,7 @@ public class OrderServiceImpl implements IOrderService {
                         }
                     }
                     if (null == merchantVo) {
-                        PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId());
+                        PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId(), ZlyyhUtils.getPlatformType());
                         if (null != platformVo && null != platformVo.getMerchantId()) {
                             merchantVo = merchantService.queryById(platformVo.getMerchantId());
                         }
@@ -1756,7 +1756,7 @@ public class OrderServiceImpl implements IOrderService {
                     return tn;
                 }
             } else if ("2".equals(order.getPickupMethod())) {
-                PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId());
+                PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId(), ZlyyhUtils.getPlatformType());
                 if (null == platformVo) {
                     throw new ServiceException("系统配置错误[platform]");
                 }

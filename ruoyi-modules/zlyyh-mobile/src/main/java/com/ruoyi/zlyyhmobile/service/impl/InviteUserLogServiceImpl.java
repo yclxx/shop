@@ -162,7 +162,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
         // 校验用户是否满足条件
         MissionVo missionVo = missionService.queryById(bo.getMissionId());
         check(missionVo);
-        ZlyyhUtils.checkCity(missionVo.getShowCity(), platformService.queryById(platformId));
+        ZlyyhUtils.checkCity(missionVo.getShowCity(), platformService.queryById(platformId, ZlyyhUtils.getPlatformType()));
         // 查询用户信息
         UserVo userVo = userService.queryById(userId);
         if (null == userVo || !userVo.getPlatformKey().equals(platformId)) {

@@ -10,6 +10,7 @@ import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.vo.PlatformVo;
 import com.ruoyi.zlyyh.enumd.DateType;
+import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.servlet.http.HttpServletRequest;
@@ -84,6 +85,31 @@ public class ZlyyhUtils {
      */
     public static String getAdCode() {
         return ServletUtils.getHeader(ZlyyhConstants.AD_CODE);
+    }
+
+    /**
+     * 平台渠道
+     */
+    public static PlatformEnumd getPlatformType() {
+        String header = ServletUtils.getHeader(Constants.PLATFORM_TYPE);
+        if (StringUtils.isBlank(header)) {
+            return PlatformEnumd.MP_YSF;
+        }
+        return PlatformEnumd.getPlatformEnumd(header);
+    }
+
+    /**
+     * 用户渠道
+     */
+    public static String getPlatformChannel() {
+        return PlatformEnumd.getPlatformSupportChannel(getPlatformType());
+    }
+
+    /**
+     * 用户渠道
+     */
+    public static String getPlatformChannel(String platformType) {
+        return PlatformEnumd.getPlatformSupportChannel(PlatformEnumd.getPlatformEnumd(platformType));
     }
 
     /**

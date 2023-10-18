@@ -749,10 +749,11 @@ public class YsfUtils {
     public static void main(String[] args) {
         String appId = "e60611309c5d4e77b15baf6b4e48292c";
         String secret = "151e06ec873747fcbd024c54d263b27f";
-        String openId = "bsrhPJ+6nhRkdQI+OmzWoMDcy8Pjkm21YW/1p3dHJoLF9WyPWB/LrsqAW6k0zQ9R";
-        String activityId = "HD2023082800258";
+        String openId = "abstGGaM6yT5Izlpo6R1qPHSbYbb/95NVmo/vxoIk35r2CYOJ8PDEmBlhwki3fQ9";
+//        String openId = "P+v3h/DMgHBZF22Fz1EHJkz8OSU1GyRjlSU4t5sVeMs/GJibxLToBL2W39XGSIjj";
+        String activityId = "HD2023101600295";
         List<String> missionIdList = new ArrayList<>();
-        missionIdList.add("JYRW2023082800433");
+        missionIdList.add("JYRW2023101600502");
         HashMap<String, Object> param = new HashMap<>();
         param.put("appId", appId);
         param.put("backendToken", getBackendTokenTest(appId, secret, "https://open.95516.com/open/access/1.0/backendToken"));
@@ -768,6 +769,28 @@ public class YsfUtils {
         DESede desede = SecureUtil.desede(HexUtil.decodeHex("d015eafe2fc74fa4a1c12f02454cf4c1d015eafe2fc74fa4"));
         missionProcessMap = desede.decryptStr(missionProcessMap);
         log.info("解密后：{}", missionProcessMap);
+
+//        String appId = "e60611309c5d4e77b15baf6b4e48292c";
+//        String secret = "151e06ec873747fcbd024c54d263b27f";
+//        String openId = "bsrhPJ+6nhRkdQI+OmzWoMDcy8Pjkm21YW/1p3dHJoLF9WyPWB/LrsqAW6k0zQ9R";
+//        String activityId = "HD2023082800258";
+//        List<String> missionIdList = new ArrayList<>();
+//        missionIdList.add("JYRW2023082800433");
+//        HashMap<String, Object> param = new HashMap<>();
+//        param.put("appId", appId);
+//        param.put("backendToken", getBackendTokenTest(appId, secret, "https://open.95516.com/open/access/1.0/backendToken"));
+//        param.put("openId", openId);
+//        param.put("activityId", activityId);
+//        param.put("missionIdList", missionIdList);
+//        param.put("logId", IdUtil.getSnowflakeNextIdStr());
+//        String result = HttpUtil.post("https://open.95516.com/open/access/1.0/searchProgress", JSONObject.toJSONString(param));
+//        log.info("用户任务进度查询返回结果：{}", result);
+//        JSONObject jsonObject = JSONObject.parseObject(result);
+//        JSONObject params = jsonObject.getJSONObject("params");
+//        String missionProcessMap = params.getString("missionProcessMap");
+//        DESede desede = SecureUtil.desede(HexUtil.decodeHex("d015eafe2fc74fa4a1c12f02454cf4c1d015eafe2fc74fa4"));
+//        missionProcessMap = desede.decryptStr(missionProcessMap);
+//        log.info("解密后：{}", missionProcessMap);
 //        Map<String, Object> contentData = new HashMap<>();
 //        contentData.put("appId", "868f070bed8942f3bef25f8fae5bd285");
 //        contentData.put("openId", "7Y9bOE9PmeifDRDi9FljAOFAznfEs0hMmBWlfQ6SRB7IAsGUu30hAZzgCBNxGni0");

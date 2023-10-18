@@ -11,6 +11,7 @@ import com.ruoyi.system.api.domain.User;
 import com.ruoyi.zlyyh.domain.vo.MemberVipBalanceVo;
 import com.ruoyi.zlyyh.domain.vo.PlatformVo;
 import com.ruoyi.zlyyh.domain.vo.UserVo;
+import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.mapper.UserMapper;
 import com.ruoyi.zlyyh.utils.YsfUtils;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
@@ -72,7 +73,7 @@ public class UserServiceImpl implements IUserService {
         } else {
             log.info("查询62会员不走缓存，userId={}", userId);
         }
-        PlatformVo platformVo = platformService.queryById(userVo.getPlatformKey());
+        PlatformVo platformVo = platformService.queryById(userVo.getPlatformKey(), PlatformEnumd.MP_YSF);
         if (null == platformVo || "0".equals(platformVo.getUnionPayVip())) {
             return null;
         }

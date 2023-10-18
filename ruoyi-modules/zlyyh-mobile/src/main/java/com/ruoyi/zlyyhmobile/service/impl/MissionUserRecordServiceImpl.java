@@ -139,7 +139,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
         if (null != missionGroupVo.getEndDate() && DateUtils.compare(missionGroupVo.getEndDate()) < 0) {
             throw new ServiceException("活动已结束");
         }
-        ZlyyhUtils.checkCity(missionGroupVo.getShowCity(), platformService.queryById(platformKey));
+        ZlyyhUtils.checkCity(missionGroupVo.getShowCity(), platformService.queryById(platformKey, ZlyyhUtils.getPlatformType()));
         // 上锁
         String lockKey = "lockKey:" + userId;
         final LockInfo lockInfo = lockTemplate.lock(lockKey, 30000L, 5000L, RedissonLockExecutor.class);
@@ -561,7 +561,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
         if (null == userVo || StringUtils.isBlank(userVo.getOpenId())) {
             return;
         }
-        PlatformVo platformVo = platformService.queryById(missionUserVo.getPlatformKey());
+        PlatformVo platformVo = platformService.queryById(missionUserVo.getPlatformKey(), ZlyyhUtils.getPlatformType());
         if (null == platformVo) {
             return;
         }

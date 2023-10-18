@@ -6,6 +6,7 @@ import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.vo.PlatformVo;
+import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.service.YsfConfigService;
 import com.ruoyi.zlyyh.utils.YsfUtils;
 import com.ruoyi.zlyyhmobile.mq.producer.OrderStreamProducer;
@@ -73,7 +74,7 @@ public class SendCouponEventListener {
                     long num = Long.parseLong(sendCouponNumber);
                     long atomicValue2 = RedisUtils.getAtomicValue(ZlyyhConstants.SEND_COUPON_NUMBER);
                     if (atomicValue2 == num) {
-                        PlatformVo platformVo = platformService.queryById(sendCouponEvent.getPlatformKey());
+                        PlatformVo platformVo = platformService.queryById(sendCouponEvent.getPlatformKey(), PlatformEnumd.MP_YSF);
                         if (null != platformVo) {
                             String backendToken = YsfUtils.getBackendToken(platformVo.getAppId(), platformVo.getSecret(), false, platformVo.getPlatformKey());
                             orderService.ysfForewarningMessage(platformVo.getPlatformKey(), backendToken, "sendDescDetails", "sendTemplateValue");

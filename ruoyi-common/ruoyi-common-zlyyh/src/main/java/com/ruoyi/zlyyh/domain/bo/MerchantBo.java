@@ -51,6 +51,15 @@ public class MerchantBo extends BaseEntity {
     private String merchantKey;
 
     /**
+     * 微信apiv3密钥
+     */
+    private String apiKey;
+    /**
+     * 商户号类型：0-云闪付，1-微信
+     */
+    private String merchantType;
+
+    /**
      * 状态（0正常 1停用）
      */
     @NotBlank(message = "状态不能为空", groups = { AddGroup.class, EditGroup.class })
