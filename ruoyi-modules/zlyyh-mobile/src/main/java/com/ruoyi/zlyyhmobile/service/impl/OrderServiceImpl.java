@@ -18,6 +18,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
@@ -30,6 +31,7 @@ import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.OrderBo;
 import com.ruoyi.zlyyh.domain.bo.ProductAmountBo;
+import com.ruoyi.zlyyh.domain.bo.ProductBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.enumd.DateType;
 import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayBizMethod;
@@ -100,6 +102,9 @@ public class OrderServiceImpl implements IOrderService {
     private final IUnionPayChannelService unionPayChannelService;
     private final ICodeService codeService;
     private final CollectiveOrderMapper collectiveOrderMapper;
+    private final ICouponService couponService;
+    private final CouponMapper couponMapper;
+    private final ProductCouponMapper productCouponMapper;
 
     @Autowired
     private LockTemplate lockTemplate;
@@ -589,8 +594,10 @@ public class OrderServiceImpl implements IOrderService {
         collectiveOrder.setOrderCityCode(bo.getAdcode());
         collectiveOrder.setOrderCityName(bo.getCityName());
         collectiveOrder.setPlatformKey(platformVo.getPlatformKey());
+        collectiveOrder.setStatus("0");
         // 生成订单
         Order order = new Order();
+        order.setCollectiveNumber(collectiveOrder.getCollectiveNumber());
         order.setNumber(IdUtil.getSnowflakeNextId());
         order.setProductId(productVo.getProductId());
         order.setCusRefund(productVo.getCusRefund());
@@ -720,6 +727,10 @@ public class OrderServiceImpl implements IOrderService {
                 order.setPayTime(new Date());
                 // 保存订单 后续如需改动成缓存订单，需注释
                 order = insertOrder(order);
+                collectiveOrder.setStatus("2");
+                collectiveOrder.setSysDeptId(order.getSysDeptId());
+                collectiveOrder.setSysUserId(order.getSysUserId());
+                collectiveOrderMapper.insert(collectiveOrder);
                 orderInfoMapper.insert(orderInfo);
                 // 缓存订单 暂时先不用 需要改动地方太多
                 //            OrderCacheUtils.setOrderCache(order);
@@ -751,40 +762,62 @@ public class OrderServiceImpl implements IOrderService {
                     reducedPrice = amount.subtract(productVo.getVipAmount());
                 }
             }
-//            // 如果使用了优惠券
-//            if (ObjectUtil.isNotEmpty(bo.getCouponId())) {
-//                // 查询优惠券
-//                Coupon coupon = appCouponService.selectCouponById(bo.getCouponId());
-//                if (ObjectUtil.isEmpty(coupon)) {
-//                    throw new ServiceException("请求异常，请稍后重试");
-//                }
-//                // 验证优惠券状态，以及使用时间
-//                if (!"1".equals(coupon.getUseStatus())
-//                    || (ObjectUtil.isNotEmpty(coupon.getPeriodOfStart()) && !DateUtils.validTime(coupon.getPeriodOfStart(), 1))
-//                    || (ObjectUtil.isNotEmpty(coupon.getPeriodOfValidity()) && DateUtils.validTime(coupon.getPeriodOfValidity(), 1))) {
-//                    throw new ServiceException("优惠券不可用！");
-//                }
-//
-//                // 最低使用金额
-//                if (amount.compareTo(coupon.getMinAmount()) <= 0) {
-//                    throw new ServiceException("优惠券需订单金额超过" + coupon.getMinAmount() + "元才可用！");
-//                }
-//                // 优惠券状态改变成已绑定
-//                coupon.setUseStatus("2");
-//                coupon.setUseTime(new Date());
-//                coupon.setNumber(number);
-//                appCouponService.updateCoupon(coupon);
-//                reducedPrice = coupon.getCouponAmount();
-//
-//            }
+            boolean couponFlag = false;
+            // 如果使用了优惠券
+            if (ObjectUtil.isNotEmpty(bo.getCouponId())) {
+                order.setCouponId(bo.getCouponId());
+                collectiveOrder.setCouponId(bo.getCouponId());
+                // 查询优惠券
+                Coupon coupon = couponMapper.selectById(bo.getCouponId());
+                if (ObjectUtil.isEmpty(coupon)) {
+                    throw new ServiceException("请求异常，请稍后重试");
+                }
+                // 验证优惠券状态，以及使用时间
+                if (!"1".equals(coupon.getUseStatus())
+                    || (ObjectUtil.isNotEmpty(coupon.getPeriodOfStart()) && !DateUtils.validTime(coupon.getPeriodOfStart(), 1))
+                    || (ObjectUtil.isNotEmpty(coupon.getPeriodOfValidity()) && DateUtils.validTime(coupon.getPeriodOfValidity(), 1))) {
+                    throw new ServiceException("优惠券不可用！");
+                }
+
+                // 最低使用金额
+                if (amount.compareTo(coupon.getMinAmount()) <= 0) {
+                    throw new ServiceException("优惠券需订单金额超过" + coupon.getMinAmount() + "元才可用！");
+                }
+                //判断是否为专属商品|优惠券判断购买商品id是否存在于优惠券商品关联表中
+                List<ProductCoupon> productCoupons = productCouponMapper.selectList(new LambdaQueryWrapper<ProductCoupon>().eq(ProductCoupon::getCouponId, bo.getCouponId()));
+                if (ObjectUtil.isNotEmpty(productCoupons)){
+                    //关联表不为空判断购买的商品id是否存在 不存在抛异常
+                    List<Long> productIds = productCoupons.stream().map(ProductCoupon::getProductId).collect(Collectors.toList());
+                    Boolean couponProduct = isCouponProduct(productIds, bo.getProductId());
+                    if (!couponProduct){
+                        throw new ServiceException("优惠券指定商品可用！");
+                    }
+                }
+
+                if (coupon.getCouponType().equals("1")){
+                    couponFlag = true;
+
+                }else if (coupon.getCouponType().equals("2")){
+                    // 优惠券状态改变成已绑定
+                    coupon.setUseStatus("2");
+                    coupon.setUseTime(new Date());
+                    coupon.setNumber(order.getNumber().toString());
+                    couponMapper.updateById(coupon);
+                    reducedPrice = coupon.getCouponAmount();
+                }
+
+
+            }
 
             order.setTotalAmount(amount.multiply(new BigDecimal(order.getCount())));
             order.setReducedPrice(reducedPrice.multiply(new BigDecimal(order.getCount())));
             order.setWantAmount(order.getTotalAmount().subtract(order.getReducedPrice()));
+
             //添加大订单价格
             collectiveOrder.setTotalAmount(amount.multiply(new BigDecimal(order.getCount())));
             collectiveOrder.setReducedPrice(reducedPrice.multiply(new BigDecimal(order.getCount())));
             collectiveOrder.setWantAmount(order.getTotalAmount().subtract(order.getReducedPrice()));
+
 
             if ("12".equals(productVo.getProductType()) || "1".equals(productVo.getUnionPay())) {
                 String externalProductId = "1".equals(productVo.getUnionPay()) ? productVo.getUnionProductId() : productVo.getExternalProductId();
@@ -793,9 +826,31 @@ public class OrderServiceImpl implements IOrderService {
                 }
                 unionPayChannelService.createUnionPayOrder(externalProductId, order);
             }
+            if(couponFlag){
+                //如果是通兑券 直接发放奖品
+                order.setStatus("2");
+                order.setPayTime(new Date());
+                // 保存订单 后续如需改动成缓存订单，需注释
+                order = insertOrder(order);
+                orderInfoMapper.insert(orderInfo);
+                collectiveOrder.setStatus("2");
+                collectiveOrder.setSysUserId(order.getSysUserId());
+                collectiveOrder.setSysDeptId(order.getSysDeptId());
+                collectiveOrderMapper.insert(collectiveOrder);
+                if ("10".equals(order.getOrderType())) {
+                    checkRandomProduct(order);
+                }
+                order = baseMapper.selectById(order.getNumber());
+                SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
+                return new CreateOrderResult(order.getNumber(), "0");
+            }
             // 保存订单 后续如需改动成缓存订单，需注释
             order = insertOrder(order);
+            collectiveOrder.setSysUserId(order.getSysUserId());
+            collectiveOrder.setSysDeptId(order.getSysDeptId());
+            collectiveOrderMapper.insert(collectiveOrder);
             orderInfoMapper.insert(orderInfo);
+
             // 缓存订单 暂时先不用 需要改动地方太多
 //            OrderCacheUtils.setOrderCache(order);
 //            OrderCacheUtils.setOrderInfoCache(orderInfo);
@@ -2677,5 +2732,18 @@ public class OrderServiceImpl implements IOrderService {
         lqw.eq(Order::getExternalOrderNumber, externalOrderNumber);
         lqw.last("order by number desc limit 1");
         return baseMapper.selectVoOne(lqw);
+    }
+
+    /**
+     * 判断商品id是否存在于优惠券商品列表中
+     */
+    Boolean isCouponProduct(Collection<Long> ids, Long productId){
+        for (Long id : ids) {
+           if (id.equals(productId)){
+               return true;
+
+           }
+        }
+        return false;
     }
 }

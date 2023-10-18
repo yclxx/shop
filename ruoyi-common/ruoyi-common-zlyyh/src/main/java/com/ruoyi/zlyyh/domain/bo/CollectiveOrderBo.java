@@ -80,9 +80,13 @@ public class CollectiveOrderBo extends BaseEntity {
     private String status;
 
     /**
-     * 供应商退款状态0-退款中 1-退款成功 2-退款失败
+     * 退款状态0-退款中 1-退款成功 2-退款失败 3-部分退款成功
      */
     private String cancelStatus;
+    /**
+     * 已退款金额
+     */
+    private BigDecimal cancelAmount;
 
     /**
      * 下单所在城市

@@ -15,6 +15,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <result property="payTime" column="pay_time"/>
     <result property="expireDate" column="expire_date"/>
     <result property="status" column="status"/>
+    <result property="cancelAmount" column="cancel_amount"/>
     <result property="cancelStatus" column="cancel_status"/>
     <result property="orderCityName" column="order_city_name"/>
     <result property="orderCityCode" column="order_city_code"/>

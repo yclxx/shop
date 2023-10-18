@@ -48,6 +48,11 @@ public class CreateOrderBo {
     private Long platformKey;
 
     /**
+     * 优惠券Id
+     */
+    private Long couponId;
+
+    /**
      * 获取城市编码
      *
      * @return 城市编码 例如杭州：330100

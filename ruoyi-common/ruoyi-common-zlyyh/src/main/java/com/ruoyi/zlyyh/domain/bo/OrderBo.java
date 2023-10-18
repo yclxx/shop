@@ -229,4 +229,9 @@ public class OrderBo extends BaseEntity {
      * 核销状态0-未核销 1-已核销 2-已失效
      */
     private String verificationStatus;
+
+    /**
+     * 大订单编号
+     */
+    private Long collectiveNumber;
 }

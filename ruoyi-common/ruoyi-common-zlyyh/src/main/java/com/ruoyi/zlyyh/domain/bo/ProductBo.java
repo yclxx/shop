@@ -346,6 +346,10 @@ public class ProductBo extends BaseEntity {
     private String supportChannel;
 
     /**
+     * 单次购买上限(购物车加号上限)
+     */
+    private Long lineUpperLimit;
+    /**
      * 演出票商品信息
      */
     private ProductTicketBo ticket;
