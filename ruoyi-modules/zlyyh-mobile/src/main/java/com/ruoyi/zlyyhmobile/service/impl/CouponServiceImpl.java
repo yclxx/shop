@@ -5,6 +5,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.exception.ServiceException;
@@ -12,14 +13,14 @@ import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
-import com.ruoyi.zlyyh.domain.Action;
-import com.ruoyi.zlyyh.domain.Coupon;
-import com.ruoyi.zlyyh.domain.ProductAction;
-import com.ruoyi.zlyyh.domain.ProductCoupon;
+import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.CouponBo;
+import com.ruoyi.zlyyh.domain.vo.CommercialTenantProductVo;
 import com.ruoyi.zlyyh.domain.vo.CouponVo;
+import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyh.mapper.CouponMapper;
 import com.ruoyi.zlyyh.mapper.ProductCouponMapper;
+import com.ruoyi.zlyyh.mapper.ProductMapper;
 import com.ruoyi.zlyyhmobile.service.ICouponService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 优惠券Service业务层处理
@@ -41,13 +43,22 @@ public class CouponServiceImpl implements ICouponService {
 
     private final CouponMapper baseMapper;
     private final ProductCouponMapper productCouponMapper;
+    private final ProductMapper productMapper;
 
     /**
      * 查询优惠券
      */
     @Override
     public CouponVo queryById(Long couponId) {
-        return baseMapper.selectVoById(couponId);
+        CouponVo couponVo = baseMapper.selectVoById(couponId);
+        //优惠券新增商品关联表
+        List<ProductCoupon> productCoupons = productCouponMapper.selectList(new LambdaQueryWrapper<ProductCoupon>().eq(ProductCoupon::getCouponId, couponVo.getCouponId()));
+        if (ObjectUtil.isNotEmpty(productCoupons)){
+            List<Long> productIds = productCoupons.stream().map(ProductCoupon::getProductId).collect(Collectors.toList());
+            List<ProductVo> productVos = productMapper.selectVoList(new LambdaQueryWrapper<Product>().in(Product::getProductId, productIds));
+            couponVo.setProductVoList(productVos);
+        }
+        return couponVo;
     }
 
     /**
@@ -101,20 +112,36 @@ public class CouponServiceImpl implements ICouponService {
 
     private LambdaQueryWrapper<Coupon> buildQueryWrapper(CouponBo bo) {
         LambdaQueryWrapper<Coupon> lqw = Wrappers.lambdaQuery();
-        lqw.like(StringUtils.isNotBlank(bo.getCouponName()), Coupon::getCouponName, bo.getCouponName());
-        lqw.eq(StringUtils.isNotBlank(bo.getRedeemCode()), Coupon::getRedeemCode, bo.getRedeemCode());
-        lqw.eq(bo.getCouponAmount() != null, Coupon::getCouponAmount, bo.getCouponAmount());
-        lqw.eq(bo.getMinAmount() != null, Coupon::getMinAmount, bo.getMinAmount());
         lqw.eq(StringUtils.isNotBlank(bo.getCouponType()), Coupon::getCouponType, bo.getCouponType());
-        lqw.eq(StringUtils.isNotBlank(bo.getUseStatus()), Coupon::getUseStatus, bo.getUseStatus());
         lqw.eq(bo.getUseTime() != null, Coupon::getUseTime, bo.getUseTime());
         lqw.eq(StringUtils.isNotBlank(bo.getNumber()), Coupon::getNumber, bo.getNumber());
-        lqw.eq(bo.getUserAddTime() != null, Coupon::getUserAddTime, bo.getUserAddTime());
         lqw.eq(StringUtils.isNotBlank(bo.getActionNo()), Coupon::getActionNo, bo.getActionNo());
-        lqw.eq(StringUtils.isNotBlank(bo.getCouponImage()), Coupon::getCouponImage, bo.getCouponImage());
         lqw.eq(bo.getUserId() != null, Coupon::getUserId, bo.getUserId());
         lqw.eq(bo.getPlatformKey() != null, Coupon::getPlatformKey, bo.getPlatformKey());
+        if ("2".equals(bo.getUseStatus())) {
+            lqw.in(Coupon::getUseStatus, "2", "3");
+        } else if ("3".equals(bo.getUseStatus())) {
+            lqw.in(Coupon::getUseStatus, "4", "5");
+        } else {
+            lqw.eq(Coupon::getUseStatus, bo.getUseStatus());
+        }
+
         return lqw;
+    }
+
+
+
+    /**
+     * 查询优惠券商品配置列表
+     */
+    public List<Long> queryCouponIdListByProductIds(List<Long> productIds) {
+        QueryWrapper<ProductCoupon> lqw = Wrappers.query();
+        lqw.select("DISTINCT coupon_id").lambda().in(ProductCoupon::getProductId, productIds);
+        List<ProductCoupon> productCoupons = productCouponMapper.selectList(lqw);
+        if(ObjectUtil.isEmpty(productCoupons)){
+            return new ArrayList<>();
+        }
+        return productCoupons.stream().map(ProductCoupon::getCouponId).collect(Collectors.toList());
     }
 
 

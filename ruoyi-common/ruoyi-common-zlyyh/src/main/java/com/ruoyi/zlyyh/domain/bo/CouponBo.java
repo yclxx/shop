@@ -10,6 +10,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 优惠券业务对象
@@ -127,4 +128,9 @@ public class CouponBo extends BaseEntity {
      * 可兑换截止日期
      */
     private Date conversionEndDate;
+
+    /**
+     * 商品id(购物车进入可能为多个商品id)
+     */
+    private List<Long> productIds;
 }

@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 优惠券视图对象
@@ -138,4 +139,6 @@ public class CouponVo {
      */
     @ExcelProperty(value = "平台标识")
     private Long platformKey;
+
+    private List<ProductVo> productVoList;
 }

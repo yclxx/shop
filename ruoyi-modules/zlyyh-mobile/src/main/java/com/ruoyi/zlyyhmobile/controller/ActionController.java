@@ -9,6 +9,7 @@ import com.ruoyi.zlyyh.domain.Coupon;
 import com.ruoyi.zlyyh.domain.bo.ActionBo;
 import com.ruoyi.zlyyh.domain.vo.ActionVo;
 import com.ruoyi.zlyyh.domain.vo.CouponVo;
+import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.service.IActionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +40,7 @@ public class ActionController extends BaseController {
     @GetMapping("/list")
     public TableDataInfo<ActionVo> list(ActionBo bo, PageQuery pageQuery) {
         bo.setStatus("0");
+        bo.setPlatformKey(ZlyyhUtils.getPlatformId());
         return actionService.queryPageList(bo, pageQuery);
     }
 

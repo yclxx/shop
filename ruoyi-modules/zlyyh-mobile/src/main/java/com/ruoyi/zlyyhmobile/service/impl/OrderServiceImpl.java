@@ -796,8 +796,15 @@ public class OrderServiceImpl implements IOrderService {
 
                 if (coupon.getCouponType().equals("1")){
                     couponFlag = true;
+                    // 优惠券状态改变成已使用 兑了相当于已使用
+                    coupon.setUseStatus("3");
+                    coupon.setUseTime(new Date());
+                    coupon.setNumber(order.getNumber().toString());
+                    couponMapper.updateById(coupon);
+                    reducedPrice = coupon.getCouponAmount();
 
-                }else if (coupon.getCouponType().equals("2")){
+                }else if (coupon.getCouponType().equals("2") || coupon.getCouponType().equals("3")){
+                    //全场通用券或者指定商品立减券
                     // 优惠券状态改变成已绑定
                     coupon.setUseStatus("2");
                     coupon.setUseTime(new Date());

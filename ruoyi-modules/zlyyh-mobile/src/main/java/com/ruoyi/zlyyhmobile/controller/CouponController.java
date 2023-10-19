@@ -15,6 +15,7 @@ import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.zlyyh.domain.Coupon;
 import com.ruoyi.zlyyh.domain.bo.CouponBo;
 import com.ruoyi.zlyyh.domain.vo.CouponVo;
+import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.service.ICouponService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +52,7 @@ public class CouponController extends BaseController {
         if(ObjectUtil.isEmpty(bo.getUseStatus())){
             throw new ServiceException("系统异常，请联系客服！");
         }
+        bo.setPlatformKey(ZlyyhUtils.getPlatformId());
         bo.setUserId(LoginHelper.getUserId());
         return iCouponService.queryPageList(bo, pageQuery);
     }
