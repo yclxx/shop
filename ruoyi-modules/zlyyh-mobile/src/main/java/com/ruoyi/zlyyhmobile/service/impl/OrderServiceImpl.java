@@ -1,9 +1,11 @@
 package com.ruoyi.zlyyhmobile.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -18,7 +20,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
@@ -29,9 +30,9 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.*;
+import com.ruoyi.zlyyh.domain.bo.AppWxPayCallbackParams;
 import com.ruoyi.zlyyh.domain.bo.OrderBo;
 import com.ruoyi.zlyyh.domain.bo.ProductAmountBo;
-import com.ruoyi.zlyyh.domain.bo.ProductBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.enumd.DateType;
 import com.ruoyi.zlyyh.enumd.PlatformEnumd;
@@ -40,6 +41,7 @@ import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayParams;
 import com.ruoyi.zlyyh.mapper.*;
 import com.ruoyi.zlyyh.param.LianLianParam;
 import com.ruoyi.zlyyh.properties.CtripConfig;
+import com.ruoyi.zlyyh.properties.WxProperties;
 import com.ruoyi.zlyyh.properties.YsfFoodProperties;
 import com.ruoyi.zlyyh.properties.utils.YsfDistributionPropertiesUtils;
 import com.ruoyi.zlyyh.service.YsfConfigService;
@@ -54,15 +56,27 @@ import com.ruoyi.zlyyhmobile.service.*;
 import com.ruoyi.zlyyhmobile.utils.AliasMethod;
 import com.ruoyi.zlyyhmobile.utils.ProductUtils;
 import com.ruoyi.zlyyhmobile.utils.redis.OrderCacheUtils;
+import com.wechat.pay.contrib.apache.httpclient.auth.AutoUpdateCertificatesVerifier;
+import com.wechat.pay.contrib.apache.httpclient.auth.PrivateKeySigner;
+import com.wechat.pay.contrib.apache.httpclient.auth.WechatPay2Credentials;
+import com.wechat.pay.contrib.apache.httpclient.util.PemUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileUrlResource;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletRequest;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
+import java.security.PrivateKey;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -106,6 +120,7 @@ public class OrderServiceImpl implements IOrderService {
     private final ICouponService couponService;
     private final CouponMapper couponMapper;
     private final ProductCouponMapper productCouponMapper;
+    private final WxProperties wxProperties;
 
     @Autowired
     private LockTemplate lockTemplate;
@@ -786,19 +801,19 @@ public class OrderServiceImpl implements IOrderService {
                 }
                 //判断是否为专属商品|优惠券判断购买商品id是否存在于优惠券商品关联表中
                 List<ProductCoupon> productCoupons = productCouponMapper.selectList(new LambdaQueryWrapper<ProductCoupon>().eq(ProductCoupon::getCouponId, bo.getCouponId()));
-                if (ObjectUtil.isNotEmpty(productCoupons)){
+                if (ObjectUtil.isNotEmpty(productCoupons)) {
                     //关联表不为空判断购买的商品id是否存在 不存在抛异常
                     List<Long> productIds = productCoupons.stream().map(ProductCoupon::getProductId).collect(Collectors.toList());
                     Boolean couponProduct = isCouponProduct(productIds, bo.getProductId());
-                    if (!couponProduct){
+                    if (!couponProduct) {
                         throw new ServiceException("优惠券指定商品可用！");
                     }
                 }
 
-                if (coupon.getCouponType().equals("1")){
+                if (coupon.getCouponType().equals("1")) {
                     couponFlag = true;
 
-                }else if (coupon.getCouponType().equals("2")){
+                } else if (coupon.getCouponType().equals("2")) {
                     // 优惠券状态改变成已绑定
                     coupon.setUseStatus("2");
                     coupon.setUseTime(new Date());
@@ -806,7 +821,6 @@ public class OrderServiceImpl implements IOrderService {
                     couponMapper.updateById(coupon);
                     reducedPrice = coupon.getCouponAmount();
                 }
-
 
             }
 
@@ -819,7 +833,6 @@ public class OrderServiceImpl implements IOrderService {
             collectiveOrder.setReducedPrice(reducedPrice.multiply(new BigDecimal(order.getCount())));
             collectiveOrder.setWantAmount(order.getTotalAmount().subtract(order.getReducedPrice()));
 
-
             if ("12".equals(productVo.getProductType()) || "1".equals(productVo.getUnionPay())) {
                 String externalProductId = "1".equals(productVo.getUnionPay()) ? productVo.getUnionProductId() : productVo.getExternalProductId();
                 if (StringUtils.isEmpty(externalProductId)) {
@@ -827,7 +840,7 @@ public class OrderServiceImpl implements IOrderService {
                 }
                 unionPayChannelService.createUnionPayOrder(externalProductId, order);
             }
-            if(couponFlag){
+            if (couponFlag) {
                 //如果是通兑券 直接发放奖品
                 order.setStatus("2");
                 order.setPayTime(new Date());
@@ -997,11 +1010,11 @@ public class OrderServiceImpl implements IOrderService {
             orderFoodInfo.setVoucherId(voucherId);
             orderFoodInfo.setTicketCode(ticketCode);
             //根据票券状态更新订单的核销状态
-            if ("EFFECTIVE".equals(voucherStatus)){
+            if ("EFFECTIVE".equals(voucherStatus)) {
                 order.setVerificationStatus("0");
-            }else if ("USED".equals(voucherStatus)){
+            } else if ("USED".equals(voucherStatus)) {
                 order.setVerificationStatus("1");
-            }else if ("CANCELED".equals(voucherStatus)){
+            } else if ("CANCELED".equals(voucherStatus)) {
                 order.setVerificationStatus("2");
             }
             orderFoodInfo.setVoucherStatus(voucherStatus);
@@ -1698,6 +1711,11 @@ public class OrderServiceImpl implements IOrderService {
         if (!order.getUserId().equals(userId)) {
             throw new ServiceException("登录超时，请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
         }
+        // 积点兑换 扣除积点
+        UserVo userVo = userService.queryById(order.getUserId());
+        if (null == userVo || StringUtils.isBlank(userVo.getOpenId())) {
+            throw new ServiceException("登录超时，请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
+        }
         if ("0".equals(order.getStatus()) || "1".equals(order.getStatus())) {
             if ("0".equals(order.getPickupMethod())) {
                 throw new ServiceException("订单无需支付");
@@ -1721,6 +1739,10 @@ public class OrderServiceImpl implements IOrderService {
                 if ("12".equals(productVo.getProductType()) || "1".equals(productVo.getUnionPay())) {
                     return unionPayChannelService.getPayTn(order.getNumber(), order.getPlatformKey());
                 } else {
+                    PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId(), ZlyyhUtils.getPlatformType());
+                    if (null == platformVo) {
+                        throw new ServiceException("平台异常");
+                    }
                     MerchantVo merchantVo = null;
                     if (null != productVo.getMerchantId()) {
                         merchantVo = merchantService.queryById(productVo.getMerchantId());
@@ -1737,8 +1759,7 @@ public class OrderServiceImpl implements IOrderService {
                         }
                     }
                     if (null == merchantVo) {
-                        PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId(), ZlyyhUtils.getPlatformType());
-                        if (null != platformVo && null != platformVo.getMerchantId()) {
+                        if (null != platformVo.getMerchantId()) {
                             merchantVo = merchantService.queryById(platformVo.getMerchantId());
                         }
                     }
@@ -1749,21 +1770,34 @@ public class OrderServiceImpl implements IOrderService {
                     updateOrder(order);
                     // 支付金额 乘100，把元转成分
                     Integer amount = BigDecimalUtils.toMinute(order.getWantAmount());
-                    String tn = PayUtils.pay(order.getNumber().toString(), amount.toString(), merchantVo.getPayCallbackUrl(), merchantVo.getMerchantNo(), merchantVo.getMerchantKey(), merchantVo.getCertPath(), null, order.getExpireDate());
-                    if (StringUtils.isEmpty(tn)) {
-                        throw new ServiceException("支付异常，请稍后重试");
+                    if ("0".equals(merchantVo.getMerchantType())) {
+                        // 云闪付支付
+                        String tn = PayUtils.pay(order.getNumber().toString(), amount.toString(), merchantVo.getPayCallbackUrl(), merchantVo.getMerchantNo(), merchantVo.getMerchantKey(), merchantVo.getCertPath(), null, order.getExpireDate());
+                        if (StringUtils.isEmpty(tn)) {
+                            throw new ServiceException("支付异常，请稍后重试");
+                        }
+                        return tn;
+                    } else if ("1".equals(merchantVo.getMerchantType())) {
+                        // 微信支付
+                        String payCallbackUrl = merchantVo.getPayCallbackUrl();
+                        if (!payCallbackUrl.contains(merchantVo.getId().toString())) {
+                            payCallbackUrl = payCallbackUrl + "/" + merchantVo.getId();
+                        }
+                        try {
+                            Map<String, String> resultMap = WxUtils.wxPay(order.getNumber().toString(), wxProperties.getPayUrl(), platformVo.getAppId(), merchantVo.getMerchantNo(), order.getProductName(), amount, userVo.getOpenId(), payCallbackUrl, merchantVo.getCertPath(), merchantVo.getMerchantKey(), merchantVo.getApiKey());
+                            return JsonUtils.toJsonString(resultMap);
+                        } catch (Exception e) {
+                            log.error("微信支付异常，", e);
+                            throw new ServiceException("支付异常，请稍后重试");
+                        }
+                    } else {
+                        throw new ServiceException("支付系统异常");
                     }
-                    return tn;
                 }
             } else if ("2".equals(order.getPickupMethod())) {
                 PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId(), ZlyyhUtils.getPlatformType());
                 if (null == platformVo) {
                     throw new ServiceException("系统配置错误[platform]");
-                }
-                // 积点兑换 扣除积点
-                UserVo userVo = userService.queryById(order.getUserId());
-                if (null == userVo || StringUtils.isBlank(userVo.getOpenId())) {
-                    throw new ServiceException("登录超时，请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
                 }
                 R<Void> result = YsfUtils.memberPointDeduct(order.getNumber(), order.getWantAmount().longValue(), order.getProductName(), userVo.getOpenId(), order.getPlatformKey());
                 if (R.isError(result)) {
@@ -1888,39 +1922,217 @@ public class OrderServiceImpl implements IOrderService {
                 if (null == merchantVo) {
                     return "商户不存在";
                 }
-                Map<String, String> rspData = PayUtils.queryOrder(order.getNumber().toString(), DateUtils.parseDateToStr("yyyyMMddHHmmss", order.getCreateTime()), merchantVo.getMerchantNo(), merchantVo.getMerchantKey(), merchantVo.getCertPath());
-                if (null == rspData) {
-                    return "支付结果查询失败，请稍后重试";
-                }
-                String origRespCode = rspData.get("origRespCode");
-                // 查询订单时的订单号
-                String queryId = rspData.get("queryId");
-                // 交易传输时间
-                String traceTime = rspData.get("traceTime");
-                // 系统跟踪号
-                String traceNo = rspData.get("traceNo");
-                // 交易金额，单位分
-                String txnAmt = rspData.get("txnAmt");
-                // 转换单位为元
-                BigDecimal txnAmount = BigDecimalUtils.toMoney(Integer.valueOf(txnAmt));
-                // 记录订单发送时间	 商户代码merId、商户订单号orderId、订单发送时间txnTime三要素唯一确定一笔交易。
-                String txnTime = rspData.get("txnTime");
-                // 5.1.2issAddnData订单优惠信息（支持单品）
-                String issAddnData = rspData.get("issAddnData");
-                if (StringUtils.isNotBlank(issAddnData)) {
-                    issAddnData = Base64.decodeStr(issAddnData);
-                }
-                if (("00").equals(origRespCode)) {
-                    //交易成功，
-                    handleOrder(order, txnAmount, queryId, traceTime, traceNo, txnTime, issAddnData);
-                    return "订单支付成功";
-                } else {
-                    //其他应答码为交易失败
-                    log.info("交易失败：" + rspData.get("origRespMsg") + "。<br> ");
-                    return "订单未支付";
+                if ("0".equals(merchantVo.getMerchantType())) {
+                    return queryYsfPayStatus(order, merchantVo);
+                } else if ("1".equals(merchantVo.getMerchantType())) {
+                    return queryWxPayStatus(order, merchantVo);
                 }
             }
             return "订单支付成功";
+        }
+    }
+
+    /**
+     * 微信支付回调
+     *
+     * @param appWxPayCallbackParams 回调参数
+     */
+    @SneakyThrows
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public boolean wxCallBack(Long merchantId, AppWxPayCallbackParams appWxPayCallbackParams, HttpServletRequest request) {
+        log.info("微信支付回调通知，商户号ID：{},通知内容：{}", merchantId, appWxPayCallbackParams);
+        // 查询商户信息
+        MerchantVo merchantVo = merchantService.queryById(merchantId);
+        if (null == merchantVo) {
+            log.error("微信支付回调通知，商户号不存在：{}", merchantId);
+            throw new ServiceException("商户号不存在");
+        }
+        String apiV3Key, merchantKey, mchid, merchantSerialNumber;
+        apiV3Key = merchantVo.getApiKey();
+        merchantKey = merchantVo.getCertPath();
+        mchid = merchantVo.getMerchantNo();
+        merchantSerialNumber = merchantVo.getMerchantKey();
+        // 查询订单信息
+        String s;
+        try {
+            s = WxUtils.decryptToString(apiV3Key.getBytes(StandardCharsets.UTF_8), appWxPayCallbackParams.getResource().getAssociated_data().getBytes(StandardCharsets.UTF_8), appWxPayCallbackParams.getResource().getNonce().getBytes(StandardCharsets.UTF_8), appWxPayCallbackParams.getResource().getCiphertext());
+        } catch (Exception e) {
+            log.error("微信支付回调解密异常:", e);
+            throw new ServiceException("解密异常");
+        }
+        log.info("微信支付回调通知，商户号ID：{},解密后内容：{}", merchantId, s);
+
+        //验证签名
+        BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream()));
+        String body = IoUtil.read(reader);
+
+        String wechatPayTimestamp = request.getHeader("Wechatpay-Timestamp");
+        String wechatPayNonce = request.getHeader("Wechatpay-Nonce");
+        String wechatSignature = request.getHeader("Wechatpay-Signature");
+        String wechatPaySerial = request.getHeader("Wechatpay-Serial");
+        //签名信息
+        String signMessage = wechatPayTimestamp + "\n" + wechatPayNonce + "\n" + body + "\n";
+        PrivateKey merchantPrivateKey = PemUtil.loadPrivateKey(
+            new FileUrlResource(merchantKey).getInputStream());
+
+        AutoUpdateCertificatesVerifier verifier = new AutoUpdateCertificatesVerifier(
+            new WechatPay2Credentials(mchid, new PrivateKeySigner(merchantSerialNumber, merchantPrivateKey)),
+            apiV3Key.getBytes(StandardCharsets.UTF_8));
+        // 加载平台证书（mchId：商户号,mchSerialNo：商户证书序列号,apiV3Key：V3秘钥）
+        boolean verify = verifier.verify(wechatPaySerial, signMessage.getBytes(StandardCharsets.UTF_8), wechatSignature);
+        if (!verify) {
+            log.info("验签失败，签名信息：" + signMessage + "平台证书序列号：" + wechatPaySerial + "签名：" + wechatSignature);
+            throw new ServiceException("验签失败");
+        }
+        log.info("微信支付回调验签成功");
+
+        Map<String, Object> result = JsonUtils.parseMap(s);
+        if (null == result || null == result.get("out_trade_no")) {
+            throw new ServiceException("无订单号out_trade_no");
+        }
+        // 商户订单号
+        String orderId = (String) result.get("out_trade_no");
+        // 交易状态
+        String trade_state = (String) result.get("trade_state");
+        // 微信支付订单号
+        String queryId = (String) result.get("transaction_id");
+        // 交易完成时间
+        String pay_time = (String) result.get("success_time");
+        // 付款银行
+        String bank_type = (String) result.get("bank_type");
+        // 优惠功能，享受优惠时返回该字段。
+        String issAddnData = JsonUtils.toJsonString(result.get("promotion_detail"));
+        // 订单金额
+        Map<String, Object> amount = BeanUtil.beanToMap(result.get("amount"));
+        // 订单总金额
+        Integer total = (Integer) amount.get("total");
+        // 用户支付金额
+        Integer payerTotal = (Integer) amount.get("payer_total");
+
+        // 交易状态，枚举值：
+        //SUCCESS：支付成功
+        //REFUND：转入退款
+        //NOTPAY：未支付
+        //CLOSED：已关闭
+        //REVOKED：已撤销（付款码支付）
+        //USERPAYING：用户支付中（付款码支付）
+        //PAYERROR：支付失败(其他原因，如银行返回失败)
+        if ("SUCCESS".equals(trade_state)) {
+            // 查询订单
+            Order order = baseMapper.selectById(Long.parseLong(orderId));
+            if (null == order) {
+                log.error("微信支付回调订单【{}】不存在,通知内容：{}", orderId, s);
+                return false;
+            }
+            handleOrder(order, BigDecimalUtils.toMoney(payerTotal), queryId, pay_time, queryId, pay_time, issAddnData);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 查询微信订单支付状态
+     *
+     * @param order 订单信息
+     * @return 支付结果
+     */
+    @Transactional
+    public String queryWxPayStatus(Order order, MerchantVo merchantVo) {
+        String result;
+        try {
+            result = WxUtils.queryWxOrder(wxProperties.getQueryPayStatusUrl(), order.getNumber().toString(), merchantVo.getMerchantNo(), merchantVo.getCertPath(), merchantVo.getMerchantKey(), merchantVo.getApiKey());
+        } catch (IOException e) {
+            return "系统繁忙";
+        }
+        if (StringUtils.isBlank(result)) {
+            return "支付结果查询失败，请稍后重试";
+        }
+        log.info("订单号：{},查询微信订单返回结果：{}", order.getNumber(), result);
+        JSONObject resultData = JSONObject.parseObject(result);
+        if (null == resultData.get("out_trade_no") || null == resultData.get("trade_state")) {
+            if ("ORDER_NOT_EXIST".equals(resultData.getString("code"))) {
+                return "订单未支付";
+            }
+            return "支付结果查询失败，请稍后重试";
+        }
+        // 交易状态
+        String trade_state = resultData.getString("trade_state");
+        // 交易状态，枚举值：
+        //SUCCESS：支付成功
+        //REFUND：转入退款
+        //NOTPAY：未支付
+        //CLOSED：已关闭
+        //REVOKED：已撤销（付款码支付）
+        //USERPAYING：用户支付中（付款码支付）
+        //PAYERROR：支付失败(其他原因，如银行返回失败)
+        if ("SUCCESS".equals(trade_state)) {
+            // 商户订单号
+            String orderId = resultData.getString("out_trade_no");
+            // 微信支付订单号
+            String queryId = resultData.getString("transaction_id");
+            // 交易完成时间
+            String pay_time = resultData.getString("success_time");
+            // 付款银行
+            String bank_type = resultData.getString("bank_type");
+            // 优惠功能，享受优惠时返回该字段。
+            String issAddnData = resultData.getString("promotion_detail");
+            // 订单金额
+            JSONObject amount = resultData.getJSONObject("amount");
+            // 订单总金额
+            Integer total = amount.getInteger("total");
+            // 用户支付金额
+            Integer payerTotal = amount.getInteger("payer_total");
+
+            handleOrder(order, BigDecimalUtils.toMoney(payerTotal), queryId, pay_time, queryId, pay_time, issAddnData);
+            return "订单支付成功。";
+        } else if ("NOTPAY".equals(trade_state)) {
+            return "订单未支付。";
+        } else if ("PAYERROR".equals(trade_state)) {
+            return "订单支付失败。";
+        } else {
+            return "订单未支付。";
+        }
+    }
+
+    /**
+     * 查询云闪付订单支付状态
+     *
+     * @param order 订单信息
+     * @return 支付结果
+     */
+    @Transactional
+    public String queryYsfPayStatus(Order order, MerchantVo merchantVo) {
+        Map<String, String> rspData = PayUtils.queryOrder(order.getNumber().toString(), DateUtils.parseDateToStr("yyyyMMddHHmmss", order.getCreateTime()), merchantVo.getMerchantNo(), merchantVo.getMerchantKey(), merchantVo.getCertPath());
+        if (null == rspData) {
+            return "支付结果查询失败，请稍后重试";
+        }
+        String origRespCode = rspData.get("origRespCode");
+        // 查询订单时的订单号
+        String queryId = rspData.get("queryId");
+        // 交易传输时间
+        String traceTime = rspData.get("traceTime");
+        // 系统跟踪号
+        String traceNo = rspData.get("traceNo");
+        // 交易金额，单位分
+        String txnAmt = rspData.get("txnAmt");
+        // 转换单位为元
+        BigDecimal txnAmount = BigDecimalUtils.toMoney(Integer.valueOf(txnAmt));
+        // 记录订单发送时间	 商户代码merId、商户订单号orderId、订单发送时间txnTime三要素唯一确定一笔交易。
+        String txnTime = rspData.get("txnTime");
+        // 5.1.2issAddnData订单优惠信息（支持单品）
+        String issAddnData = rspData.get("issAddnData");
+        if (StringUtils.isNotBlank(issAddnData)) {
+            issAddnData = Base64.decodeStr(issAddnData);
+        }
+        if (("00").equals(origRespCode)) {
+            //交易成功，
+            handleOrder(order, txnAmount, queryId, traceTime, traceNo, txnTime, issAddnData);
+            return "订单支付成功";
+        } else {
+            //其他应答码为交易失败
+            log.info("交易失败：" + rspData.get("origRespMsg") + "。<br> ");
+            return "订单未支付";
         }
     }
 
@@ -2428,7 +2640,7 @@ public class OrderServiceImpl implements IOrderService {
      * 订单支付成功处理
      *
      * @param order     订单信息
-     * @param txnAmount 回调支付金额
+     * @param txnAmount 回调支付金额 单位：元
      * @param queryId   银联查询号
      * @param traceTime 交易传输时间
      * @param traceNo   系统跟踪号
@@ -2737,12 +2949,12 @@ public class OrderServiceImpl implements IOrderService {
     /**
      * 判断商品id是否存在于优惠券商品列表中
      */
-    Boolean isCouponProduct(Collection<Long> ids, Long productId){
+    Boolean isCouponProduct(Collection<Long> ids, Long productId) {
         for (Long id : ids) {
-           if (id.equals(productId)){
-               return true;
+            if (id.equals(productId)) {
+                return true;
 
-           }
+            }
         }
         return false;
     }

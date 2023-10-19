@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.Order;
+import com.ruoyi.zlyyh.domain.bo.AppWxPayCallbackParams;
 import com.ruoyi.zlyyh.domain.bo.OrderBo;
 import com.ruoyi.zlyyh.domain.vo.OrderAndUserNumber;
 import com.ruoyi.zlyyh.domain.vo.OrderVo;
@@ -11,6 +12,7 @@ import com.ruoyi.zlyyh.utils.CloudRechargeEntity;
 import com.ruoyi.zlyyhmobile.domain.bo.CreateOrderBo;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
 
+import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Date;
@@ -104,6 +106,13 @@ public interface IOrderService {
      * @return 支付结果
      */
     String queryOrderPay(Long number);
+
+    /**
+     * 微信支付回调
+     *
+     * @param appWxPayCallbackParams 回调参数
+     */
+    boolean wxCallBack(Long merchantId, AppWxPayCallbackParams appWxPayCallbackParams, HttpServletRequest request);
 
     /**
      * 查询用户未支付订单数量

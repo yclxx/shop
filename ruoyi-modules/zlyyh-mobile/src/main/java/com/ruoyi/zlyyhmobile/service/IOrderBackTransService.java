@@ -1,8 +1,10 @@
 package com.ruoyi.zlyyhmobile.service;
 
+import com.ruoyi.zlyyh.domain.bo.AppWxPayCallbackParams;
 import com.ruoyi.zlyyh.domain.bo.OrderBackTransBo;
 import com.ruoyi.zlyyh.domain.vo.OrderBackTransVo;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 /**
@@ -29,4 +31,9 @@ public interface IOrderBackTransService {
      * 新增退款订单
      */
     Boolean insertByBo(OrderBackTransBo bo);
+
+    /**
+     * 微信退款回调业务处理
+     */
+    void wxRefundCallBack(Long merchantId, AppWxPayCallbackParams appWxPayCallbackParams, HttpServletRequest request);
 }
