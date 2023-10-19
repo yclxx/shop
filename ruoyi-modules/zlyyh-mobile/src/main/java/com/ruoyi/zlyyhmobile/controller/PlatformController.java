@@ -45,7 +45,7 @@ public class PlatformController extends BaseController {
      */
     @GetMapping("/ignore/getInfo")
     public R<AppPlatformVo> getInfo() {
-        PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId());
+        PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId(), ZlyyhUtils.getPlatformType());
         AppPlatformVo result = BeanCopyUtils.copy(platformVo, AppPlatformVo.class);
         setPlatformCityIndex(result);
         return R.ok(result);

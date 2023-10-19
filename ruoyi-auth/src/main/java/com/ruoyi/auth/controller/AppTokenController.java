@@ -1,6 +1,7 @@
 package com.ruoyi.auth.controller;
 
-import com.ruoyi.auth.form.YsfLoginBody;
+import com.ruoyi.auth.form.AppLoginBody;
+import com.ruoyi.auth.form.WxMobileLoginBody;
 import com.ruoyi.auth.service.AppLoginService;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.log.annotation.Log;
@@ -28,6 +29,30 @@ public class AppTokenController {
     private final AppLoginService appLoginService;
 
     /**
+     * 微信小程序 静默登录
+     *
+     * @param ysfLoginBody 登录信息
+     * @return 结果
+     */
+    @Log(title = "用户登录", businessType = BusinessType.GRANT, operatorType = OperatorType.MOBILE, isSaveSuccessLog = false)
+    @PostMapping("/wxLogin")
+    public R<String> wxLogin(@Validated @RequestBody AppLoginBody ysfLoginBody, HttpServletRequest request) {
+        return R.ok("操作成功", appLoginService.wxLogin(ysfLoginBody, request));
+    }
+
+    /**
+     * 微信小程序 手机号登录
+     *
+     * @param ysfLoginBody 小程序code
+     * @return 结果
+     */
+    @Log(title = "用户登录", businessType = BusinessType.GRANT, operatorType = OperatorType.MOBILE, isSaveSuccessLog = false)
+    @PostMapping("/wxLoginByMobile")
+    public R<String> wxLoginByMobile(@Validated @RequestBody WxMobileLoginBody ysfLoginBody, HttpServletRequest request) {
+        return R.ok("操作成功", appLoginService.wxLoginByMobile(ysfLoginBody, request));
+    }
+
+    /**
      * 云闪付小程序 测试登录
      *
      * @param mobile 登录信息
@@ -47,7 +72,7 @@ public class AppTokenController {
      */
     @Log(title = "用户登录", businessType = BusinessType.GRANT, operatorType = OperatorType.MOBILE, isSaveSuccessLog = false)
     @PostMapping("/ysfLogin")
-    public R<String> ysfLogin(@Validated @RequestBody YsfLoginBody ysfLoginBody, HttpServletRequest request) {
+    public R<String> ysfLogin(@Validated @RequestBody AppLoginBody ysfLoginBody, HttpServletRequest request) {
         return R.ok("操作成功", appLoginService.ysfLogin(ysfLoginBody, request));
     }
 
@@ -59,7 +84,7 @@ public class AppTokenController {
      */
     @Log(title = "用户登录", businessType = BusinessType.GRANT, operatorType = OperatorType.MOBILE, isSaveSuccessLog = false)
     @PostMapping("/ysfLoginByMobile")
-    public R<String> ysfLoginByMobile(@Validated @RequestBody YsfLoginBody ysfLoginBody, HttpServletRequest request) {
+    public R<String> ysfLoginByMobile(@Validated @RequestBody AppLoginBody ysfLoginBody, HttpServletRequest request) {
         return R.ok("操作成功", appLoginService.ysfLoginByMobile(ysfLoginBody, request));
     }
 
@@ -68,8 +93,8 @@ public class AppTokenController {
      */
     @Log(title = "用户登出", businessType = BusinessType.OTHER, operatorType = OperatorType.MOBILE)
     @PostMapping("/ysfLogout")
-    public R<Void> logout() {
-        appLoginService.logout();
+    public R<Void> logout(HttpServletRequest request) {
+        appLoginService.logout(request);
         return R.ok();
     }
 }

@@ -188,4 +188,8 @@ public interface CacheNames {
      * 分销商缓存
      */
     String DISTRIBUTOR = "distributor#2d";
+    /**
+     * 微信用户令牌缓存
+     */
+    String WX_ENTITY = "wxEntity#1d";
 }
