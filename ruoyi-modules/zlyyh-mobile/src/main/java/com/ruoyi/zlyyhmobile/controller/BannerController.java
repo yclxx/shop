@@ -50,6 +50,7 @@ public class BannerController extends BaseController {
     @GetMapping("/list")
     public R<List<BannerVo>> list(BannerBo bo) {
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         List<BannerVo> bannerVos = iBannerService.queryList(bo);
         if (ObjectUtil.isEmpty(bannerVos)) {
             return R.ok(bannerVos);

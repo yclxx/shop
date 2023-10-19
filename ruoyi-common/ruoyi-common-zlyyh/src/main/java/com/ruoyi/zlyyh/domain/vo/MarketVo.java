@@ -88,5 +88,10 @@ public class MarketVo {
     @ExcelProperty(value = "优惠券批次id")
     private Long actionId;
 
+    /**
+     * 支持端
+     */
+    @ExcelProperty(value = "支持端")
+    private String supportChannel;
 
 }

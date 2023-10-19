@@ -49,7 +49,7 @@
       <el-form-item label="奖励类型" prop="rewardType">
         <el-select v-model="queryParams.rewardType" placeholder="请选择奖励类型" clearable>
           <el-option
-            v-for="dict in dict.type.mission_award_type"
+            v-for="dict in dict.type.market_prize_type"
             :key="dict.value"
             :label="dict.label"
             :value="dict.value"
@@ -116,6 +116,15 @@
       <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="平台标识" align="center" prop="platformKey" :formatter="platformFormatter"/>
       <el-table-column label="名称" align="center" prop="marketName"/>
+      <el-table-column label="支持端" align="center" prop="supportChannel">
+        <template slot-scope="scope">
+          <div v-for="channel in dict.type.channel_type">
+            <div v-for="(supportChannel,index) in scope.row.supportChannel.split(',')" :key="index">
+              <span v-if="channel.value === supportChannel">{{ channel.label }}</span>
+            </div>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column label="开始时间" align="center" prop="beginTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.beginTime, '{y}-{m}-{d}') }}</span>
@@ -134,7 +143,7 @@
       <el-table-column label="天数" align="center" prop="marketDay"/>
       <el-table-column label="奖励类型" align="center" prop="rewardType">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.mission_award_type" :value="scope.row.rewardType"/>
+          <dict-tag :options="dict.type.market_prize_type" :value="scope.row.rewardType"/>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
@@ -237,7 +246,7 @@
             <el-form-item label="奖励类型" prop="rewardType">
               <el-select v-model="form.rewardType" placeholder="请选择奖励类型">
                 <el-option
-                  v-for="dict in dict.type.mission_award_type"
+                  v-for="dict in dict.type.market_prize_type"
                   :key="dict.value"
                   :label="dict.label"
                   :value="dict.value"
@@ -284,6 +293,18 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="支持端" prop="supportChannel">
+              <el-checkbox-group v-model="form.supportChannel">
+                <el-checkbox
+                  v-for="item in dict.type.channel_type" :key="item.value" :label="item.value">
+                  {{ item.label }}
+                </el-checkbox>
+              </el-checkbox-group>
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-form-item label="优惠券图片" prop="marketImage">
           <image-upload v-model="form.marketImage"/>
         </el-form-item>
@@ -302,9 +323,7 @@
           <el-descriptions-item label="优惠金额">{{ marketPrize.action.couponAmount }}</el-descriptions-item>
           <el-descriptions-item label="最低消费金额">{{ marketPrize.action.minAmount }}</el-descriptions-item>
           <el-descriptions-item label="优惠券类型">
-            <span v-for="item in couponTypeList" v-if="item.value === marketPrize.action.couponType">
-              <el-tag size="small">{{ item.label }}</el-tag>
-            </span>
+            <dict-tag :options="dict.type.t_coupon_type" :value="marketPrize.action.couponType"/>
           </el-descriptions-item>
           <el-descriptions-item label="优惠券状态">
             <dict-tag :options="dict.type.sys_normal_disable" :value="marketPrize.action.status"/>
@@ -345,7 +364,7 @@ import {selectListAction} from "@/api/zlyyh/action";
 
 export default {
   name: "Market",
-  dicts: ['mission_award_type', 'sys_normal_disable'],
+  dicts: ['market_prize_type', 'sys_normal_disable', 'channel_type', 't_coupon_type'],
   data() {
     return {
       // 按钮loading
@@ -368,15 +387,6 @@ export default {
       platformList: [],
       productList: [],
       actionList: [],
-      // 优惠券类型
-      couponTypeList: [{
-        label: '通兑券',
-        value: '1'
-      },
-        {
-          label: '抵扣券',
-          value: '2'
-        }],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -419,6 +429,9 @@ export default {
         ],
         marketDay: [
           {required: true, message: "天数不能为空", trigger: "blur"}
+        ],
+        supportChannel: [
+          {required: true, message: "支持端不能为空", trigger: "blur"}
         ],
         rewardType: [
           {required: true, message: "奖励类型不能为空", trigger: "change"}
@@ -498,6 +511,7 @@ export default {
         dateSpecific: undefined,
         marketDay: undefined,
         rewardType: undefined,
+        supportChannel: [],
         productId: undefined,
         actionId: undefined,
         createBy: undefined,
@@ -542,7 +556,9 @@ export default {
       this.reset();
       const marketId = row.marketId || this.ids
       getMarket(marketId).then(response => {
-        debugger
+        this.form = response.data;
+
+        this.title = "修改新用户营销";
         if (response.data.rewardType === '2') {
           const param = {actionId: response.data.actionId}
           selectListAction(param).then(response => {
@@ -554,16 +570,22 @@ export default {
             this.productList = response.data;
           });
         }
+        if (response.data && response.data.supportChannel) {
+          this.form.supportChannel = response.data.supportChannel.split(",");
+        } else {
+          this.form.supportChannel = [];
+        }
         this.loading = false;
-        this.form = response.data;
         this.open = true;
-        this.title = "修改新用户营销";
       });
     },
     /** 提交按钮 */
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
+          if (this.form.supportChannel.length > 0) {
+            this.form.supportChannel = this.form.supportChannel.join(",");
+          }
           this.buttonLoading = true;
           if (this.form.marketId != null) {
             updateMarket(this.form).then(response => {

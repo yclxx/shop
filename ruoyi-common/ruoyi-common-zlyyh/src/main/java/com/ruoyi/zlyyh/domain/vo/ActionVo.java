@@ -119,11 +119,4 @@ public class ActionVo {
      */
     @ExcelProperty(value = "平台标识")
     private Long platformKey;
-
-    /**
-     * 优惠券图片
-     */
-    private String couponImage;
-
-
 }

@@ -93,7 +93,13 @@ public class ProductServiceImpl implements IProductService {
         pageQuery.setIsAsc(null);
         pageQuery.setOrderByColumn(null);
         String str = JsonUtils.toJsonString(bo) + JsonUtils.toJsonString(pageQuery);
-        String key = SecureUtil.md5(str);
+        String key;
+        if (StringUtils.isNotEmpty(bo.getSupportChannel())) {
+            key = bo.getSupportChannel() + ":" + SecureUtil.md5(str);
+        } else {
+            key = SecureUtil.md5(str);
+        }
+
         Page<ProductVo> result = null;
         try {
             result = CacheUtils.get(CacheNames.productList, key);
@@ -357,6 +363,11 @@ public class ProductServiceImpl implements IProductService {
             lqw.and(lm -> {
                 lm.like(Product::getProductName, bo.getProductName()).or().like(Product::getProductAbbreviation, bo.getProductName())
                     .or().like(Product::getProductSubhead, bo.getProductName());
+            });
+        }
+        if (StringUtils.isNotBlank(bo.getSupportChannel())) {
+            lqw.and(lm -> {
+                lm.eq(Product::getSupportChannel, "ALL").or().like(Product::getSupportChannel, bo.getSupportChannel());
             });
         }
         if (StringUtils.isNotBlank(bo.getWeekDate())) {

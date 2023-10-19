@@ -56,7 +56,12 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="" align="center" prop="logId" v-if="true"/>
       <el-table-column label="平台标识" align="center" prop="platformKey" :formatter="platformFormatter"/>
-      <el-table-column label="" align="center" prop="marketId" />
+      <el-table-column label="客户端" align="center" prop="supportChannel">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.channel_type" :value="scope.row.supportChannel" />
+        </template>
+      </el-table-column>
+      <el-table-column label="营销id" align="center" prop="marketId" />
       <el-table-column label="用户id" align="center" prop="userId" />
       <el-table-column label="领取时间" align="center" prop="receiveDate" width="180">
         <template slot-scope="scope">
@@ -79,16 +84,6 @@
       :limit.sync="queryParams.pageSize"
       @pagination="getList"
     />
-
-    <!-- 添加或修改奖励发放记录对话框 -->
-    <!--<el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>-->
-    <!--  <el-form ref="form" :model="form" :rules="rules" label-width="80px">-->
-    <!--  </el-form>-->
-    <!--  <div slot="footer" class="dialog-footer">-->
-    <!--    <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>-->
-    <!--    <el-button @click="cancel">取 消</el-button>-->
-    <!--  </div>-->
-    <!--</el-dialog>-->
   </div>
 </template>
 
@@ -98,7 +93,7 @@ import {selectListPlatform} from "@/api/zlyyh/platform";
 
 export default {
   name: "MarketLog",
-  dicts: ['mission_award_type'],
+  dicts: ['mission_award_type','channel_type'],
   data() {
     return {
       // 按钮loading

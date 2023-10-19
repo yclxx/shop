@@ -127,7 +127,11 @@
       <el-table-column label="优惠券名称" align="center" prop="couponName"/>
       <el-table-column label="优惠金额" align="center" prop="couponAmount"/>
       <el-table-column label="最低消费金额" align="center" prop="minAmount"/>
-      <el-table-column label="优惠券类型" align="center" prop="couponType" :formatter="changeCouponType"/>
+      <el-table-column label="优惠券类型" align="center" prop="couponType">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.t_coupon_type" :value="scope.row.couponType"/>
+        </template>
+      </el-table-column>
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
@@ -156,7 +160,7 @@
       </el-table-column>
       <el-table-column fixed="right" label="操作" align="center" width="100">
         <template slot-scope="scope">
-          <el-button
+          <el-button v-if="scope.row.couponType !== '2'"
             size="mini"
             type="text"
             icon="el-icon-edit"
@@ -235,7 +239,7 @@
             <el-form-item label="优惠券类型" prop="couponType">
               <el-select v-model="form.couponType" placeholder="请选择优惠券类型">
                 <el-option
-                  v-for="item in couponTypeList"
+                  v-for="item in dict.type.t_coupon_type"
                   :key="item.value"
                   :label="item.label"
                   :value="item.value">
@@ -363,7 +367,7 @@ import ProductAction from "@/views/zlyyh/product/ProductAction.vue";
 
 export default {
   name: "Action",
-  dicts: ['sys_normal_disable'],
+  dicts: ['sys_normal_disable','t_coupon_type'],
   components: {
     ProductAction
   },
@@ -387,14 +391,6 @@ export default {
       actionList: [],
       // 平台下拉列表
       platformList: [],
-      couponTypeList: [{
-        label: '通兑券',
-        value: '1'
-      },
-        {
-          label: '抵扣券',
-          value: '2'
-        }],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -615,19 +611,6 @@ export default {
         return name;
       }
       return row.platformKey;
-    },
-    changeCouponType(row) {
-      let couponTypeName = ''
-      this.couponTypeList.forEach(item => {
-        if (row.couponType === item.value) {
-          couponTypeName = item.label;
-        }
-      })
-      if (couponTypeName && couponTypeName.length > 0) {
-        row.couponType = couponTypeName;
-        return couponTypeName;
-      }
-      return row.couponType;
     },
     /** 导出按钮操作 */
     handleExport() {

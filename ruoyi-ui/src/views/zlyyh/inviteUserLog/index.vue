@@ -37,6 +37,11 @@
 
     <el-table v-loading="loading" :data="inviteUserLogList" @selection-change="handleSelectionChange">
       <el-table-column label="平台" align="center" prop="platformKey" :formatter="platformFormatter" />
+      <el-table-column label="客户端" align="center" prop="supportChannel">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.channel_type" :value="scope.row.supportChannel" />
+        </template>
+      </el-table-column>
       <el-table-column label="任务" align="center" prop="missionId" :formatter="formatterMission" />
       <el-table-column label="用户ID" align="center" prop="userId" width="180" />
       <el-table-column label="被邀用户ID" align="center" prop="inviteUserId" width="180" />
@@ -74,6 +79,7 @@
 
   export default {
     name: "InviteUserLog",
+    dicts: ['channel_type'],
     data() {
       return {
         // 按钮loading

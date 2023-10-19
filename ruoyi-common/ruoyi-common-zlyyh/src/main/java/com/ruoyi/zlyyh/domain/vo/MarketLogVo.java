@@ -65,5 +65,11 @@ public class MarketLogVo {
     @ExcelProperty(value = "优惠券id")
     private Long couponId;
 
+    /**
+     * 支持端
+     */
+    @ExcelProperty(value = "支持端")
+    private String supportChannel;
+
 
 }

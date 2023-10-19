@@ -56,6 +56,11 @@
     <el-table v-loading="loading" :data="recordLogList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="平台" align="center" prop="platformKey" :formatter="platformFormatter"/>
+      <el-table-column label="客户端" align="center" prop="supportChannel">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.channel_type" :value="scope.row.supportChannel"/>
+        </template>
+      </el-table-column>
       <el-table-column label="用户点击次数" align="center" prop="userNumber"/>
       <el-table-column label="用户人数" align="center" prop="userPeople"/>
       <el-table-column label="订单购买次数" align="center" prop="orderBuyNumber"/>
@@ -124,7 +129,7 @@ import {selectListPlatform} from "@/api/zlyyh/platform";
 
 export default {
   name: "RecordLog",
-  dicts: ['source_type'],
+  dicts: ['source_type', 'channel_type'],
   data() {
     return {
       // 按钮loading

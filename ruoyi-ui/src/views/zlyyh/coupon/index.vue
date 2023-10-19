@@ -138,7 +138,11 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="优惠券类型" align="center" prop="couponType" :formatter="changeCouponType"/>
+      <el-table-column label="优惠券类型" align="center" prop="couponType">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.t_coupon_type" :value="scope.row.couponType"/>
+        </template>
+      </el-table-column>
       <!--<el-table-column label="优惠券名称" align="center" prop="couponName"/>-->
       <el-table-column label="批次号" align="center" prop="actionNo"/>
       <!--<el-table-column label="优惠金额" align="center" prop="couponAmount"/>-->
@@ -219,7 +223,7 @@ import {selectListPlatform} from "@/api/zlyyh/platform";
 
 export default {
   name: "Coupon",
-  dicts: ['coupon_status'],
+  dicts: ['coupon_status','t_coupon_type'],
   components: {
     Treeselect
   },
@@ -242,14 +246,6 @@ export default {
       // 优惠券表格数据
       couponList: [],
       platformList: [],
-      couponTypeList: [{
-        label: '通兑券',
-        value: '1'
-      },
-        {
-          label: '抵扣券',
-          value: '2'
-        }],
       // 弹出层标题
       // 是否显示弹出层
       open: false,
@@ -309,19 +305,6 @@ export default {
         return platformName;
       }
       return row.platformKey;
-    },
-    changeCouponType(row) {
-      let couponTypeName = ''
-      this.couponTypeList.forEach(item => {
-        if (row.couponType === item.value) {
-          couponTypeName = item.label;
-        }
-      })
-      if (couponTypeName && couponTypeName.length > 0) {
-        row.couponType = couponTypeName;
-        return couponTypeName;
-      }
-      return row.couponType;
     },
     changeCouponStatus(row) {
       let couponStatusName = ''

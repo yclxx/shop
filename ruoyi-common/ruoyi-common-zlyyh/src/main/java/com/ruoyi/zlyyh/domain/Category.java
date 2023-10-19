@@ -77,6 +77,11 @@ public class Category extends TreeEntity<Category> {
     private String showIndex;
 
     /**
+     * 支持端
+     */
+    private String supportChannel;
+
+    /**
      * 部门id
      */
     private Long sysDeptId;

@@ -193,6 +193,7 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
         }
         Refund refund = new Refund();
         refund.setNumber(orderVo.getNumber());
+        refund.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         //退款申请人
         refund.setRefundApplicant(userId.toString());
         refund.setRefundAmount(orderVo.getOutAmount());
@@ -249,7 +250,7 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
                 if ("1".equals(orderVo.getCancelStatus())) {
                     throw new ServiceException("退款已提交,不可重复申请");
                 }
-                CtripUtils.cancelOrder(orderVo.getExternalOrderNumber(), CtripConfig.getPartnerType(),refundUrl);
+                CtripUtils.cancelOrder(orderVo.getExternalOrderNumber(), CtripConfig.getPartnerType(), refundUrl);
             }
             refundMapper.insert(refund);
             return;

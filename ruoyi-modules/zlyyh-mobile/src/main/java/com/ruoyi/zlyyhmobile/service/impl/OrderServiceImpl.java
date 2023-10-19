@@ -18,7 +18,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
@@ -31,7 +30,6 @@ import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.OrderBo;
 import com.ruoyi.zlyyh.domain.bo.ProductAmountBo;
-import com.ruoyi.zlyyh.domain.bo.ProductBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.enumd.DateType;
 import com.ruoyi.zlyyh.enumd.PlatformEnumd;
@@ -606,6 +604,7 @@ public class OrderServiceImpl implements IOrderService {
         order.setProductName(productVo.getProductName());
         order.setProductImg(productVo.getProductImg());
         order.setPickupMethod(productVo.getPickupMethod());
+        order.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         order.setExpireDate(DateUtil.offsetMinute(new Date(), 15).toJdkDate());
         if (null != bo.getPayCount() && bo.getPayCount() > 0) {
             if (bo.getPayCount() > 10) {
@@ -786,19 +785,19 @@ public class OrderServiceImpl implements IOrderService {
                 }
                 //判断是否为专属商品|优惠券判断购买商品id是否存在于优惠券商品关联表中
                 List<ProductCoupon> productCoupons = productCouponMapper.selectList(new LambdaQueryWrapper<ProductCoupon>().eq(ProductCoupon::getCouponId, bo.getCouponId()));
-                if (ObjectUtil.isNotEmpty(productCoupons)){
+                if (ObjectUtil.isNotEmpty(productCoupons)) {
                     //关联表不为空判断购买的商品id是否存在 不存在抛异常
                     List<Long> productIds = productCoupons.stream().map(ProductCoupon::getProductId).collect(Collectors.toList());
                     Boolean couponProduct = isCouponProduct(productIds, bo.getProductId());
-                    if (!couponProduct){
+                    if (!couponProduct) {
                         throw new ServiceException("优惠券指定商品可用！");
                     }
                 }
 
-                if (coupon.getCouponType().equals("1")){
+                if (coupon.getCouponType().equals("1")) {
                     couponFlag = true;
 
-                }else if (coupon.getCouponType().equals("2")){
+                } else if (coupon.getCouponType().equals("2")) {
                     // 优惠券状态改变成已绑定
                     coupon.setUseStatus("2");
                     coupon.setUseTime(new Date());
@@ -827,7 +826,7 @@ public class OrderServiceImpl implements IOrderService {
                 }
                 unionPayChannelService.createUnionPayOrder(externalProductId, order);
             }
-            if(couponFlag){
+            if (couponFlag) {
                 //如果是通兑券 直接发放奖品
                 order.setStatus("2");
                 order.setPayTime(new Date());
@@ -997,11 +996,11 @@ public class OrderServiceImpl implements IOrderService {
             orderFoodInfo.setVoucherId(voucherId);
             orderFoodInfo.setTicketCode(ticketCode);
             //根据票券状态更新订单的核销状态
-            if ("EFFECTIVE".equals(voucherStatus)){
+            if ("EFFECTIVE".equals(voucherStatus)) {
                 order.setVerificationStatus("0");
-            }else if ("USED".equals(voucherStatus)){
+            } else if ("USED".equals(voucherStatus)) {
                 order.setVerificationStatus("1");
-            }else if ("CANCELED".equals(voucherStatus)){
+            } else if ("CANCELED".equals(voucherStatus)) {
                 order.setVerificationStatus("2");
             }
             orderFoodInfo.setVoucherStatus(voucherStatus);
@@ -1516,6 +1515,7 @@ public class OrderServiceImpl implements IOrderService {
         }
         Refund refund = new Refund();
         refund.setNumber(orderVo.getNumber());
+        refund.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         //退款申请人
         refund.setRefundApplicant(userId.toString());
         refund.setRefundAmount(orderVo.getOutAmount());
@@ -2737,12 +2737,12 @@ public class OrderServiceImpl implements IOrderService {
     /**
      * 判断商品id是否存在于优惠券商品列表中
      */
-    Boolean isCouponProduct(Collection<Long> ids, Long productId){
+    Boolean isCouponProduct(Collection<Long> ids, Long productId) {
         for (Long id : ids) {
-           if (id.equals(productId)){
-               return true;
+            if (id.equals(productId)) {
+                return true;
 
-           }
+            }
         }
         return false;
     }

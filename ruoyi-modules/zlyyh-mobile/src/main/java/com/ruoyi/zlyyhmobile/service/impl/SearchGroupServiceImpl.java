@@ -1,29 +1,25 @@
 package com.ruoyi.zlyyhmobile.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.ruoyi.zlyyh.domain.Product;
+import com.ruoyi.zlyyh.domain.SearchGroup;
+import com.ruoyi.zlyyh.domain.bo.SearchGroupBo;
 import com.ruoyi.zlyyh.domain.vo.ProductVo;
+import com.ruoyi.zlyyh.domain.vo.SearchGroupVo;
 import com.ruoyi.zlyyh.mapper.ProductMapper;
+import com.ruoyi.zlyyh.mapper.SearchGroupMapper;
 import com.ruoyi.zlyyhmobile.service.ISearchGroupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.ruoyi.zlyyh.domain.bo.SearchGroupBo;
-import com.ruoyi.zlyyh.domain.vo.SearchGroupVo;
-import com.ruoyi.zlyyh.domain.SearchGroup;
-import com.ruoyi.zlyyh.mapper.SearchGroupMapper;
-
 
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.Collection;
 
 /**
  * 搜索彩蛋配置Service业务层处理
@@ -78,7 +74,7 @@ public class SearchGroupServiceImpl implements ISearchGroupService {
     }
 
     private LambdaQueryWrapper<SearchGroup> buildQueryWrapper(SearchGroupBo bo) {
-        Map<String, Object> params = bo.getParams();
+        //Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<SearchGroup> lqw = Wrappers.lambdaQuery();
         lqw.eq(StringUtils.isNotBlank(bo.getSearchContent()), SearchGroup::getSearchContent, bo.getSearchContent());
         lqw.eq(bo.getPlatformKey() != null, SearchGroup::getPlatformKey, bo.getPlatformKey());
@@ -96,8 +92,11 @@ public class SearchGroupServiceImpl implements ISearchGroupService {
         lqw.and(lm -> {
             lm.eq(SearchGroup::getAssignDate, "0").or().like(SearchGroup::getWeekDate, bo.getWeekDate());
         });
-
-
+        if (StringUtils.isNotBlank(bo.getSupportChannel())) {
+            lqw.and(lm -> {
+                lm.eq(SearchGroup::getSupportChannel, "ALL").or().likeRight(SearchGroup::getSupportChannel, bo.getSupportChannel());
+            });
+        }
         return lqw;
     }
 

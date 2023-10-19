@@ -42,5 +42,10 @@ public class MarketLogBo extends BaseEntity {
      */
     private String rewardType;
 
+    /**
+     * 支持端
+     */
+    private String supportChannel;
+
 
 }

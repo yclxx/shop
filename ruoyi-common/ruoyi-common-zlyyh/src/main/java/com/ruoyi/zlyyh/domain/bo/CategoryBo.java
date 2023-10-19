@@ -82,4 +82,8 @@ public class CategoryBo extends TreeEntity<CategoryBo> {
      * 是否显示在首页
      */
     private String showIndex;
+    /**
+     * 支持端
+     */
+    private String supportChannel;
 }

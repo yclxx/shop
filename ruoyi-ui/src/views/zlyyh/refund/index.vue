@@ -76,6 +76,11 @@
     <el-table v-loading="loading" :data="refundList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="ID" align="center" prop="refundId" v-if="true"/>
+      <el-table-column label="客户端" align="center" prop="supportChannel">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.channel_type" :value="scope.row.supportChannel" />
+        </template>
+      </el-table-column>
       <el-table-column label="订单号" align="center" prop="number" />
       <el-table-column label="退款金额" align="center" prop="refundAmount" />
       <el-table-column label="退款用户ID" align="center" prop="refundApplicant" />
@@ -142,7 +147,7 @@ import { listRefund, getRefund, delRefund, addRefund, updateRefund,agreeSubmit,r
 
 export default {
   name: "Refund",
-  dicts: ['t_refund_status'],
+  dicts: ['t_refund_status','channel_type'],
   data() {
     return {
       // 按钮loading

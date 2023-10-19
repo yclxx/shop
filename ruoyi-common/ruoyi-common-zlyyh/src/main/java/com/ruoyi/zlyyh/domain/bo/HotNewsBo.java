@@ -81,5 +81,10 @@ public class HotNewsBo extends BaseEntity {
     @NotBlank(message = "展示星期不能为空")
     private String weekDate;
 
+    /**
+     * 支持端
+     */
+    private String supportChannel;
+
 
 }

@@ -64,6 +64,11 @@ public class HotNews extends BaseEntity {
     private String weekDate;
 
     /**
+     * 支持端
+     */
+    private String supportChannel;
+
+    /**
      * 部门id
      */
     private Long sysDeptId;

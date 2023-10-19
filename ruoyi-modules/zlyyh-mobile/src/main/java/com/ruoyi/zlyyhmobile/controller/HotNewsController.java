@@ -35,6 +35,7 @@ public class HotNewsController extends BaseController {
     @GetMapping("/list")
     public R<List<HotNewsVo>> list(HotNewsBo bo) {
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         List<HotNewsVo> hotNewsVos = hotNewsService.queryList(bo);
         if (ObjectUtil.isEmpty(hotNewsVos)) {
             return R.ok(hotNewsVos);

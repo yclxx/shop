@@ -76,6 +76,11 @@ public class SearchGroup extends BaseEntity {
     private Long platformKey;
 
     /**
+     * 支持端
+     */
+    private String supportChannel;
+
+    /**
      * 部门id
      */
     private Long sysDeptId;

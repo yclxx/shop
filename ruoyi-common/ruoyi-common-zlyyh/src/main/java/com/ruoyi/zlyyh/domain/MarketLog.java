@@ -55,4 +55,9 @@ public class MarketLog extends BaseEntity {
      */
     private Long couponId;
 
+    /**
+     * 支持端
+     */
+    private String supportChannel;
+
 }

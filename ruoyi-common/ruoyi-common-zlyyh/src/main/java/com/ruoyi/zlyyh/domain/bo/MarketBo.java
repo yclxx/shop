@@ -80,4 +80,9 @@ public class MarketBo extends BaseEntity {
      * 优惠券批次id
      */
     private Long actionId;
+
+    /**
+     * 支持端
+     */
+    private String supportChannel;
 }
