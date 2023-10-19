@@ -43,4 +43,9 @@ public class XcxLoginUser extends LoginUser {
      */
     private Date createTime;
 
+    /**
+     * 渠道用户ID
+     */
+    private Long userChannelId;
+
 }

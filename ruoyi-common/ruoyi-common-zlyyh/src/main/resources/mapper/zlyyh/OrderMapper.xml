@@ -15,6 +15,7 @@
         <result property="reducedPrice" column="reduced_price"/>
         <result property="wantAmount" column="want_amount"/>
         <result property="outAmount" column="out_amount"/>
+        <result property="couponId" column="coupon_id"/>
         <result property="payTime" column="pay_time"/>
         <result property="expireDate" column="expire_date"/>
         <result property="count" column="count"/>
@@ -51,6 +52,8 @@
         <result property="productSkuId" column="product_sku_id"/>
         <result property="productSessionName" column="product_session_name"/>
         <result property="productSkuName" column="product_sku_name"/>
+        <result property="verificationStatus" column="verification_status"/>
+        <result property="collectiveNumber" column="collective_number"/>
     </resultMap>
     <select id="sumSendValue" resultType="java.math.BigDecimal">
         SELECT COALESCE(CAST(sum(external_product_send_value) AS DECIMAL(10, 2)), 0.00) AS external_product_send_value

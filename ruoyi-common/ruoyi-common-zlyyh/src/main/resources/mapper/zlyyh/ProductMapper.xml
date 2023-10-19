@@ -73,6 +73,7 @@
         <result property="isCoupon" column="is_coupon"/>
         <result property="isShare" column="is_share"/>
         <result property="supplier" column="supplier"/>
+        <result property="lineUpperLimit" column="line_upper_limit"/>
     </resultMap>
 
 

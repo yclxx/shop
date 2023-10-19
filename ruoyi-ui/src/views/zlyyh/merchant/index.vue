@@ -45,6 +45,12 @@
       <el-table-column label="商户号" align="center" prop="merchantNo" />
       <el-table-column label="证书地址" align="center" prop="certPath" />
       <el-table-column label="证书密码" align="center" prop="merchantKey" />
+      <el-table-column label="微信V3密钥" align="center" prop="apiKey" />
+      <el-table-column label="商户号类型" align="center" prop="merchantType">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.t_merchant_type" :value="scope.row.merchantType" />
+        </template>
+      </el-table-column>
       <el-table-column label="状态" align="center" prop="status" width="70px">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.t_merchant_status" :value="scope.row.status" />
@@ -80,6 +86,18 @@
         <el-form-item label="证书地址" prop="certPath">
           <el-input v-model="form.certPath" placeholder="请输入证书地址" />
           <fileUpload :fileType="['pfx']" v-model="form.certPath" :limit="1" />
+        </el-form-item>
+        <el-form-item label="证书密码" prop="merchantKey">
+          <el-input v-model="form.merchantKey" placeholder="请输入证书密码" />
+        </el-form-item>
+        <el-form-item label="商户号类型" prop="merchantType">
+          <el-select v-model="form.merchantType" placeholder="请选择商户号类型" style="width: 100%;">
+            <el-option v-for="dict in dict.type.t_merchant_type" :key="dict.value" :label="dict.label"
+              :value="dict.value"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="微信V3密钥" prop="apiKey" v-if="form.merchantType && form.merchantType == '1'">
+          <el-input v-model="form.apiKey" placeholder="请输入微信V3密钥" />
         </el-form-item>
         <el-form-item label="证书密码" prop="merchantKey">
           <el-input v-model="form.merchantKey" placeholder="请输入证书密码" />
@@ -121,7 +139,7 @@
 
   export default {
     name: "Merchant",
-    dicts: ['t_merchant_status'],
+    dicts: ['t_merchant_status', 't_merchant_type'],
     components: {
       Treeselect
     },
@@ -197,6 +215,11 @@
             message: "状态不能为空",
             trigger: "change"
           }],
+          merchant_type: [{
+            required: true,
+            message: "商户号类型不能为空",
+            trigger: "change"
+          }],
           payCallbackUrl: [{
             required: true,
             message: "支付成功回调通知地址不能为空",
@@ -246,6 +269,8 @@
           merchantKey: undefined,
           sysDeptId: undefined,
           status: "0",
+          apiKey: undefined,
+          merchantType: undefined,
           payCallbackUrl: undefined,
           refundCallbackUrl: undefined,
           createBy: undefined,

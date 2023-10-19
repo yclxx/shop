@@ -337,4 +337,51 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
         Long timestamp = Long.valueOf(times);
         return new Date(timestamp);
     }
+
+    /**
+     * 判断当前时间是否超过开始时间多少毫秒
+     *
+     * @param begin       开始时间
+     * @param millisecond 毫秒
+     * @return 超过返回true，没超过返回false
+     */
+    public static boolean validTime(Date begin, long millisecond) {
+        return validTime(begin, new Date(), millisecond);
+    }
+
+    /**
+     * 判断结束时间是否超过开始时间多少毫秒
+     *
+     * @param begin       开始时间
+     * @param end         结束时间
+     * @param millisecond 毫秒
+     * @return 超过返回true，没超过返回false
+     */
+    public static boolean validTime(Date begin, Date end, long millisecond) {
+        LocalDateTime beginTimetime = dateToLocalDateTime(begin);
+        LocalDateTime endTimetime = dateToLocalDateTime(end);
+        if (null == beginTimetime || null == endTimetime) {
+            return false;
+        }
+        Duration duration = Duration.between(beginTimetime, endTimetime);
+        long millis = duration.toMillis();//相差毫秒数
+        return millis >= millisecond;
+    }
+
+    /**
+     * Date转LocalDateTime
+     *
+     * @param date Date
+     * @return LocalDateTime
+     */
+    private static LocalDateTime dateToLocalDateTime(Date date) {
+        try {
+            Instant instant = date.toInstant();
+            ZoneId zoneId = ZoneId.systemDefault();
+            return instant.atZone(zoneId).toLocalDateTime();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

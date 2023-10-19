@@ -219,4 +219,6 @@ public class HistoryOrderVo {
 
     private String cusRefund;
 
+    private String verificationStatus;
+
 }

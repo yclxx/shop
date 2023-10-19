@@ -227,4 +227,13 @@ public class ShopBo extends BaseEntity {
     private Long sysUserId;
 
     private String businessDistrictId;
+
+
+    /**
+     * 最大查询数量
+     */
+    private Integer pageSize;
+
+    private Long categoryId;
+
 }

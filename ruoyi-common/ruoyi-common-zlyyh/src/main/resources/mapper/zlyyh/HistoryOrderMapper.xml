@@ -42,6 +42,7 @@
         <result property="parentNumber" column="parent_number"/>
         <result property="sysDeptId" column="sys_dept_id"/>
         <result property="sysUserId" column="sys_user_id"/>
+        <result property="verificationStatus" column="verification_status"/>
     </resultMap>
 
 

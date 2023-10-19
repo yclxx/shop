@@ -84,6 +84,11 @@ public class OrderBo extends BaseEntity {
     private BigDecimal outAmount;
 
     /**
+     * 优惠券id
+     */
+    private Long couponId;
+
+    /**
      * 支付完成时间
      */
     private Date payTime;
@@ -219,4 +224,14 @@ public class OrderBo extends BaseEntity {
      * 规格名称
      */
     private String productSkuName;
+
+    /**
+     * 核销状态0-未核销 1-已核销 2-已失效
+     */
+    private String verificationStatus;
+
+    /**
+     * 大订单编号
+     */
+    private Long collectiveNumber;
 }

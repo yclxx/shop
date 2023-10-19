@@ -18,6 +18,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
@@ -30,8 +31,10 @@ import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.OrderBo;
 import com.ruoyi.zlyyh.domain.bo.ProductAmountBo;
+import com.ruoyi.zlyyh.domain.bo.ProductBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.enumd.DateType;
+import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayBizMethod;
 import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayParams;
 import com.ruoyi.zlyyh.mapper.*;
@@ -99,6 +102,10 @@ public class OrderServiceImpl implements IOrderService {
     private final OrderTicketMapper orderTicketMapper;
     private final IUnionPayChannelService unionPayChannelService;
     private final ICodeService codeService;
+    private final CollectiveOrderMapper collectiveOrderMapper;
+    private final ICouponService couponService;
+    private final CouponMapper couponMapper;
+    private final ProductCouponMapper productCouponMapper;
 
     @Autowired
     private LockTemplate lockTemplate;
@@ -486,7 +493,7 @@ public class OrderServiceImpl implements IOrderService {
                             int number = Integer.parseInt(cacheObject.toString());
                             // 满足条件,发送云闪付服务消息.
                             if (number >= num) {
-                                PlatformVo platformVo = platformService.queryById(order.getPlatformKey());
+                                PlatformVo platformVo = platformService.queryById(order.getPlatformKey(), PlatformEnumd.MP_YSF);
                                 if (null != platformVo) {
                                     String backendToken = YsfUtils.getBackendToken(platformVo.getAppId(), platformVo.getSecret(), false, platformVo.getPlatformKey());
                                     this.ysfForewarningMessage(order.getPlatformKey(), backendToken, "errorDescDetails", "errorTemplateValue");
@@ -531,7 +538,7 @@ public class OrderServiceImpl implements IOrderService {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public CreateOrderResult createOrder(CreateOrderBo bo, boolean system) {
-        PlatformVo platformVo = platformService.queryById(bo.getPlatformKey());
+        PlatformVo platformVo = platformService.queryById(bo.getPlatformKey(), ZlyyhUtils.getPlatformType());
         if (null == platformVo) {
             throw new ServiceException("请求失败，请退出重试");
         }
@@ -581,8 +588,17 @@ public class OrderServiceImpl implements IOrderService {
         }
         // 校验用户是否达到参与上限
         ProductUtils.checkUserCount(productVo, userVo.getUserId());
+        //此处先生成大订单(此处下单只有一个商品 只需记录价格等信息)
+        CollectiveOrder collectiveOrder = new CollectiveOrder();
+        collectiveOrder.setCollectiveNumber(IdUtil.getSnowflakeNextId());
+        collectiveOrder.setUserId(bo.getUserId());
+        collectiveOrder.setOrderCityCode(bo.getAdcode());
+        collectiveOrder.setOrderCityName(bo.getCityName());
+        collectiveOrder.setPlatformKey(platformVo.getPlatformKey());
+        collectiveOrder.setStatus("0");
         // 生成订单
         Order order = new Order();
+        order.setCollectiveNumber(collectiveOrder.getCollectiveNumber());
         order.setNumber(IdUtil.getSnowflakeNextId());
         order.setProductId(productVo.getProductId());
         order.setCusRefund(productVo.getCusRefund());
@@ -712,6 +728,10 @@ public class OrderServiceImpl implements IOrderService {
                 order.setPayTime(new Date());
                 // 保存订单 后续如需改动成缓存订单，需注释
                 order = insertOrder(order);
+                collectiveOrder.setStatus("2");
+                collectiveOrder.setSysDeptId(order.getSysDeptId());
+                collectiveOrder.setSysUserId(order.getSysUserId());
+                collectiveOrderMapper.insert(collectiveOrder);
                 orderInfoMapper.insert(orderInfo);
                 // 缓存订单 暂时先不用 需要改动地方太多
                 //            OrderCacheUtils.setOrderCache(order);
@@ -743,9 +763,63 @@ public class OrderServiceImpl implements IOrderService {
                     reducedPrice = amount.subtract(productVo.getVipAmount());
                 }
             }
+            boolean couponFlag = false;
+            // 如果使用了优惠券
+            if (ObjectUtil.isNotEmpty(bo.getCouponId())) {
+                order.setCouponId(bo.getCouponId());
+                collectiveOrder.setCouponId(bo.getCouponId());
+                // 查询优惠券
+                Coupon coupon = couponMapper.selectById(bo.getCouponId());
+                if (ObjectUtil.isEmpty(coupon)) {
+                    throw new ServiceException("请求异常，请稍后重试");
+                }
+                // 验证优惠券状态，以及使用时间
+                if (!"1".equals(coupon.getUseStatus())
+                    || (ObjectUtil.isNotEmpty(coupon.getPeriodOfStart()) && !DateUtils.validTime(coupon.getPeriodOfStart(), 1))
+                    || (ObjectUtil.isNotEmpty(coupon.getPeriodOfValidity()) && DateUtils.validTime(coupon.getPeriodOfValidity(), 1))) {
+                    throw new ServiceException("优惠券不可用！");
+                }
+
+                // 最低使用金额
+                if (amount.compareTo(coupon.getMinAmount()) <= 0) {
+                    throw new ServiceException("优惠券需订单金额超过" + coupon.getMinAmount() + "元才可用！");
+                }
+                //判断是否为专属商品|优惠券判断购买商品id是否存在于优惠券商品关联表中
+                List<ProductCoupon> productCoupons = productCouponMapper.selectList(new LambdaQueryWrapper<ProductCoupon>().eq(ProductCoupon::getCouponId, bo.getCouponId()));
+                if (ObjectUtil.isNotEmpty(productCoupons)){
+                    //关联表不为空判断购买的商品id是否存在 不存在抛异常
+                    List<Long> productIds = productCoupons.stream().map(ProductCoupon::getProductId).collect(Collectors.toList());
+                    Boolean couponProduct = isCouponProduct(productIds, bo.getProductId());
+                    if (!couponProduct){
+                        throw new ServiceException("优惠券指定商品可用！");
+                    }
+                }
+
+                if (coupon.getCouponType().equals("1")){
+                    couponFlag = true;
+
+                }else if (coupon.getCouponType().equals("2")){
+                    // 优惠券状态改变成已绑定
+                    coupon.setUseStatus("2");
+                    coupon.setUseTime(new Date());
+                    coupon.setNumber(order.getNumber().toString());
+                    couponMapper.updateById(coupon);
+                    reducedPrice = coupon.getCouponAmount();
+                }
+
+
+            }
+
             order.setTotalAmount(amount.multiply(new BigDecimal(order.getCount())));
             order.setReducedPrice(reducedPrice.multiply(new BigDecimal(order.getCount())));
             order.setWantAmount(order.getTotalAmount().subtract(order.getReducedPrice()));
+
+            //添加大订单价格
+            collectiveOrder.setTotalAmount(amount.multiply(new BigDecimal(order.getCount())));
+            collectiveOrder.setReducedPrice(reducedPrice.multiply(new BigDecimal(order.getCount())));
+            collectiveOrder.setWantAmount(order.getTotalAmount().subtract(order.getReducedPrice()));
+
+
             if ("12".equals(productVo.getProductType()) || "1".equals(productVo.getUnionPay())) {
                 String externalProductId = "1".equals(productVo.getUnionPay()) ? productVo.getUnionProductId() : productVo.getExternalProductId();
                 if (StringUtils.isEmpty(externalProductId)) {
@@ -753,9 +827,31 @@ public class OrderServiceImpl implements IOrderService {
                 }
                 unionPayChannelService.createUnionPayOrder(externalProductId, order);
             }
+            if(couponFlag){
+                //如果是通兑券 直接发放奖品
+                order.setStatus("2");
+                order.setPayTime(new Date());
+                // 保存订单 后续如需改动成缓存订单，需注释
+                order = insertOrder(order);
+                orderInfoMapper.insert(orderInfo);
+                collectiveOrder.setStatus("2");
+                collectiveOrder.setSysUserId(order.getSysUserId());
+                collectiveOrder.setSysDeptId(order.getSysDeptId());
+                collectiveOrderMapper.insert(collectiveOrder);
+                if ("10".equals(order.getOrderType())) {
+                    checkRandomProduct(order);
+                }
+                order = baseMapper.selectById(order.getNumber());
+                SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
+                return new CreateOrderResult(order.getNumber(), "0");
+            }
             // 保存订单 后续如需改动成缓存订单，需注释
             order = insertOrder(order);
+            collectiveOrder.setSysUserId(order.getSysUserId());
+            collectiveOrder.setSysDeptId(order.getSysDeptId());
+            collectiveOrderMapper.insert(collectiveOrder);
             orderInfoMapper.insert(orderInfo);
+
             // 缓存订单 暂时先不用 需要改动地方太多
 //            OrderCacheUtils.setOrderCache(order);
 //            OrderCacheUtils.setOrderInfoCache(orderInfo);
@@ -900,6 +996,14 @@ public class OrderServiceImpl implements IOrderService {
             }
             orderFoodInfo.setVoucherId(voucherId);
             orderFoodInfo.setTicketCode(ticketCode);
+            //根据票券状态更新订单的核销状态
+            if ("EFFECTIVE".equals(voucherStatus)){
+                order.setVerificationStatus("0");
+            }else if ("USED".equals(voucherStatus)){
+                order.setVerificationStatus("1");
+            }else if ("CANCELED".equals(voucherStatus)){
+                order.setVerificationStatus("2");
+            }
             orderFoodInfo.setVoucherStatus(voucherStatus);
             orderFoodInfo.setEffectTime(effectTime);
             orderFoodInfo.setExpireTime(expireTime);
@@ -989,7 +1093,6 @@ public class OrderServiceImpl implements IOrderService {
         baseMapper.updateById(order);
     }
 
-
     /**
      * 联联订单发码记录
      */
@@ -1024,11 +1127,14 @@ public class OrderServiceImpl implements IOrderService {
                         orderFoodInfo.setOrderStatus(status);
                         if (status.equals("110") || status.equals("111") || status.equals("210")) {
                             orderFoodInfo.setVoucherStatus("EFFECTIVE");
+                            order.setVerificationStatus("0");
                         } else if (status.equals("310")) {
                             orderFoodInfo.setVoucherStatus("USED");
+                            order.setVerificationStatus("1");
                         } else {
                             orderFoodInfo.setRefundAmount(1);
                             orderFoodInfo.setVoucherStatus("CANCELED");
+                            order.setVerificationStatus("2");
                         }
                     }
                     orderFoodInfo.setTotalAmount(1);
@@ -1106,6 +1212,7 @@ public class OrderServiceImpl implements IOrderService {
         Order order = baseMapper.selectById(orderReturnParam.getThirdOrderId());
         OrderFoodInfo orderFoodInfo = orderFoodInfoMapper.selectById(orderReturnParam.getThirdOrderId());
         order.setStatus("5");
+        order.setVerificationStatus("2");
         orderFoodInfo.setVoucherStatus("CANCELED");
         orderFoodInfo.setOrderStatus("412");
         orderFoodInfoMapper.updateById(orderFoodInfo);
@@ -1120,8 +1227,12 @@ public class OrderServiceImpl implements IOrderService {
         //baseMapper.updateById(order);
 
         OrderFoodInfo orderFoodInfo = orderFoodInfoMapper.selectById(orderCheckParam.getThirdOrderId());
-        orderFoodInfo.setVoucherStatus("CANCELED");
+        Order order = baseMapper.selectById(orderCheckParam.getThirdOrderId());
+        orderFoodInfo.setVoucherStatus("USED");
         orderFoodInfo.setOrderStatus("310");
+        //订单表核销状态更改为已失效
+        order.setVerificationStatus("2");
+        baseMapper.updateById(order);
         orderFoodInfoMapper.updateById(orderFoodInfo);
     }
 
@@ -1626,7 +1737,7 @@ public class OrderServiceImpl implements IOrderService {
                         }
                     }
                     if (null == merchantVo) {
-                        PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId());
+                        PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId(), ZlyyhUtils.getPlatformType());
                         if (null != platformVo && null != platformVo.getMerchantId()) {
                             merchantVo = merchantService.queryById(platformVo.getMerchantId());
                         }
@@ -1645,7 +1756,7 @@ public class OrderServiceImpl implements IOrderService {
                     return tn;
                 }
             } else if ("2".equals(order.getPickupMethod())) {
-                PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId());
+                PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId(), ZlyyhUtils.getPlatformType());
                 if (null == platformVo) {
                     throw new ServiceException("系统配置错误[platform]");
                 }
@@ -1975,7 +2086,7 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     /**
-     * 美食订单支付回调
+     * 携程订单支付回调
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -2014,14 +2125,18 @@ public class OrderServiceImpl implements IOrderService {
             order.setSendStatus("2");
             orderFoodInfo.setTicketCode(code);
             orderFoodInfo.setVoucherId(codeId);
+            //把订单里的核销状态加入
             if (resultJson.getString("status").equals("0")) {
+                order.setVerificationStatus("0");
                 orderFoodInfo.setVoucherStatus("EFFECTIVE");
 
             } else if (resultJson.getString("status").equals("3")) {
                 orderFoodInfo.setVoucherStatus("USED");
                 orderFoodInfo.setUsedAmount(1);
+                order.setVerificationStatus("1");
             } else {
                 orderFoodInfo.setVoucherStatus("CANCELED");
+                order.setVerificationStatus("2");
             }
 
             if (ObjectUtil.isNotEmpty(orderPushInfo)) {
@@ -2159,6 +2274,7 @@ public class OrderServiceImpl implements IOrderService {
             if ("8".equals(state)) {
                 //退款成功
                 historyOrder.setCancelStatus("1");
+                historyOrder.setVerificationStatus("2");
                 historyOrderMapper.updateById(historyOrder);
             }
             return;
@@ -2171,6 +2287,7 @@ public class OrderServiceImpl implements IOrderService {
         if ("8".equals(state)) {
             //退款成功
             order.setCancelStatus("1");
+            order.setVerificationStatus("2");
             updateOrder(order);
         }
     }
@@ -2511,6 +2628,7 @@ public class OrderServiceImpl implements IOrderService {
         lqw.eq(bo.getProductId() != null, Order::getProductId, bo.getProductId());
         lqw.eq(bo.getUserId() != null, Order::getUserId, bo.getUserId());
         lqw.eq(StringUtils.isNotBlank(bo.getPickupMethod()), Order::getPickupMethod, bo.getPickupMethod());
+        lqw.eq(StringUtils.isNotBlank(bo.getVerificationStatus()), Order::getVerificationStatus, bo.getVerificationStatus());
         if (StringUtils.isNotBlank(bo.getStatus())) {
             lqw.in(Order::getStatus, bo.getStatus().split(","));
         }
@@ -2614,5 +2732,18 @@ public class OrderServiceImpl implements IOrderService {
         lqw.eq(Order::getExternalOrderNumber, externalOrderNumber);
         lqw.last("order by number desc limit 1");
         return baseMapper.selectVoOne(lqw);
+    }
+
+    /**
+     * 判断商品id是否存在于优惠券商品列表中
+     */
+    Boolean isCouponProduct(Collection<Long> ids, Long productId){
+        for (Long id : ids) {
+           if (id.equals(productId)){
+               return true;
+
+           }
+        }
+        return false;
     }
 }

@@ -297,4 +297,8 @@ public class Product extends BaseEntity {
      * 支持端
      */
     private String supportChannel;
+    /**
+     * 单次购买上限(购物车加号上限)
+     */
+    private Long lineUpperLimit;
 }

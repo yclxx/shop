@@ -87,7 +87,11 @@ public class MissionUserServiceImpl implements IMissionUserService {
         if (null != missionGroupVo.getEndDate() && DateUtils.compare(missionGroupVo.getEndDate()) < 0) {
             throw new ServiceException("任务已结束");
         }
-        ZlyyhUtils.checkCity(missionGroupVo.getShowCity(), platformService.queryById(missionGroupVo.getPlatformKey()));
+        PlatformVo platformVo = platformService.queryById(missionGroupVo.getPlatformKey(), ZlyyhUtils.getPlatformType());
+        if (null == platformVo) {
+            throw new ServiceException("平台信息错误");
+        }
+        ZlyyhUtils.checkCity(missionGroupVo.getShowCity(), platformVo);
         PermissionUtils.setPlatformDeptIdAndUserId(add, missionGroupVo.getPlatformKey(), true, false);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
@@ -96,11 +100,6 @@ public class MissionUserServiceImpl implements IMissionUserService {
         // 校验是否已经报名过了
         MissionUserVo missionUserVo = this.queryByUserIdAndGroupId(bo.getMissionGroupId(), bo.getUserId(), bo.getPlatformKey());
         if (null != missionUserVo) {
-            // 查询平台信息
-            PlatformVo platformVo = platformService.queryById(bo.getPlatformKey());
-            if (null == platformVo) {
-                throw new ServiceException("平台信息错误");
-            }
             // 请求接口报名
             R<Void> r = YsfUtils.registerMission(userVo.getOpenId(), platformVo.getAppId(), platformVo.getSecret(), platformVo.getPlatformKey());
             if (R.isError(r)) {

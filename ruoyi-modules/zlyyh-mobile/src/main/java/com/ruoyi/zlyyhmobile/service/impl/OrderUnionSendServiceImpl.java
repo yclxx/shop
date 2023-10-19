@@ -75,7 +75,12 @@ public class OrderUnionSendServiceImpl implements OrderUnionSendService {
         LambdaQueryWrapper<OrderUnionSend> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(OrderUnionSend::getBondSerlNo, bondSerlNo);
         OrderUnionSend send = baseMapper.selectOne(queryWrapper);
+        //查询订单
         if (send != null) {
+            //订单更改为核销状态
+            Order order = orderMapper.selectById(send.getNumber());
+            order.setVerificationStatus("1");
+            orderMapper.updateById(order);
             send.setBondSt("06");
             baseMapper.updateById(send);
             response.getWriter().print("ok");
