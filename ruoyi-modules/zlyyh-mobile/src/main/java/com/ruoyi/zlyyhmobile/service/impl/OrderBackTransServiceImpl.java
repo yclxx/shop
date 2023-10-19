@@ -1,14 +1,17 @@
 package com.ruoyi.zlyyhmobile.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.IdUtils;
+import com.ruoyi.common.core.utils.JsonUtils;
 import com.ruoyi.zlyyh.domain.Order;
 import com.ruoyi.zlyyh.domain.OrderBackTrans;
+import com.ruoyi.zlyyh.domain.bo.AppWxPayCallbackParams;
 import com.ruoyi.zlyyh.domain.bo.OrderBackTransBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.OrderBackTransMapper;
@@ -16,6 +19,7 @@ import com.ruoyi.zlyyh.mapper.OrderInfoMapper;
 import com.ruoyi.zlyyh.mapper.OrderMapper;
 import com.ruoyi.zlyyh.utils.BigDecimalUtils;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
+import com.ruoyi.zlyyh.utils.WxUtils;
 import com.ruoyi.zlyyh.utils.YsfUtils;
 import com.ruoyi.zlyyh.utils.sdk.LogUtil;
 import com.ruoyi.zlyyh.utils.sdk.PayUtils;
@@ -23,12 +27,24 @@ import com.ruoyi.zlyyhmobile.service.IMerchantService;
 import com.ruoyi.zlyyhmobile.service.IOrderBackTransService;
 import com.ruoyi.zlyyhmobile.service.IProductService;
 import com.ruoyi.zlyyhmobile.service.IUserService;
+import com.wechat.pay.contrib.apache.httpclient.auth.AutoUpdateCertificatesVerifier;
+import com.wechat.pay.contrib.apache.httpclient.auth.PrivateKeySigner;
+import com.wechat.pay.contrib.apache.httpclient.auth.WechatPay2Credentials;
+import com.wechat.pay.contrib.apache.httpclient.util.PemUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.FileUrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletRequest;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.security.PrivateKey;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -187,5 +203,109 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
         OrderBackTrans add = BeanUtil.toBean(bo, OrderBackTrans.class);
         PermissionUtils.setDeptIdAndUserId(add, order.getSysDeptId(), order.getSysUserId());
         return baseMapper.insert(add) > 0;
+    }
+
+    /**
+     * 微信退款回调业务处理
+     */
+    @SneakyThrows
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void wxRefundCallBack(Long merchantId, AppWxPayCallbackParams appWxPayCallbackParams, HttpServletRequest request) {
+        log.info("微信退款回调通知，商户号ID：{},通知内容：{}", merchantId, appWxPayCallbackParams);
+        MerchantVo merchantVo = merchantService.queryById(merchantId);
+        if (null == merchantVo) {
+            log.error("微信退款通知，商户不存在");
+            throw new ServiceException("商户不存在");
+        }
+        String apiV3Key, merchantKey, mchid, merchantSerialNumber;
+        apiV3Key = merchantVo.getApiKey();
+        merchantKey = merchantVo.getCertPath();
+        mchid = merchantVo.getMerchantNo();
+        merchantSerialNumber = merchantVo.getMerchantKey();
+        String s;
+        try {
+            s = WxUtils.decryptToString(apiV3Key.getBytes(StandardCharsets.UTF_8), appWxPayCallbackParams.getResource().getAssociated_data().getBytes(StandardCharsets.UTF_8), appWxPayCallbackParams.getResource().getNonce().getBytes(StandardCharsets.UTF_8), appWxPayCallbackParams.getResource().getCiphertext());
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new ServiceException("解密异常");
+        }
+        log.info("微信退款回调信息：" + s);
+
+        //验证签名
+        BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream()));
+        String body = IoUtil.read(reader);
+
+        String wechatPayTimestamp = request.getHeader("Wechatpay-Timestamp");
+        String wechatPayNonce = request.getHeader("Wechatpay-Nonce");
+        String wechatSignature = request.getHeader("Wechatpay-Signature");
+        String wechatPaySerial = request.getHeader("Wechatpay-Serial");
+        //签名信息
+        String signMessage = wechatPayTimestamp + "\n" + wechatPayNonce + "\n" + body + "\n";
+        PrivateKey merchantPrivateKey = PemUtil.loadPrivateKey(
+            new FileUrlResource(merchantKey).getInputStream());
+
+        AutoUpdateCertificatesVerifier verifier = new AutoUpdateCertificatesVerifier(
+            new WechatPay2Credentials(mchid, new PrivateKeySigner(merchantSerialNumber, merchantPrivateKey)),
+            apiV3Key.getBytes(StandardCharsets.UTF_8));
+        // 加载平台证书（mchId：商户号,mchSerialNo：商户证书序列号,apiV3Key：V3秘钥）
+        boolean verify = verifier.verify(wechatPaySerial, signMessage.getBytes(StandardCharsets.UTF_8), wechatSignature);
+        if (!verify) {
+            log.info("退款回调验签失败，签名信息：" + signMessage + "平台证书序列号：" + wechatPaySerial + "签名：" + wechatSignature);
+            throw new ServiceException("验签失败");
+        }
+        log.info("微信退款回调验签成功");
+        Map<String, Object> result = JsonUtils.parseMap(s);
+        if (null == result || null == result.get("out_refund_no")) {
+            throw new ServiceException("无退款订单号out_refund_no");
+        }
+        // 退款单号
+        String out_refund_no = (String) result.get("out_refund_no");
+        // 退款成功时间
+        String success_time = (String) result.get("success_time");
+        // 退款状态
+        // SUCCESS：退款成功
+        // CLOSED：退款关闭
+        // PROCESSING：退款处理中
+        // ABNORMAL：退款异常
+        String refund_status = (String) result.get("refund_status");
+        // 金额信息
+        Map<String, Object> map = BeanUtil.beanToMap(result.get("amount"));
+        // 查询退款订单是否存在
+        OrderBackTransVo orderBackTransVo = baseMapper.selectVoById(out_refund_no);
+        if (null == orderBackTransVo) {
+            log.info("微信退款回调订单【" + out_refund_no + "】不存在，请核实");
+            return;
+        }
+        if (!"0".equals(orderBackTransVo.getOrderBackTransState())) {
+            return;
+        }
+        OrderVo orderVo = orderMapper.selectVoById(orderBackTransVo.getNumber());
+        if (null == orderVo) {
+            log.info("微信退款回调订单【" + out_refund_no + "】不存在，请核实");
+            return;
+        }
+        Order order = new Order();
+        order.setNumber(orderBackTransVo.getNumber());
+
+        OrderBackTrans backTrans = new OrderBackTrans();
+        backTrans.setThNumber(orderBackTransVo.getThNumber());
+        backTrans.setSuccessTime(new Date());
+
+        if (("SUCCESS").equals(refund_status)) {
+            backTrans.setOrderBackTransState("2");
+            order.setStatus("5");
+        } else {
+            backTrans.setOrderBackTransState("1");
+            order.setStatus("6");
+        }
+
+        baseMapper.updateById(backTrans);
+        orderMapper.updateById(order);
+        if ("9".equals(order.getOrderType())) {
+            Order ob = new Order();
+            ob.setStatus(order.getStatus());
+            orderMapper.update(ob, new LambdaQueryWrapper<Order>().eq(Order::getParentNumber, order.getNumber()));
+        }
     }
 }

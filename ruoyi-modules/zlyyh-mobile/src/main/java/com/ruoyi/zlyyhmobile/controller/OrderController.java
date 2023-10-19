@@ -1,5 +1,6 @@
 package com.ruoyi.zlyyhmobile.controller;
 
+import cn.dev33.satoken.annotation.SaIgnore;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.http.HttpStatus;
 import com.alibaba.fastjson.JSONObject;
@@ -12,6 +13,7 @@ import com.ruoyi.common.log.enums.OperatorType;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.satoken.utils.LoginHelper;
+import com.ruoyi.zlyyh.domain.bo.AppWxPayCallbackParams;
 import com.ruoyi.zlyyh.domain.bo.OrderBo;
 import com.ruoyi.zlyyh.domain.vo.OrderVo;
 import com.ruoyi.zlyyh.utils.CloudRechargeEntity;
@@ -94,6 +96,28 @@ public class OrderController {
     public R<Void> queryOrderPay(@NotNull(message = "缺失必要参数")
                                  @PathVariable("number") Long number) {
         return R.ok(orderService.queryOrderPay(number));
+    }
+
+    /**
+     * 微信支付回调
+     */
+    @RequestMapping("/ignore/wxCallBack/{merchantId}")
+    public R<Void> wxCallBack(@PathVariable("merchantId") Long merchantId, @RequestBody AppWxPayCallbackParams appWxPayCallbackParams, HttpServletRequest request) {
+        boolean b = orderService.wxCallBack(merchantId, appWxPayCallbackParams, request);
+        if (!b) {
+            R.fail("业务处理失败");
+        }
+        return R.ok();
+    }
+
+    /**
+     * 微信退款回调
+     */
+    @SaIgnore
+    @RequestMapping("/ignore/wxRefundCallBack/{merchantId}")
+    public R<Void> wxRefundCallBack(@PathVariable("merchantId") Long merchantId, @RequestBody AppWxPayCallbackParams appWxPayCallbackParams, HttpServletRequest request) {
+        orderBackTransService.wxRefundCallBack(merchantId, appWxPayCallbackParams, request);
+        return R.ok();
     }
 
     /**

@@ -747,29 +747,36 @@ public class YsfUtils {
     }
 
     public static void main(String[] args) {
-        String appId = "e60611309c5d4e77b15baf6b4e48292c";
-        String secret = "151e06ec873747fcbd024c54d263b27f";
-        String openId = "abstGGaM6yT5Izlpo6R1qPHSbYbb/95NVmo/vxoIk35r2CYOJ8PDEmBlhwki3fQ9";
-//        String openId = "P+v3h/DMgHBZF22Fz1EHJkz8OSU1GyRjlSU4t5sVeMs/GJibxLToBL2W39XGSIjj";
-        String activityId = "HD2023101600295";
-        List<String> missionIdList = new ArrayList<>();
-        missionIdList.add("JYRW2023101600502");
-        HashMap<String, Object> param = new HashMap<>();
-        param.put("appId", appId);
-        param.put("backendToken", getBackendTokenTest(appId, secret, "https://open.95516.com/open/access/1.0/backendToken"));
-        param.put("openId", openId);
-        param.put("activityId", activityId);
-        param.put("missionIdList", missionIdList);
-        param.put("logId", IdUtil.getSnowflakeNextIdStr());
-        String result = HttpUtil.post("https://open.95516.com/open/access/1.0/searchProgress", JSONObject.toJSONString(param));
-        log.info("用户任务进度查询返回结果：{}", result);
-        JSONObject jsonObject = JSONObject.parseObject(result);
-        JSONObject params = jsonObject.getJSONObject("params");
-        String missionProcessMap = params.getString("missionProcessMap");
-        DESede desede = SecureUtil.desede(HexUtil.decodeHex("d015eafe2fc74fa4a1c12f02454cf4c1d015eafe2fc74fa4"));
-        missionProcessMap = desede.decryptStr(missionProcessMap);
-        log.info("解密后：{}", missionProcessMap);
+//        String appId = "e60611309c5d4e77b15baf6b4e48292c";
+//        String secret = "151e06ec873747fcbd024c54d263b27f";
+//        String appId = "e60611309c5d4e77b15baf6b4e48292c";
+//        String secret = "151e06ec873747fcbd024c54d263b27f";
+//        String openId = "Yt476r36uzge3OFTr/yxUNLUnPa4Fjc5u1ZOO9WQbWLCsU7bvF5PX8elM0Dzid+8";
+////        String openId = "P+v3h/DMgHBZF22Fz1EHJkz8OSU1GyRjlSU4t5sVeMs/GJibxLToBL2W39XGSIjj";
+//        String activityId = "HD2023101600295";
+//        List<String> missionIdList = new ArrayList<>();
+//        missionIdList.add("JYRW2023101600502");
+//        HashMap<String, Object> param = new HashMap<>();
+//        param.put("appId", appId);
+////        param.put("backendToken", getBackendTokenTest(appId, secret, "https://open.95516.com/open/access/1.0/backendToken"));
+//        param.put("backendToken", "08a852962004003c1TAFl7M9");
+//        param.put("openId", openId);
+//        param.put("activityId", activityId);
+//        param.put("missionIdList", missionIdList);
+//        param.put("logId", IdUtil.getSnowflakeNextIdStr());
+//        String result = HttpUtil.post("https://open.95516.com/open/access/1.0/searchProgress", JSONObject.toJSONString(param));
+//        log.info("用户任务进度查询返回结果：{}", result);
+//        JSONObject jsonObject = JSONObject.parseObject(result);
+//        JSONObject params = jsonObject.getJSONObject("params");
+//        String missionProcessMap = params.getString("missionProcessMap");
+//        DESede desede = SecureUtil.desede(HexUtil.decodeHex("d015eafe2fc74fa4a1c12f02454cf4c1d015eafe2fc74fa4"));
+//        missionProcessMap = desede.decryptStr(missionProcessMap);
+//        log.info("解密后：{}", missionProcessMap);
 
+        String str = "gL416Eiprtdxs5/qs46fgy6b5N0wHhidRtcswyzqKnNWEC6Z81gen2jIt2iukAWBCj1T3Tm7jcWm6rQNByCGcSevObWsHAsdxV2eSFuDJYS1AITwi2sMy2k2oi7X6eXRqRZ+u3uvuw5hUyHw753nX3H/i7JNOOAG3DnbO4ETcMEryxaK9sCCy439MqW/d+bO599bnhXe7l/ehB72S42xcvxHUc+UtlHGFDnek2DsWV5KA3JFH6cCuIAHzH1Ruvmpv130+o9uhqa/E5vFKY4Loh9uOV60PzYLaaBfGupA/AuZKg/mdXXc7k8SFidw501CYiQ1gl9j4bv+uBoQAOsqQbzS33ckJ1xkHYi6QqLm9zA6RQrbWOCP/kiS26UeZ/PNX6lxeckDo+p/TUINHbkl135UpO9SHKM/";
+        String key = "9e3d1fdf342370b926d564e5d91cba0b9e3d1fdf342370b9";
+        DESede desede = SecureUtil.desede(HexUtil.decodeHex(key));
+        log.info("解密后：{}", desede.decryptStr(str));
 //        String appId = "e60611309c5d4e77b15baf6b4e48292c";
 //        String secret = "151e06ec873747fcbd024c54d263b27f";
 //        String openId = "bsrhPJ+6nhRkdQI+OmzWoMDcy8Pjkm21YW/1p3dHJoLF9WyPWB/LrsqAW6k0zQ9R";
