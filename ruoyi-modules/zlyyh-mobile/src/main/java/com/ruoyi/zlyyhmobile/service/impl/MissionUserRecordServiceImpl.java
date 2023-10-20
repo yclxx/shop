@@ -116,7 +116,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
      * @return 剩余抽奖次数
      */
     @Override
-    public MissionUserRecord getDraw(Long missionGroupId, Long userId, Long platformKey) {
+    public MissionUserRecord getDraw(Long missionGroupId, Long userId, Long platformKey, String channel) {
         TimeInterval timer = DateUtil.timer();
         MissionUserVo missionUserVo = iMissionUserService.queryByUserIdAndGroupId(missionGroupId, userId, platformKey);
         if (null == missionUserVo) {
@@ -125,7 +125,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
         if (!"0".equals(missionUserVo.getStatus())) {
             throw new ServiceException("禁止参与");
         }
-        UserVo userVo = userService.queryById(userId);
+        UserVo userVo = userService.queryById(userId, channel);
         if (null == userVo || "0".equals(userVo.getReloadUser()) || StringUtils.isBlank(userVo.getMobile())) {
             throw new ServiceException("登录超时，请退出重试[user]", HttpStatus.HTTP_UNAUTHORIZED);
         }

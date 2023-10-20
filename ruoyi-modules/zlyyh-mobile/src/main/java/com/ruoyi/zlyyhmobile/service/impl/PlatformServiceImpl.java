@@ -59,7 +59,7 @@ public class PlatformServiceImpl implements IPlatformService {
     private void setPlatformChannelInfo(PlatformVo platformVo, PlatformEnumd platformEnumd) {
         LambdaQueryWrapper<PlatformChannel> lqw = Wrappers.lambdaQuery();
         lqw.eq(PlatformChannel::getPlatformKey, platformVo.getPlatformKey());
-        lqw.eq(PlatformChannel::getChannel, PlatformEnumd.getPlatformSupportChannel(platformEnumd));
+        lqw.eq(PlatformChannel::getChannel, platformEnumd.getChannel());
         PlatformChannelVo platformChannelVo = platformChannelMapper.selectVoOne(lqw);
         if (null == platformChannelVo) {
             throw new ServiceException("渠道配置错误,请联系客服处理。");

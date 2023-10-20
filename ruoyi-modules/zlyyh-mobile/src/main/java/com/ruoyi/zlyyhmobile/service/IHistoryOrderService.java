@@ -3,12 +3,8 @@ package com.ruoyi.zlyyhmobile.service;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.HistoryOrder;
-import com.ruoyi.zlyyh.domain.Order;
 import com.ruoyi.zlyyh.domain.bo.HistoryOrderBo;
 import com.ruoyi.zlyyh.domain.vo.HistoryOrderVo;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * 历史订单Service接口
@@ -28,15 +24,15 @@ public interface IHistoryOrderService {
      */
     TableDataInfo<HistoryOrderVo> queryPageList(HistoryOrderBo bo, PageQuery pageQuery);
 
-
     void updateOrder(HistoryOrder historyOrder);
 
     /**
      * 历史订单退款
+     *
      * @param number
      * @param userId
      */
-    public void historyOrderRefund(Long number, Long userId);
+    public void historyOrderRefund(Long number, Long userId, String channel);
 
     /**
      * 订单迁移至历史订单

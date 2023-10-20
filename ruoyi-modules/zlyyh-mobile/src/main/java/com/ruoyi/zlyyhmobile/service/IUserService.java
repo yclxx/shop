@@ -18,7 +18,7 @@ public interface IUserService {
      * @param userId 用户ID
      * @return 用户信息
      */
-    UserVo queryById(Long userId);
+    UserVo queryById(Long userId, String channel);
 
     /**
      * 查询用户是否62会员
@@ -41,13 +41,14 @@ public interface IUserService {
      * 根据平台id和手机号获取openId
      *
      * @param platformKey 平台id
-     * @param mobile 手机号
+     * @param mobile      手机号
      * @return
      */
-    String getOpenIdByMobile(Long platformKey, String mobile);
+    String getOpenIdByMobile(Long platformKey, String mobile, String channel);
 
     /**
      * 缓存用户进入首页数据
+     *
      * @param recordLog 缓存参数
      */
     void userLog(UserRecordLog recordLog);

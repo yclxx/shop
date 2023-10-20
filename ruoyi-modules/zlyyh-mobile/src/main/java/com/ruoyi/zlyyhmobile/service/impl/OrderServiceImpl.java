@@ -2890,7 +2890,7 @@ public class OrderServiceImpl implements IOrderService {
             contentData.put("valueList", list);
             for (String phone : userList) {
                 log.info("用户手机号：{}", phone);
-                String openId = userService.getOpenIdByMobile(platformId, phone);
+                String openId = userService.getOpenIdByMobile(platformId, phone, PlatformEnumd.MP_YSF.getChannel());
                 contentData.put("openId", openId);
                 log.info("云闪付预警消息参数：{}", JSONObject.toJSONString(contentData));
                 String s = HttpUtil.post(url, JSONObject.toJSONString(contentData));

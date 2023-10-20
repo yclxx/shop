@@ -88,7 +88,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
             log.info("绑定用户邀请关系，绑定失败校验不通过，bo={}，e={}", bo, e);
             return;
         }
-        UserVo userVo = userService.queryById(userId);
+        UserVo userVo = userService.queryById(userId, ZlyyhUtils.getPlatformChannel());
         if (null == userVo || !userVo.getPlatformKey().equals(platformId)) {
             log.info("绑定用户邀请关系，用户不存在或平台不匹配，bo={}，userId={},platformKey={}", bo, userId, platformId);
             return;
@@ -164,7 +164,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
         check(missionVo);
         ZlyyhUtils.checkCity(missionVo.getShowCity(), platformService.queryById(platformId, ZlyyhUtils.getPlatformType()));
         // 查询用户信息
-        UserVo userVo = userService.queryById(userId);
+        UserVo userVo = userService.queryById(userId, ZlyyhUtils.getPlatformChannel());
         if (null == userVo || !userVo.getPlatformKey().equals(platformId)) {
             throw new ServiceException("登录超时，请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
         }
@@ -272,7 +272,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
         Page<InviteUserLogVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
         List<String> resultList = new ArrayList<>(result.getRecords().size());
         for (InviteUserLogVo record : result.getRecords()) {
-            UserVo userVo = userService.queryById(record.getInviteUserId());
+            UserVo userVo = userService.queryById(record.getInviteUserId(), ZlyyhUtils.getPlatformChannel());
             if (null != userVo) {
                 resultList.add(DesensitizedUtil.mobilePhone(userVo.getMobile()));
             }
@@ -294,7 +294,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
             if (null == copy) {
                 continue;
             }
-            UserVo userVo = userService.queryById(record.getInviteUserId());
+            UserVo userVo = userService.queryById(record.getInviteUserId(), ZlyyhUtils.getPlatformChannel());
             if (null != userVo) {
                 copy.setInviteUserMobile(userVo.getMobile());
                 copy.setOrderVo(orderService.queryById(record.getNumber()));

@@ -119,4 +119,12 @@ public class UserChannelServiceImpl implements IUserChannelService {
         }
         return baseMapper.deleteBatchIds(ids) > 0;
     }
+
+    public UserChannelVo queryByOpenId(String channel, String openId, Long platformKey) {
+        return baseMapper.selectVoOne(new LambdaQueryWrapper<UserChannel>().eq(UserChannel::getChannel, channel).eq(UserChannel::getOpenId, openId).eq(UserChannel::getPlatformKey, platformKey));
+    }
+
+    public UserChannelVo queryByUserId(String channel, Long userId, Long platformKey) {
+        return baseMapper.selectVoOne(new LambdaQueryWrapper<UserChannel>().eq(UserChannel::getChannel, channel).eq(UserChannel::getUserId, userId).eq(UserChannel::getPlatformKey, platformKey));
+    }
 }

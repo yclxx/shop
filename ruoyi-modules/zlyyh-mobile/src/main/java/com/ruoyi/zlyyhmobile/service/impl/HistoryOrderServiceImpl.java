@@ -178,7 +178,7 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
     }
 
     @Override
-    public void historyOrderRefund(Long number, Long userId) {
+    public void historyOrderRefund(Long number, Long userId, String channel) {
         HistoryOrderVo orderVo = baseMapper.selectVoById(number);
         HistoryOrder order = baseMapper.selectById(orderVo.getNumber());
         if (!orderVo.getUserId().equals(userId)) {
@@ -249,7 +249,7 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
                 if ("1".equals(orderVo.getCancelStatus())) {
                     throw new ServiceException("退款已提交,不可重复申请");
                 }
-                CtripUtils.cancelOrder(orderVo.getExternalOrderNumber(), CtripConfig.getPartnerType(),refundUrl);
+                CtripUtils.cancelOrder(orderVo.getExternalOrderNumber(), CtripConfig.getPartnerType(), refundUrl);
             }
             refundMapper.insert(refund);
             return;
@@ -306,7 +306,7 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
             }
         } else if ("2".equals(order.getPickupMethod())) {
             //2.积点兑换
-            UserVo userVo = userService.queryById(order.getUserId());
+            UserVo userVo = userService.queryById(order.getUserId(), channel);
             if (ObjectUtil.isEmpty(userVo)) {
                 throw new ServiceException("用户不存在，请联系客服处理");
             }
