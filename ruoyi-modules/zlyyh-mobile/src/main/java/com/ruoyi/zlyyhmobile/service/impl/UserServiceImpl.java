@@ -82,7 +82,7 @@ public class UserServiceImpl implements IUserService {
         } else {
             log.info("查询62会员不走缓存，userId={}", userId);
         }
-        PlatformVo platformVo = platformService.queryById(userVo.getPlatformKey(), PlatformEnumd.MP_YSF);
+        PlatformVo platformVo = platformService.queryById(userVo.getPlatformKey(), PlatformEnumd.MP_YSF.getChannel());
         if (null == platformVo || "0".equals(platformVo.getUnionPayVip())) {
             return null;
         }
@@ -160,7 +160,7 @@ public class UserServiceImpl implements IUserService {
         Long platformKey = ZlyyhUtils.getPlatformId();
         String supportChannel = ZlyyhUtils.getPlatformChannel();
         String nowDate = DateUtils.getDate();
-        String redisKey = nowDate + ":" + recordLog.getSource() + ":" + platformKey + ":"+supportChannel;
+        String redisKey = nowDate + ":" + recordLog.getSource() + ":" + platformKey + ":" + supportChannel;
         if (userId != null) {
             recordLog.setUserId(userId);
         }

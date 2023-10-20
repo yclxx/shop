@@ -64,7 +64,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.FileUrlResource;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -300,7 +299,7 @@ public class OrderServiceImpl implements IOrderService {
             order.setPushNumber(orderPushInfo.getPushNumber());
             String sendAccountType = "0";
             ProductVo productVo = productService.queryById(order.getProductId());
-            UserVo userVo = userService.queryById(order.getUserId());
+            UserVo userVo = userService.queryById(order.getUserId(), order.getSupportChannel());
             if (null != productVo && null != userVo) {
                 sendAccountType = productVo.getSendAccountType();
                 if ("0".equals(productVo.getSendAccountType()) && StringUtils.isNotBlank(userVo.getMobile())) {
@@ -508,7 +507,7 @@ public class OrderServiceImpl implements IOrderService {
                             int number = Integer.parseInt(cacheObject.toString());
                             // 满足条件,发送云闪付服务消息.
                             if (number >= num) {
-                                PlatformVo platformVo = platformService.queryById(order.getPlatformKey(), PlatformEnumd.MP_YSF);
+                                PlatformVo platformVo = platformService.queryById(order.getPlatformKey(), PlatformEnumd.MP_YSF.getChannel());
                                 if (null != platformVo) {
                                     String backendToken = YsfUtils.getBackendToken(platformVo.getAppId(), platformVo.getSecret(), false, platformVo.getPlatformKey());
                                     this.ysfForewarningMessage(order.getPlatformKey(), backendToken, "errorDescDetails", "errorTemplateValue");
@@ -553,7 +552,7 @@ public class OrderServiceImpl implements IOrderService {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public CreateOrderResult createOrder(CreateOrderBo bo, boolean system) {
-        PlatformVo platformVo = platformService.queryById(bo.getPlatformKey(), ZlyyhUtils.getPlatformType());
+        PlatformVo platformVo = platformService.queryById(bo.getPlatformKey(), ZlyyhUtils.getPlatformChannel());
         if (null == platformVo) {
             throw new ServiceException("请求失败，请退出重试");
         }
@@ -572,7 +571,7 @@ public class OrderServiceImpl implements IOrderService {
                 return new CreateOrderResult(order.getNumber(), "1");
             }
         }
-        UserVo userVo = userService.queryById(bo.getUserId());
+        UserVo userVo = userService.queryById(bo.getUserId(), ZlyyhUtils.getPlatformChannel());
         if (null == userVo || "0".equals(userVo.getReloadUser()) || StringUtils.isBlank(userVo.getMobile())) {
             throw new ServiceException("登录超时，请退出重试[user]", HttpStatus.HTTP_UNAUTHORIZED);
         }
@@ -1672,7 +1671,7 @@ public class OrderServiceImpl implements IOrderService {
             }
         } else if ("2".equals(order.getPickupMethod())) {
             //2.积点兑换
-            UserVo userVo = userService.queryById(order.getUserId());
+            UserVo userVo = userService.queryById(order.getUserId(), PlatformEnumd.MP_YSF.getChannel());
             if (ObjectUtil.isEmpty(userVo)) {
                 throw new ServiceException("用户不存在，请联系客服处理");
             }
@@ -1714,7 +1713,7 @@ public class OrderServiceImpl implements IOrderService {
             throw new ServiceException("登录超时，请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
         }
         // 积点兑换 扣除积点
-        UserVo userVo = userService.queryById(order.getUserId());
+        UserVo userVo = userService.queryById(order.getUserId(), ZlyyhUtils.getPlatformChannel());
         if (null == userVo || StringUtils.isBlank(userVo.getOpenId())) {
             throw new ServiceException("登录超时，请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
         }
@@ -1741,7 +1740,7 @@ public class OrderServiceImpl implements IOrderService {
                 if ("12".equals(productVo.getProductType()) || "1".equals(productVo.getUnionPay())) {
                     return unionPayChannelService.getPayTn(order.getNumber(), order.getPlatformKey());
                 } else {
-                    PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId(), ZlyyhUtils.getPlatformType());
+                    PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId(), ZlyyhUtils.getPlatformChannel());
                     if (null == platformVo) {
                         throw new ServiceException("平台异常");
                     }
@@ -1797,7 +1796,7 @@ public class OrderServiceImpl implements IOrderService {
                     }
                 }
             } else if ("2".equals(order.getPickupMethod())) {
-                PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId(), ZlyyhUtils.getPlatformType());
+                PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId(), ZlyyhUtils.getPlatformChannel());
                 if (null == platformVo) {
                     throw new ServiceException("系统配置错误[platform]");
                 }
@@ -1976,7 +1975,7 @@ public class OrderServiceImpl implements IOrderService {
         //签名信息
         String signMessage = wechatPayTimestamp + "\n" + wechatPayNonce + "\n" + body + "\n";
         PrivateKey merchantPrivateKey = PemUtil.loadPrivateKey(
-            new FileUrlResource(merchantKey).getInputStream());
+            WxUtils.getCertInput(merchantKey));
 
         AutoUpdateCertificatesVerifier verifier = new AutoUpdateCertificatesVerifier(
             new WechatPay2Credentials(mchid, new PrivateKeySigner(merchantSerialNumber, merchantPrivateKey)),

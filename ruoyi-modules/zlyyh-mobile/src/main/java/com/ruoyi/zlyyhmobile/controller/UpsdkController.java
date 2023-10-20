@@ -58,7 +58,7 @@ public class UpsdkController {
             log.info("未获取到平台ID,{}", ZlyyhUtils.getPlatformId());
             return R.fail("初始化信息失败，请关闭重试");
         }
-        PlatformVo platformVo = platformService.queryById(platformId, ZlyyhUtils.getPlatformType());
+        PlatformVo platformVo = platformService.queryById(platformId, ZlyyhUtils.getPlatformChannel());
         if (ObjectUtil.isNull(platformVo)) {
             return R.fail("请求错误！");
         }
@@ -106,7 +106,7 @@ public class UpsdkController {
         if (ObjectUtil.isEmpty(platformId)) {
             return R.fail("删除失败");
         }
-        PlatformVo platformVo = platformService.queryById(platformId, ZlyyhUtils.getPlatformType());
+        PlatformVo platformVo = platformService.queryById(platformId, ZlyyhUtils.getPlatformChannel());
         if (ObjectUtil.isNull(platformVo)) {
             return R.fail("请求错误！");
         }

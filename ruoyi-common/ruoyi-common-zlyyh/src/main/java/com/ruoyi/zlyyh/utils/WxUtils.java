@@ -360,7 +360,7 @@ public class WxUtils {
         return httpPost;
     }
 
-    private static InputStream getCertInput(String certPath) {
+    public static InputStream getCertInput(String certPath) {
         try {
             Resource resource;
             if (certPath.indexOf("cert") == 0) {

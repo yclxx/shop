@@ -85,7 +85,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
      */
     @Override
     public String getWxMobile(String code, Long platformKey) {
-        PlatformVo platformVo = platformService.queryById(platformKey, PlatformEnumd.MP_WX);
+        PlatformVo platformVo = platformService.queryById(platformKey, PlatformEnumd.MP_WX.getChannel());
         if (null == platformVo) {
             throw new ServiceException("平台配置错误");
         }
@@ -144,7 +144,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
     @Override
     public LoginEntity getEntity(String code, boolean getMobile, Long platformKey, String platformChannel) {
         PlatformEnumd platformType = PlatformEnumd.getPlatformEnumd(platformChannel);
-        PlatformVo platformVo = platformService.queryById(platformKey, platformType);
+        PlatformVo platformVo = platformService.queryById(platformKey, platformType.getChannel());
         if (null == platformVo) {
             throw new ServiceException("请求错误，请退出重试！[platform is null]");
         }

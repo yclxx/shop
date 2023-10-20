@@ -18,6 +18,7 @@ import com.ruoyi.zlyyh.domain.vo.MissionGroupVo;
 import com.ruoyi.zlyyh.domain.vo.MissionUserVo;
 import com.ruoyi.zlyyh.domain.vo.PlatformVo;
 import com.ruoyi.zlyyh.domain.vo.UserVo;
+import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.mapper.MissionGroupMapper;
 import com.ruoyi.zlyyh.mapper.MissionUserMapper;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
@@ -75,7 +76,7 @@ public class MissionUserServiceImpl implements IMissionUserService {
     @Override
     public Boolean insertByBo(MissionUserBo bo) {
         MissionUser add = BeanUtil.toBean(bo, MissionUser.class);
-        UserVo userVo = userService.queryById(bo.getUserId());
+        UserVo userVo = userService.queryById(bo.getUserId(), PlatformEnumd.MP_YSF.getChannel());
         if (null == userVo || StringUtils.isEmpty(userVo.getOpenId())) {
             throw new ServiceException("登录超时，请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
         }
@@ -87,7 +88,7 @@ public class MissionUserServiceImpl implements IMissionUserService {
         if (null != missionGroupVo.getEndDate() && DateUtils.compare(missionGroupVo.getEndDate()) < 0) {
             throw new ServiceException("任务已结束");
         }
-        PlatformVo platformVo = platformService.queryById(missionGroupVo.getPlatformKey(), ZlyyhUtils.getPlatformType());
+        PlatformVo platformVo = platformService.queryById(missionGroupVo.getPlatformKey(), ZlyyhUtils.getPlatformChannel());
         if (null == platformVo) {
             throw new ServiceException("平台信息错误");
         }

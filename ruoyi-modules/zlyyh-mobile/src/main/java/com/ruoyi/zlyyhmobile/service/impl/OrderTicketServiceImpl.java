@@ -60,7 +60,7 @@ public class OrderTicketServiceImpl implements OrderTicketService {
      */
     @Override
     public CreateOrderResult createTicketOrder(CreateOrderTicketBo bo) {
-        PlatformVo platformVo = platformService.queryById(bo.getPlatformKey(), ZlyyhUtils.getPlatformType());
+        PlatformVo platformVo = platformService.queryById(bo.getPlatformKey(), ZlyyhUtils.getPlatformChannel());
         if (null == platformVo) {
             throw new ServiceException("请求失败，请退出重试");
         }
@@ -79,7 +79,7 @@ public class OrderTicketServiceImpl implements OrderTicketService {
                 return new CreateOrderResult(order.getNumber(), "1");
             }
         }
-        UserVo userVo = userService.queryById(bo.getUserId());
+        UserVo userVo = userService.queryById(bo.getUserId(), ZlyyhUtils.getPlatformChannel());
         if (null == userVo || "0".equals(userVo.getReloadUser()) || StringUtils.isBlank(userVo.getMobile())) {
             throw new ServiceException("登录超时，请退出重试[user]", HttpStatus.HTTP_UNAUTHORIZED);
         }

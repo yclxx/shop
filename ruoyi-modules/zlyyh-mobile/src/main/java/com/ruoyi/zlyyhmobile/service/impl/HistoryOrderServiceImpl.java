@@ -19,6 +19,7 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.HistoryOrderBo;
 import com.ruoyi.zlyyh.domain.vo.*;
+import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.mapper.*;
 import com.ruoyi.zlyyh.properties.CtripConfig;
 import com.ruoyi.zlyyh.properties.YsfFoodProperties;
@@ -307,7 +308,7 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
             }
         } else if ("2".equals(order.getPickupMethod())) {
             //2.积点兑换
-            UserVo userVo = userService.queryById(order.getUserId(), channel);
+            UserVo userVo = userService.queryById(order.getUserId(), PlatformEnumd.MP_YSF.getChannel());
             if (ObjectUtil.isEmpty(userVo)) {
                 throw new ServiceException("用户不存在，请联系客服处理");
             }
