@@ -2,9 +2,12 @@ package com.ruoyi.zlyyhadmin.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.ruoyi.common.core.domain.R;
+import com.ruoyi.common.core.utils.BeanCopyUtils;
+import com.ruoyi.common.core.utils.ColumnUtil;
 import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
 import com.ruoyi.common.core.web.controller.BaseController;
+import com.ruoyi.common.core.web.domain.SelectListEntity;
 import com.ruoyi.common.excel.utils.ExcelUtil;
 import com.ruoyi.common.log.annotation.Log;
 import com.ruoyi.common.log.enums.BusinessType;
@@ -46,6 +49,18 @@ public class ActionController extends BaseController {
     @GetMapping("/list")
     public TableDataInfo<ActionVo> list(ActionBo bo, PageQuery pageQuery) {
         return actionService.queryPageList(bo, pageQuery);
+    }
+
+    /**
+     * 批次下拉列表
+     * @param bo
+     * @return
+     */
+    @GetMapping("/selectList")
+    public  R<List<SelectListEntity>> selectList(ActionBo bo) {
+        bo.setStatus("0");
+        List<ActionVo> list = actionService.queryList(bo);
+        return R.ok(BeanCopyUtils.copyListToSelectListVo(list, ColumnUtil.getFieldName(ActionVo::getCouponName), ColumnUtil.getFieldName(ActionVo::getActionId),null));
     }
 
     /**

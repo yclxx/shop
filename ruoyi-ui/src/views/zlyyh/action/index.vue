@@ -127,7 +127,11 @@
       <el-table-column label="优惠券名称" align="center" prop="couponName"/>
       <el-table-column label="优惠金额" align="center" prop="couponAmount"/>
       <el-table-column label="最低消费金额" align="center" prop="minAmount"/>
-      <el-table-column label="优惠券类型" align="center" prop="couponType" :formatter="changeCouponType"/>
+      <el-table-column label="优惠券类型" align="center" prop="couponType">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.t_coupon_type" :value="scope.row.couponType"/>
+        </template>
+      </el-table-column>
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
@@ -156,7 +160,7 @@
       </el-table-column>
       <el-table-column fixed="right" label="操作" align="center" width="100">
         <template slot-scope="scope">
-          <el-button
+          <el-button v-if="scope.row.couponType !== '2'"
             size="mini"
             type="text"
             icon="el-icon-edit"
@@ -235,7 +239,7 @@
             <el-form-item label="优惠券类型" prop="couponType">
               <el-select v-model="form.couponType" placeholder="请选择优惠券类型">
                 <el-option
-                  v-for="item in couponList"
+                  v-for="item in dict.type.t_coupon_type"
                   :key="item.value"
                   :label="item.label"
                   :value="item.value">
@@ -346,7 +350,7 @@
         </el-form>
       </div>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="createCoupon">确 定</el-button>
+        <el-button :loading="loading" type="primary" @click="createCoupon">确 定</el-button>
         <el-button @click="numberOpen = false">取 消</el-button>
       </div>
     </el-dialog>
@@ -363,7 +367,7 @@ import ProductAction from "@/views/zlyyh/product/ProductAction.vue";
 
 export default {
   name: "Action",
-  dicts: ['sys_normal_disable'],
+  dicts: ['sys_normal_disable','t_coupon_type'],
   components: {
     ProductAction
   },
@@ -387,14 +391,6 @@ export default {
       actionList: [],
       // 平台下拉列表
       platformList: [],
-      couponList: [{
-        label: '通兑券',
-        value: '1'
-      },
-        {
-          label: '抵扣券',
-          value: '2'
-        }],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -563,20 +559,22 @@ export default {
       this.numberOpen = true;
       this.numberRow = row;
     },
-    /** 删除按钮操作 */
     createCoupon() {
       const params = {
         'actionId': this.numberRow.actionId,
         'couponCount': this.number
       }
-      this.$modal.confirm('请确认是否生成批次号为"' + this.numberRow.actionNo + '"，共计"' + this.numberRow.couponCount + '"张优惠券的优惠券信息').then(() => {
+      this.loading = true;
+      this.$modal.confirm('请确认是否生成批次号为"' + this.numberRow.actionNo + '"，共计"' + this.number + '"张优惠券的优惠券信息').then(() => {
         return createCoupon(params);
       }).then(() => {
         this.numberOpen = false;
+        this.loading = false;
         this.getList();
         this.$modal.msgSuccess("生成优惠券成功！");
       }).catch(() => {
       }).finally(() => {
+        this.loading = false;
         this.numberOpen = false;
       });
     },
@@ -613,19 +611,6 @@ export default {
         return name;
       }
       return row.platformKey;
-    },
-    changeCouponType(row) {
-      let couponTypeName = ''
-      this.couponList.forEach(item => {
-        if (row.couponType === item.value) {
-          couponTypeName = item.label;
-        }
-      })
-      if (couponTypeName && couponTypeName.length > 0) {
-        row.couponType = couponTypeName;
-        return couponTypeName;
-      }
-      return row.couponType;
     },
     /** 导出按钮操作 */
     handleExport() {

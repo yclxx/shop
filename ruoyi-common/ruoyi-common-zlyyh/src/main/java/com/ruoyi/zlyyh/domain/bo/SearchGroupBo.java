@@ -91,5 +91,10 @@ public class SearchGroupBo extends BaseEntity {
     @NotNull(message = "平台标识不能为空", groups = { AddGroup.class, EditGroup.class })
     private Long platformKey;
 
+    /**
+     * 支持端
+     */
+    private String supportChannel;
+
 
 }

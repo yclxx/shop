@@ -17,15 +17,6 @@ export function getCoupon(couponId) {
   })
 }
 
-// 新增优惠券
-// export function addCoupon(data) {
-//   return request({
-//     url: '/zlyyh-admin/coupon',
-//     method: 'post',
-//     data: data
-//   })
-// }
-
 // 修改优惠券
 export function updateCoupon(data) {
   return request({

@@ -234,4 +234,9 @@ public class OrderBo extends BaseEntity {
      * 大订单编号
      */
     private Long collectiveNumber;
+
+    /**
+     * 支持端
+     */
+    private String supportChannel;
 }

@@ -74,7 +74,7 @@ public class CouponController extends BaseController {
     @SaCheckPermission("zlyyh:coupon:edit")
     @Log(title = "优惠券", businessType = BusinessType.UPDATE)
     @PutMapping()
-    public R<Void> edit(@Validated(EditGroup.class) @RequestBody CouponBo bo) {
+    public R<Void> edit(@RequestBody CouponBo bo) {
         return toAjax(iCouponService.updateByBo(bo));
     }
 

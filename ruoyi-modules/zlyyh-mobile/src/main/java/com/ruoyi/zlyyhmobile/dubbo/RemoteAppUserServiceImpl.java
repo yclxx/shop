@@ -545,8 +545,6 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
     public void userLog() throws InterruptedException {
         Date yesterday = DateUtil.yesterday();
         String yesterdays = DateUtils.parseDateToStr(DateUtils.YYYY_MM_DD, yesterday);
-        //Date toDay = DateUtil.date();
-        //String nowDate = DateUtils.getDate();
         int end = 9;
         List<Long> users = new ArrayList<>();
         Set<String> keys = RedisUtils.getCacheSet(yesterdays + ":userLogs");
@@ -594,6 +592,9 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
             }
             if (oldKey.length > 1) {
                 log.setPlatformKey(Long.valueOf(oldKey[2]));
+            }
+            if (oldKey.length > 2) {
+                log.setSupportChannel(oldKey[3]);
             }
             log.setOrderBuyNumber(orderBuyNumber);
             log.setOrderBuyUser(orderBuyUser);

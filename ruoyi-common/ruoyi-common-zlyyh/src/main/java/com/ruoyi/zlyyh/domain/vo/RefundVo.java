@@ -71,4 +71,11 @@ public class RefundVo {
     private String refundRemark;
 
 
+    /**
+     * 支持端
+     */
+    @ExcelProperty(value = "支持端")
+    private String supportChannel;
+
+
 }

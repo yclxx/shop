@@ -67,5 +67,10 @@ public class RecordLogVo {
     @ExcelDictFormat(dictType = "source_type")
     private String source;
 
+    /**
+     * 支持端
+     */
+    @ExcelProperty(value = "支持端")
+    private String supportChannel;
 
 }

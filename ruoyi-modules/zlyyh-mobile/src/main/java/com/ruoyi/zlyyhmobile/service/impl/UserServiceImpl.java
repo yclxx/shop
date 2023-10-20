@@ -138,19 +138,19 @@ public class UserServiceImpl implements IUserService {
     public void userLog(UserRecordLog recordLog) {
         Long userId = LoginHelper.getUserId();
         Long platformKey = ZlyyhUtils.getPlatformId();
+        String supportChannel = ZlyyhUtils.getPlatformChannel();
         String nowDate = DateUtils.getDate();
-        String redisKey = nowDate + ":" + recordLog.getSource() + ":" + platformKey;
+        String redisKey = nowDate + ":" + recordLog.getSource() + ":" + platformKey + ":"+supportChannel;
         if (userId != null) {
             recordLog.setUserId(userId);
         }
         recordLog.setPlatformKey(platformKey);
-
+        recordLog.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         boolean exists = RedisUtils.isExistsObject(redisKey);
         RedisUtils.setCacheList(redisKey, recordLog);
         if (!exists) {
             RedisUtils.expire(redisKey, Duration.ofHours(50));
         }
-
         boolean existsObject = RedisUtils.isExistsObject(nowDate + ":userLogs");
         RedisUtils.setCacheSet(nowDate + ":userLogs", redisKey);
         if (!existsObject) {

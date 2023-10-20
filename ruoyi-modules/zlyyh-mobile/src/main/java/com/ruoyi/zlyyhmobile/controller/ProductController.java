@@ -40,6 +40,7 @@ public class ProductController {
     public TableDataInfo<ProductVo> getProductList(ProductBo bo, PageQuery pageQuery) {
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
         bo.setShowCity(ServletUtils.getHeader(ZlyyhConstants.CITY_CODE));
+        bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         return productService.queryPageList(bo, pageQuery);
     }
 

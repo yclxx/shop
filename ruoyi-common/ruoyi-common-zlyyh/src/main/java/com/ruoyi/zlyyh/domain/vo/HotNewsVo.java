@@ -83,5 +83,11 @@ public class HotNewsVo {
     @ExcelProperty(value = "展示星期")
     private String weekDate;
 
+    /**
+     * 支持端
+     */
+    @ExcelProperty(value = "支持端")
+    private String supportChannel;
+
 
 }

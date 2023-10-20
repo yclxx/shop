@@ -23,4 +23,8 @@ public class UserRecordLog {
      * 来源
      */
     private String source;
+    /**
+     * 客户端
+     */
+    private String supportChannel;
 }

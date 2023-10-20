@@ -50,6 +50,7 @@ public class CategoryController {
         bo.setShowCity(ServletUtils.getHeader(ZlyyhConstants.CITY_CODE));
         bo.setWeekDate("" + DateUtil.dayOfWeek(new Date()));
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         return R.ok(categoryService.queryList(bo));
     }
 
@@ -76,6 +77,7 @@ public class CategoryController {
         bo.setWeekDate("" + DateUtil.dayOfWeek(new Date()));
         bo.setShowIndex("1");
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         return R.ok(categoryService.queryList(bo));
     }
 }

@@ -621,6 +621,7 @@ public class OrderServiceImpl implements IOrderService {
         order.setProductName(productVo.getProductName());
         order.setProductImg(productVo.getProductImg());
         order.setPickupMethod(productVo.getPickupMethod());
+        order.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         order.setExpireDate(DateUtil.offsetMinute(new Date(), 15).toJdkDate());
         if (null != bo.getPayCount() && bo.getPayCount() > 0) {
             if (bo.getPayCount() > 10) {
@@ -1529,6 +1530,7 @@ public class OrderServiceImpl implements IOrderService {
         }
         Refund refund = new Refund();
         refund.setNumber(orderVo.getNumber());
+        refund.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         //退款申请人
         refund.setRefundApplicant(userId.toString());
         refund.setRefundAmount(orderVo.getOutAmount());

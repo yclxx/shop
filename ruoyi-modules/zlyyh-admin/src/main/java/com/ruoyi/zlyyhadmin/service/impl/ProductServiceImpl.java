@@ -192,6 +192,7 @@ public class ProductServiceImpl implements IProductService {
     public List<ProductVo> queryProductList(ProductBo bo) {
         LambdaQueryWrapper<Product> lqw = new LambdaQueryWrapper<>();
         lqw.eq(StringUtils.isNotBlank(bo.getStatus()), Product::getStatus, bo.getStatus());
+        lqw.eq(ObjectUtil.isNotEmpty(bo.getProductId()), Product::getProductId, bo.getProductId());
         lqw.eq(StringUtils.isNotBlank(bo.getSearchStatus()), Product::getSearchStatus, bo.getSearchStatus());
         lqw.and(lq -> lq.ge(Product::getShowEndDate, DateUtils.dateTimeNow()).or(e -> e.isNull(Product::getShowEndDate)));
         lqw.and(lq -> lq.ge(Product::getSellEndDate, DateUtils.dateTimeNow()).or(e -> e.isNull(Product::getSellEndDate)));

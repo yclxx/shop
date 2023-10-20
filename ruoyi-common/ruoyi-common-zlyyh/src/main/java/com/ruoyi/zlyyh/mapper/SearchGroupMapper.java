@@ -16,6 +16,4 @@ import com.ruoyi.zlyyh.domain.vo.SearchGroupVo;
     @DataColumn(key = "deptName", value = "sys_dept_id"),
     @DataColumn(key = "userName", value = "sys_user_id")
 })
-public interface SearchGroupMapper extends BaseMapperPlus<SearchGroupMapper, SearchGroup, SearchGroupVo> {
-
-}
+public interface SearchGroupMapper extends BaseMapperPlus<SearchGroupMapper, SearchGroup, SearchGroupVo> {}
