@@ -2,6 +2,7 @@ package com.ruoyi.zlyyhmobile.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.http.HttpStatus;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.validate.EditGroup;
@@ -64,6 +65,11 @@ public class CouponController extends BaseController {
      */
     @GetMapping("/{couponId}")
     public R<CouponVo> getInfo(@NotNull(message = "主键不能为空") @PathVariable Long couponId) {
+        Long userId = LoginHelper.getUserId();
+        CouponVo couponVo = iCouponService.queryById(couponId);
+        if (null == couponVo || !couponVo.getUserId().equals(userId)) {
+            throw new ServiceException("用户信息不匹配,请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
+        }
         return R.ok(iCouponService.queryById(couponId));
     }
 

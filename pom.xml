@@ -39,6 +39,7 @@
         <bouncycastle.version>1.72</bouncycastle.version>
         <commons.fileupload.version>1.5</commons.fileupload.version>
         <dynamic.version>2.5.4</dynamic.version>
+        <wechatpay.version>0.2.2</wechatpay.version>
 
         <!-- 临时修复 snakeyaml 漏洞 -->
         <snakeyaml.version>1.33</snakeyaml.version>
@@ -324,6 +325,13 @@
                 <groupId>com.baomidou</groupId>
                 <artifactId>dynamic-datasource-spring-boot-starter</artifactId>
                 <version>${dynamic.version}</version>
+            </dependency>
+
+            <!--微信支付SDK-->
+            <dependency>
+                <groupId>com.github.wechatpay-apiv3</groupId>
+                <artifactId>wechatpay-apache-httpclient</artifactId>
+                <version>${wechatpay.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -79,8 +79,6 @@ public class CartServiceImpl implements ICartService {
         LambdaQueryWrapper<Cart> lqw = Wrappers.lambdaQuery();
         lqw.eq(bo.getUserId() != null, Cart::getUserId, bo.getUserId());
         lqw.eq(bo.getProductId() != null, Cart::getProductId, bo.getProductId());
-        lqw.eq(bo.getCreateSellingPrice() != null, Cart::getCreateSellingPrice, bo.getCreateSellingPrice());
-        lqw.eq(bo.getQuantity() != null, Cart::getQuantity, bo.getQuantity());
         return lqw;
     }
 
@@ -92,6 +90,13 @@ public class CartServiceImpl implements ICartService {
         // 是否存在，存在加数量
         CartVo voOne = baseMapper.selectVoOne(buildQueryWrapper(bo));
         if (ObjectUtil.isNotEmpty(voOne)) {
+            //判断商品添加次数是否超过上限
+            ProductVo productVo = productMapper.selectVoById(bo.getProductId());
+            if (ObjectUtil.isNotEmpty(productVo.getLineUpperLimit())){
+                if (voOne.getQuantity()+bo.getQuantity()>productVo.getLineUpperLimit()){
+                    throw new ServiceException("该商品购物车内仅能添加"+productVo.getLineUpperLimit()+"次");
+                }
+            }
             bo.setQuantity(voOne.getQuantity() + bo.getQuantity());
             bo.setId(voOne.getId());
             return updateByBo(bo);
@@ -130,6 +135,11 @@ public class CartServiceImpl implements ICartService {
         ProductVo productVo = productMapper.selectVoById(entity.getProductId());
         if (ObjectUtil.isEmpty(productVo)) {
             throw new ServiceException("商品不存在！");
+        }
+        if (ObjectUtil.isNotEmpty(productVo.getLineUpperLimit())){
+            if (entity.getQuantity()>productVo.getLineUpperLimit()){
+                throw new ServiceException("该商品购物车内仅能添加"+productVo.getLineUpperLimit()+"次");
+            }
         }
         entity.setCreateSellingPrice(productVo.getSellAmount());
     }

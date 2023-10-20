@@ -82,7 +82,7 @@ public class CartController extends BaseController {
      *
      * @param ids 主键串
      */
-    @PostMapping("/{ids}")
+    @PostMapping("/del/{ids}")
     public R<Void> remove(@NotEmpty(message = "主键不能为空") @PathVariable Long[] ids) {
         return toAjax(iCartService.deleteWithValidByIds(Arrays.asList(ids),LoginHelper.getUserId(),true));
     }
