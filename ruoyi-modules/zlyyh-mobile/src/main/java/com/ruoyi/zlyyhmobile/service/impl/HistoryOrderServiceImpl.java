@@ -193,6 +193,7 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
         }
         Refund refund = new Refund();
         refund.setNumber(orderVo.getNumber());
+        refund.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         //退款申请人
         refund.setRefundApplicant(userId.toString());
         refund.setRefundAmount(orderVo.getOutAmount());

@@ -125,6 +125,11 @@
       </el-table-column>
       <el-table-column label="购买数量" align="center" prop="count" />
       <el-table-column label="平台" align="center" prop="platformKey" width="130" :formatter="platformFormatter" />
+      <el-table-column label="客户端" align="center" prop="supportChannel">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.channel_type" :value="scope.row.supportChannel" />
+        </template>
+      </el-table-column>
       <el-table-column label="订单类型" align="center" prop="orderType">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.t_product_type" :value="scope.row.orderType" />
@@ -390,7 +395,8 @@
 
   export default {
     name: "Order",
-    dicts: ['t_order_status', 't_order_pickup_method', 't_order_send_status', 't_order_push_status', 't_product_type'],
+    dicts: ['t_order_status', 't_order_pickup_method', 't_order_send_status', 't_order_push_status',
+      't_product_type','channel_type'],
     data() {
       return {
         refundWay: '0',

@@ -61,5 +61,9 @@ public class InviteUserLogBo extends BaseEntity {
      */
     private Long platformKey;
 
+    /**
+     * 支持端
+     */
+    private String supportChannel;
 
 }

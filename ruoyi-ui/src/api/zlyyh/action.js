@@ -9,6 +9,15 @@ export function listAction(query) {
   })
 }
 
+// 批次列表查询
+export function selectListAction(query) {
+  return request({
+    url: '/zlyyh-admin/action/selectList',
+    method: 'get',
+    params: query
+  })
+}
+
 // 查询优惠券批次详细
 export function getAction(actionId) {
   return request({

@@ -40,7 +40,7 @@ public class CategoryServiceImpl implements ICategoryService {
     /**
      * 查询栏目列表
      */
-    @Cacheable(cacheNames = CacheNames.CATEGORY_LIST, key = "#bo.getPlatformKey()+'-'+#bo.getParentId()+'-'+#bo.getShowCity()+'-'+#bo.getWeekDate()+'-'+#bo.getShowIndex()")
+    @Cacheable(cacheNames = CacheNames.CATEGORY_LIST, key = "#bo.getPlatformKey()+'-'+#bo.getSupportChannel()+'-'+#bo.getParentId()+'-'+#bo.getShowCity()+'-'+#bo.getWeekDate()+'-'+#bo.getShowIndex()")
     @Override
     public List<CategoryVo> queryList(CategoryBo bo) {
         LambdaQueryWrapper<Category> lqw = buildQueryWrapper(bo);
@@ -50,12 +50,18 @@ public class CategoryServiceImpl implements ICategoryService {
     private LambdaQueryWrapper<Category> buildQueryWrapper(CategoryBo bo) {
         Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<Category> lqw = Wrappers.lambdaQuery();
+
         lqw.eq(bo.getParentId() != null, Category::getParentId, bo.getParentId());
         lqw.eq(bo.getPlatformKey() != null, Category::getPlatformKey, bo.getPlatformKey());
         lqw.eq(StringUtils.isNotBlank(bo.getShowIndex()), Category::getShowIndex, bo.getShowIndex());
         if (StringUtils.isNotBlank(bo.getShowCity())) {
             lqw.and(lm -> {
                 lm.eq(Category::getShowCity, "ALL").or().like(Category::getShowCity, bo.getShowCity());
+            });
+        }
+        if (StringUtils.isNotBlank(bo.getSupportChannel())) {
+            lqw.and(lm -> {
+                lm.eq(Category::getSupportChannel, "ALL").or().likeRight(Category::getSupportChannel, bo.getSupportChannel());
             });
         }
         if (StringUtils.isNotBlank(bo.getWeekDate())) {

@@ -59,5 +59,10 @@ public class RecordLogBo extends BaseEntity {
      */
     private String source;
 
+    /**
+     * 支持端
+     */
+    private String supportChannel;
+
 
 }

@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyhmobile.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.ruoyi.common.core.constant.CacheNames;
 import com.ruoyi.zlyyh.domain.HotNews;
@@ -30,7 +31,7 @@ public class HotNewsServiceImpl implements IHotNewsService {
     /**
      * 查询热门搜索
      */
-    @Cacheable(cacheNames = CacheNames.hotNews, key = "#bo.getPlatformKey()")
+    @Cacheable(cacheNames = CacheNames.hotNews, key = "#bo.getPlatformKey()+''+#bo.getSupportChannel()")
     @Override
     public List<HotNewsVo> queryList(HotNewsBo bo) {
         LambdaQueryWrapper<HotNews> lqw = Wrappers.lambdaQuery();
@@ -42,6 +43,11 @@ public class HotNewsServiceImpl implements IHotNewsService {
         lqw.and(lm -> {
             lm.isNull(HotNews::getEndTime).or().gt(HotNews::getEndTime, new Date());
         });
+        if (StringUtils.isNotBlank(bo.getSupportChannel())) {
+            lqw.and(lm -> {
+                lm.eq(HotNews::getSupportChannel, "ALL").or().likeRight(HotNews::getSupportChannel, bo.getSupportChannel());
+            });
+        }
         lqw.last("order by news_rank asc");
         return baseMapper.selectVoList(lqw);
     }

@@ -73,4 +73,10 @@ public class InviteUserLogVo {
     @ExcelProperty(value = "创建时间")
     private Date createTime;
 
+    /**
+     * 支持端
+     */
+    @ExcelProperty(value = "支持端")
+    private String supportChannel;
+
 }

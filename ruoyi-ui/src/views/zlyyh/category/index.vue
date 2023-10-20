@@ -48,6 +48,15 @@
           <dict-tag :options="dict.type.t_category_list_type" :value="scope.row.categoryListType" />
         </template>
       </el-table-column>
+      <el-table-column label="支持端" align="center" prop="supportChannel">
+        <template slot-scope="scope">
+          <div v-for="channel in dict.type.channel_type">
+            <div v-for="(supportChannel,index) in scope.row.supportChannel.split(',')" :key="index">
+              <span v-if="channel.value === supportChannel">{{ channel.label }}</span>
+            </div>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column label="平台" align="center" prop="platformKey" :formatter="platformFormatter" />
       <el-table-column label="显示首页" width="88" align="center" prop="showIndex">
         <template slot-scope="scope">
@@ -102,6 +111,16 @@
                 <el-option v-for="dict in dict.type.t_category_list_type" :key="dict.value" :label="dict.label"
                   :value="dict.value"></el-option>
               </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="支持端" prop="supportChannel">
+              <el-checkbox-group v-model="form.supportChannel">
+                <el-checkbox
+                  v-for="item in dict.type.channel_type" :key="item.value" :label="item.value">
+                  {{ item.label }}
+                </el-checkbox>
+              </el-checkbox-group>
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -205,7 +224,7 @@
   export default {
     name: "Category",
     dicts: ['t_category_list_type', 't_category_status', 't_product_assign_date', 't_grad_period_date_list',
-      't_show_index'
+      't_show_index','channel_type'
     ],
     components: {
       Treeselect
@@ -262,6 +281,11 @@
           categoryListType: [{
             required: true,
             message: "栏目内容类型不能为空",
+            trigger: "change"
+          }],
+          supportChannel: [{
+            required: true,
+            message: "支持端不能为空",
             trigger: "change"
           }],
           status: [{
@@ -403,6 +427,7 @@
           parentId: null,
           sort: null,
           platformKey: null,
+          supportChannel: [],
           createBy: null,
           createTime: null,
           updateBy: null,
@@ -464,6 +489,11 @@
           if (this.form && this.form.weekDate) {
             this.form.weekDate = this.form.weekDate.split(",");
           }
+          if (this.form && this.form.supportChannel) {
+            this.form.supportChannel = this.form.supportChannel.split(",");
+          } else {
+            this.form.supportChannel = [];
+          }
           if (this.form.showCity == 'ALL') {
             this.cityNodeAll = true;
             this.$nextTick(() => {
@@ -514,6 +544,9 @@
               this.form.showCity = "ALL";
             } else {
               this.form.showCity = this.getCityAllCheckedKeys().toString();
+            }
+            if (this.form && this.form.supportChannel.length >0) {
+              this.form.supportChannel = this.form.supportChannel.join(',');
             }
             if (this.form.categoryId != null) {
               updateCategory(this.form).then(response => {

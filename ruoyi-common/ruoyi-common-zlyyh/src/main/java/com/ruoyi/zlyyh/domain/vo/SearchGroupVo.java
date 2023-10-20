@@ -98,6 +98,12 @@ public class SearchGroupVo {
     @ExcelProperty(value = "平台标识")
     private Long platformKey;
 
+    /**
+     * 支持端
+     */
+    @ExcelProperty(value = "支持端")
+    private String supportChannel;
+
     private List<ProductVo> productVoList;
 
 

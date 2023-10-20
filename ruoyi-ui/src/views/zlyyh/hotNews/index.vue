@@ -45,14 +45,6 @@
           <el-option v-for="item in cityList" :key="item.rightLabel" :label="item.label" :value="item.rightLabel"/>
         </el-select>
       </el-form-item>
-      <!--<el-form-item label="展示星期" prop="weekDate">-->
-      <!--  <el-input-->
-      <!--    v-model="queryParams.weekDate"-->
-      <!--    placeholder="请输入展示星期"-->
-      <!--    clearable-->
-      <!--    @keyup.enter.native="handleQuery"-->
-      <!--  />-->
-      <!--</el-form-item>-->
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -114,6 +106,15 @@
       <el-table-column label="ID" align="center" prop="newsId" v-if="true"/>
       <el-table-column label="显示名称" align="center" prop="newsName"/>
       <el-table-column label="排序" align="center" prop="newsRank"/>
+      <el-table-column label="支持端" align="center" prop="supportChannel">
+        <template slot-scope="scope">
+          <div v-for="channel in dict.type.channel_type">
+            <div v-for="(supportChannel,index) in scope.row.supportChannel.split(',')" :key="index">
+              <span v-if="channel.value === supportChannel">{{ channel.label }}</span>
+            </div>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column label="平台" width="100" align="center" prop="platformKey" :formatter="platformFormatter"/>
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
@@ -195,6 +196,14 @@
                        :value="dict.value"></el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="支持端" prop="supportChannel">
+          <el-checkbox-group v-model="form.supportChannel">
+            <el-checkbox
+              v-for="item in dict.type.channel_type" :key="item.value" :label="item.value">
+              {{ item.label }}
+            </el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
         <el-form-item label="展示城市" prop="showCity">
           <el-checkbox v-model="cityNodeAll" @change="selectAll">全部</el-checkbox>
           <el-tree @check="handleNodeClick" class="tree-border" :data="cityOptions" show-checkbox default-expand-all
@@ -222,7 +231,7 @@ import {selectListPlatform} from "@/api/zlyyh/platform";
 export default {
   name: "HotNews",
   dicts: ['t_banner_show_dimension', 't_banner_type', 't_banner_status', 't_banner_to_type', 't_product_assign_date',
-    't_grad_period_date_list'
+    't_grad_period_date_list', 'channel_type'
   ],
   data() {
     return {
@@ -297,9 +306,9 @@ export default {
         assignDate: [
           {required: true, message: "指定星期不能为空", trigger: "blur"}
         ],
-        //showCity: [
-        //  {required: true, message: "展示城市不能为空", trigger: "blur"}
-        //],
+        supportChannel: [
+          {required: true, message: "支持端不能为空", trigger: "blur"}
+        ],
         weekDate: [
           {required: true, message: "展示星期不能为空", trigger: "blur"}
         ],
@@ -392,6 +401,7 @@ export default {
         assignDate: undefined,
         showCity: undefined,
         weekDate: undefined,
+        supportChannel: [],
         createBy: undefined,
         createTime: undefined,
         updateBy: undefined,
@@ -438,6 +448,11 @@ export default {
         if (this.form && this.form.weekDate) {
           this.form.weekDate = this.form.weekDate.split(",");
         }
+        if (this.form && this.form.supportChannel) {
+          this.form.supportChannel = this.form.supportChannel.split(",");
+        } else {
+          this.form.supportChannel = [];
+        }
         this.$nextTick(() => {
           showCity.then(res => {
             let checkedKeys = res.data.checkedKeys;
@@ -472,6 +487,9 @@ export default {
           }
           if (this.form.weekDate) {
             this.form.weekDate = this.form.weekDate.join(',');
+          }
+          if (this.form.supportChannel.length > 0) {
+            this.form.supportChannel = this.form.supportChannel.join(",");
           }
           if (this.form.newsId != null) {
             updateHotNews(this.form).then(response => {

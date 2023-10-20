@@ -98,7 +98,15 @@
       <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="ID" align="center" prop="searchId" v-if="true"/>
       <el-table-column label="平台" width="100" align="center" prop="platformKey" :formatter="platformFormatter"/>
-
+      <el-table-column label="支持端" align="center" prop="supportChannel">
+        <template slot-scope="scope">
+          <div v-for="channel in dict.type.channel_type">
+            <div v-for="(supportChannel,index) in scope.row.supportChannel.split(',')" :key="index">
+              <span v-if="channel.value === supportChannel">{{ channel.label }}</span>
+            </div>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column label="搜索内容" align="center" prop="searchContent" width="180"/>
       <el-table-column label="商品" align="center" prop="productId" :formatter="changeProductName"/>
       <el-table-column label="跳转类型" width="100" align="center" prop="toType">
@@ -121,7 +129,7 @@
 
       <el-table-column label="状态" align="center" prop="status" fixed="right">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.t_banner_status" :value="scope.row.status" />
+          <dict-tag :options="dict.type.t_banner_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right">
@@ -164,7 +172,7 @@
           <el-col :span="8">
             <el-form-item label="平台" prop="platformKey">
               <el-select v-model="form.platformKey" placeholder="请选择平台标识" clearable>
-                <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id" />
+                <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id"/>
               </el-select>
             </el-form-item>
           </el-col>
@@ -174,6 +182,16 @@
                 <el-option v-for="item in productList" :key="item.id" :value="item.id"
                            :label="item.label"></el-option>
               </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="支持端" prop="supportChannel">
+              <el-checkbox-group v-model="form.supportChannel">
+                <el-checkbox
+                  v-for="item in dict.type.channel_type" :key="item.value" :label="item.value">
+                  {{ item.label }}
+                </el-checkbox>
+              </el-checkbox-group>
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -194,7 +212,7 @@
             <el-form-item label="状态" prop="status">
               <el-radio-group v-model="form.status">
                 <el-radio v-for="dict in dict.type.t_banner_status" :key="dict.value" :label="dict.value">
-                  {{dict.label}}
+                  {{ dict.label }}
                 </el-radio>
               </el-radio-group>
             </el-form-item>
@@ -203,7 +221,7 @@
             <el-form-item label="指定周几" prop="assignDate">
               <el-radio-group v-model="form.assignDate">
                 <el-radio v-for="dict in dict.type.t_product_assign_date" :key="dict.value" :label="dict.value">
-                  {{dict.label}}
+                  {{ dict.label }}
                 </el-radio>
               </el-radio-group>
             </el-form-item>
@@ -226,20 +244,20 @@
           </el-col>
           <el-col :span="8" v-if="form.toType == 3">
             <el-form-item label="小程序ID" prop="appId">
-              <el-input v-model="form.appId" placeholder="请输入小程序ID" />
+              <el-input v-model="form.appId" placeholder="请输入小程序ID"/>
             </el-form-item>
           </el-col>
           <el-col :span="24" v-if="form.toType != '0' && form.toType != '4' && form.toType != '6'">
             <el-form-item label="页面地址" v-if="form.toType == '3'">
-              <el-input v-model="form.url" placeholder="请输入内容" />
+              <el-input v-model="form.url" placeholder="请输入内容"/>
             </el-form-item>
             <el-form-item label="页面地址" v-else prop="url">
-              <el-input v-model="form.url" placeholder="请输入内容" />
+              <el-input v-model="form.url" placeholder="请输入内容"/>
             </el-form-item>
           </el-col>
           <el-col :span="12" v-if="form.toType == 4">
             <el-form-item label="图片页面" prop="url">
-              <image-upload :limit="1" v-model="form.url" />
+              <image-upload :limit="1" v-model="form.url"/>
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -250,10 +268,6 @@
             </el-form-item>
           </el-col>
         </el-row>
-
-
-
-
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
@@ -285,7 +299,7 @@ import {
 
 export default {
   name: "SearchGroup",
-  dicts: ['t_banner_status', 't_banner_to_type', 't_product_assign_date','t_grad_period_date_list'],
+  dicts: ['t_banner_status', 'channel_type', 't_banner_to_type', 't_product_assign_date', 't_grad_period_date_list'],
   data() {
     return {
       // 按钮loading
@@ -376,16 +390,18 @@ export default {
         searchContent: [
           {required: true, message: "搜索内容不能为空", trigger: "blur"}
         ],
-
-        toType: [
-          {required: true, message: "跳转类型：0-无需跳转，1-内部页面，2-外部页面，3-小程序跳转，4-图片页面，5-RN跳转，6-页面指定位置不能为空", trigger: "change"}
-        ],
-
+        toType: [{
+          required: true, trigger: "change",
+          message: "跳转类型：0-无需跳转，1-内部页面，2-外部页面，3-小程序跳转，4-图片页面，5-RN跳转，6-页面指定位置不能为空"
+        }],
         status: [
           {required: true, message: "状态不能为空", trigger: "change"}
         ],
         platformKey: [
           {required: true, message: "平台标识不能为空", trigger: "blur"}
+        ],
+        supportChannel: [
+          {required: true, message: "z支持端不能为空", trigger: "blur"}
         ]
       }
     };
@@ -507,6 +523,7 @@ export default {
         showCity: undefined,
         assignDate: undefined,
         weekDate: undefined,
+        supportChannel: [],
         status: undefined,
         createBy: undefined,
         createTime: undefined,
@@ -555,6 +572,11 @@ export default {
         if (this.form && this.form.weekDate) {
           this.form.weekDate = this.form.weekDate.split(",");
         }
+        if (this.form && this.form.supportChannel) {
+          this.form.supportChannel = this.form.supportChannel.split(",");
+        } else {
+          this.form.supportChannel = [];
+        }
         this.$nextTick(() => {
           showCity.then(res => {
             let checkedKeys = res.data.checkedKeys;
@@ -583,6 +605,9 @@ export default {
           }
           if (this.form.weekDate) {
             this.form.weekDate = this.form.weekDate.join(',');
+          }
+          if (this.form.supportChannel.length > 0) {
+            this.form.supportChannel = this.form.supportChannel.join(",");
           }
           if (this.form.searchId != null) {
             updateSearchGroup(this.form).then(response => {

@@ -49,5 +49,9 @@ public class RecordLog extends BaseEntity {
      * 来源
      */
     private String source;
+    /**
+     * 支持端
+     */
+    private String supportChannel;
 
 }

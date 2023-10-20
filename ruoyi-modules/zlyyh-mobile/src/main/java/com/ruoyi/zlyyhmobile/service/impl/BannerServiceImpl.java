@@ -31,7 +31,7 @@ public class BannerServiceImpl implements IBannerService {
     /**
      * 查询广告管理列表
      */
-    @Cacheable(cacheNames = CacheNames.BANNER, key = "#bo.getPlatformKey()+'-'+#bo.bannerType+'-'+#bo.pagePath")
+    @Cacheable(cacheNames = CacheNames.BANNER, key = "#bo.getPlatformKey()+'-'+#bo.supportChannel+'-'+#bo.bannerType+'-'+#bo.pagePath")
     @Override
     public List<BannerVo> queryList(BannerBo bo) {
         LambdaQueryWrapper<Banner> lqw = Wrappers.lambdaQuery();
@@ -45,6 +45,11 @@ public class BannerServiceImpl implements IBannerService {
         lqw.and(lm -> {
             lm.isNull(Banner::getEndTime).or().gt(Banner::getEndTime, new Date());
         });
+        if (StringUtils.isNotBlank(bo.getSupportChannel())) {
+            lqw.and(lm -> {
+                lm.eq(Banner::getSupportChannel, "ALL").or().likeRight(Banner::getSupportChannel, bo.getSupportChannel());
+            });
+        }
         lqw.last("order by banner_rank asc");
         return baseMapper.selectVoList(lqw);
     }

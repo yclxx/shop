@@ -97,6 +97,12 @@ public class ActionVo {
     private String couponDescription;
 
     /**
+     * 优惠券图片
+     */
+    @ExcelProperty(value = "优惠券图片")
+    private String couponImage;
+
+    /**
      * 可兑换起始日期
      */
     @ExcelProperty(value = "可兑换起始日期")
@@ -113,11 +119,4 @@ public class ActionVo {
      */
     @ExcelProperty(value = "平台标识")
     private Long platformKey;
-
-    /**
-     * 优惠券图片
-     */
-    private String couponImage;
-
-
 }

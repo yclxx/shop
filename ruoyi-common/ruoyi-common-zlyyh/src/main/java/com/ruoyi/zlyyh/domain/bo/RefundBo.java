@@ -67,5 +67,10 @@ public class RefundBo extends BaseEntity {
      */
     private String refundRemark;
 
+    /**
+     * 支持端
+     */
+    private String supportChannel;
+
 
 }

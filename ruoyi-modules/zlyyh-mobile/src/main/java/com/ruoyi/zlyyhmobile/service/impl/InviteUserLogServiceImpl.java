@@ -220,6 +220,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
         add.setInviteCityCode(ZlyyhUtils.getAdCode());
         add.setMissionId(bo.getMissionId());
         add.setPlatformKey(platformId);
+        add.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         // 生成订单
         CreateOrderBo createOrderBo = new CreateOrderBo();
         createOrderBo.setProductId(productVos.get(userInviteLogCount.intValue()).getProductId());

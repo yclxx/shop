@@ -146,6 +146,7 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         order.setProductName(productVo.getProductName());
         order.setProductImg(productVo.getProductImg());
         order.setPickupMethod(productVo.getPickupMethod());
+        order.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         order.setExpireDate(DateUtil.offsetMinute(new Date(), 15).toJdkDate());
         order.setStatus("0");
         if ("1".equals(productVo.getSendAccountType())) {

@@ -156,7 +156,7 @@ public class CouponServiceImpl implements ICouponService {
         coupon.setUseStatus("5");
         LambdaQueryWrapper<Coupon> lqw = new LambdaQueryWrapper<>();
         lqw.eq(Coupon::getActionNo, bo.getActionNo());
-        lqw.in(Coupon::getCouponType, "0", "1");
+        lqw.in(Coupon::getUseStatus, "0", "1");
         return baseMapper.update(coupon, lqw) > 0;
     }
 
@@ -169,7 +169,7 @@ public class CouponServiceImpl implements ICouponService {
         coupon.setUseStatus("5");
         LambdaQueryWrapper<Coupon> lqw = new LambdaQueryWrapper<>();
         lqw.in(Coupon::getCouponId,ids);
-        lqw.in(Coupon::getCouponType, "0", "1");
+        lqw.in(Coupon::getUseStatus, "0", "1");
         return baseMapper.update(coupon, lqw) > 0;
     }
 }
