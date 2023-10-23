@@ -819,8 +819,7 @@ public class OrderServiceImpl implements IOrderService {
                     couponMapper.updateById(coupon);
                     reducedPrice = coupon.getCouponAmount();
 
-
-                }else if (coupon.getCouponType().equals("2") || coupon.getCouponType().equals("3")){
+                } else if (coupon.getCouponType().equals("2") || coupon.getCouponType().equals("3")) {
                     //全场通用券或者指定商品立减券
 
                     // 优惠券状态改变成已绑定
@@ -1439,7 +1438,7 @@ public class OrderServiceImpl implements IOrderService {
         } else if ("14".equals(orderVo.getOrderType())) {
             // 联联
             OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(orderVo.getNumber());
-            if (StringUtils.isEmpty(orderFoodInfoVo.getTicketCode())) {
+            if (null != orderFoodInfoVo && StringUtils.isEmpty(orderFoodInfoVo.getTicketCode())) {
                 Order order = BeanCopyUtils.copy(orderVo, Order.class);
                 if (ObjectUtil.isNotEmpty(order)) {
                     lianLianOrderCode(order);
