@@ -52,10 +52,10 @@ public class OrderTicketVo {
     private Long lineId;
     @ExcelProperty(value = "票档")
     private String lineName;
-
     @ExcelIgnore
     private String status;
-
+    @ExcelProperty(value = "手机号")
+    private String mobile;
     /**
      * 观影时间
      */
@@ -68,13 +68,13 @@ public class OrderTicketVo {
     private String reservation;
 
     /**
-     * 购买金额
+     * 原价
      */
     @ExcelIgnore
     private BigDecimal price;
 
     /**
-     * 结算金额
+     * 售价
      */
     @ExcelProperty(value = "售价")
     private BigDecimal sellPrice;

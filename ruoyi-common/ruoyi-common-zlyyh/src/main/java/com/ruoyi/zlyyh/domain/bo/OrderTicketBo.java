@@ -47,6 +47,10 @@ public class OrderTicketBo extends BaseEntity {
     private Long lineId;
 
     /**
+     * 购买人手机号
+     */
+    private String mobile;
+    /**
      * 观影时间
      */
     @NotNull(message = "观影时间不能为空", groups = {AddGroup.class, EditGroup.class})
@@ -56,15 +60,15 @@ public class OrderTicketBo extends BaseEntity {
      */
     private String reservation;
     /**
-     * 购买金额
+     * 原价
      */
-    @NotNull(message = "购买金额不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = "原价不能为空", groups = {AddGroup.class, EditGroup.class})
     private BigDecimal price;
 
     /**
-     * 结算金额
+     * 售价
      */
-    @NotNull(message = "结算金额不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotNull(message = "售价不能为空", groups = {AddGroup.class, EditGroup.class})
     private BigDecimal sellPrice;
 
     /**
@@ -165,6 +169,8 @@ public class OrderTicketBo extends BaseEntity {
      * 物流公司
      */
     private String logisticsCom;
+
+    private String codeNo;
 
     private String status;
     private String productName;

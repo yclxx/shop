@@ -58,6 +58,14 @@ public class OrderTicketServiceImpl implements IOrderTicketService {
      * 查询演出票订单列表
      */
     public TableDataInfo<OrderTicketVo> selectPageUserList(OrderTicketBo bo, PageQuery pageQuery) {
+        if (StringUtils.isNotEmpty(bo.getCodeNo())) {
+            LambdaQueryWrapper<Code> codeQuery = Wrappers.lambdaQuery();
+            codeQuery.eq(Code::getCodeNo, bo.getCodeNo());
+            List<CodeVo> codeVos = codeMapper.selectVoList(codeQuery);
+            if (ObjectUtil.isNotEmpty(codeVos)) {
+                bo.setNumber(codeVos.get(0).getNumber());
+            }
+        }
         Page<OrderTicketVo> result = baseMapper.selectVoPages(pageQuery.build(), bo);
         return TableDataInfo.build(result);
     }
@@ -67,6 +75,14 @@ public class OrderTicketServiceImpl implements IOrderTicketService {
      */
     @Override
     public List<OrderTicketVo> queryList(OrderTicketBo bo) {
+        if (StringUtils.isNotEmpty(bo.getCodeNo())) {
+            LambdaQueryWrapper<Code> codeQuery = Wrappers.lambdaQuery();
+            codeQuery.eq(Code::getCodeNo, bo.getCodeNo());
+            List<CodeVo> codeVos = codeMapper.selectVoList(codeQuery);
+            if (ObjectUtil.isNotEmpty(codeVos)) {
+                bo.setNumber(codeVos.get(0).getNumber());
+            }
+        }
         return baseMapper.selectVoLists(bo);
     }
 

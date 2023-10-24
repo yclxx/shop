@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.zlyyh.mapper.MerchantApprovalMapper">
+    <resultMap type="com.ruoyi.zlyyh.domain.MerchantApproval" id="MerchantApprovalResult">
+        <result property="approvalId" column="approval_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="platformKey" column="platform_key"/>
+        <result property="brandName" column="brand_name"/>
+        <result property="brandLogo" column="brand_logo"/>
+        <result property="shopName" column="shop_name"/>
+        <result property="shopMobile" column="shop_mobile"/>
+        <result property="shopType" column="shop_type"/>
+        <result property="shopAddress" column="shop_address"/>
+        <result property="shopImage" column="shop_image"/>
+        <result property="businessWeek" column="business_week"/>
+        <result property="businessBegin" column="business_begin"/>
+        <result property="businessEnd" column="business_end"/>
+        <result property="nature" column="nature"/>
+        <result property="extend" column="extend"/>
+        <result property="activity" column="activity"/>
+        <result property="invoiceType" column="invoice_type"/>
+        <result property="account" column="account"/>
+        <result property="ysfMerchant" column="ysf_merchant"/>
+        <result property="wxMerchant" column="wx_merchant"/>
+        <result property="payMerchant" column="pay_merchant"/>
+        <result property="productType" column="product_type"/>
+        <result property="approvalStatus" column="approval_status"/>
+        <result property="rejectReason" column="reject_reason"/>
+    </resultMap>
+</mapper>

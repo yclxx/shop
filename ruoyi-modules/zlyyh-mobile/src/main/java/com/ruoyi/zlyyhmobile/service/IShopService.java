@@ -2,6 +2,7 @@ package com.ruoyi.zlyyhmobile.service;
 
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.zlyyh.domain.bo.MerchantApprovalBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
 
@@ -39,4 +40,6 @@ public interface IShopService {
      * @return 门店集合
      */
     List<ShopVo> queryListByCommercialIds(List<Long> commercialIds,String cityCode);
+
+    boolean addApproval(MerchantApprovalBo bo);
 }
