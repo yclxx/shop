@@ -14,6 +14,8 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateOrderResult implements Serializable {
+    /**大订单号*/
+    private Long collectiveNumber;
     /** 订单号 */
     private Long number;
     /** 领取状态： 0-领取成功，1-需前往支付 */

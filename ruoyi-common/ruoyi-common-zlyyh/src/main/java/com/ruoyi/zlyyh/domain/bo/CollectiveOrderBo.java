@@ -120,5 +120,10 @@ public class CollectiveOrderBo extends BaseEntity {
      */
     private Long sysUserId;
 
+    /**
+     * 数量
+     */
+    private Long count;
+
 
 }

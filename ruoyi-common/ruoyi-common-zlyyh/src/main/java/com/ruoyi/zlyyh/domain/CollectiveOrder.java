@@ -10,6 +10,8 @@ import java.math.BigDecimal;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
+
 import com.ruoyi.common.core.web.domain.BaseEntity;
 
 /**
@@ -103,5 +105,9 @@ public class CollectiveOrder extends BaseEntity {
      * 用户id
      */
     private Long sysUserId;
+
+    private List<Order> orders;
+
+    private Long count;
 
 }

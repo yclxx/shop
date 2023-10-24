@@ -281,6 +281,7 @@ public class RemoteCtripFoodServiceImpl implements RemoteCtripFoodService {
         productBo.setProductAffiliation("0");
         //重新调整为上架状态
         productBo.setStatus("0");
+        productBo.setLineUpperLimit(1L);
     }
 
     /**

@@ -4,6 +4,7 @@ import com.ruoyi.common.core.utils.StringUtils;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * 创建订单
@@ -16,7 +17,6 @@ public class CreateOrderBo {
     /**
      * 产品ID
      */
-    @NotNull(message = "产品不能为空")
     private Long productId;
     /**
      * 用户ID
@@ -51,6 +51,11 @@ public class CreateOrderBo {
      * 优惠券Id
      */
     private Long couponId;
+
+    /**
+     *商品信息
+     */
+    private List<OrderProductBo> orderProductBos;
 
     /**
      * 获取城市编码

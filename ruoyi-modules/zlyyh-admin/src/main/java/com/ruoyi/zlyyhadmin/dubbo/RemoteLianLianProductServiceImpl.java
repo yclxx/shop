@@ -257,6 +257,8 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                     }
                 }
                 product.setDescription(spxz);
+                //购物车内仅添加一个商品
+                product.setLineUpperLimit(1L);
                 // 商品扩展信息
                 //commodity.setCommodityInfo(commodityInfo);
                 //不存在则新增

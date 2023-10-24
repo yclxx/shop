@@ -301,6 +301,7 @@ public class RemoteFoodServicelmpl implements RemoteFoodService {
         productBo.setShowEndDate(DateUtils.parseDate(xjDate));
         productBo.setSellStartDate(DateUtils.parseDate(sjDate));
         productBo.setSellEndDate(DateUtils.parseDate(xjDate));
+        productBo.setLineUpperLimit(1L);
 
     }
 
