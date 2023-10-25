@@ -96,6 +96,31 @@ public class SysOssController extends BaseController {
         return R.ok(map);
     }
 
+    @PostMapping(value = "/ignore/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public R<Map<String, String>> ignoreUpload(@RequestPart("file") MultipartFile file) {
+        if (ObjectUtil.isNull(file)) {
+            return R.fail("上传文件不能为空");
+        }
+        /** 校验文件上传类型是否正确，防止恶意文件上传 */
+        try {
+            FileUploadUtils.assertAllowed(file, MimeTypeUtils.DEFAULT_ALLOWED_EXTENSION);
+        } catch (InvalidExtensionException e) {
+            throw new ServiceException("不支持上传该文件");
+        }
+        SysOssVo oss;
+        try {
+            oss = iSysOssService.upload(file);
+        } catch (Exception e) {
+            //请求本地
+            oss = iSysOssService.uploadLocalhost(file);
+        }
+        Map<String, String> map = new HashMap<>(2);
+        map.put("url", oss.getUrl());
+        map.put("fileName", oss.getOriginalName());
+        map.put("ossId", oss.getOssId().toString());
+        return R.ok(map);
+    }
+
     /**
      * 下载OSS对象存储
      *

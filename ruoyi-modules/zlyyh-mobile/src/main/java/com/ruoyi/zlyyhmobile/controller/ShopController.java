@@ -5,15 +5,14 @@ import com.ruoyi.common.core.utils.ServletUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
+import com.ruoyi.zlyyh.domain.bo.MerchantApprovalBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
+import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.service.IShopService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
@@ -59,10 +58,18 @@ public class ShopController {
 
     /**
      * 获取商品门店信息
+     *
      * @return 门店列表
      */
     @GetMapping("/{shopId}")
     public R<ShopVo> getShopListByProductId(@NotNull(message = "主键不能为空") @PathVariable Long shopId) {
         return R.ok(shopService.queryById(shopId));
+    }
+
+    @PostMapping("/addApproval")
+    public R addApproval(@RequestBody MerchantApprovalBo bo) {
+        bo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        shopService.addApproval(bo);
+        return R.ok();
     }
 }

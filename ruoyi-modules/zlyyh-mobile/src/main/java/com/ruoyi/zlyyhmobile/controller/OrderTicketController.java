@@ -57,6 +57,8 @@ public class OrderTicketController {
                                          @PathVariable("number") Long number) {
         OrderTicketVo orderTicketVo = orderTicketService.orderInfo(number);
         if (ObjectUtil.isNotEmpty(orderTicketVo)) {
+            // 数据脱敏
+            orderTicketVo.setMobile(DesensitizedUtil.mobilePhone(orderTicketVo.getMobile()));
             orderTicketVo.setTel(DesensitizedUtil.mobilePhone(orderTicketVo.getTel()));
             if (ObjectUtil.isNotEmpty(orderTicketVo.getOrderIdCardVos())) {
                 orderTicketVo.getOrderIdCardVos().forEach(o -> {

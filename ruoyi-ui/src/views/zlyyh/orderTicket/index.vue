@@ -9,6 +9,14 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
+      <el-form-item label="核销码" prop="codeNo">
+        <el-input
+          v-model="queryParams.codeNo"
+          placeholder="请输入完整核销码"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
       <el-form-item label="产品" prop="productName">
         <el-input
           v-model="queryParams.productName"
@@ -101,10 +109,10 @@
             票档：{{ scope.row.lineName }}
           </div>
           <div>
-            购买金额：{{ scope.row.price }}
+            原价：{{ scope.row.price }}
           </div>
           <div>
-            结算金额：{{ scope.row.sellPrice }}
+            售价：{{ scope.row.sellPrice }}
           </div>
           <div>
             购买数量：{{ scope.row.count }}
@@ -139,6 +147,10 @@
       <el-table-column label="收货地址" align="left" prop="addressInfo">
         <template slot-scope="scope">
           <div>
+            手机号：
+            <span>{{ scope.row.mobile }}</span>
+          </div>
+          <div>
             收货人：
             <span>{{ scope.row.name }}</span>
           </div>
@@ -170,27 +182,28 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <div>
-          <el-button
-          type="text" size="mini"
-          v-hasPermi="['zlyyh:productTicketLine:query']"
-          icon="el-icon-tickets"
-          @click="queryTicketLine(scope.row)">票种
-          </el-button>
+            <el-button
+              type="text" size="mini"
+              v-hasPermi="['zlyyh:productTicketLine:query']"
+              icon="el-icon-tickets"
+              @click="queryTicketLine(scope.row)">票种
+            </el-button>
           </div>
           <div>
-          <el-button
-          type="text" size="mini"
-          icon="el-icon-monitor"
-          v-hasPermi="['zlyyh:orderTicket:query']"
-          @click="queryOrderIdCard(scope.row)">观影人
-          </el-button>
+            <el-button
+              type="text" size="mini"
+              icon="el-icon-monitor"
+              v-hasPermi="['zlyyh:orderTicket:query']"
+              @click="queryOrderIdCard(scope.row)">观影人
+            </el-button>
           </div>
           <div>
-          <el-button
-          type="text" size="mini"
-          icon="el-icon-s-operation"
-          v-hasPermi="['zlyyh:code:list']"
-          @click="listCode(scope.row)">核销</el-button>
+            <el-button
+              type="text" size="mini"
+              icon="el-icon-s-operation"
+              v-hasPermi="['zlyyh:code:list']"
+              @click="listCode(scope.row)">核销信息
+            </el-button>
           </div>
         </template>
       </el-table-column>
@@ -273,24 +286,24 @@
         <el-table-column label="操作">
           <template slot-scope="scope">
             <el-button v-if="scope.row.usedStatus === '0'"
-            type="text" size="mini"
-            icon="el-icon-setting"
-            v-hasPermi="['zlyyh:orderTicket:writeOffCode']"
-            @click="confirm('writeOffCode',scope.row)">
+                       type="text" size="mini"
+                       icon="el-icon-setting"
+                       v-hasPermi="['zlyyh:orderTicket:writeOffCode']"
+                       @click="confirm('writeOffCode',scope.row)">
               核销
             </el-button>
             <el-button v-if="scope.row.usedStatus === '1'"
-            type="text" size="mini"
-            icon="el-icon-link"
-            v-hasPermi="['zlyyh:orderTicket:voidCode']"
-            @click="confirm('voidCode',scope.row)">
+                       type="text" size="mini"
+                       icon="el-icon-link"
+                       v-hasPermi="['zlyyh:orderTicket:voidCode']"
+                       @click="confirm('voidCode',scope.row)">
               票卷返还
             </el-button>
             <el-button v-if="scope.row.usedStatus === '0'"
-            type="text" size="mini"
-            icon="el-icon-error"
-            v-hasPermi="['zlyyh:orderTicket:returnCode']"
-            @click="confirm('returnCode',scope.row)">
+                       type="text" size="mini"
+                       icon="el-icon-error"
+                       v-hasPermi="['zlyyh:orderTicket:returnCode']"
+                       @click="confirm('returnCode',scope.row)">
               作废
             </el-button>
           </template>
@@ -408,6 +421,7 @@ export default {
         pageNum: 1,
         pageSize: 10,
         number: undefined,
+        codeNo: undefined,
         status: undefined,
         productName: undefined,
         sessionName: undefined,
@@ -542,7 +556,7 @@ export default {
         });
       }
     },
-    confirm(value,row) {
+    confirm(value, row) {
       let text = undefined;
       if (value === 'writeOffCode') {
         text = '核销'
@@ -551,22 +565,23 @@ export default {
       } else if (value === 'returnCode') {
         text = '作废'
       }
-      this.$confirm('请确认是否执行'+text+'操作', '确认信息', {
-          distinguishCancelAndClose: true,
-          confirmButtonText: '确认',
-          cancelButtonText: '取消'
-        }).then(() => {
-          if (value === 'writeOffCode') {
-            this.writeOffCode(row)
-          } else if (value === 'voidCode') {
-            this.voidCode(row)
-          } else if (value === 'returnCode') {
-            this.returnCode(row)
-        }}).catch(action => {
-          this.$message({
-            type: 'info',
-            message: '已取消操作'
-          })
+      this.$confirm('请确认是否执行' + text + '操作', '确认信息', {
+        distinguishCancelAndClose: true,
+        confirmButtonText: '确认',
+        cancelButtonText: '取消'
+      }).then(() => {
+        if (value === 'writeOffCode') {
+          this.writeOffCode(row)
+        } else if (value === 'voidCode') {
+          this.voidCode(row)
+        } else if (value === 'returnCode') {
+          this.returnCode(row)
+        }
+      }).catch(action => {
+        this.$message({
+          type: 'info',
+          message: '已取消操作'
+        })
       });
     },
     // 核销

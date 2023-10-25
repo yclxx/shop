@@ -40,6 +40,8 @@ public class OrderTicket extends BaseEntity {
      * 票种id
      */
     private Long lineId;
+
+    private String mobile;
     /**
      * 观影时间
      */
@@ -49,11 +51,11 @@ public class OrderTicket extends BaseEntity {
      */
     private String reservation;
     /**
-     * 购买金额
+     * 原价
      */
     private BigDecimal price;
     /**
-     * 结算金额
+     * 售价
      */
     private BigDecimal sellPrice;
     /**

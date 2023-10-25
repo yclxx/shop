@@ -4,11 +4,15 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.constant.CacheNames;
+import com.ruoyi.common.core.utils.BeanCopyUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.zlyyh.domain.MerchantApproval;
 import com.ruoyi.zlyyh.domain.Shop;
+import com.ruoyi.zlyyh.domain.bo.MerchantApprovalBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
+import com.ruoyi.zlyyh.mapper.MerchantApprovalMapper;
 import com.ruoyi.zlyyh.mapper.ShopMapper;
 import com.ruoyi.zlyyhmobile.service.IShopService;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +33,7 @@ import java.util.List;
 public class ShopServiceImpl implements IShopService {
 
     private final ShopMapper baseMapper;
+    private final MerchantApprovalMapper merchantApprovalMapper;
 
     /**
      * 查询门店
@@ -101,5 +106,11 @@ public class ShopServiceImpl implements IShopService {
             return new ArrayList<>();
         }
         return baseMapper.selectVoList(new LambdaQueryWrapper<Shop>().in(Shop::getCommercialTenantId, commercialIds).eq(Shop::getCitycode, cityCode));
+    }
+
+    public boolean addApproval(MerchantApprovalBo bo) {
+        bo.setApprovalStatus("0");
+        MerchantApproval copy = BeanCopyUtils.copy(bo, MerchantApproval.class);
+        return merchantApprovalMapper.insert(copy)>0;
     }
 }

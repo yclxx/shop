@@ -178,6 +178,7 @@ public class OrderTicketServiceImpl implements OrderTicketService {
 
         OrderTicket orderTicket = new OrderTicket();
         orderTicket.setNumber(order.getNumber());
+        orderTicket.setMobile(userVo.getMobile());
         orderTicket.setProductId(ticketLineVo.getProductId());
         orderTicket.setSessionId(ticketLineVo.getSessionId());
         orderTicket.setLineId(ticketLineVo.getLineId());

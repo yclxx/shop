@@ -241,7 +241,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="活动类型" prop="activity">
-              <el-select v-model="form.activity" placeholder="请选择活动类型" style="width: 90%;">
+              <el-select v-model="form.activity" multiple placeholder="请选择活动类型" style="width: 90%;">
                 <el-option v-for="dict in dict.type.activity_type" :key="dict.value" :label="dict.label"
                            :value="dict.value"></el-option>
               </el-select>
@@ -908,6 +908,9 @@
           } else {
             this.form.supportChannel = []
           }
+          if (response.data.activity) {
+            this.form.activity = response.data.activity.split(",")
+          }
         });
       },
       /** 提交按钮 */
@@ -920,6 +923,9 @@
             }
             if (this.form.supportChannel) {
               this.form.supportChannel = this.form.supportChannel.join(",")
+            }
+            if (this.form.activity) {
+              this.form.activity = this.form.activity.join(",")
             }
             if (this.form.shopId != null) {
               updateShop(this.form).then(response => {
