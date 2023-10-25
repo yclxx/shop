@@ -132,5 +132,10 @@ public class CollectiveOrderVo {
     @ExcelProperty(value = "用户id")
     private Long sysUserId;
 
+    /**
+     * 数量
+     */
+    private Long count;
+
 
 }

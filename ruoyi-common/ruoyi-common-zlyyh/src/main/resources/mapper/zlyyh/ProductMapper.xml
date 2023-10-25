@@ -74,6 +74,7 @@
         <result property="isShare" column="is_share"/>
         <result property="supplier" column="supplier"/>
         <result property="lineUpperLimit" column="line_upper_limit"/>
+        <result property="payBankType" column="pay_bank_type"/>
     </resultMap>
 
 

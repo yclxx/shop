@@ -86,5 +86,8 @@ public class OrderInfoBo extends BaseEntity {
      */
     private String commodityJson;
 
+    private String payBankType;
+
+
 
 }

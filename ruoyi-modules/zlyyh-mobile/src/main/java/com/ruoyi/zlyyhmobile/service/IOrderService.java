@@ -52,6 +52,14 @@ public interface IOrderService {
      */
     CreateOrderResult createOrder(CreateOrderBo bo, boolean system);
 
+
+    /**
+     * 创建购物车订单
+     *
+     * @return 返回结果
+     */
+    CreateOrderResult createCarOrder(CreateOrderBo bo, boolean system);
+
     /**
      * 查询订单详情
      *

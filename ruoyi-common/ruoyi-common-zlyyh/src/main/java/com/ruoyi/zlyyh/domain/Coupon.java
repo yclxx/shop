@@ -64,7 +64,7 @@ public class Coupon extends BaseEntity {
      */
     private Date useTime;
     /**
-     * 使用订单编号，对应t_order中number，若是购物车合并购买记录大订单的订单号
+     * 大订单的订单号
      */
     private String number;
     /**
