@@ -865,8 +865,12 @@ public class OrderServiceImpl implements IOrderService {
         }
         // 商品总金额
         BigDecimal amount = new BigDecimal("0");
-        // 订单优惠金额
+        // 订单优惠总金额
         BigDecimal reducedPrice = new BigDecimal("0");
+        //计算的商品总金额
+        BigDecimal cAmount = new BigDecimal("0");
+        //优惠券金额
+        BigDecimal couponAmount = new BigDecimal("0");
         // 商品总数量
         Long count = 0L;
         //此处先生成大订单
@@ -892,8 +896,9 @@ public class OrderServiceImpl implements IOrderService {
         List<ProductVo> productVoList = productMapper.selectVoBatchIds(productIds);
         // list 转map
         Map<Long, ProductVo> productVoMap = productVoList.stream().collect(Collectors.toMap(ProductVo::getProductId, productVo -> productVo));
-        //循环添加子订单
-        for (OrderProductBo orderProductBo : bo.getOrderProductBos()) {
+        for (OrderProductBo orderProductBo : bo.getOrderProductBos()){
+            //这个循环判断购物车是否能够下单/计算商品金额
+            //此处判断商品名额状态并且获取金额
             if (orderProductBo.getQuantity() < 1) {
                 throw new ServiceException("购买数量非法");
             }
@@ -915,8 +920,109 @@ public class OrderServiceImpl implements IOrderService {
             if (productVo.getProductType().equals("10") || productVo.getProductType().equals("11") || productVo.getProductType().equals("12") || productVo.getPickupMethod().equals("0") || productVo.getPickupMethod().equals("2")){
                 throw new ServiceException(productVo.getProductName()+"该商品请在商品详情页直接点击购买");
             }
-            count = count + orderProductBo.getQuantity();
+            if (null != user62VipInfo) {
+                if ("01".equals(user62VipInfo.getStatus()) || "03".equals(user62VipInfo.getStatus())) {
+                    if ("8".equals(productVo.getProductType())) {
+                        Date endDate = DateUtil.parse(user62VipInfo.getEndTime());
+                        if (null != endDate && DateUtil.between(new Date(), endDate, DateUnit.DAY) > 365) {
+                            throw new ServiceException("已达续费上限");
+                        }
+                    }
+                } else {
+                    if ("1".equals(productVo.getPayUser())) {
+                        // 不是会员，再次查询，防止用户开通之后，我方缓存未更新问题
+                        user62VipInfo = userService.getUser62VipInfo(false, userVo.getUserId());
+                        if (!"01".equals(user62VipInfo.getStatus()) && !"03".equals(user62VipInfo.getStatus())) {
+                            throw new ServiceException("请先开通62会员");
+                        }
+                    }
+                }
+            } else {
+                if ("1".equals(productVo.getPayUser()) || "8".equals(productVo.getProductType())) {
+                    throw new ServiceException("查询62会员状态失败,请重新授权手机号重试");
+                }
+            }
+            //计算商品金额
+            //62会员价
+            if (null != user62VipInfo) {
+                if ("01".equals(user62VipInfo.getStatus()) || "03".equals(user62VipInfo.getStatus())) {
+                    if (null != productVo.getVipUpAmount() && productVo.getVipUpAmount().signum() > 0) {
+                        cAmount = cAmount.add(productVo.getVipUpAmount());
+                        continue;
+                    }
+                }
+            }
+            // 权益会员
+            if ("1".equals(userVo.getVipUser())) {
+                if (null != productVo.getVipAmount() && productVo.getVipAmount().signum() > 0) {
+                    cAmount = cAmount.add(productVo.getVipAmount());
+                    continue;
+                }
+            }
 
+            cAmount = cAmount.add(productVo.getSellAmount());
+
+
+        }
+
+
+        // 如果使用了优惠券
+        if (ObjectUtil.isNotEmpty(bo.getCouponId())) {
+            collectiveOrder.setCouponId(bo.getCouponId());
+            // 查询优惠券
+            Coupon coupon = couponMapper.selectById(bo.getCouponId());
+            if (ObjectUtil.isEmpty(coupon)) {
+                throw new ServiceException("请求异常，请稍后重试");
+            }
+            // 验证优惠券状态，以及使用时间
+            if (!"1".equals(coupon.getUseStatus())
+                || (ObjectUtil.isNotEmpty(coupon.getPeriodOfStart()) && !DateUtils.validTime(coupon.getPeriodOfStart(), 1))
+                || (ObjectUtil.isNotEmpty(coupon.getPeriodOfValidity()) && DateUtils.validTime(coupon.getPeriodOfValidity(), 1))) {
+                throw new ServiceException("优惠券不可用！");
+            }
+
+            // 最低使用金额
+            if (cAmount.compareTo(coupon.getMinAmount()) <= 0) {
+                throw new ServiceException("优惠券需订单金额超过" + coupon.getMinAmount() + "元才可用！");
+            }
+            if (coupon.getCouponType().equals("1")){
+                throw new ServiceException(coupon.getCouponName()+"请直接在商品详情下单使用");
+            }
+            if (coupon.getCouponType().equals("3")){
+                //如果是指定商品用券 先查表
+                //判断是否为专属商品|优惠券判断购买商品id是否存在于优惠券商品关联表中
+                List<ProductCoupon> productCoupons = productCouponMapper.selectList(new LambdaQueryWrapper<ProductCoupon>().eq(ProductCoupon::getCouponId, bo.getCouponId()));
+                if (ObjectUtil.isNotEmpty(productCoupons)) {
+                    //关联表不为空判断购买的商品id是否存在 不存在抛异常
+                    List<Long> productIds1 = productCoupons.stream().map(ProductCoupon::getProductId).collect(Collectors.toList());
+                    Boolean couponProduct = isProductCoupon(productIds1, productIds);
+                    if (!couponProduct) {
+                        throw new ServiceException("优惠券指定商品可用！");
+                    }
+                } else {
+                    throw new ServiceException("优惠券指定商品可用！");
+                }
+
+            }
+
+
+            if (coupon.getCouponType().equals("2") || coupon.getCouponType().equals("3")){
+                //全场通用券或者指定商品立减券
+                // 优惠券状态改变成已绑定
+                coupon.setUseStatus("2");
+                coupon.setUseTime(new Date());
+                coupon.setNumber(collectiveOrder.getCollectiveNumber().toString());
+                couponMapper.updateById(coupon);
+                reducedPrice = coupon.getCouponAmount().add(reducedPrice);
+            }
+
+        }
+
+        //循环添加子订单
+        for (OrderProductBo orderProductBo : bo.getOrderProductBos()) {
+            //这个循环主要做订单的新增/价格的计算/购物车的删减
+            ProductVo productVo = productVoMap.get(orderProductBo.getProductId());
+            count = count + orderProductBo.getQuantity();
             if (ObjectUtil.isNotEmpty(orderProductBo.getCartId())) {
                 CartVo cartVo = cartService.queryById(orderProductBo.getCartId());
                 if (ObjectUtil.isNotEmpty(cartVo)) {
@@ -971,35 +1077,16 @@ public class OrderServiceImpl implements IOrderService {
             orderInfo.setNumber(order.getNumber());
             orderInfo.setCommodityJson(JsonUtils.toJsonString(productVo));
             if (null != user62VipInfo) {
-                if ("01".equals(user62VipInfo.getStatus()) || "03".equals(user62VipInfo.getStatus())) {
-                    if ("8".equals(productVo.getProductType())) {
-                        Date endDate = DateUtil.parse(user62VipInfo.getEndTime());
-                        if (null != endDate && DateUtil.between(new Date(), endDate, DateUnit.DAY) > 365) {
-                            throw new ServiceException("已达续费上限");
-                        }
-                    }
-                } else {
-                    if ("1".equals(productVo.getPayUser())) {
-                        // 不是会员，再次查询，防止用户开通之后，我方缓存未更新问题
-                        user62VipInfo = userService.getUser62VipInfo(false, userVo.getUserId());
-                        if (!"01".equals(user62VipInfo.getStatus()) && !"03".equals(user62VipInfo.getStatus())) {
-                            throw new ServiceException("请先开通62会员");
-                        }
-                    }
-                }
                 orderInfo.setVip62Status(user62VipInfo.getStatus());
                 orderInfo.setVip62MemberType(user62VipInfo.getMemberType());
                 orderInfo.setVip62BeginTime(user62VipInfo.getBeginTime());
                 orderInfo.setVip62EndTime(user62VipInfo.getEndTime());
-            } else {
-                if ("1".equals(productVo.getPayUser()) || "8".equals(productVo.getProductType())) {
-                    throw new ServiceException("查询62会员状态失败,请重新授权手机号重试");
-                }
             }
             //如果是供应商美食订单走这里
             addFoodOrder(productVo,order,userVo,platformVo);
             BigDecimal amountSmall = productVo.getSellAmount();
             BigDecimal reducedPriceSmall = new BigDecimal("0");
+            BigDecimal reducedPriceOrder = new BigDecimal("0");
             // 62会员
             if (null != user62VipInfo) {
                 if ("01".equals(user62VipInfo.getStatus()) || "03".equals(user62VipInfo.getStatus())) {
@@ -1014,11 +1101,19 @@ public class OrderServiceImpl implements IOrderService {
                     reducedPriceSmall = amount.subtract(productVo.getVipAmount());
                 }
             }
+
             amount = amount.add(amountSmall.multiply(new BigDecimal(orderProductBo.getQuantity())));
-            reducedPrice = reducedPriceSmall.add(reducedPriceSmall.multiply(new BigDecimal(orderProductBo.getQuantity())));
+
+            reducedPrice = reducedPrice.add(reducedPriceSmall.multiply(new BigDecimal(orderProductBo.getQuantity())));
+            //扣减金额 = （商品售价-会员售价）*商品数量 + （商品售价*商品数量/全部商品总价）*优惠券优惠金额
+            reducedPriceOrder = reducedPriceSmall.multiply(new BigDecimal(orderProductBo.getQuantity()));
+            if (cAmount.compareTo(new BigDecimal("0")) > 0){
+                reducedPriceOrder = reducedPriceOrder.add(couponAmount.multiply(amountSmall.divide(cAmount)));
+            }
+
             try {
                 order.setTotalAmount(amountSmall.multiply(new BigDecimal(orderProductBo.getQuantity())));
-                order.setReducedPrice(reducedPriceSmall.multiply(new BigDecimal(orderProductBo.getQuantity())));
+                order.setReducedPrice(reducedPriceOrder);
                 order.setWantAmount(order.getTotalAmount().subtract(order.getReducedPrice()));
                 order = insertOrder(order);
                 orderInfoMapper.insert(orderInfo);
@@ -1035,42 +1130,8 @@ public class OrderServiceImpl implements IOrderService {
         }
 
 
-        // 如果使用了优惠券
-        if (ObjectUtil.isNotEmpty(bo.getCouponId())) {
-            collectiveOrder.setCouponId(bo.getCouponId());
-            // 查询优惠券
-            Coupon coupon = couponMapper.selectById(bo.getCouponId());
-            if (ObjectUtil.isEmpty(coupon)) {
-                throw new ServiceException("请求异常，请稍后重试");
-            }
-            // 验证优惠券状态，以及使用时间
-            if (!"1".equals(coupon.getUseStatus())
-                || (ObjectUtil.isNotEmpty(coupon.getPeriodOfStart()) && !DateUtils.validTime(coupon.getPeriodOfStart(), 1))
-                || (ObjectUtil.isNotEmpty(coupon.getPeriodOfValidity()) && DateUtils.validTime(coupon.getPeriodOfValidity(), 1))) {
-                throw new ServiceException("优惠券不可用！");
-            }
-
-            // 最低使用金额
-            if (amount.compareTo(coupon.getMinAmount()) <= 0) {
-                throw new ServiceException("优惠券需订单金额超过" + coupon.getMinAmount() + "元才可用！");
-            }
-            if (coupon.getCouponType().equals("1")){
-                throw new ServiceException(coupon.getCouponName()+"请直接在商品详情下单使用");
-            }
 
 
-            if (coupon.getCouponType().equals("2") || coupon.getCouponType().equals("3")){
-                //全场通用券或者指定商品立减券
-
-                // 优惠券状态改变成已绑定
-                coupon.setUseStatus("2");
-                coupon.setUseTime(new Date());
-                coupon.setNumber(collectiveOrder.getCollectiveNumber().toString());
-                couponMapper.updateById(coupon);
-                reducedPrice = coupon.getCouponAmount().add(reducedPrice);
-            }
-
-        }
         //计算金额  添加大订单价格
         collectiveOrder.setCount(count);
         collectiveOrder.setTotalAmount(amount);
@@ -1800,6 +1861,8 @@ public class OrderServiceImpl implements IOrderService {
         if (!"2".equals(orderVo.getStatus())) {
             throw new ServiceException("订单不可退，如有疑问，请联系客服处理");
         }
+        //查询大订单
+        CollectiveOrder collectiveOrder = collectiveOrderMapper.selectById(order.getCollectiveNumber());
         Refund refund = new Refund();
         refund.setNumber(orderVo.getNumber());
         refund.setSupportChannel(ZlyyhUtils.getPlatformChannel());
@@ -1819,6 +1882,10 @@ public class OrderServiceImpl implements IOrderService {
             if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && !orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
                 throw new ServiceException("该订单无法申请退款");
             }
+            //大订单跟小订单状态一致
+            collectiveOrder.setStatus("4");
+            collectiveOrder.setCancelStatus("0");
+            collectiveOrderMapper.updateById(collectiveOrder);
             order.setCancelStatus("0");
             order.setStatus("4");
             updateOrder(order);
@@ -1857,6 +1924,10 @@ public class OrderServiceImpl implements IOrderService {
                 String lianRefund = ysfConfigService.queryValueByKey(order.getPlatformKey(), "LianLian.refund");
                 JSONObject refundJson = LianLianUtils.refund(channelId, secret, basePath + lianRefund, order.getExternalOrderNumber(), orderFoodInfoVo.getBizOrderId());
                 if (ObjectUtil.isNotEmpty(refundJson)) {
+                    //大订单跟小订单状态一致
+                    collectiveOrder.setStatus("4");
+                    collectiveOrder.setCancelStatus("0");
+                    collectiveOrderMapper.updateById(collectiveOrder);
                     order.setCancelStatus("0");
                     order.setStatus("4");
                     baseMapper.updateById(order);
@@ -1870,6 +1941,10 @@ public class OrderServiceImpl implements IOrderService {
             if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && !orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
                 throw new ServiceException("该订单无法申请退款");
             }
+            //大订单跟小订单状态一致
+            collectiveOrder.setStatus("4");
+            collectiveOrder.setCancelStatus("0");
+            collectiveOrderMapper.updateById(collectiveOrder);
             order.setCancelStatus("0");
             order.setStatus("4");
             baseMapper.updateById(order);
@@ -1889,6 +1964,10 @@ public class OrderServiceImpl implements IOrderService {
         } else if ("7".equals(orderType)) {
             //如果是电子券卡密订单 等待同意
             refundMapper.insert(refund);
+            //大订单跟小订单状态一致
+            collectiveOrder.setStatus("4");
+            collectiveOrder.setCancelStatus("0");
+            collectiveOrderMapper.updateById(collectiveOrder);
             order.setStatus("4");
             updateOrder(order);
             return;
@@ -1934,6 +2013,18 @@ public class OrderServiceImpl implements IOrderService {
                 orderBackTrans.setPickupMethod("1");
                 orderBackTrans.setSuccessTime(DateUtils.getNowDate());
                 order.setStatus("5");
+                if (collectiveOrder.getCancelAmount().add(order.getWantAmount()).compareTo(collectiveOrder.getWantAmount()) < 0){
+                    //没退完
+                    collectiveOrder.setStatus("4");
+                    collectiveOrder.setCancelAmount(collectiveOrder.getCancelAmount().add(order.getWantAmount()));
+                    collectiveOrder.setCancelStatus("3");
+                }else {
+                    //全退完了
+                    collectiveOrder.setStatus("5");
+                    collectiveOrder.setCancelAmount(collectiveOrder.getCancelAmount().add(order.getWantAmount()));
+                    collectiveOrder.setCancelStatus("1");
+                }
+
             } else if (("03").equals(respCode) || ("04").equals(respCode) || ("05").equals(respCode)) {
                 //后续需发起交易状态查询交易确定交易状态
             } else {
@@ -1954,11 +2045,20 @@ public class OrderServiceImpl implements IOrderService {
                 orderBackTrans.setSuccessTime(DateUtils.getNowDate());
                 orderBackTrans.setOrderBackTransState("2");
                 order.setStatus("5");
+                //全退完了
+                collectiveOrder.setStatus("5");
+                collectiveOrder.setCancelAmount(collectiveOrder.getCancelAmount().add(order.getWantAmount()));
+                collectiveOrder.setCancelStatus("1");
             } else {
                 orderBackTrans.setOrderBackTransState("1");
                 order.setStatus("6");
+                //退款失败
+                collectiveOrder.setStatus("6");
+                collectiveOrder.setCancelAmount(collectiveOrder.getCancelAmount().add(order.getWantAmount()));
+                collectiveOrder.setCancelStatus("2");
             }
         }
+        collectiveOrderMapper.updateById(collectiveOrder);
         updateOrder(order);
         if ("9".equals(order.getOrderType())) {
             Order ob = new Order();
@@ -2343,7 +2443,7 @@ public class OrderServiceImpl implements IOrderService {
                 log.error("微信支付回调订单【{}】不存在,通知内容：{}", orderId, s);
                 return false;
             }
-            handleOrder(collectiveOrder, BigDecimalUtils.toMoney(payerTotal), queryId, pay_time, queryId, pay_time, issAddnData);
+            handleOrder(collectiveOrder, BigDecimalUtils.toMoney(payerTotal), queryId, pay_time, queryId, pay_time, issAddnData,bank_type);
             return true;
         }
         return false;
@@ -2402,7 +2502,7 @@ public class OrderServiceImpl implements IOrderService {
             // 用户支付金额
             Integer payerTotal = amount.getInteger("payer_total");
 
-            handleOrder(collectiveOrder, BigDecimalUtils.toMoney(payerTotal), queryId, pay_time, queryId, pay_time, issAddnData);
+            handleOrder(collectiveOrder, BigDecimalUtils.toMoney(payerTotal), queryId, pay_time, queryId, pay_time, issAddnData,bank_type);
             return "订单支付成功。";
         } else if ("NOTPAY".equals(trade_state)) {
             return "订单未支付。";
@@ -2445,7 +2545,7 @@ public class OrderServiceImpl implements IOrderService {
         }
         if (("00").equals(origRespCode)) {
             //交易成功，
-            handleOrder(collectiveOrder, txnAmount, queryId, traceTime, traceNo, txnTime, issAddnData);
+            handleOrder(collectiveOrder, txnAmount, queryId, traceTime, traceNo, txnTime, issAddnData,"");
             return "订单支付成功";
         } else {
             //其他应答码为交易失败
@@ -2548,7 +2648,7 @@ public class OrderServiceImpl implements IOrderService {
                     log.error("银联支付回调订单【{}】不存在,通知内容：{}", orderId, valideData);
                     return;
                 }
-                handleOrder(collectiveOrder, txnAmount, queryId, traceTime, traceNo, txnTime, issAddnData);
+                handleOrder(collectiveOrder, txnAmount, queryId, traceTime, traceNo, txnTime, issAddnData,"");
             } catch (Exception e) {
                 log.error("订单回调通知处理异常：", e);
             }
@@ -2970,7 +3070,7 @@ public class OrderServiceImpl implements IOrderService {
      * @param txnTime   订单发送时间
      */
     @Transactional(rollbackFor = Exception.class)
-    public void handleOrder(CollectiveOrder collectiveOrder, BigDecimal txnAmount, String queryId, String traceTime, String traceNo, String txnTime, String issAddnData) {
+    public void handleOrder(CollectiveOrder collectiveOrder, BigDecimal txnAmount, String queryId, String traceTime, String traceNo, String txnTime, String issAddnData,String bankType) {
         // 验证金额是否一致
         txnAmount = txnAmount.divide(new BigDecimal("1"), 2, RoundingMode.HALF_UP);
         if (collectiveOrder.getWantAmount().compareTo(txnAmount) != 0) {
@@ -2993,6 +3093,7 @@ public class OrderServiceImpl implements IOrderService {
             orderInfo.setTxnTime(txnTime);
             orderInfo.setTxnAmt(order.getWantAmount());
             orderInfo.setIssAddnData(issAddnData);
+            orderInfo.setPayBankType(bankType);
             // 修改订单扩展信息
             orderInfoMapper.updateById(orderInfo);
             // 默认交易成功
@@ -3291,6 +3392,17 @@ public class OrderServiceImpl implements IOrderService {
     Boolean isCouponProduct(Collection<Long> ids, Long productId) {
         for (Long id : ids) {
             if (id.equals(productId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    /**
+     * 判断优惠券id是否存在于优惠券商品列表中
+     */
+    Boolean isProductCoupon(Collection<Long> ids, Collection<Long> carProductIds) {
+        for (Long id : carProductIds) {
+            if (ids.contains(id)) {
                 return true;
             }
         }
