@@ -48,7 +48,6 @@ public class AreaServiceImpl implements IAreaService {
         return baseMapper.selectVoById(id);
     }
 
-
     /**
      * 查询行政区列表
      */
@@ -163,7 +162,7 @@ public class AreaServiceImpl implements IAreaService {
             } else {
                 String[] split = platform.getPlatformCity().split(",");
                 for (String s : split) {
-                    if(StringUtils.isNotBlank(s)){
+                    if (StringUtils.isNotBlank(s)) {
                         list.add(Long.parseLong(s));
                     }
                 }
@@ -214,7 +213,7 @@ public class AreaServiceImpl implements IAreaService {
         Product product = productMapper.selectById(productId);
         if (null != product && null != product.getShowCity()) {
             List<Long> list = new ArrayList<>();
-            if (product.getShowCity().equals("ALL")) {
+            if (StringUtils.isBlank(product.getShowCity()) && product.getShowCity().equals("ALL")) {
                 list.add(99L);
             } else {
                 String[] split = product.getShowCity().split(",");
@@ -230,11 +229,11 @@ public class AreaServiceImpl implements IAreaService {
     @Override
     public List<Long> selectPlatformCityBySearchId(Long searchId) {
         SearchGroup searchGroup = searchGroupMapper.selectById(searchId);
-        if(null != searchGroup && null != searchGroup.getShowCity()){
+        if (null != searchGroup && null != searchGroup.getShowCity()) {
             List<Long> list = new ArrayList<>();
-            if(searchGroup.getShowCity().equals("ALL")){
+            if (searchGroup.getShowCity().equals("ALL")) {
                 list.add(99L);
-            }else {
+            } else {
                 String[] split = searchGroup.getShowCity().split(",");
                 for (String s : split) {
                     list.add(Long.parseLong(s));

@@ -28,6 +28,7 @@ import com.ruoyi.common.core.utils.*;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.RedisUtils;
+import com.ruoyi.system.api.RemoteOrderService;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.AppWxPayCallbackParams;
@@ -122,6 +123,7 @@ public class OrderServiceImpl implements IOrderService {
     private final WxProperties wxProperties;
     private final ICartService cartService;
     private final IMissionUserDrawService missionUserDrawService;
+    private final RemoteOrderService remoteOrderService;
     @Autowired
     private LockTemplate lockTemplate;
 
@@ -3101,6 +3103,18 @@ public class OrderServiceImpl implements IOrderService {
             log.info("订单【{}】已处理不重复处理", collectiveOrder.getCollectiveNumber());
             return;
         }
+        //默认交易成功
+        collectiveOrder.setStatus("2");
+        collectiveOrder.setOutAmount(txnAmount);
+        collectiveOrderMapper.updateById(collectiveOrder);
+        // 优惠券状态改变为已使用
+        if (ObjectUtil.isNotEmpty(collectiveOrder.getCouponId())) {
+            Coupon coupon = couponMapper.selectById(collectiveOrder.getCouponId());
+            if (ObjectUtil.isNotEmpty(coupon) && !"3".equals(coupon.getUseStatus())) {
+                coupon.setUseStatus("3");
+                couponMapper.updateById(coupon);
+            }
+        }
         //查询小订单
         List<Order> orders = baseMapper.selectList(new LambdaQueryWrapper<Order>().eq(Order::getCollectiveNumber, collectiveOrder.getCollectiveNumber()));
         for (Order order : orders) {
@@ -3128,23 +3142,27 @@ public class OrderServiceImpl implements IOrderService {
             if ("10".equals(order.getOrderType())) {
                 checkRandomProduct(order);
             }
-            SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
-        }
-        // 优惠券状态改变为已使用
-        if (ObjectUtil.isNotEmpty(collectiveOrder.getCouponId())) {
-            Coupon coupon = couponMapper.selectById(collectiveOrder.getCouponId());
-            if (ObjectUtil.isNotEmpty(coupon) && !"3".equals(coupon.getUseStatus())) {
-                coupon.setUseStatus("3");
-                couponMapper.updateById(coupon);
+            // 判断是否有限定银行卡，如果有则退款
+            boolean b = checkPayBank(bankType, order);
+            if (b) {
+                SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
             }
         }
+    }
 
-        // 实际支付金额
-        //默认交易成功
-        collectiveOrder.setStatus("2");
-        collectiveOrder.setOutAmount(txnAmount);
-        collectiveOrderMapper.updateById(collectiveOrder);
-
+    private boolean checkPayBank(String payBank, Order order) {
+        if (StringUtils.isBlank(payBank)) {
+            return true;
+        }
+        ProductVo productVo = productService.queryById(order.getProductId());
+        if (null != productVo && StringUtils.isNotBlank(productVo.getPayBankType()) && !"ALL".equalsIgnoreCase(productVo.getPayBankType())) {
+            if (!productVo.getPayBankType().contains(payBank)) {
+                // 发起退款
+                remoteOrderService.refundOrder(order.getNumber(), order.getOutAmount(), "未使用特定付款方式");
+                return false;
+            }
+        }
+        return true;
     }
 
     private R<Void> productPackageHandle(Long number, Long productId, Long userId, String adcode, String cityName, Long platformKey) {

@@ -549,9 +549,9 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
             Long dayOrderCount = orderService.getDayOrderCount(productVo.getProductId(), userId);
             userProductCount = new UserProductCount();
             userProductCount.setProductId(productVo.getProductId());
+            userProductCount.setPayCount(dayOrderCount.intValue());
             if (dayOrderCount >= productVo.getDayUserCount()) {
                 userProductCount.setDayPay(false);
-                userProductCount.setPayCount(dayOrderCount.intValue());
             }
             return userProductCount;
         }
