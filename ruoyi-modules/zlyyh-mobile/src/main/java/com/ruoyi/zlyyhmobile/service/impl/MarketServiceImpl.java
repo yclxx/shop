@@ -28,7 +28,6 @@ import com.ruoyi.zlyyhmobile.service.IMarketService;
 import com.ruoyi.zlyyhmobile.service.IOrderService;
 import com.ruoyi.zlyyhmobile.service.IUserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -46,23 +45,17 @@ public class MarketServiceImpl implements IMarketService {
     /**
      * 查看平台新用户营销信息(默认获取最新一条的数据)
      */
-    @Cacheable(cacheNames = CacheNames.userMarket, key = "#platformId")
+    //@Cacheable(cacheNames = CacheNames.userMarket, key = "#bo.getPlatformKey()+'-'+#bo.getSupportChannel()")
     @Override
     public MarketVo queryMarketVo(MarketBo bo) {
         LambdaQueryWrapper<Market> lqw = buildQueryWrapper(bo);
         return baseMapper.selectVoOne(lqw);
     }
 
-    @Cacheable(cacheNames = CacheNames.userMarketLog, key = "#bo.getPlatformKey()+''+#userId")
+    //@Cacheable(cacheNames = CacheNames.userMarketLog, key = "#bo.getPlatformKey()+'-'+#userId")
     @Override
     public MarketLog queryMarketLogVo(MarketBo bo, Long userId) {
-        MarketLog marketLog = this.buildMarketLogQuery(bo, userId);
-        if (ObjectUtil.isNotEmpty(marketLog)) {
-            return marketLog;
-        } else {
-            Market market = baseMapper.selectById(bo.getMarketId());
-            return this.buildMarketLog(market, userId);
-        }
+        return this.buildMarketLogQuery(bo, userId);
     }
 
     @Override
@@ -82,7 +75,7 @@ public class MarketServiceImpl implements IMarketService {
         // 判断活动时间
         if (DateUtils.compare(nowDate, market.getBeginTime()) < 0) throw new ServiceException("活动未开始");
         if (DateUtils.compare(nowDate, market.getEndTime()) > 0) throw new ServiceException("活动已结束");
-        UserVo userVo = userService.queryById(userId);
+        UserVo userVo = userService.queryById(userId, bo.getSupportChannel());
         if (ObjectUtil.isEmpty(userVo)) throw new ServiceException("未查到你的用户信息");
         // 判断上次登录时间是否小于指定时间
         if (DateUtils.compare(userVo.getLastLoginDate(), market.getDateSpecific()) < 0) {
