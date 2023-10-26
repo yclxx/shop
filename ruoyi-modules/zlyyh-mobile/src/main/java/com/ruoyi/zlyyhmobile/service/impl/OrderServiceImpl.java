@@ -319,22 +319,24 @@ public class OrderServiceImpl implements IOrderService {
                 // 修改订单信息
                 updateOrder(order);
             }
-            if (StringUtils.isBlank(order.getExternalProductId()) || (("3".equals(order.getOrderType()) || "10".equals(order.getOrderType()) || "4".equals(order.getOrderType())) && null == order.getExternalProductSendValue())) {
-                if (null == productVo || (!"9".equals(productVo.getProductType()) && StringUtils.isBlank(productVo.getExternalProductId()))) {
-                    log.error("订单发券错误，缺少供应商产品ID：{}", number);
-                    // 处理结果
-                    sendResult(R.fail("缺少供应商产品ID"), orderPushInfo, order, cache, false);
-                    return;
+            if (!"16".equals(order.getOrderType())) {
+                if (StringUtils.isBlank(order.getExternalProductId()) || (("3".equals(order.getOrderType()) || "10".equals(order.getOrderType()) || "4".equals(order.getOrderType())) && null == order.getExternalProductSendValue())) {
+                    if (null == productVo || (!"9".equals(productVo.getProductType()) && StringUtils.isBlank(productVo.getExternalProductId()))) {
+                        log.error("订单发券错误，缺少供应商产品ID：{}", number);
+                        // 处理结果
+                        sendResult(R.fail("缺少供应商产品ID"), orderPushInfo, order, cache, false);
+                        return;
+                    }
+                    if (("3".equals(order.getOrderType()) || "10".equals(order.getOrderType()) || "4".equals(order.getOrderType())) && null == order.getExternalProductSendValue() && null == productVo.getExternalProductSendValue()) {
+                        log.error("订单发券错误，缺少发放金额：{}", number);
+                        sendResult(R.fail("缺少发放金额"), orderPushInfo, order, cache, false);
+                        return;
+                    }
+                    order.setExternalProductId(productVo.getExternalProductId());
+                    order.setExternalProductSendValue(productVo.getExternalProductSendValue());
+                    orderPushInfo.setExternalProductId(order.getExternalProductId());
+                    orderPushInfo.setExternalProductSendValue(order.getExternalProductSendValue());
                 }
-                if (("3".equals(order.getOrderType()) || "10".equals(order.getOrderType()) || "4".equals(order.getOrderType())) && null == order.getExternalProductSendValue() && null == productVo.getExternalProductSendValue()) {
-                    log.error("订单发券错误，缺少发放金额：{}", number);
-                    sendResult(R.fail("缺少发放金额"), orderPushInfo, order, cache, false);
-                    return;
-                }
-                order.setExternalProductId(productVo.getExternalProductId());
-                order.setExternalProductSendValue(productVo.getExternalProductSendValue());
-                orderPushInfo.setExternalProductId(order.getExternalProductId());
-                orderPushInfo.setExternalProductSendValue(order.getExternalProductSendValue());
             }
             // 通过银联分销分账，生成code
             if ("1".equals(order.getUnionPay()) && !"12".equals(order.getOrderType())) {
