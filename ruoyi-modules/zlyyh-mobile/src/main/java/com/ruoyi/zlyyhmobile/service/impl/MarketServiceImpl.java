@@ -28,6 +28,7 @@ import com.ruoyi.zlyyhmobile.service.IMarketService;
 import com.ruoyi.zlyyhmobile.service.IOrderService;
 import com.ruoyi.zlyyhmobile.service.IUserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -45,14 +46,14 @@ public class MarketServiceImpl implements IMarketService {
     /**
      * 查看平台新用户营销信息(默认获取最新一条的数据)
      */
-    //@Cacheable(cacheNames = CacheNames.userMarket, key = "#bo.getPlatformKey()+'-'+#bo.getSupportChannel()")
+    @Cacheable(cacheNames = CacheNames.marketInfo, key = "#bo.getPlatformKey()+'-'+#bo.getSupportChannel()")
     @Override
     public MarketVo queryMarketVo(MarketBo bo) {
         LambdaQueryWrapper<Market> lqw = buildQueryWrapper(bo);
         return baseMapper.selectVoOne(lqw);
     }
 
-    //@Cacheable(cacheNames = CacheNames.userMarketLog, key = "#bo.getPlatformKey()+'-'+#userId")
+    @Cacheable(cacheNames = CacheNames.marketLog, key = "#bo.getPlatformKey()+'-'+#userId")
     @Override
     public MarketLog queryMarketLogVo(MarketBo bo, Long userId) {
         return this.buildMarketLogQuery(bo, userId);
@@ -67,8 +68,9 @@ public class MarketServiceImpl implements IMarketService {
 
         // 判断用户是否已经领取奖励
         MarketLog marketLog = this.buildMarketLogQuery(bo, userId);
+        // 记录不为空，并且状态为没有被领取
         if (ObjectUtil.isNotEmpty(marketLog) && !marketLog.getStatus().equals("0")) {
-            throw new ServiceException("您已领取奖励");
+            throw new ServiceException("你已领取奖励");
         }
         // 获取当前时间
         Date nowDate = DateUtils.getNowDate();
@@ -84,6 +86,7 @@ public class MarketServiceImpl implements IMarketService {
                 Action action = actionMapper.selectById(market.getActionId());
                 ActionBo actionBo = new ActionBo();
                 actionBo.setActionNo(action.getActionNo());
+                // 领取优惠券
                 Coupon coupon = actionService.insertUserCoupon(actionBo, userId);
                 if (ObjectUtil.isNotEmpty(coupon)) {
                     if (ObjectUtil.isEmpty(marketLog)) {
@@ -94,10 +97,11 @@ public class MarketServiceImpl implements IMarketService {
                     marketLogMapper.updateById(marketLog);
                     // 清除缓存
                     String key = market.getPlatformKey() + "-" + userId;
-                    CacheUtils.evict(CacheNames.userMarketLog, key);
+                    CacheUtils.evict(CacheNames.marketLog, key);
                     return marketLog;
                 }
             } else if (market.getRewardType().equals("3")) {
+                // 商品
                 CreateOrderBo createOrderBo = new CreateOrderBo();
                 createOrderBo.setProductId(market.getProductId());
                 createOrderBo.setUserId(userId);
@@ -114,12 +118,14 @@ public class MarketServiceImpl implements IMarketService {
                     marketLogMapper.updateById(marketLog);
                     // 清除缓存
                     String key = market.getPlatformKey() + "-" + userId;
-                    CacheUtils.evict(CacheNames.userMarketLog, key);
+                    CacheUtils.evict(CacheNames.marketLog, key);
                     return marketLog;
                 }
             } else {
                 throw new ServiceException("领取失败");
             }
+        } else {
+            throw new ServiceException("你不符合活动规则");
         }
         return null;
     }

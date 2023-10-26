@@ -195,9 +195,9 @@ public interface CacheNames {
     /**
      * 新用户营销
      */
-    String userMarket = "userMarket#1d";
+    String marketInfo = "MarketInfo#1d";
     /**
      * 新用户营销奖励信息
      */
-    String userMarketLog = "userMarketLog#1d";
+    String marketLog = "MarketLog#1d";
 }
