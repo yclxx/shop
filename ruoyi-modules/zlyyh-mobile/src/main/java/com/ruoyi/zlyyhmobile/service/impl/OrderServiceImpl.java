@@ -117,7 +117,6 @@ public class OrderServiceImpl implements IOrderService {
     private final IUnionPayChannelService unionPayChannelService;
     private final ICodeService codeService;
     private final CollectiveOrderMapper collectiveOrderMapper;
-    private final ICouponService couponService;
     private final CouponMapper couponMapper;
     private final ProductCouponMapper productCouponMapper;
     private final WxProperties wxProperties;
@@ -371,7 +370,7 @@ public class OrderServiceImpl implements IOrderService {
                 R<Void> result = YsfUtils.memberPointAcquire(order.getNumber(), orderPushInfo.getPushNumber(), orderPushInfo.getExternalProductId(), orderPushInfo.getExternalProductSendValue().longValue(), "0", order.getProductName(), order.getAccount(), sendAccountType, order.getPlatformKey());
                 sendResult(result, orderPushInfo, order, cache, false);
             } else if ("6".equals(order.getOrderType()) || "7".equals(order.getOrderType()) || "8".equals(order.getOrderType())) {
-                R<Void> result = CloudRechargeUtils.doPostCreateOrder(order.getNumber(), orderPushInfo.getExternalProductId(), order.getAccount(), 1, orderPushInfo.getPushNumber());
+                R<Void> result = CloudRechargeUtils.doPostCreateOrder(order.getNumber(), orderPushInfo.getExternalProductId(), order.getAccount(), 1, orderPushInfo.getPushNumber(), null);
                 sendResult(result, orderPushInfo, order, cache, false);
             } else if ("9".equals(order.getOrderType())) {
                 // 券包
@@ -1818,6 +1817,7 @@ public class OrderServiceImpl implements IOrderService {
         return delete > 0;
     }
 
+    @Transactional
     @Override
     public void cancel(Long collectiveNumber, Long userId) {
         CollectiveOrder collectiveOrder = collectiveOrderMapper.selectById(collectiveNumber);

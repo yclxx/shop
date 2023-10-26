@@ -26,9 +26,7 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.common.satoken.utils.LoginHelper;
-import com.ruoyi.zlyyh.domain.MissionGroupProduct;
-import com.ruoyi.zlyyh.domain.MissionUserRecord;
-import com.ruoyi.zlyyh.domain.MissionUserRecordLog;
+import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.DrawBo;
 import com.ruoyi.zlyyh.domain.bo.MissionBo;
 import com.ruoyi.zlyyh.domain.bo.MissionGroupProductBo;
@@ -38,10 +36,7 @@ import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.mapper.MissionGroupProductMapper;
 import com.ruoyi.zlyyh.mapper.MissionUserRecordLogMapper;
 import com.ruoyi.zlyyh.mapper.MissionUserRecordMapper;
-import com.ruoyi.zlyyh.utils.DrawRedisCacheUtils;
-import com.ruoyi.zlyyh.utils.PermissionUtils;
-import com.ruoyi.zlyyh.utils.YsfUtils;
-import com.ruoyi.zlyyh.utils.ZlyyhUtils;
+import com.ruoyi.zlyyh.utils.*;
 import com.ruoyi.zlyyhmobile.domain.bo.CreateOrderBo;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
 import com.ruoyi.zlyyhmobile.domain.vo.UserProductCount;
@@ -96,12 +91,12 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
         if (null == missionGroupVo) {
             return TableDataInfo.build(new ArrayList<>());
         }
-        MissionUserVo missionUserVo = iMissionUserService.queryByUserIdAndGroupId(missionGroupId, LoginHelper.getUserId(), missionGroupVo.getPlatformKey());
-        if (null == missionUserVo) {
+        UserVo userVo = userService.queryById(LoginHelper.getUserId(), ZlyyhUtils.getPlatformChannel());
+        if (null == userVo) {
             return TableDataInfo.build(new ArrayList<>());
         }
         LambdaQueryWrapper<MissionUserRecord> lqw = Wrappers.lambdaQuery();
-        lqw.eq(MissionUserRecord::getMissionUserId, missionUserVo.getMissionUserId());
+        lqw.eq(MissionUserRecord::getMissionUserId, userVo.getUserId());
         lqw.eq(MissionUserRecord::getMissionGroupId, missionGroupId);
         lqw.eq(MissionUserRecord::getStatus, "1");
         Page<MissionUserRecordVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
@@ -119,13 +114,6 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
     @Override
     public MissionUserRecord getDraw(Long missionGroupId, Long userId, Long platformKey, String channel) {
         TimeInterval timer = DateUtil.timer();
-        MissionUserVo missionUserVo = iMissionUserService.queryByUserIdAndGroupId(missionGroupId, userId, platformKey);
-        if (null == missionUserVo) {
-            throw new ServiceException("未找到用户信息，请退出重试");
-        }
-        if (!"0".equals(missionUserVo.getStatus())) {
-            throw new ServiceException("禁止参与");
-        }
         UserVo userVo = userService.queryById(userId, channel);
         if (null == userVo || "0".equals(userVo.getReloadUser()) || StringUtils.isBlank(userVo.getMobile())) {
             throw new ServiceException("登录超时，请退出重试[user]", HttpStatus.HTTP_UNAUTHORIZED);
@@ -140,7 +128,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
         if (null != missionGroupVo.getEndDate() && DateUtils.compare(missionGroupVo.getEndDate()) < 0) {
             throw new ServiceException("活动已结束");
         }
-        ZlyyhUtils.checkCity(missionGroupVo.getShowCity(), platformService.queryById(platformKey, ZlyyhUtils.getPlatformChannel()));
+        ZlyyhUtils.checkCity(missionGroupVo.getShowCity());
         // 上锁
         String lockKey = "lockKey:" + userId;
         final LockInfo lockInfo = lockTemplate.lock(lockKey, 30000L, 5000L, RedissonLockExecutor.class);
@@ -149,12 +137,12 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
         }
         // 获取锁成功，处理业务
         try {
-            MissionUserRecord missionUserRecord = this.getMissionUserRecord(missionUserVo.getMissionUserId(), missionGroupId, missionGroupVo.getPlatformKey());
+            MissionUserRecord missionUserRecord = this.getMissionUserRecord(userVo.getUserId(), missionGroupId, missionGroupVo.getPlatformKey());
             if (null == missionUserRecord) {
                 throw new ServiceException("暂无抽奖机会~");
             }
             MissionUserRecordEvent missionUserRecordEvent = new MissionUserRecordEvent();
-            List<DrawVo> drawVos = this.getDrawListByCache(missionUserVo.getMissionUserId(), missionGroupId, platformKey, missionUserRecordEvent);
+            List<DrawVo> drawVos = this.getDrawListByCache(userVo.getUserId(), missionGroupId, platformKey, missionUserRecordEvent);
             if (ObjectUtil.isEmpty(drawVos)) {
                 throw new ServiceException("奖品已发完");
             }
@@ -232,8 +220,8 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
                 log.error("奖品发放中，或已发放成功：{}", missionUserRecordId);
                 return;
             }
-            MissionVo missionVo = missionService.queryById(missionUserRecord.getMissionId());
-            if (null == missionVo) {
+            MissionGroupVo missionGroupVo = missionGroupService.queryById(missionUserRecord.getMissionGroupId());
+            if (null == missionGroupVo) {
                 return;
             }
             // 新增发券记录
@@ -264,16 +252,19 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
             }
             if ("0".equals(missionUserRecord.getDrawType())) {
                 // 0银联票券
-                R<JSONObject> result = YsfUtils.sendCoupon(missionUserRecord.getMissionUserRecordId(), missionUserRecordLog.getPushNumber(), missionUserRecordLog.getExternalProductId(), missionUserRecord.getSendAccount(), 1L, "1", missionVo.getPlatformKey());
+                R<JSONObject> result = YsfUtils.sendCoupon(missionUserRecord.getMissionUserRecordId(), missionUserRecordLog.getPushNumber(), missionUserRecordLog.getExternalProductId(), missionUserRecord.getSendAccount(), 1L, "1", missionGroupVo.getPlatformKey());
                 // 处理结果
                 sendResult(result, missionUserRecord, missionUserRecordLog, true);
             } else if ("1".equals(missionUserRecord.getDrawType())) {
                 // 1云闪付红包
-                R<Void> result = YsfUtils.sendAcquire(missionUserRecord.getMissionUserRecordId(), missionUserRecordLog.getPushNumber(), missionUserRecord.getSendAccount(), "1", missionUserRecordLog.getExternalProductId(), missionUserRecordLog.getSendValue(), missionUserRecord.getDrawName(), missionUserRecord.getDrawId(), missionVo.getPlatformKey());
+                R<Void> result = YsfUtils.sendAcquire(missionUserRecord.getMissionUserRecordId(), missionUserRecordLog.getPushNumber(), missionUserRecord.getSendAccount(), "1", missionUserRecordLog.getExternalProductId(), missionUserRecordLog.getSendValue(), missionUserRecord.getDrawName(), missionUserRecord.getDrawId(), missionGroupVo.getPlatformKey());
                 sendResult(result, missionUserRecord, missionUserRecordLog, false);
             } else if ("2".equals(missionUserRecord.getDrawType())) {
                 // 2云闪付积点
-                R<Void> result = YsfUtils.memberPointAcquire(missionUserRecord.getMissionUserRecordId(), missionUserRecordLog.getPushNumber(), missionUserRecordLog.getExternalProductId(), missionUserRecordLog.getSendValue().longValue(), "0", missionUserRecord.getDrawName(), missionUserRecord.getSendAccount(), "1", missionVo.getPlatformKey());
+                R<Void> result = YsfUtils.memberPointAcquire(missionUserRecord.getMissionUserRecordId(), missionUserRecordLog.getPushNumber(), missionUserRecordLog.getExternalProductId(), missionUserRecordLog.getSendValue().longValue(), "0", missionUserRecord.getDrawName(), missionUserRecord.getSendAccount(), "1", missionGroupVo.getPlatformKey());
+                sendResult(result, missionUserRecord, missionUserRecordLog, false);
+            } else if ("3".equals(missionUserRecord.getDrawType())) {
+                R<Void> result = CloudRechargeUtils.doPostCreateOrder(missionUserRecord.getMissionUserRecordId(), missionUserRecordLog.getExternalProductId(), missionUserRecord.getSendAccount(), 1, missionUserRecordLog.getPushNumber(), "/zlyyh-mobile/missionUserRecord/ignore/orderCallback");
                 sendResult(result, missionUserRecord, missionUserRecordLog, false);
             }
         } finally {
@@ -315,16 +306,21 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
 
     private void sendResult(R result, MissionUserRecord missionUserRecord, MissionUserRecordLog missionUserRecordLog, boolean warnQueryCoupon) {
         if (R.isSuccess(result)) {
-            // 发放成功
-            missionUserRecordLog.setStatus("1");
-            missionUserRecord.setSendStatus("2");
-            if (null != result.getData()) {
-                missionUserRecordLog.setRemark(JSONObject.toJSONString(result.getData()));
+            if (missionUserRecord.getDrawType().equals("3")) {
+                JSONObject data = (JSONObject) result.getData();
+                rechargeResult(data, missionUserRecordLog, missionUserRecord);
             } else {
-                missionUserRecordLog.setRemark(result.getMsg());
-            }
-            if (StringUtils.isNotBlank(missionUserRecordLog.getRemark()) && missionUserRecordLog.getRemark().length() >= 5000) {
-                missionUserRecordLog.setRemark(missionUserRecordLog.getRemark().substring(0, 4900));
+                // 发放成功
+                missionUserRecordLog.setStatus("1");
+                missionUserRecord.setSendStatus("2");
+                if (null != result.getData()) {
+                    missionUserRecordLog.setRemark(JSONObject.toJSONString(result.getData()));
+                } else {
+                    missionUserRecordLog.setRemark(result.getMsg());
+                }
+                if (StringUtils.isNotBlank(missionUserRecordLog.getRemark()) && missionUserRecordLog.getRemark().length() >= 5000) {
+                    missionUserRecordLog.setRemark(missionUserRecordLog.getRemark().substring(0, 4900));
+                }
             }
         } else {
             if (R.FAIL == result.getCode()) {
@@ -372,9 +368,15 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
         if (null == missionVo) {
             return;
         }
-        R<JSONObject> result = YsfUtils.queryCoupon(missionUserRecordLog.getMissionUserRecordId(), missionUserRecordLog.getPushNumber(), missionUserRecordLog.getCreateTime(), missionVo.getPlatformKey());
-        // 处理结果
-        sendResult(result, missionUserRecord, missionUserRecordLog, false);
+        if ("3".equals(missionUserRecord.getDrawType())) {
+            R<JSONObject> result = CloudRechargeUtils.doPostQueryOrder(missionUserRecordLog.getMissionUserRecordId(), missionUserRecordLog.getPushNumber());
+            sendResult(result, missionUserRecord, missionUserRecordLog, false);
+        } else if ("0".equals(missionUserRecord.getDrawType())) {
+            R<JSONObject> result = YsfUtils.queryCoupon(missionUserRecordLog.getMissionUserRecordId(), missionUserRecordLog.getPushNumber(), missionUserRecordLog.getCreateTime(), missionVo.getPlatformKey());
+            // 处理结果
+            sendResult(result, missionUserRecord, missionUserRecordLog, false);
+        }
+
     }
 
     /**
@@ -382,17 +384,57 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
      *
      * @param missionGroupId 任务组ID
      * @param userId         用户ID
-     * @param platformKey    平台标识
      * @return 剩余抽奖次数
      */
     @Override
-    public Long getUserDrawCount(Long missionGroupId, Long userId, Long platformKey) {
-        MissionUserVo missionUserVo = iMissionUserService.queryByUserIdAndGroupId(missionGroupId, userId, platformKey);
-        if (null == missionUserVo) {
-            return 0L;
+    public Long getUserDrawCount(Long missionGroupId, Long userId) {
+        this.queryMissionAndToUserDraw(userId, missionGroupId);
+        return getDrawCount(userId, missionGroupId);
+    }
+
+    @Override
+    public void cloudRechargeCallback(CloudRechargeEntity huiguyunEntity) {
+        CloudRechargeUtils.getData(huiguyunEntity);
+        JSONObject data = JSONObject.parseObject(huiguyunEntity.getEncryptedData());
+        // 查询订单是否存在
+        MissionUserRecordLog missionUserRecordLog = missionUserRecordLogMapper.selectOne(new LambdaQueryWrapper<MissionUserRecordLog>().eq(MissionUserRecordLog::getPushNumber, data.getString("externalOrderNumber")));
+        if (null == missionUserRecordLog) {
+            throw new ServiceException("订单不存在");
         }
-        this.queryMissionAndToUserDraw(missionUserVo);
-        return getDrawCount(missionUserVo.getMissionUserId(), missionGroupId);
+        MissionUserRecord missionUserRecord = baseMapper.selectById(missionUserRecordLog.getMissionUserRecordId());
+        if (null == missionUserRecord) {
+            throw new ServiceException("订单不存在");
+        }
+        rechargeResult(data, missionUserRecordLog, missionUserRecord);
+        missionUserRecordLogMapper.updateById(missionUserRecordLog);
+        // 修改订单信息
+        baseMapper.updateById(missionUserRecord);
+    }
+
+    /**
+     * 充值中心订单结果处理
+     *
+     * @param data                 订单结果
+     * @param missionUserRecordLog 订单请求信息
+     * @param missionUserRecord    订单信息
+     */
+    private void rechargeResult(JSONObject data, MissionUserRecordLog missionUserRecordLog, MissionUserRecord missionUserRecord) {
+        String state = data.getString("state");
+        missionUserRecordLog.setExternalOrderNumber(data.getString("number"));
+        if ("4".equals(state)) {
+            // 发放成功
+            missionUserRecordLog.setStatus("1");
+            missionUserRecord.setSendStatus("2");
+        } else if ("5".equals(state)) {
+            // 发放失败
+            missionUserRecordLog.setStatus("2");
+            missionUserRecordLog.setRemark(data.getString("remark"));
+            if (StringUtils.isNotBlank(missionUserRecordLog.getRemark()) && missionUserRecordLog.getRemark().length() >= 5000) {
+                missionUserRecordLog.setRemark(missionUserRecordLog.getRemark().substring(0, 4900));
+            }
+            missionUserRecord.setSendStatus("3");
+            missionUserRecord.setFailReason(missionUserRecordLog.getRemark());
+        }
     }
 
     /**
@@ -410,7 +452,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
                 pageQuery.setPageSize(500);
                 TableDataInfo<MissionUserVo> missionUserVoTableDataInfo = iMissionUserService.queryPageList(missionGroupId, pageQuery);
                 for (MissionUserVo row : missionUserVoTableDataInfo.getRows()) {
-                    this.queryMissionAndToUserDraw(row);
+                    this.queryMissionAndToUserDraw(row.getUserId(), row.getMissionGroupId());
                 }
                 int count = pageQuery.getPageNum() * pageQuery.getPageSize();
                 if (count >= missionUserVoTableDataInfo.getTotal()) {
@@ -545,24 +587,24 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
     /**
      * 请求接口赠送奖励
      *
-     * @param missionUserVo 用户信息
+     * @param userId 用户信息
      */
-    private void queryMissionAndToUserDraw(MissionUserVo missionUserVo) {
-        if (null == missionUserVo) {
+    private void queryMissionAndToUserDraw(Long userId, Long missionGroupId) {
+        if (null == userId) {
             return;
         }
-        MissionGroupVo missionGroupVo = missionGroupService.queryById(missionUserVo.getMissionGroupId());
-        if (null == missionGroupVo || !"0".equals(missionGroupVo.getStatus())) {
+        MissionGroupVo missionGroupVo = missionGroupService.queryById(missionGroupId);
+        if (null == missionGroupVo || !"0".equals(missionGroupVo.getStatus()) || StringUtils.isBlank(missionGroupVo.getMissionGroupUpid())) {
             return;
         }
         if (null != missionGroupVo.getEndDate() && DateUtils.compare(missionGroupVo.getEndDate()) < 0) {
             return;
         }
-        UserVo userVo = userService.queryById(missionUserVo.getUserId(), PlatformEnumd.MP_YSF.getChannel());
+        UserVo userVo = userService.queryById(userId, PlatformEnumd.MP_YSF.getChannel());
         if (null == userVo || StringUtils.isBlank(userVo.getOpenId())) {
             return;
         }
-        PlatformVo platformVo = platformService.queryById(missionUserVo.getPlatformKey(), PlatformEnumd.MP_YSF.getChannel());
+        PlatformVo platformVo = platformService.queryById(missionGroupVo.getPlatformKey(), PlatformEnumd.MP_YSF.getChannel());
         if (null == platformVo) {
             return;
         }
@@ -583,14 +625,14 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
                 continue;
             }
             // 赠送奖励
-            sendRecord(missionVo, missionUserVo, result.getData());
+            sendRecord(missionVo, userVo, result.getData());
         }
     }
 
-    private void sendRecord(MissionVo missionVo, MissionUserVo missionUserVo, Integer missionCount) {
+    private void sendRecord(MissionVo missionVo, UserVo userVo, Integer missionCount) {
         if ("0".equals(missionVo.getMissionAwardType())) {
             // 查询用户累计获得机会
-            Long totalCount = getUserRecordCount(missionUserVo, DateType.TOTAL);
+            Long totalCount = getUserRecordCount(userVo.getUserId(), missionVo.getMissionGroupId(), DateType.TOTAL);
             long count = missionCount - totalCount;
             if (count <= 0) {
                 log.info("用户累计获得抽奖机会：{}，任务完成次数：{}", totalCount, missionCount);
@@ -598,7 +640,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
             }
             // 赠送抽奖机会
             if (missionVo.getUserCountDay() > 0) {
-                Long ac = getUserRecordCount(missionUserVo, DateType.DAY);
+                Long ac = getUserRecordCount(userVo.getUserId(), missionVo.getMissionGroupId(), DateType.DAY);
                 if (count + ac > missionVo.getUserCountDay()) {
                     count = missionVo.getUserCountDay() - ac;
                 }
@@ -608,7 +650,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
                 }
             }
             if (missionVo.getUserCountWeek() > 0) {
-                Long ac = getUserRecordCount(missionUserVo, DateType.WEEK);
+                Long ac = getUserRecordCount(userVo.getUserId(), missionVo.getMissionGroupId(), DateType.WEEK);
                 if (count + ac > missionVo.getUserCountWeek()) {
                     count = missionVo.getUserCountWeek() - ac;
                 }
@@ -618,7 +660,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
                 }
             }
             if (missionVo.getUserCountMonth() > 0) {
-                Long ac = getUserRecordCount(missionUserVo, DateType.MONTH);
+                Long ac = getUserRecordCount(userVo.getUserId(), missionVo.getMissionGroupId(), DateType.MONTH);
                 if (count + ac > missionVo.getUserCountMonth()) {
                     count = missionVo.getUserCountMonth() - ac;
                 }
@@ -631,7 +673,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
                 MissionUserRecord add = new MissionUserRecord();
                 add.setMissionId(missionVo.getMissionId());
                 add.setMissionGroupId(missionVo.getMissionGroupId());
-                add.setMissionUserId(missionUserVo.getUserId());
+                add.setMissionUserId(userVo.getUserId());
                 Date expiryDate = null;
                 if ("1".equals(missionVo.getAwardExpiryType())) {
                     try {
@@ -654,16 +696,16 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
                 PermissionUtils.setPlatformDeptIdAndUserId(add, missionVo.getPlatformKey(), true, false);
                 boolean flag = baseMapper.insert(add) > 0;
                 if (!flag) {
-                    log.error("赠送用户抽奖机会失败，活动用户信息：{}，任务信息：{}", missionUserVo, missionVo);
+                    log.error("赠送用户抽奖机会失败，活动用户Id：{}，任务信息：{}", userVo.getUserId(), missionVo);
                 }
             }
         }
     }
 
-    private Long getUserRecordCount(MissionUserVo missionUserVo, DateType dateType) {
+    private Long getUserRecordCount(Long userId, Long missionGroupId, DateType dateType) {
         LambdaQueryWrapper<MissionUserRecord> lqw = Wrappers.lambdaQuery();
-        lqw.eq(MissionUserRecord::getMissionUserId, missionUserVo.getMissionUserId());
-        lqw.eq(MissionUserRecord::getMissionGroupId, missionUserVo.getMissionGroupId());
+        lqw.eq(MissionUserRecord::getMissionUserId, userId);
+        lqw.eq(MissionUserRecord::getMissionGroupId, missionGroupId);
         lqw.isNotNull(MissionUserRecord::getCreateTime);
         if (null != dateType) {
             if (dateType == DateType.DAY) {

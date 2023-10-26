@@ -5,6 +5,7 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.MissionUserRecord;
 import com.ruoyi.zlyyh.domain.bo.MissionGroupProductBo;
 import com.ruoyi.zlyyh.domain.vo.MissionUserRecordVo;
+import com.ruoyi.zlyyh.utils.CloudRechargeEntity;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
 import com.ruoyi.zlyyhmobile.domain.vo.UserProductCount;
 
@@ -22,7 +23,14 @@ public interface IMissionUserRecordService {
 
     MissionUserRecord getDraw(Long missionGroupId, Long userId, Long platformKey, String channel);
 
-    Long getUserDrawCount(Long missionGroupId, Long userId, Long platformKey);
+    Long getUserDrawCount(Long missionGroupId, Long userId);
+
+    /**
+     * 充值中心订单回调
+     *
+     * @param cloudRechargeEntity 通知参数
+     */
+    void cloudRechargeCallback(CloudRechargeEntity cloudRechargeEntity);
 
     /**
      * 发奖

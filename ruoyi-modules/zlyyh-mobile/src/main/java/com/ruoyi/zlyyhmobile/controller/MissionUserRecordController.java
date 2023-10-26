@@ -13,6 +13,7 @@ import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.zlyyh.domain.MissionUserRecord;
 import com.ruoyi.zlyyh.domain.bo.MissionGroupProductBo;
 import com.ruoyi.zlyyh.domain.vo.MissionUserRecordVo;
+import com.ruoyi.zlyyh.utils.CloudRechargeEntity;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
 import com.ruoyi.zlyyhmobile.domain.vo.UserProductCount;
@@ -67,13 +68,22 @@ public class MissionUserRecordController extends BaseController {
     }
 
     /**
+     * 订单回调通知
+     */
+    @RequestMapping("/ignore/orderCallback")
+    public R<Void> orderCallback(@RequestBody CloudRechargeEntity huiguyunEntity) {
+        iMissionUserRecordService.cloudRechargeCallback(huiguyunEntity);
+        return R.ok();
+    }
+
+    /**
      * 获取用户剩余抽奖机会
      *
      * @param missionGroupId 任务组ID
      */
     @GetMapping("/getUserDrawCount/{missionGroupId}")
     public R<Long> getUserDrawCount(@NotNull(message = "缺少任务组编号") @PathVariable Long missionGroupId) {
-        return R.ok(iMissionUserRecordService.getUserDrawCount(missionGroupId, LoginHelper.getUserId(), ZlyyhUtils.getPlatformId()));
+        return R.ok(iMissionUserRecordService.getUserDrawCount(missionGroupId, LoginHelper.getUserId()));
     }
 
     /**
