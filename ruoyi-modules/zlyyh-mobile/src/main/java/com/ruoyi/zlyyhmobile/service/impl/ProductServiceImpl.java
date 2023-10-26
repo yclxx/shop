@@ -13,13 +13,17 @@ import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.common.satoken.utils.LoginHelper;
+import com.ruoyi.zlyyh.domain.Platform;
 import com.ruoyi.zlyyh.domain.Product;
 import com.ruoyi.zlyyh.domain.bo.ProductBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
+import com.ruoyi.zlyyh.mapper.PlatformMapper;
 import com.ruoyi.zlyyh.mapper.ProductMapper;
+import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.service.*;
+import com.sun.javafx.PlatformUtil;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.cache.annotation.Cacheable;
@@ -47,6 +51,7 @@ public class ProductServiceImpl implements IProductService {
     private final IShopService shopService;
     private final IProductInfoService productInfoService;
     private final IProductTicketService productTicketService;
+    private final PlatformMapper platformMapper;
 
     /**
      * 查询商品
@@ -345,7 +350,7 @@ public class ProductServiceImpl implements IProductService {
     private LambdaQueryWrapper<Product> buildQueryWrapper(ProductBo bo) {
         LambdaQueryWrapper<Product> lqw = Wrappers.lambdaQuery();
         lqw.eq(StringUtils.isNotBlank(bo.getProductType()), Product::getProductType, bo.getProductType());
-        lqw.eq(bo.getPlatformKey() != null, Product::getPlatformKey, bo.getPlatformKey());
+
         lqw.eq(Product::getStatus, "0");
         lqw.eq(StringUtils.isNotBlank(bo.getSearch()), Product::getSearch, bo.getSearch());
         lqw.eq(StringUtils.isNotBlank(bo.getSearchStatus()), Product::getSearchStatus, bo.getSearchStatus());
@@ -402,6 +407,33 @@ public class ProductServiceImpl implements IProductService {
             }
             lqw.in(Product::getProductId, commercialTenantProductVos.stream().map(CommercialTenantProductVo::getProductId).collect(Collectors.toList()));
         }
+        if (ObjectUtil.isNotEmpty(bo.getPlatformKey())){
+            PlatformVo platformVo = platformMapper.selectVoById(bo.getPlatformKey());
+            String supportSupplier = platformVo.getSupportSupplier();
+            if (ObjectUtil.isNotEmpty(supportSupplier)){
+                if ("All".equals(supportSupplier)){
+                    lqw.and(lm -> {
+                        lm.eq(bo.getPlatformKey() != null, Product::getPlatformKey, bo.getPlatformKey()).or().isNull(Product::getPlatformKey);
+                    });
+
+                } else {
+                    List<String> supportSupplierIds = Arrays.asList(supportSupplier.split(","));
+                    lqw.and(lm -> {
+                        lm.eq(bo.getPlatformKey() != null, Product::getPlatformKey, bo.getPlatformKey());
+                        if(ObjectUtil.isNotEmpty(supportSupplierIds)){
+                            lm.in(Product::getSupplier,supportSupplierIds);
+                        }
+                    });
+                }
+
+            }else {
+                lqw.eq(bo.getPlatformKey() != null, Product::getPlatformKey, bo.getPlatformKey());
+            }
+
+        }
+
+
+
         lqw.last("order by sort asc,update_time desc,product_id desc");
         return lqw;
     }
