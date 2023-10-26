@@ -7,6 +7,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <resultMap type="com.ruoyi.zlyyh.domain.MissionGroupProduct" id="MissionGroupProductResult">
     <result property="id" column="id"/>
     <result property="missionGroupId" column="mission_group_id"/>
+    <result property="missionId" column="mission_id"/>
     <result property="productId" column="product_id"/>
     <result property="sort" column="sort"/>
     <result property="createBy" column="create_by"/>

@@ -145,6 +145,7 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         collectiveOrder.setOrderCityName(bo.getCityName());
         collectiveOrder.setPlatformKey(platformVo.getPlatformKey());
         collectiveOrder.setStatus("0");
+        collectiveOrder.setExpireDate(DateUtil.offsetMinute(new Date(), 15).toJdkDate());
         // 生成订单
         Order order = new Order();
         order.setNumber(IdUtil.getSnowflakeNextId());
@@ -157,7 +158,7 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         order.setProductImg(productVo.getProductImg());
         order.setPickupMethod(productVo.getPickupMethod());
         order.setSupportChannel(ZlyyhUtils.getPlatformChannel());
-        order.setExpireDate(DateUtil.offsetMinute(new Date(), 15).toJdkDate());
+        order.setExpireDate(collectiveOrder.getExpireDate());
         order.setStatus("0");
         if ("1".equals(productVo.getSendAccountType())) {
             order.setAccount(userVo.getOpenId());

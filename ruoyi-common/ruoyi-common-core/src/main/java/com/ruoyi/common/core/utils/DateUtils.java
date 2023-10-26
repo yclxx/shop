@@ -1,12 +1,12 @@
 package com.ruoyi.common.core.utils;
 
+import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.time.DateFormatUtils;
-import org.springframework.util.StringUtils;
 
 import java.lang.management.ManagementFactory;
 import java.text.ParseException;
@@ -203,7 +203,11 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
     }
 
     public static void main(String[] args) {
-        System.out.println(getDatePoorDay(new Date(), parseDate("2023-07-11"), true));
+        Date nowDate = getNowDate();
+        DateTime yesterday = DateUtil.tomorrow();
+        System.out.println(nowDate);
+        System.out.println(yesterday);
+        System.out.println(DateUtils.compare(nowDate,yesterday));
     }
 
     /**

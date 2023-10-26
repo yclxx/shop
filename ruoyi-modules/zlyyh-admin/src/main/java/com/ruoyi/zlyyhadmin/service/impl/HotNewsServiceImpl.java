@@ -77,7 +77,7 @@ public class HotNewsServiceImpl implements IHotNewsService {
     /**
      * 新增热门搜索配置
      */
-    @CacheEvict(cacheNames = CacheNames.hotNews, key = "#bo.getPlatformKey()")
+    @CacheEvict(cacheNames = CacheNames.hotNews, key = "#bo.getPlatformKey()+'-'+#bo.getSupportChannel()")
     @Override
     public Boolean insertByBo(HotNewsBo bo) {
         HotNews add = BeanUtil.toBean(bo, HotNews.class);
@@ -92,7 +92,7 @@ public class HotNewsServiceImpl implements IHotNewsService {
     /**
      * 修改热门搜索配置
      */
-    @CacheEvict(cacheNames = CacheNames.hotNews, key = "#bo.getPlatformKey()")
+    @CacheEvict(cacheNames = CacheNames.hotNews, key = "#bo.getPlatformKey()+'-'+#bo.getSupportChannel()")
     @Override
     public Boolean updateByBo(HotNewsBo bo) {
         HotNews update = BeanUtil.toBean(bo, HotNews.class);

@@ -113,7 +113,7 @@ public class MissionUserRecordController extends BaseController {
      */
     @GetMapping("/getUserProductPayCount/{missionGroupId}")
     public R<UserProductCount> getUserProductPayCount(@NotNull(message = "缺少任务编号") @PathVariable Long missionGroupId) {
-        return R.ok(iMissionUserRecordService.getUserProductPayCount(missionGroupId, LoginHelper.getUserId()));
+        return R.ok(iMissionUserRecordService.getUserProductPayCount(missionGroupId, missionGroupId, LoginHelper.getUserId()));
     }
 
     /**

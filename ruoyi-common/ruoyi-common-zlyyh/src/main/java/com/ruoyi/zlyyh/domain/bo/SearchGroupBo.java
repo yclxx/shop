@@ -2,14 +2,13 @@ package com.ruoyi.zlyyh.domain.bo;
 
 import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
+import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import javax.validation.constraints.*;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.util.Date;
-
-import java.util.Date;
-import com.ruoyi.common.core.web.domain.BaseEntity;
 
 /**
  * 搜索彩蛋配置业务对象
@@ -95,6 +94,4 @@ public class SearchGroupBo extends BaseEntity {
      * 支持端
      */
     private String supportChannel;
-
-
 }

@@ -40,6 +40,7 @@ public class MarketLogVo {
     @ExcelProperty(value = "用户id")
     private Long userId;
 
+    private String status;
     /**
      * 领取时间
      */

@@ -192,4 +192,12 @@ public interface CacheNames {
      * 微信用户令牌缓存
      */
     String WX_ENTITY = "wxEntity#1d";
+    /**
+     * 新用户营销
+     */
+    String userMarket = "userMarket#1d";
+    /**
+     * 新用户营销奖励信息
+     */
+    String userMarketLog = "userMarketLog#1d";
 }

@@ -1,11 +1,8 @@
 package com.ruoyi.zlyyhmobile.service.impl;
 
-import cn.hutool.core.date.DateField;
-import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.TimeInterval;
 import cn.hutool.core.util.IdUtil;
-import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.http.HttpStatus;
 import com.alibaba.fastjson.JSONObject;
@@ -26,7 +23,9 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.common.satoken.utils.LoginHelper;
-import com.ruoyi.zlyyh.domain.*;
+import com.ruoyi.zlyyh.domain.MissionGroupProduct;
+import com.ruoyi.zlyyh.domain.MissionUserRecord;
+import com.ruoyi.zlyyh.domain.MissionUserRecordLog;
 import com.ruoyi.zlyyh.domain.bo.DrawBo;
 import com.ruoyi.zlyyh.domain.bo.MissionBo;
 import com.ruoyi.zlyyh.domain.bo.MissionGroupProductBo;
@@ -75,6 +74,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
     private final IProductService productService;
     private final IOrderService orderService;
     private final IPlatformService platformService;
+    private final IMissionUserDrawService missionUserDrawService;
     @Autowired
     private LockTemplate lockTemplate;
 
@@ -471,57 +471,90 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
      * @return 结果
      */
     @Override
-    public UserProductCount getUserProductPayCount(Long missionGroupId, Long userId) {
+    public UserProductCount getUserProductPayCount(Long missionGroupId, Long missionId, Long userId) {
+        MissionVo missionVo = null;
+        if (null != missionId) {
+            missionVo = missionService.queryById(missionId);
+        }
         MissionGroupVo missionGroupVo = missionGroupService.queryById(missionGroupId);
         if (null == missionGroupVo) {
-            return new UserProductCount();
+            if (null == missionVo) {
+                return new UserProductCount();
+            } else {
+                missionGroupVo = missionGroupService.queryById(missionVo.getMissionGroupId());
+            }
+            if (null == missionGroupVo) {
+                return new UserProductCount();
+            }
         }
-        List<ProductVo> productVos = missionGroupService.missionProduct(missionGroupId);
+        List<ProductVo> productVos;
+        if (null != missionVo) {
+            productVos = missionGroupService.missionProduct(missionId, missionGroupVo.getPlatformKey());
+            if (ObjectUtil.isEmpty(productVos)) {
+                productVos = missionGroupService.missionProduct(missionGroupId, missionGroupVo.getPlatformKey());
+            }
+        } else {
+            productVos = missionGroupService.missionProduct(missionGroupId, missionGroupVo.getPlatformKey());
+        }
         if (ObjectUtil.isEmpty(productVos)) {
             return new UserProductCount();
         }
-        String redisKey = "UserProductCount:" + missionGroupId + ":" + userId + ":" + DateUtil.today();
+        Long id = null == missionVo ? missionGroupId : missionId;
+        String redisKey = "UserProductCount:" + id + ":" + userId + ":" + DateUtil.today();
         UserProductCount userProductCount = RedisUtils.getCacheObject(redisKey);
         if (null != userProductCount && !userProductCount.isDayPay()) {
             return userProductCount;
         }
-        // 查询用户参与次数
-        OrderVo lastOrder = orderService.getLastOrder(productVos.stream().map(ProductVo::getProductId).collect(Collectors.toList()), userId);
-        if (null == lastOrder) {
+        if (productVos.size() > 1) {
+            // 查询用户参与次数
+            OrderVo lastOrder = orderService.getLastOrder(productVos.stream().map(ProductVo::getProductId).collect(Collectors.toList()), userId);
+            if (null == lastOrder) {
+                userProductCount = new UserProductCount();
+                userProductCount.setProductId(productVos.get(0).getProductId());
+                return userProductCount;
+            }
+            int i = 0;
+            for (int j = 0; j < productVos.size(); j++) {
+                if (productVos.get(j).getProductId().equals(lastOrder.getProductId())) {
+                    i = j;
+                    break;
+                }
+            }
+            i++;
             userProductCount = new UserProductCount();
-            userProductCount.setProductId(productVos.get(0).getProductId());
+            if (DateUtils.compare(lastOrder.getCreateTime(), DateUtil.beginOfDay(new Date())) >= 0) {
+                userProductCount.setDayPay(false);
+                userProductCount.setPayCount(i);
+                if (i >= productVos.size()) {
+                    userProductCount.setProductId(productVos.get(0).getProductId());
+                } else {
+                    userProductCount.setProductId(productVos.get(i).getProductId());
+                }
+                RedisUtils.setCacheObject(redisKey, userProductCount, Duration.ofDays(2));
+            } else if (DateUtils.compare(lastOrder.getCreateTime(), DateUtil.beginOfDay(DateUtil.yesterday())) >= 0 && DateUtils.compare(lastOrder.getCreateTime(), DateUtil.beginOfDay(new Date())) < 0) {
+                if (i >= productVos.size()) {
+                    userProductCount.setPayCount(0);
+                    userProductCount.setProductId(productVos.get(0).getProductId());
+                } else {
+                    userProductCount.setPayCount(i);
+                    userProductCount.setProductId(productVos.get(i).getProductId());
+                }
+            } else {
+                userProductCount.setProductId(productVos.get(0).getProductId());
+            }
+            return userProductCount;
+        } else {
+            ProductVo productVo = productVos.get(0);
+            // 查询用户参与次数
+            Long dayOrderCount = orderService.getDayOrderCount(productVo.getProductId(), userId);
+            userProductCount = new UserProductCount();
+            userProductCount.setProductId(productVo.getProductId());
+            if (dayOrderCount >= productVo.getDayUserCount()) {
+                userProductCount.setDayPay(false);
+                userProductCount.setPayCount(dayOrderCount.intValue());
+            }
             return userProductCount;
         }
-        int i = 0;
-        for (int j = 0; j < productVos.size(); j++) {
-            if (productVos.get(j).getProductId().equals(lastOrder.getProductId())) {
-                i = j;
-                break;
-            }
-        }
-        i++;
-        userProductCount = new UserProductCount();
-        if (DateUtils.compare(lastOrder.getCreateTime(), DateUtil.beginOfDay(new Date())) >= 0) {
-            userProductCount.setDayPay(false);
-            userProductCount.setPayCount(i);
-            if (i >= productVos.size()) {
-                userProductCount.setProductId(productVos.get(0).getProductId());
-            } else {
-                userProductCount.setProductId(productVos.get(i).getProductId());
-            }
-            RedisUtils.setCacheObject(redisKey, userProductCount, Duration.ofDays(2));
-        } else if (DateUtils.compare(lastOrder.getCreateTime(), DateUtil.beginOfDay(DateUtil.yesterday())) >= 0 && DateUtils.compare(lastOrder.getCreateTime(), DateUtil.beginOfDay(new Date())) < 0) {
-            if (i >= productVos.size()) {
-                userProductCount.setPayCount(0);
-                userProductCount.setProductId(productVos.get(0).getProductId());
-            } else {
-                userProductCount.setPayCount(i);
-                userProductCount.setProductId(productVos.get(i).getProductId());
-            }
-        } else {
-            userProductCount.setProductId(productVos.get(0).getProductId());
-        }
-        return userProductCount;
     }
 
     /**
@@ -533,21 +566,18 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
         if (null == missionVo) {
             throw new ServiceException("任务不存在");
         }
-        if (!"0".equals(missionVo.getMissionAffiliation()) && !"1".equals(missionVo.getMissionAffiliation())) {
-            throw new ServiceException("任务配置错误");
-        }
         checkMissionStatus(missionVo.getStatus(), missionVo.getStartDate(), missionVo.getEndDate());
         MissionGroupVo missionGroupVo = missionGroupService.queryById(missionVo.getMissionGroupId());
         if (null == missionGroupVo) {
             throw new ServiceException("任务不存在");
         }
         checkMissionStatus(missionGroupVo.getStatus(), missionGroupVo.getStartDate(), missionGroupVo.getEndDate());
-        UserProductCount userProductPayCount = this.getUserProductPayCount(missionVo.getMissionGroupId(), userId);
+        UserProductCount userProductPayCount = this.getUserProductPayCount(missionVo.getMissionGroupId(), missionId, userId);
         if (null == userProductPayCount || null == userProductPayCount.getProductId()) {
             throw new ServiceException("任务配置错误");
         }
         if (!userProductPayCount.isDayPay()) {
-            throw new ServiceException("今日已参与");
+            throw new ServiceException("今日已达参与上限");
         }
         if ("1".equals(missionVo.getMissionAffiliation())) {
             // 查询是否是62会员 先查缓存
@@ -617,7 +647,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
                 continue;
             }
             // 请求接口查询用户完成任务进度
-            R<Integer> result = YsfUtils.queryMission(missionVo.getMissionUpid(), userVo.getOpenId(), platformVo.getAppId(), platformVo.getSecret(), platformVo.getPlatformKey());
+            R<Long> result = YsfUtils.queryMission(missionVo.getMissionUpid(), userVo.getOpenId(), platformVo.getAppId(), platformVo.getSecret(), platformVo.getPlatformKey());
             if (R.isError(result)) {
                 continue;
             }
@@ -625,98 +655,8 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
                 continue;
             }
             // 赠送奖励
-            sendRecord(missionVo, userVo, result.getData());
+//            missionUserDrawService.sendRecord(missionVo, userVo.getUserId(), result.getData());
         }
-    }
-
-    private void sendRecord(MissionVo missionVo, UserVo userVo, Integer missionCount) {
-        if ("0".equals(missionVo.getMissionAwardType())) {
-            // 查询用户累计获得机会
-            Long totalCount = getUserRecordCount(userVo.getUserId(), missionVo.getMissionGroupId(), DateType.TOTAL);
-            long count = missionCount - totalCount;
-            if (count <= 0) {
-                log.info("用户累计获得抽奖机会：{}，任务完成次数：{}", totalCount, missionCount);
-                return;
-            }
-            // 赠送抽奖机会
-            if (missionVo.getUserCountDay() > 0) {
-                Long ac = getUserRecordCount(userVo.getUserId(), missionVo.getMissionGroupId(), DateType.DAY);
-                if (count + ac > missionVo.getUserCountDay()) {
-                    count = missionVo.getUserCountDay() - ac;
-                }
-                if (count <= 0) {
-                    log.info("用户今日已达获得抽奖机会上限：{}，任务完成次数：{}", missionVo.getUserCountDay(), missionCount);
-                    return;
-                }
-            }
-            if (missionVo.getUserCountWeek() > 0) {
-                Long ac = getUserRecordCount(userVo.getUserId(), missionVo.getMissionGroupId(), DateType.WEEK);
-                if (count + ac > missionVo.getUserCountWeek()) {
-                    count = missionVo.getUserCountWeek() - ac;
-                }
-                if (count <= 0) {
-                    log.info("用户本周已达获得抽奖机会上限：{}，任务完成次数：{}", missionVo.getUserCountWeek(), missionCount);
-                    return;
-                }
-            }
-            if (missionVo.getUserCountMonth() > 0) {
-                Long ac = getUserRecordCount(userVo.getUserId(), missionVo.getMissionGroupId(), DateType.MONTH);
-                if (count + ac > missionVo.getUserCountMonth()) {
-                    count = missionVo.getUserCountMonth() - ac;
-                }
-                if (count <= 0) {
-                    log.info("用户本月已达获得抽奖机会上限：{}，任务完成次数：{}", missionVo.getUserCountMonth(), missionCount);
-                    return;
-                }
-            }
-            for (int i = 0; i < count; i++) {
-                MissionUserRecord add = new MissionUserRecord();
-                add.setMissionId(missionVo.getMissionId());
-                add.setMissionGroupId(missionVo.getMissionGroupId());
-                add.setMissionUserId(userVo.getUserId());
-                Date expiryDate = null;
-                if ("1".equals(missionVo.getAwardExpiryType())) {
-                    try {
-                        expiryDate = DateUtil.parseDate(missionVo.getAwardExpiryDate()).toJdkDate();
-                    } catch (Exception ignored) {
-                    }
-                } else if ("2".equals(missionVo.getAwardExpiryType())) {
-                    if (NumberUtil.isLong(missionVo.getAwardExpiryDate())) {
-                        expiryDate = DateUtil.endOfDay(DateUtil.offsetDay(new Date(), Integer.parseInt(missionVo.getAwardExpiryDate()))).offset(DateField.MILLISECOND, -999).toJdkDate();
-                    }
-                } else if ("3".equals(missionVo.getAwardExpiryType())) {
-                    String format = DateUtil.format(DateUtil.offsetMonth(new Date(), 1), DatePattern.NORM_MONTH_PATTERN);
-                    format = format + missionVo.getAwardExpiryDate();
-                    try {
-                        expiryDate = DateUtil.parseDate(format).toJdkDate();
-                    } catch (Exception ignored) {
-                    }
-                }
-                add.setExpiryTime(expiryDate);
-                PermissionUtils.setPlatformDeptIdAndUserId(add, missionVo.getPlatformKey(), true, false);
-                boolean flag = baseMapper.insert(add) > 0;
-                if (!flag) {
-                    log.error("赠送用户抽奖机会失败，活动用户Id：{}，任务信息：{}", userVo.getUserId(), missionVo);
-                }
-            }
-        }
-    }
-
-    private Long getUserRecordCount(Long userId, Long missionGroupId, DateType dateType) {
-        LambdaQueryWrapper<MissionUserRecord> lqw = Wrappers.lambdaQuery();
-        lqw.eq(MissionUserRecord::getMissionUserId, userId);
-        lqw.eq(MissionUserRecord::getMissionGroupId, missionGroupId);
-        lqw.isNotNull(MissionUserRecord::getCreateTime);
-        if (null != dateType) {
-            if (dateType == DateType.DAY) {
-                lqw.apply("date(create_time) = curdate()");
-            } else if (dateType == DateType.WEEK) {
-                lqw.apply("YEARWEEK(date_format(create_time,'%Y-%m-%d'),1) = YEARWEEK(now(),1)");
-            } else if (dateType == DateType.MONTH) {
-                lqw.apply("DATE_FORMAT(create_time,'%Y%m')=DATE_FORMAT(CURDATE(),'%Y%m')");
-            }
-        }
-        return baseMapper.selectCount(lqw);
     }
 
     private Long getDrawCount(Long missionUserId, Long missionGroupId) {

@@ -202,6 +202,15 @@ public interface IOrderService {
     OrderVo getLastOrder(List<Long> productIds, Long userId);
 
     /**
+     * 获取今日购买次数
+     *
+     * @param productId 产品ID
+     * @param userId     用户ID
+     * @return 最后购买的产品订单
+     */
+    Long getDayOrderCount(Long productId, Long userId);
+
+    /**
      * 查询订单列表
      *
      * @return 订单集合
