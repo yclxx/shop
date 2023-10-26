@@ -799,13 +799,13 @@ public class OrderServiceImpl implements IOrderService {
             order.setTotalAmount(amount.multiply(new BigDecimal(order.getCount())));
             order.setReducedPrice(reducedPrice.multiply(new BigDecimal(order.getCount())));
             order.setWantAmount(order.getTotalAmount().subtract(order.getReducedPrice()));
-            order.setOutAmount(order.getWantAmount());
+
 
             //添加大订单价格
             collectiveOrder.setTotalAmount(amount.multiply(new BigDecimal(order.getCount())));
             collectiveOrder.setReducedPrice(reducedPrice.multiply(new BigDecimal(order.getCount())));
             collectiveOrder.setWantAmount(order.getTotalAmount().subtract(order.getReducedPrice()));
-            collectiveOrder.setOutAmount(collectiveOrder.getWantAmount());
+
 
             if ("12".equals(productVo.getProductType()) || "1".equals(productVo.getUnionPay())) {
                 String externalProductId = "1".equals(productVo.getUnionPay()) ? productVo.getUnionProductId() : productVo.getExternalProductId();
@@ -1130,7 +1130,6 @@ public class OrderServiceImpl implements IOrderService {
                 order.setTotalAmount(amountSmall.multiply(new BigDecimal(orderProductBo.getQuantity())));
                 order.setReducedPrice(reducedPriceOrder);
                 order.setWantAmount(order.getTotalAmount().subtract(order.getReducedPrice()));
-                order.setOutAmount(order.getWantAmount());
                 order = insertOrder(order);
                 orderInfoMapper.insert(orderInfo);
             } catch (Exception e) {
@@ -1147,7 +1146,7 @@ public class OrderServiceImpl implements IOrderService {
         collectiveOrder.setTotalAmount(amount);
         collectiveOrder.setReducedPrice(reducedPrice);
         collectiveOrder.setWantAmount(amount.subtract(reducedPrice));
-        collectiveOrder.setOutAmount(collectiveOrder.getWantAmount());
+
         collectiveOrderMapper.insert(collectiveOrder);
         collectiveOrder = getCollectiveOrder(collectiveOrder.getCollectiveNumber());
         return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), null, "1");
@@ -3116,6 +3115,7 @@ public class OrderServiceImpl implements IOrderService {
             // 修改订单扩展信息
             orderInfoMapper.updateById(orderInfo);
             // 默认交易成功
+            order.setOutAmount(order.getWantAmount());
             order.setStatus("2");
             if (null == order.getPayTime()) {
                 order.setPayTime(DateUtils.getNowDate());
