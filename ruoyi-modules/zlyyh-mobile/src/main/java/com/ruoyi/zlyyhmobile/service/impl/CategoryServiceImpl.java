@@ -14,7 +14,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 栏目Service业务层处理
@@ -48,9 +47,8 @@ public class CategoryServiceImpl implements ICategoryService {
     }
 
     private LambdaQueryWrapper<Category> buildQueryWrapper(CategoryBo bo) {
-        Map<String, Object> params = bo.getParams();
+        //Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<Category> lqw = Wrappers.lambdaQuery();
-
         lqw.eq(bo.getParentId() != null, Category::getParentId, bo.getParentId());
         lqw.eq(bo.getPlatformKey() != null, Category::getPlatformKey, bo.getPlatformKey());
         lqw.eq(StringUtils.isNotBlank(bo.getShowIndex()), Category::getShowIndex, bo.getShowIndex());

@@ -242,6 +242,7 @@ public class OrderController {
     @GetMapping("/getOrderList")
     public TableDataInfo<OrderVo> getOrderList(OrderBo bo, PageQuery pageQuery) {
         bo.setUserId(LoginHelper.getUserId());
+        bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         return orderService.queryPageList(bo, pageQuery);
     }
 

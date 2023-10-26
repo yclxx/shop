@@ -39,6 +39,10 @@ public class MarketLog extends BaseEntity {
      */
     private Long userId;
     /**
+     * 状态
+     */
+    private String status;
+    /**
      * 领取时间
      */
     private Date receiveDate;
