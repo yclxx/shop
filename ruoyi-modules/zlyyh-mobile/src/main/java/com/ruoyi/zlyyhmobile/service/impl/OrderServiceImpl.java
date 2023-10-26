@@ -643,8 +643,10 @@ public class OrderServiceImpl implements IOrderService {
                 throw new ServiceException("单次购买数量不能超过10");
             }
             order.setCount(bo.getPayCount());
+            collectiveOrder.setCount(bo.getPayCount());
         } else {
             order.setCount(1L);
+            collectiveOrder.setCount(1L);
         }
         order.setStatus("0");
         if ("1".equals(productVo.getSendAccountType())) {
