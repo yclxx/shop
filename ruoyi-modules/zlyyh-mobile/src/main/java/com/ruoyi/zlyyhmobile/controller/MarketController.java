@@ -41,6 +41,7 @@ public class MarketController extends BaseController {
     public R<MarketLog> insertUserMarket(@RequestBody MarketBo bo) {
         Long userId = LoginHelper.getUserId();
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         MarketLog marketLog = marketService.insertUserMarket(bo, userId);
         return R.ok(marketLog);
     }
