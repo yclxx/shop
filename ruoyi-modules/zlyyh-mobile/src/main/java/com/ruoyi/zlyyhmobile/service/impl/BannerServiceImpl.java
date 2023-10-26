@@ -47,7 +47,7 @@ public class BannerServiceImpl implements IBannerService {
         });
         if (StringUtils.isNotBlank(bo.getSupportChannel())) {
             lqw.and(lm -> {
-                lm.eq(Banner::getSupportChannel, "ALL").or().likeRight(Banner::getSupportChannel, bo.getSupportChannel());
+                lm.eq(Banner::getSupportChannel, "ALL").or().like(Banner::getSupportChannel, bo.getSupportChannel());
             });
         }
         lqw.last("order by banner_rank asc");

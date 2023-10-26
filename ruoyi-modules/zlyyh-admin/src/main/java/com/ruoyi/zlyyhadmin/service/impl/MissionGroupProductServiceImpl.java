@@ -62,6 +62,7 @@ public class MissionGroupProductServiceImpl implements IMissionGroupProductServi
         Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<MissionGroupProduct> lqw = Wrappers.lambdaQuery();
         lqw.eq(bo.getMissionGroupId() != null, MissionGroupProduct::getMissionGroupId, bo.getMissionGroupId());
+        lqw.eq(bo.getMissionId() != null, MissionGroupProduct::getMissionId, bo.getMissionId());
         lqw.eq(bo.getProductId() != null, MissionGroupProduct::getProductId, bo.getProductId());
         return lqw;
     }

@@ -69,17 +69,13 @@ public class MissionGroupServiceImpl implements IMissionGroupService {
      * @return 商品集合
      */
     @Override
-    public List<ProductVo> missionProduct(Long missionGroupId) {
-        MissionGroupVo missionGroupVo = this.queryById(missionGroupId);
-        if (null == missionGroupVo) {
-            return new ArrayList<>();
-        }
-        List<MissionGroupProductVo> missionGroupProductVos = missionGroupProductMapper.selectVoList(new LambdaQueryWrapper<MissionGroupProduct>().eq(MissionGroupProduct::getMissionGroupId, missionGroupId));
+    public List<ProductVo> missionProduct(Long missionGroupId,Long platformKey) {
+        List<MissionGroupProductVo> missionGroupProductVos = missionGroupProductMapper.selectVoList(new LambdaQueryWrapper<MissionGroupProduct>().eq(MissionGroupProduct::getMissionGroupId, missionGroupId).or().eq(MissionGroupProduct::getMissionId,missionGroupId));
         if (ObjectUtil.isEmpty(missionGroupProductVos)) {
             return new ArrayList<>();
         }
         Map<Long, Long> collect = missionGroupProductVos.stream().collect(HashMap::new, (m, v) -> m.put(v.getProductId(), Optional.ofNullable(v.getSort()).orElse(99L)), HashMap::putAll);
-        List<ProductVo> productVos = productService.queryGrabPeriodProduct((Set) collect.keySet(), ServletUtils.getHeader(ZlyyhConstants.CITY_CODE), null, missionGroupVo.getPlatformKey());
+        List<ProductVo> productVos = productService.queryGrabPeriodProduct((Set) collect.keySet(), ServletUtils.getHeader(ZlyyhConstants.CITY_CODE), null, platformKey);
         if (ObjectUtil.isNotEmpty(productVos)) {
             for (ProductVo productVo : productVos) {
                 productVo.setSort(collect.get(productVo.getProductId()));

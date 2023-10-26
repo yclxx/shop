@@ -59,7 +59,7 @@ public class YsfUtils {
      * @param openId 用户openId
      * @return 返回结果
      */
-    public static R<Integer> queryMission(String missionId, String openId, String appId, String secret, Long platformKey) {
+    public static R<Long> queryMission(String missionId, String openId, String appId, String secret, Long platformKey) {
         try {
             Map<String, String> params = new HashMap<>();
             params.put("appId", appId);
@@ -80,7 +80,7 @@ public class YsfUtils {
                     return R.fail(s);
                 }
                 JSONObject mission = missionProgresses.getJSONObject(0);
-                return R.ok(Optional.ofNullable(mission.getInteger("missionCycleCompleteTimes")).orElse(0));
+                return R.ok(Optional.ofNullable(mission.getLong("missionCycleCompleteTimes")).orElse(0L));
             }
             return R.fail(resultJson.getString("msg"));
         } catch (Exception e) {

@@ -70,7 +70,7 @@ public interface IMissionUserRecordService {
      * @param userId         用户ID
      * @return 结果
      */
-    UserProductCount getUserProductPayCount(Long missionGroupId, Long userId);
+    UserProductCount getUserProductPayCount(Long missionGroupId, Long missionId, Long userId);
 
     /**
      * 购买商品

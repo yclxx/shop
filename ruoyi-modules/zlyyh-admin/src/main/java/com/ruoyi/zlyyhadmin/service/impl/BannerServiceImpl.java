@@ -90,7 +90,7 @@ public class BannerServiceImpl implements IBannerService {
     /**
      * 新增广告管理
      */
-    @CacheEvict(cacheNames = CacheNames.BANNER, key = "#bo.getPlatformKey()+'-'+#bo.supportChannel+'-'+#bo.bannerType+'-'+#bo.pagePath")
+    @CacheEvict(cacheNames = CacheNames.BANNER, allEntries = true)
     @Override
     public Boolean insertByBo(BannerBo bo) {
         Banner add = BeanUtil.toBean(bo, Banner.class);
@@ -105,7 +105,7 @@ public class BannerServiceImpl implements IBannerService {
     /**
      * 修改广告管理
      */
-    @CacheEvict(cacheNames = CacheNames.BANNER, key = "#bo.getPlatformKey()+'-'+#bo.supportChannel+'-'+#bo.bannerType+'-'+#bo.pagePath")
+    @CacheEvict(cacheNames = CacheNames.BANNER, allEntries = true)
     @Override
     public Boolean updateByBo(BannerBo bo) {
         Banner update = BeanUtil.toBean(bo, Banner.class);

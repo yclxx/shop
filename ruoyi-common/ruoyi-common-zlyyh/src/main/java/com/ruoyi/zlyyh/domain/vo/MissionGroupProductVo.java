@@ -33,6 +33,11 @@ public class MissionGroupProductVo {
     private Long missionGroupId;
 
     /**
+     * 任务ID
+     */
+    private Long missionId;
+
+    /**
      * 商品ID
      */
     @ExcelProperty(value = "商品ID")

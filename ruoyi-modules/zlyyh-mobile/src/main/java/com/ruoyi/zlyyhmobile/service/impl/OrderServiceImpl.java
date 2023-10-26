@@ -121,7 +121,7 @@ public class OrderServiceImpl implements IOrderService {
     private final ProductCouponMapper productCouponMapper;
     private final WxProperties wxProperties;
     private final ICartService cartService;
-
+    private final IMissionUserDrawService missionUserDrawService;
     @Autowired
     private LockTemplate lockTemplate;
 
@@ -396,6 +396,14 @@ public class OrderServiceImpl implements IOrderService {
                 }
             } else if ("15".equals(order.getOrderType())) {
                 payCtripFoodOrder(order.getExternalOrderNumber());
+            } else if ("16".equals(order.getOrderType())) {
+                try {
+                    String externalOrderNumber = missionUserDrawService.sendDrawCount(order.getUserId(), order.getProductId());
+                    order.setExternalOrderNumber(externalOrderNumber);
+                    sendResult(R.ok("发放成功"), orderPushInfo, order, cache, false);
+                } catch (Exception e) {
+                    sendResult(R.fail(e.getMessage()), orderPushInfo, order, cache, false);
+                }
             } else {
                 sendResult(R.fail("订单类型无处理方式，请联系技术人员"), orderPushInfo, order, cache, false);
             }
@@ -615,6 +623,7 @@ public class OrderServiceImpl implements IOrderService {
         collectiveOrder.setOrderCityName(bo.getCityName());
         collectiveOrder.setPlatformKey(platformVo.getPlatformKey());
         collectiveOrder.setStatus("0");
+        collectiveOrder.setExpireDate(DateUtil.offsetMinute(new Date(), 15).toJdkDate());
         // 生成订单
         Order order = new Order();
         order.setCollectiveNumber(collectiveOrder.getCollectiveNumber());
@@ -626,7 +635,7 @@ public class OrderServiceImpl implements IOrderService {
         order.setProductImg(productVo.getProductImg());
         order.setPickupMethod(productVo.getPickupMethod());
         order.setSupportChannel(ZlyyhUtils.getPlatformChannel());
-        order.setExpireDate(DateUtil.offsetMinute(new Date(), 15).toJdkDate());
+        order.setExpireDate(collectiveOrder.getExpireDate());
         if (null != bo.getPayCount() && bo.getPayCount() > 0) {
             if (bo.getPayCount() > 10) {
                 throw new ServiceException("单次购买数量不能超过10");
@@ -877,6 +886,7 @@ public class OrderServiceImpl implements IOrderService {
         collectiveOrder.setOrderCityName(bo.getCityName());
         collectiveOrder.setPlatformKey(platformVo.getPlatformKey());
         collectiveOrder.setStatus("0");
+        collectiveOrder.setExpireDate(DateUtil.offsetMinute(new Date(), 15).toJdkDate());
         // 查询是否是62会员 先查缓存
         MemberVipBalanceVo user62VipInfo = userService.getUser62VipInfo(true, userVo.getUserId());
         //查出来购物车中的商品 分为子订单
@@ -1037,7 +1047,7 @@ public class OrderServiceImpl implements IOrderService {
             order.setProductImg(productVo.getProductImg());
             order.setPickupMethod(productVo.getPickupMethod());
             order.setSupportChannel(ZlyyhUtils.getPlatformChannel());
-            order.setExpireDate(DateUtil.offsetMinute(new Date(), 15).toJdkDate());
+            order.setExpireDate(collectiveOrder.getExpireDate());
             if (null != orderProductBo.getQuantity() && orderProductBo.getQuantity() > 0) {
                 if (orderProductBo.getQuantity() > 99) {
                     throw new ServiceException("单次购买数量不能超过99");
@@ -2072,7 +2082,15 @@ public class OrderServiceImpl implements IOrderService {
     public String payOrder(Long collectiveNumber, Long userId) {
         CollectiveOrder collectiveOrder = collectiveOrderMapper.selectById(collectiveNumber);
         if (null == collectiveOrder) {
-            throw new ServiceException("订单不存在");
+            OrderVo orderVo = baseMapper.selectVoById(collectiveNumber);
+            if (null == orderVo) {
+                throw new ServiceException("订单不存在");
+            }
+            collectiveNumber = orderVo.getCollectiveNumber();
+            collectiveOrder = collectiveOrderMapper.selectById(collectiveNumber);
+            if (null == collectiveOrder) {
+                throw new ServiceException("订单不存在");
+            }
         }
         if (!collectiveOrder.getUserId().equals(userId)) {
             throw new ServiceException("登录超时，请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
@@ -2979,6 +2997,22 @@ public class OrderServiceImpl implements IOrderService {
         lqw.eq(Order::getStatus, "2");
         lqw.last("order by create_time desc limit 1");
         return baseMapper.selectVoOne(lqw);
+    }
+
+    /**
+     * 获取今日购买次数
+     *
+     * @param productId 产品ID
+     * @param userId    用户ID
+     * @return 最后购买的产品订单
+     */
+    public Long getDayOrderCount(Long productId, Long userId) {
+        LambdaQueryWrapper<Order> lqw = Wrappers.lambdaQuery();
+        lqw.eq(Order::getProductId, productId);
+        lqw.eq(Order::getUserId, userId);
+        lqw.eq(Order::getStatus, "2");
+        lqw.ge(Order::getCreateTime, DateUtil.beginOfDay(new Date()));
+        return baseMapper.selectCount(lqw);
     }
 
     @Override
