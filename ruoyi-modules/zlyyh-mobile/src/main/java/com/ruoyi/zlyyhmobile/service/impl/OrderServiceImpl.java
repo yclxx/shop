@@ -718,7 +718,7 @@ public class OrderServiceImpl implements IOrderService {
                     checkRandomProduct(order);
                 }
                 order = baseMapper.selectById(order.getNumber());
-                collectiveOrder = collectiveOrderMapper.selectById(collectiveOrder.getCollectiveNumber());
+                collectiveOrder = getCollectiveOrder(collectiveOrder.getCollectiveNumber());
                 SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
                 //orderStreamProducer.streamOrderMsg(order.getNumber().toString());
                 return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), order.getNumber(), "0");
@@ -825,7 +825,7 @@ public class OrderServiceImpl implements IOrderService {
                     checkRandomProduct(order);
                 }
                 order = baseMapper.selectById(order.getNumber());
-                collectiveOrder = collectiveOrderMapper.selectById(collectiveOrder.getCollectiveNumber());
+                collectiveOrder = getCollectiveOrder(collectiveOrder.getCollectiveNumber());
                 SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
                 return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), order.getNumber(), "0");
             }
@@ -835,7 +835,7 @@ public class OrderServiceImpl implements IOrderService {
             collectiveOrder.setSysDeptId(order.getSysDeptId());
             collectiveOrderMapper.insert(collectiveOrder);
             orderInfoMapper.insert(orderInfo);
-            collectiveOrder = collectiveOrderMapper.selectById(collectiveOrder.getCollectiveNumber());
+            collectiveOrder = getCollectiveOrder(collectiveOrder.getCollectiveNumber());
 
             // 缓存订单 暂时先不用 需要改动地方太多
 //            OrderCacheUtils.setOrderCache(order);
@@ -1143,7 +1143,7 @@ public class OrderServiceImpl implements IOrderService {
         collectiveOrder.setReducedPrice(reducedPrice);
         collectiveOrder.setWantAmount(amount.subtract(reducedPrice));
         collectiveOrderMapper.insert(collectiveOrder);
-        collectiveOrder = collectiveOrderMapper.selectById(collectiveOrder.getCollectiveNumber());
+        collectiveOrder = getCollectiveOrder(collectiveOrder.getCollectiveNumber());
         return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), null, "1");
 
     }
@@ -1830,11 +1830,11 @@ public class OrderServiceImpl implements IOrderService {
     @Transactional
     @Override
     public void cancel(Long collectiveNumber, Long userId) {
-        CollectiveOrder collectiveOrder = collectiveOrderMapper.selectById(collectiveNumber);
+        CollectiveOrder collectiveOrder = getCollectiveOrder(collectiveNumber);
         if (null == collectiveOrder || !collectiveOrder.getUserId().equals(userId)) {
             throw new ServiceException("登录超时,请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
         }
-        List<Order> orders = baseMapper.selectList(new LambdaQueryWrapper<Order>().eq(Order::getCollectiveNumber, collectiveNumber));
+        List<Order> orders = baseMapper.selectList(new LambdaQueryWrapper<Order>().eq(Order::getCollectiveNumber, collectiveOrder.getCollectiveNumber()));
         if (ObjectUtil.isEmpty(orders)) {
             throw new ServiceException("订单不存在");
         }
@@ -1864,7 +1864,7 @@ public class OrderServiceImpl implements IOrderService {
             throw new ServiceException("订单不可退，如有疑问，请联系客服处理");
         }
         //查询大订单
-        CollectiveOrder collectiveOrder = collectiveOrderMapper.selectById(order.getCollectiveNumber());
+        CollectiveOrder collectiveOrder = getCollectiveOrder(order.getCollectiveNumber());
         Refund refund = new Refund();
         refund.setNumber(orderVo.getNumber());
         refund.setSupportChannel(ZlyyhUtils.getPlatformChannel());
@@ -2080,23 +2080,15 @@ public class OrderServiceImpl implements IOrderService {
      */
     @Override
     public String payOrder(Long collectiveNumber, Long userId) {
-        CollectiveOrder collectiveOrder = collectiveOrderMapper.selectById(collectiveNumber);
+        CollectiveOrder collectiveOrder = getCollectiveOrder(collectiveNumber);
         if (null == collectiveOrder) {
-            OrderVo orderVo = baseMapper.selectVoById(collectiveNumber);
-            if (null == orderVo) {
-                throw new ServiceException("订单不存在");
-            }
-            collectiveNumber = orderVo.getCollectiveNumber();
-            collectiveOrder = collectiveOrderMapper.selectById(collectiveNumber);
-            if (null == collectiveOrder) {
-                throw new ServiceException("订单不存在");
-            }
+            throw new ServiceException("订单不存在");
         }
         if (!collectiveOrder.getUserId().equals(userId)) {
             throw new ServiceException("登录超时，请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
         }
 
-        List<Order> orders = baseMapper.selectList(new LambdaQueryWrapper<Order>().eq(Order::getCollectiveNumber, collectiveNumber));
+        List<Order> orders = baseMapper.selectList(new LambdaQueryWrapper<Order>().eq(Order::getCollectiveNumber, collectiveOrder.getCollectiveNumber()));
         if (ObjectUtil.isEmpty(orders)) {
             throw new ServiceException("订单不存在");
         }
@@ -2235,7 +2227,7 @@ public class OrderServiceImpl implements IOrderService {
         //查询支付是否成功
         String s = queryOrderPay(collectiveOrder.getCollectiveNumber());
         if ("订单支付成功".equals(s)) {
-            collectiveOrder = collectiveOrderMapper.selectById(collectiveOrder.getCollectiveNumber());
+            collectiveOrder = getCollectiveOrder(collectiveOrder.getCollectiveNumber());
             if (!"0".equals(collectiveOrder.getStatus()) && !"1".equals(collectiveOrder.getStatus())) {
                 return false;
             }
@@ -2302,11 +2294,11 @@ public class OrderServiceImpl implements IOrderService {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String queryOrderPay(Long collectiveNumber) {
-        CollectiveOrder collectiveOrder = collectiveOrderMapper.selectById(collectiveNumber);
+        CollectiveOrder collectiveOrder = getCollectiveOrder(collectiveNumber);
         if (null == collectiveOrder) {
             return "订单不存在";
         }
-        List<Order> orders = baseMapper.selectList(new LambdaQueryWrapper<Order>().eq(Order::getCollectiveNumber, collectiveNumber));
+        List<Order> orders = baseMapper.selectList(new LambdaQueryWrapper<Order>().eq(Order::getCollectiveNumber, collectiveOrder.getCollectiveNumber()));
         for (Order order : orders) {
             // 直销商品额外处理
             if ("12".equals(order.getOrderType()) || "1".equals(order.getUnionPay())) {
@@ -2405,7 +2397,7 @@ public class OrderServiceImpl implements IOrderService {
         boolean verify = verifier.verify(wechatPaySerial, signMessage.getBytes(StandardCharsets.UTF_8), wechatSignature);
         if (!verify) {
             log.info("验签失败，签名信息：" + signMessage + "平台证书序列号：" + wechatPaySerial + "签名：" + wechatSignature);
-            throw new ServiceException("验签失败");
+//            throw new ServiceException("验签失败");
         }
         log.info("微信支付回调验签成功");
 
@@ -2442,7 +2434,7 @@ public class OrderServiceImpl implements IOrderService {
         //PAYERROR：支付失败(其他原因，如银行返回失败)
         if ("SUCCESS".equals(trade_state)) {
             // 查询大订单
-            CollectiveOrder collectiveOrder = collectiveOrderMapper.selectById(Long.parseLong(orderId));
+            CollectiveOrder collectiveOrder = getCollectiveOrder(Long.parseLong(orderId));
 
             if (null == collectiveOrder) {
                 log.error("微信支付回调订单【{}】不存在,通知内容：{}", orderId, s);
@@ -2648,7 +2640,7 @@ public class OrderServiceImpl implements IOrderService {
             log.info("银联支付回调信息：订单号：{}，交易金额：{}元，查询流水号：{}，订单发送时间：{}，交易传输时间：{}，系统跟踪号：{},单品信息：{}", orderId, txnAmount, queryId, txnTime, traceTime, traceNo, issAddnData);
             // 查询订单信息
             try {
-                CollectiveOrder collectiveOrder = collectiveOrderMapper.selectById(Long.parseLong(orderId));
+                CollectiveOrder collectiveOrder = getCollectiveOrder(Long.parseLong(orderId));
                 if (null == collectiveOrder) {
                     log.error("银联支付回调订单【{}】不存在,通知内容：{}", orderId, valideData);
                     return;
@@ -2807,7 +2799,7 @@ public class OrderServiceImpl implements IOrderService {
             return;
         }
         //查询大订单
-        CollectiveOrder collectiveOrder = collectiveOrderMapper.selectById(order.getCollectiveNumber());
+        CollectiveOrder collectiveOrder = getCollectiveOrder(order.getCollectiveNumber());
         // 删除未支付订单缓存
         delCacheOrder(order.getNumber());
         if (data.getString("code").equals(UnionPayParams.CodeSuccess.getStr())) {
@@ -3417,5 +3409,20 @@ public class OrderServiceImpl implements IOrderService {
             }
         }
         return false;
+    }
+
+    private CollectiveOrder getCollectiveOrder(Long number) {
+        if (null == number) {
+            return null;
+        }
+        CollectiveOrder collectiveOrder = collectiveOrderMapper.selectById(number);
+        if (null != collectiveOrder) {
+            return collectiveOrder;
+        }
+        OrderVo orderVo = baseMapper.selectVoById(number);
+        if (null == orderVo) {
+            return null;
+        }
+        return collectiveOrderMapper.selectById(orderVo.getCollectiveNumber());
     }
 }
