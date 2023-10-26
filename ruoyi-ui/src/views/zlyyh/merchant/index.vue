@@ -77,30 +77,34 @@
         <el-form-item label="归属部门" prop="sysDeptId">
           <treeselect v-model="form.sysDeptId" :options="deptOptions" :show-count="true" placeholder="请选择归属部门" />
         </el-form-item>
-        <el-form-item label="商户名称" prop="merchantName">
-          <el-input v-model="form.merchantName" placeholder="请输入商户名称" />
-        </el-form-item>
-        <el-form-item label="商户号" prop="merchantNo">
-          <el-input v-model="form.merchantNo" placeholder="请输入商户号" />
-        </el-form-item>
-        <el-form-item label="证书地址" prop="certPath">
-          <el-input v-model="form.certPath" placeholder="请输入证书地址" />
-          <fileUpload :fileType="['pfx']" v-model="form.certPath" :limit="1" />
-        </el-form-item>
-        <el-form-item label="证书密码" prop="merchantKey">
-          <el-input v-model="form.merchantKey" placeholder="请输入证书密码" />
-        </el-form-item>
         <el-form-item label="商户号类型" prop="merchantType">
           <el-select v-model="form.merchantType" placeholder="请选择商户号类型" style="width: 100%;">
             <el-option v-for="dict in dict.type.t_merchant_type" :key="dict.value" :label="dict.label"
               :value="dict.value"></el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="商户名称" prop="merchantName">
+          <el-input v-model="form.merchantName" placeholder="请输入商户名称" />
+        </el-form-item>
+        <el-form-item label="商户号" prop="merchantNo">
+          <el-input v-model="form.merchantNo" placeholder="请输入商户号" />
+        </el-form-item>
+        <el-form-item label="证书" prop="certPath">
+          <el-input v-model="form.certPath" placeholder="请输入证书地址" />
+          <fileUpload :fileType="['pfx','pem']" v-model="form.certPath" :limit="1" />
+        </el-form-item>
+        <div v-if="form.merchantType && form.merchantType == '1'">
+          <el-form-item label="证书序列号" prop="merchantKey">
+            <el-input v-model="form.merchantKey" placeholder="请输入证书序列号" />
+          </el-form-item>
+        </div>
+        <div v-else>
+          <el-form-item label="证书密码" prop="merchantKey">
+            <el-input v-model="form.merchantKey" placeholder="请输入证书密码" />
+          </el-form-item>
+        </div>
         <el-form-item label="微信V3密钥" prop="apiKey" v-if="form.merchantType && form.merchantType == '1'">
           <el-input v-model="form.apiKey" placeholder="请输入微信V3密钥" />
-        </el-form-item>
-        <el-form-item label="证书密码" prop="merchantKey">
-          <el-input v-model="form.merchantKey" placeholder="请输入证书密码" />
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-select v-model="form.status" placeholder="请选择状态">
@@ -215,7 +219,7 @@
             message: "状态不能为空",
             trigger: "change"
           }],
-          merchant_type: [{
+          merchantType: [{
             required: true,
             message: "商户号类型不能为空",
             trigger: "change"

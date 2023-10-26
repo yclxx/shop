@@ -34,6 +34,7 @@ import com.ruoyi.zlyyh.domain.bo.MissionBo;
 import com.ruoyi.zlyyh.domain.bo.MissionGroupProductBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.enumd.DateType;
+import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.mapper.MissionGroupProductMapper;
 import com.ruoyi.zlyyh.mapper.MissionUserRecordLogMapper;
 import com.ruoyi.zlyyh.mapper.MissionUserRecordMapper;
@@ -116,7 +117,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
      * @return 剩余抽奖次数
      */
     @Override
-    public MissionUserRecord getDraw(Long missionGroupId, Long userId, Long platformKey) {
+    public MissionUserRecord getDraw(Long missionGroupId, Long userId, Long platformKey, String channel) {
         TimeInterval timer = DateUtil.timer();
         MissionUserVo missionUserVo = iMissionUserService.queryByUserIdAndGroupId(missionGroupId, userId, platformKey);
         if (null == missionUserVo) {
@@ -125,7 +126,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
         if (!"0".equals(missionUserVo.getStatus())) {
             throw new ServiceException("禁止参与");
         }
-        UserVo userVo = userService.queryById(userId);
+        UserVo userVo = userService.queryById(userId, channel);
         if (null == userVo || "0".equals(userVo.getReloadUser()) || StringUtils.isBlank(userVo.getMobile())) {
             throw new ServiceException("登录超时，请退出重试[user]", HttpStatus.HTTP_UNAUTHORIZED);
         }
@@ -139,7 +140,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
         if (null != missionGroupVo.getEndDate() && DateUtils.compare(missionGroupVo.getEndDate()) < 0) {
             throw new ServiceException("活动已结束");
         }
-        ZlyyhUtils.checkCity(missionGroupVo.getShowCity(), platformService.queryById(platformKey, ZlyyhUtils.getPlatformType()));
+        ZlyyhUtils.checkCity(missionGroupVo.getShowCity(), platformService.queryById(platformKey, ZlyyhUtils.getPlatformChannel()));
         // 上锁
         String lockKey = "lockKey:" + userId;
         final LockInfo lockInfo = lockTemplate.lock(lockKey, 30000L, 5000L, RedissonLockExecutor.class);
@@ -557,11 +558,11 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
         if (null != missionGroupVo.getEndDate() && DateUtils.compare(missionGroupVo.getEndDate()) < 0) {
             return;
         }
-        UserVo userVo = userService.queryById(missionUserVo.getUserId());
+        UserVo userVo = userService.queryById(missionUserVo.getUserId(), PlatformEnumd.MP_YSF.getChannel());
         if (null == userVo || StringUtils.isBlank(userVo.getOpenId())) {
             return;
         }
-        PlatformVo platformVo = platformService.queryById(missionUserVo.getPlatformKey(), ZlyyhUtils.getPlatformType());
+        PlatformVo platformVo = platformService.queryById(missionUserVo.getPlatformKey(), PlatformEnumd.MP_YSF.getChannel());
         if (null == platformVo) {
             return;
         }

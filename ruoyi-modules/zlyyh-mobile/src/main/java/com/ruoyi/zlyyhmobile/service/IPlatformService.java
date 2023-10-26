@@ -1,7 +1,6 @@
 package com.ruoyi.zlyyhmobile.service;
 
 import com.ruoyi.zlyyh.domain.vo.PlatformVo;
-import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 
 /**
  * 平台信息Service接口
@@ -17,5 +16,5 @@ public interface IPlatformService {
      * @param platformKey 平台key
      * @return 平台信息
      */
-    PlatformVo queryById(Long platformKey, PlatformEnumd platformEnumd);
+    PlatformVo queryById(Long platformKey, String channel);
 }

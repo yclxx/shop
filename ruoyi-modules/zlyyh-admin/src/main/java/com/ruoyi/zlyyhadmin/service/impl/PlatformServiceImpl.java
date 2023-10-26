@@ -11,7 +11,6 @@ import com.ruoyi.common.core.utils.BeanCopyUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
-import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.zlyyh.domain.Merchant;
 import com.ruoyi.zlyyh.domain.Platform;
 import com.ruoyi.zlyyh.domain.PlatformChannel;
@@ -131,7 +130,7 @@ public class PlatformServiceImpl implements IPlatformService {
     /**
      * 修改平台信息
      */
-    @CacheEvict(cacheNames = CacheNames.PLATFORM, key = "#bo.platformKey")
+    @CacheEvict(cacheNames = CacheNames.PLATFORM, allEntries = true)
     @Override
     public Boolean updateByBo(PlatformBo bo) {
         Platform update = BeanUtil.toBean(bo, Platform.class);
@@ -147,11 +146,9 @@ public class PlatformServiceImpl implements IPlatformService {
     /**
      * 批量删除平台信息
      */
+    @CacheEvict(cacheNames = CacheNames.PLATFORM, allEntries = true)
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
-        for (Long id : ids) {
-            CacheUtils.evict(CacheNames.PLATFORM, id);
-        }
         boolean b = baseMapper.deleteBatchIds(ids) > 0;
         if (b) {
             LambdaQueryWrapper<PlatformChannel> queryWrapper = Wrappers.lambdaQuery();

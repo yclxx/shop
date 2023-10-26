@@ -8,6 +8,7 @@ import com.ruoyi.common.core.web.controller.BaseController;
 import com.ruoyi.zlyyh.domain.vo.AreaVo;
 import com.ruoyi.zlyyh.domain.vo.PlatformCityIndexVo;
 import com.ruoyi.zlyyh.domain.vo.PlatformVo;
+import com.ruoyi.zlyyh.service.YsfConfigService;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.vo.AppPlatformVo;
 import com.ruoyi.zlyyhmobile.service.IPlatformCityIndexService;
@@ -37,6 +38,7 @@ public class PlatformController extends BaseController {
 
     private final IPlatformService platformService;
     private final IPlatformCityIndexService platformCityIndexService;
+    private final YsfConfigService ysfConfigService;
 
     /**
      * 获取平台信息
@@ -45,10 +47,21 @@ public class PlatformController extends BaseController {
      */
     @GetMapping("/ignore/getInfo")
     public R<AppPlatformVo> getInfo() {
-        PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId(), ZlyyhUtils.getPlatformType());
+        PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId(), ZlyyhUtils.getPlatformChannel());
         AppPlatformVo result = BeanCopyUtils.copy(platformVo, AppPlatformVo.class);
         setPlatformCityIndex(result);
         return R.ok(result);
+    }
+
+    /**
+     * 获取移动宠粉跳转链接
+     *
+     * @return 平台信息
+     */
+    @GetMapping("/ignore/getUrl")
+    public R<String> getUrl() {
+        String url = ysfConfigService.queryValueByKey(ZlyyhUtils.getPlatformId(), "tabUrl");
+        return R.ok(url);
     }
 
     /**

@@ -30,14 +30,13 @@ import com.ruoyi.system.api.model.WxEntity;
 import com.ruoyi.system.api.model.XcxLoginUser;
 import com.ruoyi.system.api.model.YsfEntity;
 import com.ruoyi.zlyyh.domain.RecordLog;
-import com.ruoyi.zlyyh.domain.UserChannel;
+import com.ruoyi.zlyyh.domain.bo.UserChannelBo;
 import com.ruoyi.zlyyh.domain.vo.BackendTokenEntity;
 import com.ruoyi.zlyyh.domain.vo.PlatformVo;
 import com.ruoyi.zlyyh.domain.vo.UserChannelVo;
 import com.ruoyi.zlyyh.domain.vo.UserVo;
 import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.mapper.RecordLogMapper;
-import com.ruoyi.zlyyh.mapper.UserChannelMapper;
 import com.ruoyi.zlyyh.mapper.UserMapper;
 import com.ruoyi.zlyyh.properties.WxProperties;
 import com.ruoyi.zlyyh.properties.utils.YsfPropertiesUtils;
@@ -48,6 +47,7 @@ import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.bo.UserRecordLog;
 import com.ruoyi.zlyyhmobile.service.IOrderService;
 import com.ruoyi.zlyyhmobile.service.IPlatformService;
+import com.ruoyi.zlyyhmobile.service.IUserChannelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboService;
@@ -72,7 +72,7 @@ import java.util.stream.Collectors;
 public class RemoteAppUserServiceImpl implements RemoteAppUserService {
 
     private final UserMapper userMapper;
-    private final UserChannelMapper userChannelMapper;
+    private final IUserChannelService userChannelService;
     private final RecordLogMapper recordLogMapper;
     private final IPlatformService platformService;
     private final IOrderService orderService;
@@ -85,7 +85,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
      */
     @Override
     public String getWxMobile(String code, Long platformKey) {
-        PlatformVo platformVo = platformService.queryById(platformKey, PlatformEnumd.MP_WX);
+        PlatformVo platformVo = platformService.queryById(platformKey, PlatformEnumd.MP_WX.getChannel());
         if (null == platformVo) {
             throw new ServiceException("平台配置错误");
         }
@@ -144,7 +144,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
     @Override
     public LoginEntity getEntity(String code, boolean getMobile, Long platformKey, String platformChannel) {
         PlatformEnumd platformType = PlatformEnumd.getPlatformEnumd(platformChannel);
-        PlatformVo platformVo = platformService.queryById(platformKey, platformType);
+        PlatformVo platformVo = platformService.queryById(platformKey, platformType.getChannel());
         if (null == platformVo) {
             throw new ServiceException("请求错误，请退出重试！[platform is null]");
         }
@@ -170,25 +170,25 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
             throw new UserException("user.blocked", mobile);
         }
         String channel = ZlyyhUtils.getPlatformChannel(platformType);
-        UserChannelVo userChannelVo = this.queryByUserId(channel, userVo.getUserId(), platformKey);
+        UserChannelVo userChannelVo = userChannelService.queryByUserId(channel, userVo.getUserId(), platformKey);
         if (null == userChannelVo) {
             return null;
         }
         if (StringUtils.isNotBlank(openId) && !openId.equals(userChannelVo.getOpenId())) {
-            UserChannelVo openIdUserChannelVo = this.queryByOpenId(channel, openId, platformKey);
+            UserChannelVo openIdUserChannelVo = userChannelService.queryByOpenId(channel, openId, platformKey);
             if (null != openIdUserChannelVo) {
                 // 修改原來的用戶openId
-                UserChannel userChannel = new UserChannel();
+                UserChannelBo userChannel = new UserChannelBo();
                 userChannel.setId(openIdUserChannelVo.getId());
                 userChannel.setOpenId(openIdUserChannelVo.getOpenId() + "_del" + RandomUtil.randomNumbers(2));
-                userChannelMapper.updateById(userChannel);
+                userChannelService.updateByBo(userChannel);
             }
             userChannelVo.setOpenId(openId);
             // 修改openId
-            UserChannel userChannel = new UserChannel();
+            UserChannelBo userChannel = new UserChannelBo();
             userChannel.setId(userChannelVo.getId());
             userChannel.setOpenId(openId);
-            userChannelMapper.updateById(userChannel);
+            userChannelService.updateByBo(userChannel);
         }
         // 此处可根据登录用户的数据不同 自行创建 loginUser
         return buildLoginUser(userVo, userChannelVo);
@@ -197,7 +197,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
     @Override
     public XcxLoginUser getUserInfoByOpenid(String openId, Long platformKey, String platformType) throws UserException {
         String channel = ZlyyhUtils.getPlatformChannel(platformType);
-        UserChannelVo userChannelVo = this.queryByOpenId(channel, openId, platformKey);
+        UserChannelVo userChannelVo = userChannelService.queryByOpenId(channel, openId, platformKey);
         UserVo userVo;
         if (null == userChannelVo) {
             if (!"0".equals(channel)) {
@@ -206,7 +206,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
             userVo = userMapper.selectVoOne(new LambdaQueryWrapper<User>().eq(User::getPlatformKey, platformKey).eq(User::getOpenId, openId));
             if (null != userVo) {
                 insertUserChannel(userVo, openId, channel);
-                userChannelVo = this.queryByOpenId(channel, openId, platformKey);
+                userChannelVo = userChannelService.queryByOpenId(channel, openId, platformKey);
             }
         } else {
             userVo = userMapper.selectVoById(userChannelVo.getUserId());
@@ -268,10 +268,10 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
             }
             String channel = ZlyyhUtils.getPlatformChannel(platformType);
             // 查询渠道用户是否存在
-            UserChannelVo userChannelVo = this.queryByOpenId(channel, loginEntity.getOpenId(), loginEntity.getPlatformKey());
+            UserChannelVo userChannelVo = userChannelService.queryByOpenId(channel, loginEntity.getOpenId(), loginEntity.getPlatformKey());
             if (null == userChannelVo) {
                 // 根据openId查询
-                userChannelVo = this.queryByUserId(channel, user.getUserId(), loginEntity.getPlatformKey());
+                userChannelVo = userChannelService.queryByUserId(channel, user.getUserId(), loginEntity.getPlatformKey());
                 if (null == userChannelVo) {
                     insertUserChannel(user.getUserId(), loginEntity.getOpenId(), cityName, cityCode, loginEntity.getPlatformKey(), channel);
                 } else {
@@ -298,7 +298,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
      */
     private void insertUserChannel(Long userId, String openId, String cityName, String cityCode, Long platformKey, String channel) {
         // 新增渠道用户
-        UserChannel userChannel = new UserChannel();
+        UserChannelBo userChannel = new UserChannelBo();
         userChannel.setUserId(userId);
         userChannel.setOpenId(openId);
         userChannel.setReloadUser("1");
@@ -307,7 +307,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
         userChannel.setRegisterCityCode(cityCode);
         userChannel.setPlatformKey(platformKey);
 
-        userChannelMapper.insert(userChannel);
+        userChannelService.insertByBo(userChannel);
     }
 
     /**
@@ -319,7 +319,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
      */
     private void insertUserChannel(UserVo userVo, String openId, String channel) {
         // 新增渠道用户
-        UserChannel userChannel = new UserChannel();
+        UserChannelBo userChannel = new UserChannelBo();
         userChannel.setUserId(userVo.getUserId());
         userChannel.setOpenId(openId);
         userChannel.setReloadUser(userVo.getReloadUser());
@@ -330,7 +330,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
         userChannel.setCreateTime(userVo.getCreateTime());
         userChannel.setPlatformKey(userVo.getPlatformKey());
 
-        userChannelMapper.insert(userChannel);
+        userChannelService.insertByBo(userChannel);
     }
 
     /**
@@ -342,7 +342,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
      */
     private void updateUserChannel(Long userId, String openId, Long channelId) {
         // 新增渠道用户
-        UserChannel userChannel = new UserChannel();
+        UserChannelBo userChannel = new UserChannelBo();
         userChannel.setId(channelId);
         if (StringUtils.isNotBlank(openId)) {
             userChannel.setOpenId(openId);
@@ -352,7 +352,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
         }
         userChannel.setReloadUser("1");
 
-        userChannelMapper.updateById(userChannel);
+        userChannelService.updateByBo(userChannel);
     }
 
     /**
@@ -368,15 +368,15 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
             return;
         }
         String channel = ZlyyhUtils.getPlatformChannel(platformType);
-        UserChannelVo userChannelVo = this.queryByUserId(channel, user.getUserId(), user.getPlatformKey());
+        UserChannelVo userChannelVo = userChannelService.queryByUserId(channel, user.getUserId(), user.getPlatformKey());
         if (null == userChannelVo) {
             return;
         }
-        UserChannel userChannel = new UserChannel();
+        UserChannelBo userChannel = new UserChannelBo();
         userChannel.setId(userChannelVo.getId());
         userChannel.setReloadUser("0");
 
-        userChannelMapper.updateById(userChannel);
+        userChannelService.updateByBo(userChannel);
     }
 
     /**
@@ -446,7 +446,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
         ysfEntity.setAccessToken(params.get("accessToken"));
         if (getMobile) {
             Map<String, String> mobileMap = getMobile(ysfEntity.getAccessToken(), ysfEntity.getOpenId(), ysfEntity.getBackendToken(), platformVo.getAppId(), platformVo.getPlatformKey());
-            if (ObjectUtil.isEmpty(mobileMap)) {
+            if (null == mobileMap) {
                 throw new ServiceException("系统繁忙，请稍后重试！");
             }
             // 获取手机号
@@ -617,25 +617,17 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
         user.setLoginCityCode(cityCode);
         userMapper.updateById(user);
 
-        UserChannelVo userChannelVo = userChannelMapper.selectVoById(userChannelId);
+        UserChannelVo userChannelVo = userChannelService.queryById(userChannelId);
         if (null == userChannelVo) {
             return;
         }
-        UserChannel userChannel = new UserChannel();
+        UserChannelBo userChannel = new UserChannelBo();
         userChannel.setId(userChannelVo.getId());
         userChannel.setLastLoginDate(userChannelVo.getLoginDate());
         userChannel.setLoginIp(ip);
         userChannel.setLoginDate(new Date());
         userChannel.setLoginCityName(cityName);
         userChannel.setLoginCityCode(cityCode);
-        userChannelMapper.updateById(userChannel);
-    }
-
-    private UserChannelVo queryByOpenId(String channel, String openId, Long platformKey) {
-        return userChannelMapper.selectVoOne(new LambdaQueryWrapper<UserChannel>().eq(UserChannel::getChannel, channel).eq(UserChannel::getOpenId, openId).eq(UserChannel::getPlatformKey, platformKey));
-    }
-
-    private UserChannelVo queryByUserId(String channel, Long userId, Long platformKey) {
-        return userChannelMapper.selectVoOne(new LambdaQueryWrapper<UserChannel>().eq(UserChannel::getChannel, channel).eq(UserChannel::getUserId, userId).eq(UserChannel::getPlatformKey, platformKey));
+        userChannelService.updateByBo(userChannel);
     }
 }

@@ -74,7 +74,7 @@ public class SendCouponEventListener {
                     long num = Long.parseLong(sendCouponNumber);
                     long atomicValue2 = RedisUtils.getAtomicValue(ZlyyhConstants.SEND_COUPON_NUMBER);
                     if (atomicValue2 == num) {
-                        PlatformVo platformVo = platformService.queryById(sendCouponEvent.getPlatformKey(), PlatformEnumd.MP_YSF);
+                        PlatformVo platformVo = platformService.queryById(sendCouponEvent.getPlatformKey(), PlatformEnumd.MP_YSF.getChannel());
                         if (null != platformVo) {
                             String backendToken = YsfUtils.getBackendToken(platformVo.getAppId(), platformVo.getSecret(), false, platformVo.getPlatformKey());
                             orderService.ysfForewarningMessage(platformVo.getPlatformKey(), backendToken, "sendDescDetails", "sendTemplateValue");

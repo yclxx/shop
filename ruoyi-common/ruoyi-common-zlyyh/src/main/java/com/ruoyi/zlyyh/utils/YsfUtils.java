@@ -747,19 +747,16 @@ public class YsfUtils {
     }
 
     public static void main(String[] args) {
-//        String appId = "e60611309c5d4e77b15baf6b4e48292c";
-//        String secret = "151e06ec873747fcbd024c54d263b27f";
-//        String appId = "e60611309c5d4e77b15baf6b4e48292c";
-//        String secret = "151e06ec873747fcbd024c54d263b27f";
-//        String openId = "Yt476r36uzge3OFTr/yxUNLUnPa4Fjc5u1ZOO9WQbWLCsU7bvF5PX8elM0Dzid+8";
-////        String openId = "P+v3h/DMgHBZF22Fz1EHJkz8OSU1GyRjlSU4t5sVeMs/GJibxLToBL2W39XGSIjj";
-//        String activityId = "HD2023101600295";
+//        String appId = "d27c0217490d4e35a901abb2e874f383";
+//        String secret = "92d7f2f9e56243618077bebf34bb8da0";
+//        String openId = "qt0ox7zbYK0kV2D2iH1jk+iG2kuggLb3APUmZApbCtijevf3qtr9sJNDpKPj5cpA";
+//        String activityId = "HD2023101800301";
 //        List<String> missionIdList = new ArrayList<>();
-//        missionIdList.add("JYRW2023101600502");
+//        missionIdList.add("JYRW2023101800509");
 //        HashMap<String, Object> param = new HashMap<>();
 //        param.put("appId", appId);
 ////        param.put("backendToken", getBackendTokenTest(appId, secret, "https://open.95516.com/open/access/1.0/backendToken"));
-//        param.put("backendToken", "08a852962004003c1TAFl7M9");
+//        param.put("backendToken", "08abf63e200000491RfzZGk1");
 //        param.put("openId", openId);
 //        param.put("activityId", activityId);
 //        param.put("missionIdList", missionIdList);
@@ -769,11 +766,11 @@ public class YsfUtils {
 //        JSONObject jsonObject = JSONObject.parseObject(result);
 //        JSONObject params = jsonObject.getJSONObject("params");
 //        String missionProcessMap = params.getString("missionProcessMap");
-//        DESede desede = SecureUtil.desede(HexUtil.decodeHex("d015eafe2fc74fa4a1c12f02454cf4c1d015eafe2fc74fa4"));
+//        DESede desede = SecureUtil.desede(HexUtil.decodeHex("9e3d1fdf342370b926d564e5d91cba0b9e3d1fdf342370b9"));
 //        missionProcessMap = desede.decryptStr(missionProcessMap);
 //        log.info("解密后：{}", missionProcessMap);
 
-        String str = "gL416Eiprtdxs5/qs46fgy6b5N0wHhidRtcswyzqKnNWEC6Z81gen2jIt2iukAWBCj1T3Tm7jcWm6rQNByCGcSevObWsHAsdxV2eSFuDJYS1AITwi2sMy2k2oi7X6eXRqRZ+u3uvuw5hUyHw753nX3H/i7JNOOAG3DnbO4ETcMEryxaK9sCCy439MqW/d+bO599bnhXe7l/ehB72S42xcvxHUc+UtlHGFDnek2DsWV5KA3JFH6cCuIAHzH1Ruvmpv130+o9uhqa/E5vFKY4Loh9uOV60PzYLaaBfGupA/AuZKg/mdXXc7k8SFidw501CYiQ1gl9j4bv+uBoQAOsqQbzS33ckJ1xkHYi6QqLm9zA6RQrbWOCP/kiS26UeZ/PNX6lxeckDo+p/TUINHbkl135UpO9SHKM/";
+        String str = "gL416Eiprtewi34YEJ6633j8jptV6/D1RtcswyzqKnNWEC6Z81gen2jIt2iukAWBZ0aWOKPMD7OJ1uyXG3/ZwqbqtA0HIIZxJ685tawcCx3FXZ5IW4MlhLUAhPCLawzLaTaiLtfp5dGpFn67e6+7DmFTIfDvnedfcf+Lsk044AYt0pd/YdoVA/JuRYm2U5ADjf0ypb935s4v0feSq2xUJXmRhcA0Fg2r/EdRz5S2UcY1+jIfV0CQnhivarwh5mShgAfMfVG6+anDkTw7Nmx3Pb8Tm8UpjguiH245XrQ/NgvO4UZRR/ZWe4pov+wwLk1nG7F/CiUw831TSwiQBVID9J2CPBfbR207TxIWJ3DnTUJiJDWCX2Phu/64GhAA6ypBUyZh5u+8B3wSInrHs2HY8e7CWEDnjJOxSJLbpR5n881fqXF5yQOj6n9NQg0duSXXflSk71Icoz8=";
         String key = "9e3d1fdf342370b926d564e5d91cba0b9e3d1fdf342370b9";
         DESede desede = SecureUtil.desede(HexUtil.decodeHex(key));
         log.info("解密后：{}", desede.decryptStr(str));

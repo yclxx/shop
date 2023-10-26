@@ -34,7 +34,6 @@ import com.wechat.pay.contrib.apache.httpclient.util.PemUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.FileUrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -179,7 +178,7 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
             }
         } else if ("2".equals(order.getPickupMethod())) {
             //2.积点兑换
-            UserVo userVo = userService.queryById(order.getUserId());
+            UserVo userVo = userService.queryById(order.getUserId(), order.getSupportChannel());
             if (ObjectUtil.isEmpty(userVo)) {
                 throw new ServiceException("用户不存在，请联系客服处理");
             }
@@ -243,7 +242,7 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
         //签名信息
         String signMessage = wechatPayTimestamp + "\n" + wechatPayNonce + "\n" + body + "\n";
         PrivateKey merchantPrivateKey = PemUtil.loadPrivateKey(
-            new FileUrlResource(merchantKey).getInputStream());
+            WxUtils.getCertInput(merchantKey));
 
         AutoUpdateCertificatesVerifier verifier = new AutoUpdateCertificatesVerifier(
             new WechatPay2Credentials(mchid, new PrivateKeySigner(merchantSerialNumber, merchantPrivateKey)),

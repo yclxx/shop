@@ -11,20 +11,24 @@ public enum PlatformEnumd {
     /**
      * 微信小程序
      */
-    MP_WX("mp-weixin"),
+    MP_WX("mp-weixin", "1"),
     /**
      * 云闪付小程序
      */
-    MP_YSF("mp-union"),
+    MP_YSF("mp-union", "0");
+
     /**
-     * H5
+     * 平台
      */
-    WEB("web");
-
     private String platformType;
+    /**
+     * 平台渠道，对应字典表中的渠道
+     */
+    private String channel;
 
-    PlatformEnumd(String platformType) {
+    PlatformEnumd(String platformType, String channel) {
         this.platformType = platformType;
+        this.channel = channel;
     }
 
     public static String getPlatformSupportChannel(PlatformEnumd platformEnumd) {

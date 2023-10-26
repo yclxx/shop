@@ -285,7 +285,7 @@ public class OrderController {
     @PostMapping("/historyOrderRefund/{number}")
     public R<Void> historyOrderRefund(@NotNull(message = "请求错误")
                                       @PathVariable("number") Long number) {
-        historyOrderService.historyOrderRefund(number, LoginHelper.getUserId());
+        historyOrderService.historyOrderRefund(number, LoginHelper.getUserId(), ZlyyhUtils.getPlatformChannel());
         return R.ok();
     }
 

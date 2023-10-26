@@ -20,7 +20,7 @@ import java.util.Map;
 public interface IMissionUserRecordService {
     TableDataInfo<MissionUserRecordVo> getUserRecordPageList(Long missionGroupId, PageQuery pageQuery);
 
-    MissionUserRecord getDraw(Long missionGroupId, Long userId, Long platformKey);
+    MissionUserRecord getDraw(Long missionGroupId, Long userId, Long platformKey, String channel);
 
     Long getUserDrawCount(Long missionGroupId, Long userId, Long platformKey);
 

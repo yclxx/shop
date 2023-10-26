@@ -60,7 +60,7 @@ public class MissionUserRecordController extends BaseController {
     @RepeatSubmit(message = "操作频繁,请稍后重试")
     @PostMapping("/draw/{missionGroupId}")
     public R<Long> getDrawId(@NotNull(message = "缺少任务组编号") @PathVariable Long missionGroupId) {
-        MissionUserRecord missionUserRecord = iMissionUserRecordService.getDraw(missionGroupId, LoginHelper.getUserId(), ZlyyhUtils.getPlatformId());
+        MissionUserRecord missionUserRecord = iMissionUserRecordService.getDraw(missionGroupId, LoginHelper.getUserId(), ZlyyhUtils.getPlatformId(), ZlyyhUtils.getPlatformChannel());
         // 异步进行发放奖品操作
         asyncService.sendDraw(missionUserRecord.getMissionUserRecordId());
         return R.ok(missionUserRecord.getDrawId());

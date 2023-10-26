@@ -9,6 +9,7 @@ import com.baomidou.lock.LockTemplate;
 import com.baomidou.lock.executor.RedissonLockExecutor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.JsonUtils;
 import com.ruoyi.common.core.utils.SpringUtils;
 import com.ruoyi.common.core.utils.StringUtils;
@@ -26,7 +27,10 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileUrlResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
@@ -34,6 +38,7 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
@@ -123,7 +128,7 @@ public class WxUtils {
      */
     public static Map<String, String> wxPay(String number, String url, String appid, String mchid, String description, Integer amountTotal, String openId, String notify_url, String platform_merchant_key, String merchantSerialNumber, String apiV3Key) throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         PrivateKey merchantPrivateKey = PemUtil.loadPrivateKey(
-            new FileUrlResource(platform_merchant_key).getInputStream());
+            getCertInput(platform_merchant_key));
         // 自动更新证书功能
         HttpClient httpClient = getHttpClient(mchid, merchantSerialNumber, merchantPrivateKey, apiV3Key);
 
@@ -216,7 +221,7 @@ public class WxUtils {
      */
     private static String queryWxOrder(String url, String mchid, String platform_merchant_key, String merchantSerialNumber, String apiV3Key) throws IOException {
         PrivateKey merchantPrivateKey = PemUtil.loadPrivateKey(
-            new FileUrlResource(platform_merchant_key).getInputStream());
+            getCertInput(platform_merchant_key));
         // 自动更新证书功能
         HttpClient httpClient = getHttpClient(mchid, merchantSerialNumber, merchantPrivateKey, apiV3Key);
         HttpGet httpGet = new HttpGet(url);
@@ -245,7 +250,7 @@ public class WxUtils {
      */
     public static String wxRefund(String number, String out_refund_no, String url, String mchid, String reason, Integer refundAmount, Integer amountTotal, String notify_url, String platform_merchant_key, String merchantSerialNumber, String apiV3Key) throws IOException {
         PrivateKey merchantPrivateKey = PemUtil.loadPrivateKey(
-            new FileUrlResource(platform_merchant_key).getInputStream());
+            getCertInput(platform_merchant_key));
         // 自动更新证书功能
         HttpClient httpClient = getHttpClient(mchid, merchantSerialNumber, merchantPrivateKey, apiV3Key);
 
@@ -353,5 +358,22 @@ public class WxUtils {
         httpPost.addHeader("Content-type", "application/json; charset=utf-8");
 
         return httpPost;
+    }
+
+    public static InputStream getCertInput(String certPath) {
+        try {
+            Resource resource;
+            if (certPath.indexOf("cert") == 0) {
+                resource = new ClassPathResource(certPath);
+            } else if (certPath.indexOf("http") == 0) {
+                resource = new UrlResource(certPath);
+            } else {
+                resource = new FileUrlResource(certPath);
+            }
+            return resource.getInputStream();
+        } catch (IOException e) {
+            log.error("加载证书异常：", e);
+            throw new ServiceException("加载证书异常");
+        }
     }
 }

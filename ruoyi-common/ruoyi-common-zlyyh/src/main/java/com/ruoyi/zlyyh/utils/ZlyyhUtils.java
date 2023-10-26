@@ -102,14 +102,14 @@ public class ZlyyhUtils {
      * 用户渠道
      */
     public static String getPlatformChannel() {
-        return PlatformEnumd.getPlatformSupportChannel(getPlatformType());
+        return getPlatformType().getChannel();
     }
 
     /**
      * 用户渠道
      */
     public static String getPlatformChannel(String platformType) {
-        return PlatformEnumd.getPlatformSupportChannel(PlatformEnumd.getPlatformEnumd(platformType));
+        return PlatformEnumd.getPlatformEnumd(platformType).getChannel();
     }
 
     /**

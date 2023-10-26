@@ -6,6 +6,7 @@ import com.ruoyi.common.core.web.controller.BaseController;
 import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.zlyyh.domain.vo.MemberVipBalanceVo;
 import com.ruoyi.zlyyh.domain.vo.UserVo;
+import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.bo.UserRecordLog;
 import com.ruoyi.zlyyhmobile.service.IOrderService;
 import com.ruoyi.zlyyhmobile.service.IUserService;
@@ -38,7 +39,7 @@ public class UserController extends BaseController {
      */
     @GetMapping("/getUserInfo")
     public R<UserVo> getUserInfo() {
-        UserVo userVo = userService.queryById(LoginHelper.getUserId());
+        UserVo userVo = userService.queryById(LoginHelper.getUserId(), ZlyyhUtils.getPlatformChannel());
         // 校验是否权益会员，权益会员是否到期
         if (null != userVo && "1".equals(userVo.getVipUser()) && null != userVo.getVipExpiryDate()) {
             if (DateUtils.compare(userVo.getVipExpiryDate()) < 1) {

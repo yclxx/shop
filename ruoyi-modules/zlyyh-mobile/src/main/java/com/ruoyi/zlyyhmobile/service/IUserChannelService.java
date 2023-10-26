@@ -1,10 +1,9 @@
 package com.ruoyi.zlyyhmobile.service;
 
-import com.ruoyi.zlyyh.domain.UserChannel;
-import com.ruoyi.zlyyh.domain.vo.UserChannelVo;
-import com.ruoyi.zlyyh.domain.bo.UserChannelBo;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.zlyyh.domain.bo.UserChannelBo;
+import com.ruoyi.zlyyh.domain.vo.UserChannelVo;
 
 import java.util.Collection;
 import java.util.List;
@@ -46,4 +45,8 @@ public interface IUserChannelService {
      * 校验并批量删除用户渠道信息信息
      */
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
+
+    UserChannelVo queryByOpenId(String channel, String openId, Long platformKey);
+
+    UserChannelVo queryByUserId(String channel, Long userId, Long platformKey);
 }

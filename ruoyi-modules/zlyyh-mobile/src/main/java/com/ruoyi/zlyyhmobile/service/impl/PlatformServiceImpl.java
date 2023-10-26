@@ -10,7 +10,6 @@ import com.ruoyi.zlyyh.domain.PlatformChannel;
 import com.ruoyi.zlyyh.domain.vo.AreaVo;
 import com.ruoyi.zlyyh.domain.vo.PlatformChannelVo;
 import com.ruoyi.zlyyh.domain.vo.PlatformVo;
-import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.mapper.AreaMapper;
 import com.ruoyi.zlyyh.mapper.PlatformChannelMapper;
 import com.ruoyi.zlyyh.mapper.PlatformMapper;
@@ -38,13 +37,13 @@ public class PlatformServiceImpl implements IPlatformService {
     /**
      * 查询平台信息
      */
-    @Cacheable(cacheNames = CacheNames.PLATFORM, key = "#platformKey + '-' + #platformEnumd.getPlatformType()")
+    @Cacheable(cacheNames = CacheNames.PLATFORM, key = "#platformKey + '-' + #channel")
     @Override
-    public PlatformVo queryById(Long platformKey, PlatformEnumd platformEnumd) {
+    public PlatformVo queryById(Long platformKey, String channel) {
         PlatformVo platformVo = baseMapper.selectVoById(platformKey);
         if (null != platformVo) {
             try {
-                this.setPlatformChannelInfo(platformVo, platformEnumd);
+                this.setPlatformChannelInfo(platformVo, channel);
             } catch (Exception e) {
                 return null;
             }
@@ -56,10 +55,10 @@ public class PlatformServiceImpl implements IPlatformService {
         return platformVo;
     }
 
-    private void setPlatformChannelInfo(PlatformVo platformVo, PlatformEnumd platformEnumd) {
+    private void setPlatformChannelInfo(PlatformVo platformVo, String channel) {
         LambdaQueryWrapper<PlatformChannel> lqw = Wrappers.lambdaQuery();
         lqw.eq(PlatformChannel::getPlatformKey, platformVo.getPlatformKey());
-        lqw.eq(PlatformChannel::getChannel, PlatformEnumd.getPlatformSupportChannel(platformEnumd));
+        lqw.eq(PlatformChannel::getChannel, channel);
         PlatformChannelVo platformChannelVo = platformChannelMapper.selectVoOne(lqw);
         if (null == platformChannelVo) {
             throw new ServiceException("渠道配置错误,请联系客服处理。");
