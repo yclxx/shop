@@ -1,6 +1,5 @@
 package com.ruoyi.zlyyhmobile.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -12,21 +11,17 @@ import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.Action;
 import com.ruoyi.zlyyh.domain.Coupon;
-import com.ruoyi.zlyyh.domain.ProductAction;
 import com.ruoyi.zlyyh.domain.bo.ActionBo;
 import com.ruoyi.zlyyh.domain.bo.CouponBo;
 import com.ruoyi.zlyyh.domain.vo.ActionVo;
 import com.ruoyi.zlyyh.domain.vo.CouponVo;
 import com.ruoyi.zlyyh.mapper.ActionMapper;
 import com.ruoyi.zlyyh.mapper.CouponMapper;
-import com.ruoyi.zlyyh.mapper.ProductActionMapper;
-
 import com.ruoyi.zlyyhmobile.service.IActionService;
 import com.ruoyi.zlyyhmobile.service.ICouponService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -61,8 +56,6 @@ public class ActionServiceImpl implements IActionService {
         Page<ActionVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
         return TableDataInfo.build(result);
     }
-
-
 
     /**
      * 根据批次领取对应的优惠券
@@ -126,17 +119,8 @@ public class ActionServiceImpl implements IActionService {
         coupon.setRedeemCode(RandomUtil.randomNumbers(10));
         // 新增优惠券
         couponMapper.insert(coupon);
-
         return coupon;
-
     }
-
-
-
-
-
-
-
 
     private LambdaQueryWrapper<Action> buildQueryWrapper(ActionBo bo) {
         LambdaQueryWrapper<Action> lqw = Wrappers.lambdaQuery();
@@ -152,8 +136,4 @@ public class ActionServiceImpl implements IActionService {
         lqw.eq(bo.getPlatformKey() != null, Action::getPlatformKey, bo.getPlatformKey());
         return lqw;
     }
-
-
-
-
 }

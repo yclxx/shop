@@ -31,7 +31,7 @@ public class HotNewsServiceImpl implements IHotNewsService {
     /**
      * 查询热门搜索
      */
-    @Cacheable(cacheNames = CacheNames.hotNews, key = "#bo.getPlatformKey()+''+#bo.getSupportChannel()")
+    @Cacheable(cacheNames = CacheNames.hotNews, key = "#bo.getPlatformKey()+'-'+#bo.getSupportChannel()")
     @Override
     public List<HotNewsVo> queryList(HotNewsBo bo) {
         LambdaQueryWrapper<HotNews> lqw = Wrappers.lambdaQuery();

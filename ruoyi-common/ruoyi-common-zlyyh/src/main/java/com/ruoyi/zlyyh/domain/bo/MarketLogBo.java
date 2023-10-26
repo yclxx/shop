@@ -31,7 +31,10 @@ public class MarketLogBo extends BaseEntity {
      * 用户id
      */
     private Long userId;
-
+    /**
+     * 状态
+     */
+    private String status;
     /**
      * 领取时间
      */

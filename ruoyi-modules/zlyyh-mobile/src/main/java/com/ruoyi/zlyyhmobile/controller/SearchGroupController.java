@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 搜索彩蛋配置控制器
  * 前端访问路由地址为:/zlyyh/searchGroup
- *
  * @author yzg
  * @date 2023-07-24
  */
