@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ruoyi.common.core.constant.CacheNames;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
@@ -17,6 +18,7 @@ import com.ruoyi.zlyyh.mapper.MarketMapper;
 import com.ruoyi.zlyyh.mapper.ProductMapper;
 import com.ruoyi.zlyyhadmin.service.IMarketService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -99,6 +101,7 @@ public class MarketServiceImpl implements IMarketService {
     /**
      * 新增新用户营销
      */
+    @CacheEvict(cacheNames = CacheNames.marketInfo, allEntries = true)
     @Override
     public Boolean insertByBo(MarketBo bo) {
         Market add = BeanUtil.toBean(bo, Market.class);
@@ -112,6 +115,7 @@ public class MarketServiceImpl implements IMarketService {
     /**
      * 修改新用户营销
      */
+    @CacheEvict(cacheNames = CacheNames.marketInfo, allEntries = true)
     @Override
     public Boolean updateByBo(MarketBo bo) {
         Market update = BeanUtil.toBean(bo, Market.class);
@@ -121,6 +125,7 @@ public class MarketServiceImpl implements IMarketService {
     /**
      * 批量删除新用户营销
      */
+    @CacheEvict(cacheNames = CacheNames.marketInfo, allEntries = true)
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
         return baseMapper.deleteBatchIds(ids) > 0;

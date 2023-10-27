@@ -14,14 +14,14 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="领取时间" prop="receiveDate">
-        <el-date-picker clearable
-          v-model="queryParams.receiveDate"
-          type="date"
-          value-format="yyyy-MM-dd"
-          placeholder="请选择领取时间">
-        </el-date-picker>
-      </el-form-item>
+      <!--<el-form-item label="领取时间" prop="receiveDate">-->
+      <!--  <el-date-picker clearable-->
+      <!--    v-model="queryParams.receiveDate"-->
+      <!--    type="datetime"-->
+      <!--    value-format="yyyy-MM-dd"-->
+      <!--    placeholder="请选择领取时间">-->
+      <!--  </el-date-picker>-->
+      <!--</el-form-item>-->
       <el-form-item label="奖励类型" prop="rewardType">
         <el-select v-model="queryParams.rewardType" placeholder="请选择奖励类型" clearable>
           <el-option
@@ -47,25 +47,27 @@
           size="mini"
           @click="handleExport"
           v-hasPermi="['zlyyh:marketLog:export']"
-        >导出</el-button>
+        >导出
+        </el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="marketLogList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="" align="center" prop="logId" v-if="true"/>
+      <!--<el-table-column type="selection" width="55" align="center" />-->
+      <!--<el-table-column label="" align="center" prop="logId" v-if="true"/>-->
       <el-table-column label="平台标识" align="center" prop="platformKey" :formatter="platformFormatter"/>
       <el-table-column label="客户端" align="center" prop="supportChannel">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.channel_type" :value="scope.row.supportChannel" />
+          <dict-tag :options="dict.type.channel_type" :value="scope.row.supportChannel"/>
         </template>
       </el-table-column>
-      <el-table-column label="营销id" align="center" prop="marketId" />
-      <el-table-column label="用户id" align="center" prop="userId" />
+      <el-table-column label="营销id" align="center" prop="marketId"/>
+      <el-table-column label="用户id" align="center" prop="userId"/>
+      <el-table-column label="状态" align="center" prop="status" :formatter="statusFormatter"/>
       <el-table-column label="领取时间" align="center" prop="receiveDate" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.receiveDate, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.receiveDate, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="奖励类型" align="center" prop="rewardType">
@@ -73,8 +75,8 @@
           <dict-tag :options="dict.type.mission_award_type" :value="scope.row.rewardType"/>
         </template>
       </el-table-column>
-      <el-table-column label="商品id" align="center" prop="productId" />
-      <el-table-column label="优惠券id" align="center" prop="couponId" />
+      <el-table-column label="商品id" align="center" prop="productId"/>
+      <el-table-column label="优惠券id" align="center" prop="couponId"/>
     </el-table>
 
     <pagination
@@ -88,12 +90,12 @@
 </template>
 
 <script>
-import { listMarketLog, getMarketLog} from "@/api/zlyyh/marketLog";
+import {listMarketLog, getMarketLog} from "@/api/zlyyh/marketLog";
 import {selectListPlatform} from "@/api/zlyyh/platform";
 
 export default {
   name: "MarketLog",
-  dicts: ['mission_award_type','channel_type'],
+  dicts: ['mission_award_type', 'channel_type'],
   data() {
     return {
       // 按钮loading
@@ -113,6 +115,11 @@ export default {
       // 奖励发放记录表格数据
       marketLogList: [],
       platformList: [],
+      statusList: [
+        {value: '0', label: '未领取'},
+        {value: '1', label: '已领取'},
+        {value: '2', label: '已使用'}
+      ],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -124,7 +131,7 @@ export default {
         platformKey: undefined,
         marketId: undefined,
         userId: undefined,
-        receiveDate: undefined,
+        // receiveDate: undefined,
         rewardType: undefined,
       },
       // 表单参数
@@ -132,28 +139,28 @@ export default {
       // 表单校验
       rules: {
         logId: [
-          { required: true, message: "不能为空", trigger: "blur" }
+          {required: true, message: "不能为空", trigger: "blur"}
         ],
         platformKey: [
-          { required: true, message: "平台标识不能为空", trigger: "blur" }
+          {required: true, message: "平台标识不能为空", trigger: "blur"}
         ],
         marketId: [
-          { required: true, message: "不能为空", trigger: "blur" }
+          {required: true, message: "不能为空", trigger: "blur"}
         ],
         userId: [
-          { required: true, message: "用户id不能为空", trigger: "blur" }
+          {required: true, message: "用户id不能为空", trigger: "blur"}
         ],
         receiveDate: [
-          { required: true, message: "领取时间不能为空", trigger: "blur" }
+          {required: true, message: "领取时间不能为空", trigger: "blur"}
         ],
         rewardType: [
-          { required: true, message: "奖励类型不能为空", trigger: "change" }
+          {required: true, message: "奖励类型不能为空", trigger: "change"}
         ],
         productId: [
-          { required: true, message: "商品id不能为空", trigger: "blur" }
+          {required: true, message: "商品id不能为空", trigger: "blur"}
         ],
         couponId: [
-          { required: true, message: "优惠券id不能为空", trigger: "blur" }
+          {required: true, message: "优惠券id不能为空", trigger: "blur"}
         ],
       }
     };
@@ -181,6 +188,15 @@ export default {
         return name;
       }
       return row.platformKey;
+    },
+    statusFormatter(row) {
+      let name = '';
+      this.statusList.forEach(item => {
+        if (item.value == row.status) {
+          name = item.label;
+        }
+      })
+      return name;
     },
     /** 查询奖励发放记录列表 */
     getList() {
@@ -227,7 +243,7 @@ export default {
     // 多选框选中数据
     handleSelectionChange(selection) {
       this.ids = selection.map(item => item.logId)
-      this.single = selection.length!==1
+      this.single = selection.length !== 1
       this.multiple = !selection.length
     },
     /** 新增按钮操作 */

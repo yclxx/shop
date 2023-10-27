@@ -127,17 +127,17 @@
       </el-table-column>
       <el-table-column label="开始时间" align="center" prop="beginTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.beginTime, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.beginTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="结束时间" align="center" prop="endTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.endTime, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.endTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="指定时间" align="center" prop="dateSpecific" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.dateSpecific, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.dateSpecific, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="天数" align="center" prop="marketDay"/>
@@ -284,10 +284,10 @@
                 :remote-method="getProductSelectList "
                 :loading="loading">
                 <el-option
-                  v-for="item in actionList"
+                  v-for="item in productList"
                   :key="item.id"
-                  :label="item.id"
-                  :value="item.label">
+                  :label="item.label"
+                  :value="item.id">
                 </el-option>
               </el-select>
             </el-form-item>
