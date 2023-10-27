@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -116,6 +117,7 @@ public class RemoteOrderServiceImpl implements RemoteOrderService {
      * @param amount       退款金额
      * @param refundRemark 退款原因
      */
+    @Async
     public void refundOrder(Long number, BigDecimal amount, String refundRemark) {
         OrderBackTransBo bo = new OrderBackTransBo();
         bo.setNumber(number);

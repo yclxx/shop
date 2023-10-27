@@ -118,7 +118,7 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
         // 退款检查
         checkOrderStatus(bo, order.getOutAmount(), order.getStatus(), refund);
         // 基本信息
-        setBaseOrderBack(bo, order.getNumber());
+        setBaseOrderBack(bo, order.getNumber(), order.getPickupMethod());
         order.setStatus("4");
         // 退款操作
         orderBack(bo, order);
@@ -153,7 +153,7 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
         // 校验订单是否可退
         checkOrderStatus(bo, order.getOutAmount(), order.getStatus(), refund);
         // 基本信息
-        setBaseOrderBack(bo, order.getNumber());
+        setBaseOrderBack(bo, order.getNumber(), order.getPickupMethod());
         order.setStatus("4");
         // 退款操作
         orderBack(bo, order);
@@ -195,10 +195,11 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
         return baseMapper.deleteBatchIds(ids) > 0;
     }
 
-    private void setBaseOrderBack(OrderBackTransBo bo, Long number) {
+    private void setBaseOrderBack(OrderBackTransBo bo, Long number, String pickupMethod) {
         bo.setThNumber(IdUtils.getSnowflakeNextIdStr("T"));
         bo.setOrderBackTransState("0");
         bo.setNumber(number);
+        bo.setPickupMethod(pickupMethod);
     }
 
     /**
@@ -300,7 +301,11 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
         Integer amountTotal = BigDecimalUtils.toMinute(outAmount);
         String s;
         try {
-            s = WxUtils.wxRefund(bo.getNumber().toString(), bo.getThNumber(), wxProperties.getRefundUrl(), merchantVo.getMerchantNo(), null, BigDecimalUtils.toMinute(bo.getRefund()), amountTotal, refundCallbackUrl, merchantVo.getCertPath(), merchantVo.getMerchantKey(), merchantVo.getApiKey());
+            Long oldNumber = ReflectUtils.invokeGetter(obj, "collectiveNumber");
+            if (null == oldNumber) {
+                oldNumber = bo.getNumber();
+            }
+            s = WxUtils.wxRefund(oldNumber.toString(), bo.getThNumber(), wxProperties.getRefundUrl(), merchantVo.getMerchantNo(), null, BigDecimalUtils.toMinute(bo.getRefund()), amountTotal, refundCallbackUrl, merchantVo.getCertPath(), merchantVo.getMerchantKey(), merchantVo.getApiKey());
         } catch (Exception e) {
             log.error("微信退款异常：", e);
             throw new ServiceException("退款异常");

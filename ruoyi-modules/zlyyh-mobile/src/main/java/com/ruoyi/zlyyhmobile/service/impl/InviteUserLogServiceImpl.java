@@ -209,9 +209,17 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
         if (null == userInviteLogCount) {
             userInviteLogCount = 0L;
         }
-        if (userInviteLogCount >= productVos.size()) {
-            throw new ServiceException("感谢您的助力，今日已达标");
+        if (productVos.size() > 1) {
+            if (userInviteLogCount >= productVos.size()) {
+                throw new ServiceException("感谢您的助力，今日已达标");
+            }
+        } else {
+            ProductVo productVo = productVos.get(0);
+            if (productVo.getDayUserCount() > 0 && userInviteLogCount >= productVo.getDayUserCount()) {
+                throw new ServiceException("感谢您的助力，今日已达标");
+            }
         }
+
         log.info("助力成功，被邀请用户ID：{}，邀请用户ID：{}", userId, bo.getUserId());
         InviteUserLog add = new InviteUserLog();
         add.setUserId(bo.getUserId());

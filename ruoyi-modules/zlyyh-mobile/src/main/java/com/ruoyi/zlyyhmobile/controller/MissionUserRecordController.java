@@ -24,6 +24,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotNull;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -41,6 +42,16 @@ public class MissionUserRecordController extends BaseController {
 
     private final IMissionUserRecordService iMissionUserRecordService;
     private final AsyncService asyncService;
+
+    /**
+     * 获取抽奖记录 只显示最近50条
+     *
+     * @param missionGroupId 任务组ID
+     */
+    @GetMapping("/ignore/getRecordList/{missionGroupId}")
+    public R<List<MissionUserRecordVo>> getRecordList(@NotNull(message = "缺少任务组编号") @PathVariable Long missionGroupId) {
+        return R.ok(iMissionUserRecordService.getRecordList(missionGroupId));
+    }
 
     /**
      * 获取用户抽奖记录

@@ -213,7 +213,7 @@ public class AreaServiceImpl implements IAreaService {
         Product product = productMapper.selectById(productId);
         if (null != product && null != product.getShowCity()) {
             List<Long> list = new ArrayList<>();
-            if (StringUtils.isBlank(product.getShowCity()) && product.getShowCity().equals("ALL")) {
+            if (StringUtils.isBlank(product.getShowCity()) || product.getShowCity().equals("ALL")) {
                 list.add(99L);
             } else {
                 String[] split = product.getShowCity().split(",");

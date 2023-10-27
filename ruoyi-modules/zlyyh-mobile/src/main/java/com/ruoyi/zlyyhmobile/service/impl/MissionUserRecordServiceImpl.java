@@ -39,6 +39,7 @@ import com.ruoyi.zlyyh.utils.*;
 import com.ruoyi.zlyyhmobile.domain.bo.CreateOrderBo;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
 import com.ruoyi.zlyyhmobile.domain.vo.UserProductCount;
+import com.ruoyi.zlyyhmobile.event.CacheMissionRecordEvent;
 import com.ruoyi.zlyyhmobile.event.MissionUserRecordEvent;
 import com.ruoyi.zlyyhmobile.service.*;
 import com.ruoyi.zlyyhmobile.utils.AliasMethod;
@@ -74,9 +75,35 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
     private final IProductService productService;
     private final IOrderService orderService;
     private final IPlatformService platformService;
-    private final IMissionUserDrawService missionUserDrawService;
     @Autowired
     private LockTemplate lockTemplate;
+
+    /**
+     * 查询奖品列表
+     *
+     * @param missionGroupId 任务组ID
+     * @return
+     */
+    @Override
+    public List<MissionUserRecordVo> getRecordList(Long missionGroupId) {
+        String key = CacheNames.recordList + ":" + missionGroupId;
+        List<MissionUserRecordVo> recordVos = RedisUtils.getCacheList(key);
+        if (ObjectUtil.isEmpty(recordVos)) {
+            MissionGroupVo missionGroupVo = missionGroupService.queryById(missionGroupId);
+            if (null == missionGroupVo) {
+                return new ArrayList<>();
+            }
+            LambdaQueryWrapper<MissionUserRecord> lqw = Wrappers.lambdaQuery();
+            lqw.eq(MissionUserRecord::getMissionGroupId, missionGroupId);
+            lqw.eq(MissionUserRecord::getStatus, "1");
+            lqw.ne(MissionUserRecord::getDrawType, "9");
+            lqw.last("order by draw_time desc limit 50");
+            recordVos = baseMapper.selectVoList(lqw);
+            RedisUtils.setCacheList(key, recordVos);
+            RedisUtils.expire(key, Duration.ofMinutes(20));
+        }
+        return recordVos;
+    }
 
     /**
      * 查询用户奖品列表
@@ -158,7 +185,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
             missionUserRecord.setDrawType(drawVo.getDrawType());
             missionUserRecord.setDrawName(drawVo.getDrawName());
             missionUserRecord.setDrawImg(drawVo.getDrawImg());
-            missionUserRecord.setSendAccount(userVo.getOpenId());
+            missionUserRecord.setSendAccount(userVo.getMobile());
             missionUserRecord.setDrawTime(new Date());
             missionUserRecord.setDrawNo(drawVo.getDrawNo());
             missionUserRecord.setSendValue(drawVo.getSendValue());
@@ -182,6 +209,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
             }
             // 返回结果
             log.info("用户userId：{}，总耗时：{}毫秒", userId, timer.interval());
+            SpringUtils.context().publishEvent(new CacheMissionRecordEvent(missionUserRecord.getMissionUserRecordId()));
             return missionUserRecord;
         } finally {
             //释放锁
@@ -230,15 +258,23 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
             missionUserRecordLog.setPushNumber(IdUtil.getSnowflakeNextIdStr());
             missionUserRecordLog.setExternalProductId(missionUserRecord.getDrawNo());
             missionUserRecordLog.setStatus("0");
+            if ("9".equals(missionUserRecord.getDrawType())) {
+                missionUserRecordLog.setStatus("1");
+            }
             missionUserRecordLog.setSendValue(missionUserRecord.getSendValue());
             missionUserRecordLogMapper.insert(missionUserRecordLog);
-
             // 修改订单状态发券中
             missionUserRecord.setSendStatus("1");
+            if ("9".equals(missionUserRecord.getDrawType())) {
+                missionUserRecord.setSendStatus("2");
+            }
             missionUserRecord.setSendOkTime(new Date());
             missionUserRecord.setPushNumber(missionUserRecordLog.getPushNumber());
             // 修改订单信息
             baseMapper.updateById(missionUserRecord);
+            if ("9".equals(missionUserRecord.getDrawType())) {
+                return;
+            }
             // 再次查询，防止多次修改，多次加密问题
             missionUserRecord = baseMapper.selectById(missionUserRecord.getMissionUserRecordId());
             if (StringUtils.isBlank(missionUserRecord.getDrawNo())) {

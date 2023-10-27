@@ -1442,6 +1442,9 @@
               this.form.showCity = "ALL";
             } else {
               this.form.showCity = this.getCityAllCheckedKeys().toString();
+              if (!this.form.showCity || this.form.showCity.length == 0) {
+                this.form.showCity = "ALL";
+              }
             }
             if (this.form.weekDate) {
               this.form.weekDate = this.form.weekDate.toString();

@@ -10,6 +10,7 @@ import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
 import com.ruoyi.zlyyhmobile.domain.vo.UserProductCount;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,6 +20,8 @@ import java.util.Map;
  * @date 2023-05-10
  */
 public interface IMissionUserRecordService {
+    List<MissionUserRecordVo> getRecordList(Long missionGroupId);
+
     TableDataInfo<MissionUserRecordVo> getUserRecordPageList(Long missionGroupId, PageQuery pageQuery);
 
     MissionUserRecord getDraw(Long missionGroupId, Long userId, Long platformKey, String channel);

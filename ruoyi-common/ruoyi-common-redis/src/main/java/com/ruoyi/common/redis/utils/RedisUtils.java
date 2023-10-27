@@ -245,6 +245,18 @@ public class RedisUtils {
     }
 
     /**
+     * 缓存单个数据至List
+     *
+     * @param key  缓存的键值
+     * @param data 待缓存的数据
+     * @return 缓存的对象
+     */
+    public static <T> void setCacheList(final String key, int index, final T data) {
+        RList<T> rList = CLIENT.getList(key);
+        rList.add(index, data);
+    }
+
+    /**
      * 删除List中指定数据
      *
      * @param key  缓存的键值
@@ -257,9 +269,21 @@ public class RedisUtils {
     }
 
     /**
+     * 删除List中指定数据
+     *
+     * @param key   缓存的键值
+     * @param index 待删除的数据
+     * @return 缓存的对象
+     */
+    public static <T> void delCacheList(final String key, int index) {
+        RList<T> rList = CLIENT.getList(key);
+        rList.remove(index);
+    }
+
+    /**
      * 获取List中总数量
      *
-     * @param key  缓存的键值
+     * @param key 缓存的键值
      * @return 缓存的对象
      */
     public static int getCacheListSize(final String key) {
