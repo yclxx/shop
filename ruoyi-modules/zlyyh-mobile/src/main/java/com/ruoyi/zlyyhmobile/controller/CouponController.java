@@ -81,6 +81,7 @@ public class CouponController extends BaseController {
     public R<Boolean> conversion(@RequestBody Coupon coupon) {
         // 获取用户信息
         coupon.setUserId(LoginHelper.getUserId());
+        coupon.setPlatformKey(ZlyyhUtils.getPlatformId());
         return R.ok(iCouponService.conversion(coupon));
     }
 
