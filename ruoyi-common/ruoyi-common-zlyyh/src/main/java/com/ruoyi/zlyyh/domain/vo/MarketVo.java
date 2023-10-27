@@ -52,6 +52,12 @@ public class MarketVo {
     private Date beginTime;
 
     /**
+     * 状态
+     */
+    @ExcelProperty(value = "状态")
+    private String status;
+
+    /**
      * 结束时间
      */
     @ExcelProperty(value = "结束时间")

@@ -54,6 +54,11 @@ public class MarketBo extends BaseEntity {
     private Date endTime;
 
     /**
+     * 状态
+     */
+    private String status;
+
+    /**
      * 指定时间
      */
     @NotNull(message = "指定时间不能为空", groups = { AddGroup.class, EditGroup.class })

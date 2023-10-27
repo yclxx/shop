@@ -432,6 +432,9 @@
             message: "请选择周几显示",
             trigger: "blur"
           }],
+          supportChannel: [
+            {required: true, message: "支持端不能为空", trigger: "blur"}
+          ]
         },
         pickerOptions: {
           shortcuts: [{
