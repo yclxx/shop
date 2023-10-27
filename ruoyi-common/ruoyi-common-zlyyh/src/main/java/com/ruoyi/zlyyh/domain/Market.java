@@ -47,6 +47,10 @@ public class Market extends BaseEntity {
      */
     private Date endTime;
     /**
+     * 状态
+     */
+    private String status;
+    /**
      * 指定时间
      */
     private Date dateSpecific;

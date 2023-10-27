@@ -1094,6 +1094,9 @@
             message: "请选择是否是涉及银联分销",
             trigger: "blur"
           }],
+          supportChannel: [
+            {required: true, message: "支持端不能为空", trigger: "blur"}
+          ],
         },
         isUpdate: false
       };
@@ -1279,7 +1282,7 @@
           isCoupon: undefined,
           isShare: undefined,
           supplier: undefined,
-          supportChannel: [],
+          supportChannel: ['ALL'],
           ticket: {
             ticketChooseSeat: undefined,
             ticketForm: undefined,

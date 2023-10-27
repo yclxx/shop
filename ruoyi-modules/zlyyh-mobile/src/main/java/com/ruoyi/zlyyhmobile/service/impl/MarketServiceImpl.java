@@ -62,7 +62,6 @@ public class MarketServiceImpl implements IMarketService {
     @Override
     public MarketLog insertUserMarket(MarketBo bo, Long userId) {
         if (ObjectUtil.isEmpty(bo) || ObjectUtil.isEmpty(userId)) throw new ServiceException("奖励领取失败");
-
         Market market = baseMapper.selectById(bo.getMarketId());
         if (ObjectUtil.isEmpty(market)) throw new ServiceException("活动已结束");
 
@@ -77,6 +76,7 @@ public class MarketServiceImpl implements IMarketService {
         // 判断活动时间
         if (DateUtils.compare(nowDate, market.getBeginTime()) < 0) throw new ServiceException("活动未开始");
         if (DateUtils.compare(nowDate, market.getEndTime()) > 0) throw new ServiceException("活动已结束");
+
         UserVo userVo = userService.queryById(userId, bo.getSupportChannel());
         if (ObjectUtil.isEmpty(userVo)) throw new ServiceException("未查到你的用户信息");
         // 判断上次登录时间是否小于指定时间
@@ -142,6 +142,10 @@ public class MarketServiceImpl implements IMarketService {
         LambdaQueryWrapper<Market> lqw = Wrappers.lambdaQuery();
         lqw.eq(bo.getMarketId() != null, Market::getMarketId, bo.getMarketId());
         lqw.eq(bo.getPlatformKey() != null, Market::getPlatformKey, bo.getPlatformKey());
+        lqw.eq(StringUtils.isNotEmpty(bo.getStatus()), Market::getStatus, bo.getStatus());
+        Date nowTime = DateUtils.getNowDate();
+        lqw.le(Market::getBeginTime, nowTime);
+        lqw.ge(Market::getEndTime, nowTime);
         if (StringUtils.isNotBlank(bo.getSupportChannel())) {
             lqw.and(lm -> {
                 lm.eq(Market::getSupportChannel, "ALL").or().likeRight(Market::getSupportChannel, bo.getSupportChannel());

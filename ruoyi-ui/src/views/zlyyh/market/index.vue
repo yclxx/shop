@@ -125,6 +125,11 @@
           </div>
         </template>
       </el-table-column>
+      <el-table-column label="状态" align="center" prop="status">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
+        </template>
+      </el-table-column>
       <el-table-column label="开始时间" align="center" prop="beginTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.beginTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
@@ -188,7 +193,7 @@
     <el-dialog :title="title" :visible.sync="open" width="800px" height="50%">
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-row>
-          <el-col :span="12">
+          <el-col :span="8">
             <el-form-item label="平台标识" prop="platformKey">
               <el-select v-model="form.platformKey" placeholder="请选择平台标识" @change="getPlatformSelectList"
                          clearable>
@@ -196,9 +201,17 @@
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="8">
             <el-form-item label="名称" prop="marketName">
               <el-input v-model="form.marketName" placeholder="请输入名称"/>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="状态" prop="status">
+              <el-select v-model="form.status" placeholder="请选择状态" clearable>
+                <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
+                           :value="dict.value" />
+              </el-select>
             </el-form-item>
           </el-col>
         </el-row>
@@ -505,6 +518,7 @@ export default {
         marketId: undefined,
         platformKey: undefined,
         marketName: undefined,
+        status: undefined,
         marketImage: undefined,
         beginTime: undefined,
         endTime: undefined,

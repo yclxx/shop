@@ -401,7 +401,7 @@ export default {
           {required: true, message: "平台标识不能为空", trigger: "blur"}
         ],
         supportChannel: [
-          {required: true, message: "z支持端不能为空", trigger: "blur"}
+          {required: true, message: "支持端不能为空", trigger: "blur"}
         ]
       }
     };

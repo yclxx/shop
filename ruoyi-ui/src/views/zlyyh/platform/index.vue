@@ -148,7 +148,7 @@
             <el-form-item label="支持端" prop="supportChannel">
               <el-checkbox-group v-model="form.supportChannel">
                 <el-checkbox @change="checked=>changeChannel(checked,dict)"
-                  v-for="item in dict.type.channel_type" :key="item.value" :label="item.value">
+                             v-for="item in dict.type.channel_type" :key="item.value" :label="item.value">
                   {{ item.label }}
                 </el-checkbox>
               </el-checkbox-group>
@@ -160,7 +160,7 @@
             <el-card>
               <div slot="header">
                 <span v-for="dict in dict.type.channel_type" v-if="dict.value === item.channel">
-                  {{dict.label }}配置
+                  {{ dict.label }}配置
                 </span>
               </div>
               <el-col :span="6">
@@ -340,7 +340,10 @@ export default {
           required: true,
           message: "云闪付会员权限不能为空",
           trigger: "blur"
-        }]
+        }],
+        supportChannel: [
+          {required: true, message: "支持端不能为空", trigger: "blur"}
+        ]
       },
       insert: true,
     };
@@ -414,7 +417,7 @@ export default {
           merchantId: undefined
         }],
         manangerDeptId: undefined,
-        supportChannel: ['0'],
+        supportChannel: ['ALL'],
         supportSupplier: [],
       };
       this.resetForm("form");

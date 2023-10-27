@@ -25,6 +25,7 @@ public class MarketController extends BaseController {
     public R<MarketVo> list(MarketBo bo) {
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
         bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
+        bo.setStatus("0");
         MarketVo marketVo = marketService.queryMarketVo(bo);
         return R.ok(marketVo);
     }
