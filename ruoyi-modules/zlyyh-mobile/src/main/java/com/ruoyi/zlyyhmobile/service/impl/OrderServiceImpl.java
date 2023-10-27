@@ -771,6 +771,9 @@ public class OrderServiceImpl implements IOrderService {
                 }
                 //判断是否为专属商品|优惠券判断购买商品id是否存在于优惠券商品关联表中
                 List<ProductCoupon> productCoupons = productCouponMapper.selectList(new LambdaQueryWrapper<ProductCoupon>().eq(ProductCoupon::getCouponId, bo.getCouponId()));
+                if ((coupon.getCouponType().equals("1") || coupon.getCouponType().equals("3")) && ObjectUtil.isEmpty(productCoupons)){
+                    throw new ServiceException("该优惠券指定商品可用！");
+                }
                 if (ObjectUtil.isNotEmpty(productCoupons)) {
                     //关联表不为空判断购买的商品id是否存在 不存在抛异常
                     List<Long> productIds = productCoupons.stream().map(ProductCoupon::getProductId).collect(Collectors.toList());

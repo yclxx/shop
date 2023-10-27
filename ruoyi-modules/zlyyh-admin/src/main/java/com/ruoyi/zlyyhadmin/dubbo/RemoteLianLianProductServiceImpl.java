@@ -188,7 +188,6 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 }
 
                 //主体信息
-                product.setPlatformKey(platformKey);
 
                 if (lianProductVo.getOnlyName().equals(item.getSubTitle())) {
                     product.setProductName(lianProductVo.getOnlyName());//产品名称
@@ -348,7 +347,6 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
             shopBo.setShopName(shop.getName());
             shopBo.setShopTel(StringUtils.isEmpty(checkCellphone(shop.getPhoneNumber())) ? checkTelephone(shop.getPhoneNumber()) : checkCellphone(shop.getPhoneNumber()));
             shopBo.setFormattedAddress(shop.getAddress());
-            shopBo.setPlatformKey(platformKey);
             shopBo.setCitycode(shop.getCityCode());
             shopBo.setAddress(shop.getAddress());
             shopBo.setLongitude(longitude);
