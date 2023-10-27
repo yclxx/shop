@@ -358,4 +358,11 @@ public class ProductBo extends BaseEntity {
     private List<ProductTicketSessionBo> ticketSession;
 
     private String payBankType;
+
+    private String productSmallImg;
+
+    private String isPoup;
+
+    private String poupText;
+
 }

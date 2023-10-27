@@ -413,4 +413,10 @@ public class ProductVo implements Serializable {
     private ShopVo shopVo;
 
     private String payBankType;
+
+    private String productSmallImg;
+
+    private String isPoup;
+
+    private String poupText;
 }
