@@ -466,6 +466,9 @@
                 <el-form-item label="商品图片" prop="productImg">
                   <image-upload v-model="form.productImg" :limit="1" />
                 </el-form-item>
+                <el-form-item label="首页图片" prop="productSmallImg">
+                  <image-upload v-model="form.productSmallImg" :limit="1" />
+                </el-form-item>
                 <el-form-item label="校验城市" prop="checkPayCity">
                   <span slot="label">
                     校验城市
@@ -619,6 +622,17 @@
                   <el-input v-model="form.totalUserCount" placeholder="请输入活动用户限领" />
                 </el-form-item>
               </el-col>
+              <el-col :span="8">
+                <el-form-item label="单次购买数量" prop="lineUpperLimit">
+                  <span slot="label">
+                    单次购买数量
+                    <el-tooltip content="用户单次下单可购买的最大数量" placement="top">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input v-model="form.lineUpperLimit" placeholder="请输入单次购买数量" />
+                </el-form-item>
+              </el-col>
             </el-row>
           </el-tab-pane>
           <el-tab-pane label="扩展信息" name="expand" key="expand" :style="{height: tableHeight}">
@@ -730,6 +744,21 @@
               <el-col :span="8">
                 <el-form-item label="分享描述" prop="shareName">
                   <el-input v-model="form.shareName" type="textarea" placeholder="请输入内容" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="8">
+                <el-form-item label="需要弹窗提示" prop="isPoup">
+                  <el-select v-model="form.isPoup" placeholder="请选择是否支持优惠券">
+                    <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label"
+                               :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col v-if="form.isPoup == 'Y'" :span="8">
+                <el-form-item label="弹窗内容" prop="poupText">
+                  <el-input v-model="form.poupText" type="textarea" placeholder="请输入内容" />
                 </el-form-item>
               </el-col>
             </el-row>
@@ -1221,6 +1250,9 @@
           productAbbreviation: undefined,
           productSubhead: undefined,
           productImg: undefined,
+          productSmallImg: undefined,
+          isPoup: undefined,
+          poupText: undefined,
           productAffiliation: undefined,
           productType: undefined,
           pickupMethod: undefined,

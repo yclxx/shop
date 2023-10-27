@@ -303,4 +303,10 @@ public class Product extends BaseEntity {
     private Long lineUpperLimit;
 
     private String payBankType;
+
+    private String productSmallImg;
+
+    private String isPoup;
+
+    private String poupText;
 }

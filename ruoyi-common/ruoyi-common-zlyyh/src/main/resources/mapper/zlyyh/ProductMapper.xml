@@ -75,6 +75,9 @@
         <result property="supplier" column="supplier"/>
         <result property="lineUpperLimit" column="line_upper_limit"/>
         <result property="payBankType" column="pay_bank_type"/>
+        <result property="productSmallImg" column="product_small_img"/>
+        <result property="isPoup" column="is_poup"/>
+        <result property="poupText" column="poup_text"/>
     </resultMap>
 
 
