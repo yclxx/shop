@@ -42,6 +42,15 @@ public class ZlyyhUtils {
     }
 
     /**
+     * 校验是否在活动城市
+     *
+     * @param showCity 活动城市
+     */
+    public static void checkCity(String showCity) {
+        checkCity(showCity, null);
+    }
+
+    /**
      * 获取日期key
      *
      * @param dateType 日期类型

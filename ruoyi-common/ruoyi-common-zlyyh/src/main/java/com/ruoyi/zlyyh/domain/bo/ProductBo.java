@@ -356,4 +356,13 @@ public class ProductBo extends BaseEntity {
 
     /** 场次与票种 */
     private List<ProductTicketSessionBo> ticketSession;
+
+    private String payBankType;
+
+    private String productSmallImg;
+
+    private String isPoup;
+
+    private String poupText;
+
 }

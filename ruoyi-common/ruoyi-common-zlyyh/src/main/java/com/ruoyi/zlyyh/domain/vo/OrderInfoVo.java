@@ -89,5 +89,7 @@ public class OrderInfoVo {
      */
     private String commodityJson;
 
+    private String payBankType;
+
 
 }

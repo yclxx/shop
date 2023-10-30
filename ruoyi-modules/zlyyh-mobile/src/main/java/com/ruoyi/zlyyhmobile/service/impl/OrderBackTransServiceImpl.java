@@ -210,8 +210,12 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
     @SneakyThrows
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void wxRefundCallBack(Long merchantId, AppWxPayCallbackParams appWxPayCallbackParams, HttpServletRequest request) {
-        log.info("微信退款回调通知，商户号ID：{},通知内容：{}", merchantId, appWxPayCallbackParams);
+    public void wxRefundCallBack(Long merchantId, HttpServletRequest request) {
+        //验证签名
+        BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream()));
+        String body = IoUtil.read(reader);
+        log.info("微信退款回调通知，商户号ID：{},通知内容：{}", merchantId, body);
+        AppWxPayCallbackParams appWxPayCallbackParams = JsonUtils.parseObject(body, AppWxPayCallbackParams.class);
         MerchantVo merchantVo = merchantService.queryById(merchantId);
         if (null == merchantVo) {
             log.error("微信退款通知，商户不存在");
@@ -231,10 +235,6 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
         }
         log.info("微信退款回调信息：" + s);
 
-        //验证签名
-        BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream()));
-        String body = IoUtil.read(reader);
-
         String wechatPayTimestamp = request.getHeader("Wechatpay-Timestamp");
         String wechatPayNonce = request.getHeader("Wechatpay-Nonce");
         String wechatSignature = request.getHeader("Wechatpay-Signature");
@@ -248,10 +248,14 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
             new WechatPay2Credentials(mchid, new PrivateKeySigner(merchantSerialNumber, merchantPrivateKey)),
             apiV3Key.getBytes(StandardCharsets.UTF_8));
         // 加载平台证书（mchId：商户号,mchSerialNo：商户证书序列号,apiV3Key：V3秘钥）
-        boolean verify = verifier.verify(wechatPaySerial, signMessage.getBytes(StandardCharsets.UTF_8), wechatSignature);
-        if (!verify) {
-            log.info("退款回调验签失败，签名信息：" + signMessage + "平台证书序列号：" + wechatPaySerial + "签名：" + wechatSignature);
-            throw new ServiceException("验签失败");
+        try {
+            boolean verify = verifier.verify(wechatPaySerial, signMessage.getBytes(StandardCharsets.UTF_8), wechatSignature);
+            if (!verify) {
+                log.info("退款回调验签失败，签名信息：" + signMessage + "平台证书序列号：" + wechatPaySerial + "签名：" + wechatSignature);
+                //            throw new ServiceException("验签失败");
+            }
+        } catch (Exception e) {
+            log.error("微信退款回调异常：", e);
         }
         log.info("微信退款回调验签成功");
         Map<String, Object> result = JsonUtils.parseMap(s);

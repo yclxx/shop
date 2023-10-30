@@ -200,4 +200,9 @@ public interface CacheNames {
      * 新用户营销奖励信息
      */
     String marketLog = "MarketLog#1d";
+    String userMarketLog = "userMarketLog#1d";
+    /**
+     * 新用户营销奖励信息
+     */
+    String recordList = "recordList#20m";
 }

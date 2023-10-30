@@ -144,8 +144,8 @@
           <el-button v-if="scope.row.productType == '13'" size="mini" type="text" icon="el-icon-edit"
             @click="handleTicketSessionLine(scope.row)" v-hasPermi="['zlyyh:product:ticket']">场次与票种
           </el-button>
-          <el-button size="mini" type="text" icon="el-icon-edit"
-            @click="handleShop(scope.row)" v-hasPermi="['zlyyh:product:shop']">门店维护
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleShop(scope.row)"
+            v-hasPermi="['zlyyh:product:shop']">门店维护
           </el-button>
         </template>
       </el-table-column>
@@ -217,6 +217,23 @@
                     <el-option v-for="dict in dict.type.t_product_pickup_method" :key="dict.value" :label="dict.label"
                       :value="dict.value"></el-option>
                   </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8" v-if="form.pickupMethod && form.pickupMethod != '0' ">
+                <el-form-item label="限制银行" prop="payBankType">
+                  <span slot="label">
+                    限制银行
+                    <el-tooltip placement="top">
+                      <div slot="content">
+                        <div>仅限微信支付有效,限制必须使用对应银行的银行卡支付,如不是限制的银行卡支付则退款,ALL不限制</div>
+                        <div style="color: #5555ff;"><a
+                            href="https://pay.weixin.qq.com/docs/merchant/development/chart/bank-type.html"
+                            target="_blank">《银行对照表》</a></div>
+                      </div>
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input v-model="form.payBankType" placeholder="请输入限制的银行" />
                 </el-form-item>
               </el-col>
               <el-col :span="8" v-if="form.pickupMethod && form.pickupMethod != '0'">
@@ -449,6 +466,9 @@
                 <el-form-item label="商品图片" prop="productImg">
                   <image-upload v-model="form.productImg" :limit="1" />
                 </el-form-item>
+                <el-form-item label="首页图片" prop="productSmallImg">
+                  <image-upload v-model="form.productSmallImg" :limit="1" />
+                </el-form-item>
                 <el-form-item label="校验城市" prop="checkPayCity">
                   <span slot="label">
                     校验城市
@@ -602,6 +622,17 @@
                   <el-input v-model="form.totalUserCount" placeholder="请输入活动用户限领" />
                 </el-form-item>
               </el-col>
+              <el-col :span="8">
+                <el-form-item label="单次购买数量" prop="lineUpperLimit">
+                  <span slot="label">
+                    单次购买数量
+                    <el-tooltip content="用户单次下单可购买的最大数量" placement="top">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input v-model="form.lineUpperLimit" placeholder="请输入单次购买数量" />
+                </el-form-item>
+              </el-col>
             </el-row>
           </el-tab-pane>
           <el-tab-pane label="扩展信息" name="expand" key="expand" :style="{height: tableHeight}">
@@ -627,8 +658,7 @@
               <el-col :span="8">
                 <el-form-item label="支持端" prop="supportChannel">
                   <el-checkbox-group v-model="form.supportChannel">
-                    <el-checkbox
-                      v-for="item in dict.type.channel_type" :key="item.value" :label="item.value">
+                    <el-checkbox v-for="item in dict.type.channel_type" :key="item.value" :label="item.value">
                       {{ item.label }}
                     </el-checkbox>
                   </el-checkbox-group>
@@ -684,7 +714,7 @@
                 <el-form-item label="共享" prop="isShare">
                   <el-select v-model="form.isShare" placeholder="请选择是否共享">
                     <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label"
-                               :value="dict.value"></el-option>
+                      :value="dict.value"></el-option>
                   </el-select>
                 </el-form-item>
               </el-col>
@@ -692,7 +722,7 @@
                 <el-form-item label="支持优惠券" prop="isCoupon">
                   <el-select v-model="form.isCoupon" placeholder="请选择是否支持优惠券">
                     <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label"
-                               :value="dict.value"></el-option>
+                      :value="dict.value"></el-option>
                   </el-select>
                 </el-form-item>
               </el-col>
@@ -700,7 +730,7 @@
                 <el-form-item label="供应商" prop="supplier">
                   <el-select v-model="form.supplier" placeholder="请选择供应商">
                     <el-option v-for="dict in supplierList" :key="dict.id" :label="dict.label"
-                               :value="dict.id"></el-option>
+                      :value="dict.id"></el-option>
                   </el-select>
                 </el-form-item>
               </el-col>
@@ -708,12 +738,27 @@
             <el-row>
               <el-col :span="8">
                 <el-form-item label="分享标题" prop="shareTitle">
-                  <el-input v-model="form.shareTitle" placeholder="请输入分享标题"/>
+                  <el-input v-model="form.shareTitle" placeholder="请输入分享标题" />
                 </el-form-item>
               </el-col>
               <el-col :span="8">
                 <el-form-item label="分享描述" prop="shareName">
-                  <el-input v-model="form.shareName" type="textarea" placeholder="请输入内容"/>
+                  <el-input v-model="form.shareName" type="textarea" placeholder="请输入内容" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="8">
+                <el-form-item label="需要弹窗提示" prop="isPoup">
+                  <el-select v-model="form.isPoup" placeholder="请选择是否支持优惠券">
+                    <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label"
+                               :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col v-if="form.isPoup == 'Y'" :span="8">
+                <el-form-item label="弹窗内容" prop="poupText">
+                  <el-input v-model="form.poupText" type="textarea" placeholder="请输入内容" />
                 </el-form-item>
               </el-col>
             </el-row>
@@ -737,11 +782,11 @@
           </el-tab-pane>
           <el-tab-pane label="演出票信息" name="ticket" key="ticket"
             v-if="form.ticket && (form.productType == '13' || isUpdate)">
-            <ProductTicket :ticket="form.ticket"/>
+            <ProductTicket :ticket="form.ticket" />
           </el-tab-pane>
           <el-tab-pane label="场次与票种" name="session" key="session"
             v-if="form.ticket && (form.productType == '13' || isUpdate)">
-            <ProductSession :ticketSession="form.ticketSession"/>
+            <ProductSession :ticketSession="form.ticketSession" />
           </el-tab-pane>
         </el-tabs>
       </el-form>
@@ -790,27 +835,46 @@
     delProduct,
     addProduct,
     updateProduct,
-    setProductDayCount} from "@/api/zlyyh/product";
+    setProductDayCount
+  } from "@/api/zlyyh/product";
   import {
     treeselect as cityTreeselect,
     productShowCityTreeSelect,
     selectCityList
   } from "@/api/zlyyh/area"
-  import { selectListPlatform } from "@/api/zlyyh/platform"
-  import { listSelectMerchant } from "@/api/zlyyh/merchant"
-  import { selectListMerchant } from "@/api/zlyyh/commercialTenant"
-  import { selectListDistributor } from "@/api/zlyyh/distributor"
-  import { selectListCategory } from "@/api/zlyyh/category"
+  import {
+    selectListPlatform
+  } from "@/api/zlyyh/platform"
+  import {
+    listSelectMerchant
+  } from "@/api/zlyyh/merchant"
+  import {
+    selectListMerchant
+  } from "@/api/zlyyh/commercialTenant"
+  import {
+    selectListDistributor
+  } from "@/api/zlyyh/distributor"
+  import {
+    selectListCategory
+  } from "@/api/zlyyh/category"
   import item from "@/layout/components/Sidebar/Item.vue";
   import Shop from "@/views/zlyyh/shop/productShop.vue";
   import ProductTicket from "@/views/zlyyh/product/productTicket.vue";
   import ProductSession from "@/views/zlyyh/product/productSession.vue";
-  import {exportTags} from "@/api/zlyyh/tags";
-  import {selectSupplier} from "@/api/zlyyh/supplier";
+  import {
+    exportTags
+  } from "@/api/zlyyh/tags";
+  import {
+    selectSupplier
+  } from "@/api/zlyyh/supplier";
 
   export default {
     name: "Product",
-    components: {Shop,ProductTicket,ProductSession},
+    components: {
+      Shop,
+      ProductTicket,
+      ProductSession
+    },
     computed: {
       item() {
         return item
@@ -1189,6 +1253,9 @@
           productAbbreviation: undefined,
           productSubhead: undefined,
           productImg: undefined,
+          productSmallImg: undefined,
+          isPoup: undefined,
+          poupText: undefined,
           productAffiliation: undefined,
           productType: undefined,
           pickupMethod: undefined,
@@ -1226,6 +1293,7 @@
           description: undefined,
           providerLogo: undefined,
           providerName: undefined,
+          payBankType: undefined,
           tags: undefined,
           tagsList: undefined,
           showCity: undefined,
@@ -1409,6 +1477,9 @@
               this.form.showCity = "ALL";
             } else {
               this.form.showCity = this.getCityAllCheckedKeys().toString();
+              if (!this.form.showCity || this.form.showCity.length == 0) {
+                this.form.showCity = "ALL";
+              }
             }
             if (this.form.weekDate) {
               this.form.weekDate = this.form.weekDate.toString();
@@ -1592,8 +1663,7 @@
       selectSupplierList() {
         selectSupplier(this.form).then(response => {
           this.supplierList = response.data;
-        }).finally(() => {
-        });
+        }).finally(() => {});
       },
     }
   };

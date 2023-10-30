@@ -47,9 +47,9 @@ public class CategoryServiceImpl implements ICategoryService {
     }
 
     private LambdaQueryWrapper<Category> buildQueryWrapper(CategoryBo bo) {
-        //Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<Category> lqw = Wrappers.lambdaQuery();
         lqw.eq(bo.getParentId() != null, Category::getParentId, bo.getParentId());
+        lqw.eq(Category::getStatus, "0");
         lqw.eq(bo.getPlatformKey() != null, Category::getPlatformKey, bo.getPlatformKey());
         lqw.eq(StringUtils.isNotBlank(bo.getShowIndex()), Category::getShowIndex, bo.getShowIndex());
         if (StringUtils.isNotBlank(bo.getShowCity())) {
@@ -59,7 +59,7 @@ public class CategoryServiceImpl implements ICategoryService {
         }
         if (StringUtils.isNotBlank(bo.getSupportChannel())) {
             lqw.and(lm -> {
-                lm.eq(Category::getSupportChannel, "ALL").or().likeRight(Category::getSupportChannel, bo.getSupportChannel());
+                lm.eq(Category::getSupportChannel, "ALL").or().like(Category::getSupportChannel, bo.getSupportChannel());
             });
         }
         if (StringUtils.isNotBlank(bo.getWeekDate())) {

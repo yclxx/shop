@@ -51,6 +51,7 @@ public class OrderTicketServiceImpl implements OrderTicketService {
     private final ProductTicketLineMapper ticketLineMapper;
     private final CodeMapper codeMapper;
     private final IUnionPayChannelService unionPayChannelService;
+    private final CollectiveOrderMapper collectiveOrderMapper;
 
     /**
      * 创建订单
@@ -76,7 +77,7 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         if (StringUtils.isNotBlank(cacheObject)) {
             Order order = RedisUtils.getCacheObject(cacheObject);
             if (null != order && "0".equals(order.getStatus())) {
-                return new CreateOrderResult(order.getNumber(), "1");
+                return new CreateOrderResult(order.getCollectiveNumber(), order.getNumber(), "1");
             }
         }
         UserVo userVo = userService.queryById(bo.getUserId(), ZlyyhUtils.getPlatformChannel());
@@ -136,9 +137,19 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         ProductTicket ticket = ticketMapper.selectVoByProductId(ticketLineVo.getProductId());
         ProductTicketSessionVo ticketSession = ticketSessionMapper.selectVoById(ticketLineVo.getSessionId());
 
+        //此处先生成大订单(此处下单只有一个商品 只需记录价格等信息)
+        CollectiveOrder collectiveOrder = new CollectiveOrder();
+        collectiveOrder.setCollectiveNumber(IdUtil.getSnowflakeNextId());
+        collectiveOrder.setUserId(bo.getUserId());
+        collectiveOrder.setOrderCityCode(bo.getAdcode());
+        collectiveOrder.setOrderCityName(bo.getCityName());
+        collectiveOrder.setPlatformKey(platformVo.getPlatformKey());
+        collectiveOrder.setStatus("0");
+        collectiveOrder.setExpireDate(DateUtil.offsetMinute(new Date(), 15).toJdkDate());
         // 生成订单
         Order order = new Order();
         order.setNumber(IdUtil.getSnowflakeNextId());
+        order.setCollectiveNumber(collectiveOrder.getCollectiveNumber());
         order.setProductId(productVo.getProductId());
         order.setCusRefund(productVo.getCusRefund());
         order.setUserId(bo.getUserId());
@@ -147,7 +158,7 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         order.setProductImg(productVo.getProductImg());
         order.setPickupMethod(productVo.getPickupMethod());
         order.setSupportChannel(ZlyyhUtils.getPlatformChannel());
-        order.setExpireDate(DateUtil.offsetMinute(new Date(), 15).toJdkDate());
+        order.setExpireDate(collectiveOrder.getExpireDate());
         order.setStatus("0");
         if ("1".equals(productVo.getSendAccountType())) {
             order.setAccount(userVo.getOpenId());
@@ -227,6 +238,10 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         order.setWantAmount(orderTicket.getSellPrice().multiply(BigDecimal.valueOf(bo.getPayCount())));
         // 实际支付金额
         order.setOutAmount(orderTicket.getSellPrice().multiply(BigDecimal.valueOf(bo.getPayCount())));
+        collectiveOrder.setTotalAmount(order.getTotalAmount());
+        collectiveOrder.setReducedPrice(order.getReducedPrice());
+        collectiveOrder.setWantAmount(order.getWantAmount());
+        collectiveOrder.setOutAmount(order.getOutAmount());
         // 快递方式处理
         if (ticket.getTicketPostWay().equals("2")) {
             order.setTotalAmount(order.getTotalAmount().add(ticket.getTicketPostage()));
@@ -235,6 +250,8 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         }
         // 优惠金额
         order.setReducedPrice(order.getTotalAmount().subtract(order.getWantAmount()));
+
+
         // 身份信息 必填处理
         if (ticket.getTicketCard().equals("0")) {
             if (null == bo.getCardList() || bo.getCardList().isEmpty()) throw new ServiceException("请选择观影人信息");
@@ -264,7 +281,9 @@ public class OrderTicketServiceImpl implements OrderTicketService {
             SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
             orderMapper.insert(order);
             baseMapper.insert(orderTicket);
-            return new CreateOrderResult(order.getNumber(), "0");
+            collectiveOrder.setStatus("2");
+            collectiveOrderMapper.insert(collectiveOrder);
+            return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), order.getNumber(), "1");
         }
 
         // 银联分销预下单处理
@@ -279,9 +298,12 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         RedisUtils.setCacheObject(lineNumber + bo.getLineId(), lineNumbers + bo.getPayCount(), Duration.ofDays(1));
         orderMapper.insert(order);
         baseMapper.insert(orderTicket);
+
+        collectiveOrderMapper.insert(collectiveOrder);
+        collectiveOrder = collectiveOrderMapper.selectById(collectiveOrder.getCollectiveNumber());
         // 缓存订单数据
         cacheOrder(order);
-        return new CreateOrderResult(order.getNumber(), "1");
+        return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), order.getNumber(), "1");
     }
 
     /**

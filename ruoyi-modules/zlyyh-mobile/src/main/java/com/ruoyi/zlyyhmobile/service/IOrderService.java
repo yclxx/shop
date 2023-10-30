@@ -4,13 +4,13 @@ import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.Order;
-import com.ruoyi.zlyyh.domain.bo.AppWxPayCallbackParams;
 import com.ruoyi.zlyyh.domain.bo.OrderBo;
 import com.ruoyi.zlyyh.domain.vo.OrderAndUserNumber;
 import com.ruoyi.zlyyh.domain.vo.OrderVo;
 import com.ruoyi.zlyyh.utils.CloudRechargeEntity;
 import com.ruoyi.zlyyhmobile.domain.bo.CreateOrderBo;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
+import com.ruoyi.zlyyhmobile.domain.vo.PayResultVo;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
@@ -51,6 +51,13 @@ public interface IOrderService {
      * @return 返回结果
      */
     CreateOrderResult createOrder(CreateOrderBo bo, boolean system);
+
+    /**
+     * 创建购物车订单
+     *
+     * @return 返回结果
+     */
+    CreateOrderResult createCarOrder(CreateOrderBo bo, boolean system);
 
     /**
      * 查询订单详情
@@ -95,7 +102,7 @@ public interface IOrderService {
      * @param number 订单号
      * @return 返回tn号，已支付返回 ok
      */
-    String payOrder(Long number, Long userId);
+    PayResultVo payOrder(Long number, Long userId);
 
     Order updateOrder(Order order);
 
@@ -112,7 +119,7 @@ public interface IOrderService {
      *
      * @param appWxPayCallbackParams 回调参数
      */
-    boolean wxCallBack(Long merchantId, AppWxPayCallbackParams appWxPayCallbackParams, HttpServletRequest request);
+    boolean wxCallBack(Long merchantId, HttpServletRequest request);
 
     /**
      * 查询用户未支付订单数量
@@ -192,6 +199,15 @@ public interface IOrderService {
      * @return 最后购买的产品订单
      */
     OrderVo getLastOrder(List<Long> productIds, Long userId);
+
+    /**
+     * 获取今日购买次数
+     *
+     * @param productId 产品ID
+     * @param userId    用户ID
+     * @return 最后购买的产品订单
+     */
+    Long getDayOrderCount(Long productId, Long userId);
 
     /**
      * 查询订单列表

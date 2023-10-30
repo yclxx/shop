@@ -1,9 +1,9 @@
 package com.ruoyi.common.core.config;
 
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import com.ruoyi.common.core.jackson.BigDecimalToStringSerializer;
 import com.ruoyi.common.core.jackson.BigNumberSerializer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -34,7 +34,7 @@ public class JacksonConfig {
             javaTimeModule.addSerializer(Long.class, BigNumberSerializer.INSTANCE);
             javaTimeModule.addSerializer(Long.TYPE, BigNumberSerializer.INSTANCE);
             javaTimeModule.addSerializer(BigInteger.class, BigNumberSerializer.INSTANCE);
-            javaTimeModule.addSerializer(BigDecimal.class, ToStringSerializer.instance);
+            javaTimeModule.addSerializer(BigDecimal.class, BigDecimalToStringSerializer.instance);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             javaTimeModule.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(formatter));
             javaTimeModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer(formatter));

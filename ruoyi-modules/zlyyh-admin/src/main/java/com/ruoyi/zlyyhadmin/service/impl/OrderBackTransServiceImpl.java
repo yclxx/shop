@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyhadmin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -103,8 +104,7 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
         lqw.eq(StringUtils.isNotBlank(bo.getTraceNo()), OrderBackTrans::getTraceNo, bo.getTraceNo());
         lqw.eq(bo.getSuccessTime() != null, OrderBackTrans::getSuccessTime, bo.getSuccessTime());
         lqw.eq(StringUtils.isNotBlank(bo.getOrderBackTransState()), OrderBackTrans::getOrderBackTransState, bo.getOrderBackTransState());
-        lqw.between(params.get("beginCreateTime") != null && params.get("endCreateTime") != null,
-            OrderBackTrans::getCreateTime, params.get("beginCreateTime"), params.get("endCreateTime"));
+        lqw.between(params.get("beginCreateTime") != null && params.get("endCreateTime") != null, OrderBackTrans::getCreateTime, params.get("beginCreateTime"), params.get("endCreateTime"));
         return lqw;
     }
 
@@ -115,10 +115,26 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
     @Override
     public Boolean insertByBo(OrderBackTransBo bo, boolean refund) {
         Order order = orderMapper.selectById(bo.getNumber());
+        if (null == order.getOutAmount() || order.getOutAmount().signum() < 1) {
+            // 有可能订单还没更新，休眠1秒
+            ThreadUtil.sleep(1000);
+            order = orderMapper.selectById(bo.getNumber());
+        }
         // 退款检查
-        checkOrderStatus(bo, order.getOutAmount(), order.getStatus(), refund);
+        try {
+            checkOrderStatus(bo, order.getOutAmount(), order.getStatus(), refund);
+        } catch (Exception e) {
+            // 有可能订单还没更新，休眠1秒
+            ThreadUtil.sleep(3000);
+            order = orderMapper.selectById(bo.getNumber());
+            try {
+                checkOrderStatus(bo, order.getOutAmount(), order.getStatus(), refund);
+            } catch (Exception ex) {
+                checkOrderStatus(bo, order.getWantAmount(), order.getStatus(), refund);
+            }
+        }
         // 基本信息
-        setBaseOrderBack(bo, order.getNumber());
+        setBaseOrderBack(bo, order.getNumber(), order.getPickupMethod());
         order.setStatus("4");
         // 退款操作
         orderBack(bo, order);
@@ -153,7 +169,7 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
         // 校验订单是否可退
         checkOrderStatus(bo, order.getOutAmount(), order.getStatus(), refund);
         // 基本信息
-        setBaseOrderBack(bo, order.getNumber());
+        setBaseOrderBack(bo, order.getNumber(), order.getPickupMethod());
         order.setStatus("4");
         // 退款操作
         orderBack(bo, order);
@@ -195,10 +211,11 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
         return baseMapper.deleteBatchIds(ids) > 0;
     }
 
-    private void setBaseOrderBack(OrderBackTransBo bo, Long number) {
+    private void setBaseOrderBack(OrderBackTransBo bo, Long number, String pickupMethod) {
         bo.setThNumber(IdUtils.getSnowflakeNextIdStr("T"));
         bo.setOrderBackTransState("0");
         bo.setNumber(number);
+        bo.setPickupMethod(pickupMethod);
     }
 
     /**
@@ -210,6 +227,7 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
      */
     private void checkOrderStatus(OrderBackTransBo bo, BigDecimal outAmount, String status, boolean refund) {
         if (bo.getRefund().compareTo(outAmount) > 0) {
+            log.info("订单退款金额：{}，订单实际支付金额：{}", bo.getRefund(), outAmount);
             throw new ServiceException("退款金额不能超出订单金额");
         }
         if (!refund && !"2".equals(status)) {
@@ -298,9 +316,20 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
         }
         BigDecimal outAmount = ReflectUtils.invokeGetter(obj, "outAmount");
         Integer amountTotal = BigDecimalUtils.toMinute(outAmount);
+        if (amountTotal < 1) {
+            outAmount = ReflectUtils.invokeGetter(obj, "wantAmount");
+            amountTotal = BigDecimalUtils.toMinute(outAmount);
+        }
+        if (amountTotal < 1) {
+            throw new ServiceException("退款金额错误");
+        }
         String s;
         try {
-            s = WxUtils.wxRefund(bo.getNumber().toString(), bo.getThNumber(), wxProperties.getRefundUrl(), merchantVo.getMerchantNo(), null, BigDecimalUtils.toMinute(bo.getRefund()), amountTotal, refundCallbackUrl, merchantVo.getCertPath(), merchantVo.getMerchantKey(), merchantVo.getApiKey());
+            Long oldNumber = ReflectUtils.invokeGetter(obj, "collectiveNumber");
+            if (null == oldNumber) {
+                oldNumber = bo.getNumber();
+            }
+            s = WxUtils.wxRefund(oldNumber.toString(), bo.getThNumber(), wxProperties.getRefundUrl(), merchantVo.getMerchantNo(), null, BigDecimalUtils.toMinute(bo.getRefund()), amountTotal, refundCallbackUrl, merchantVo.getCertPath(), merchantVo.getMerchantKey(), merchantVo.getApiKey());
         } catch (Exception e) {
             log.error("微信退款异常：", e);
             throw new ServiceException("退款异常");

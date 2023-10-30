@@ -114,13 +114,19 @@ public class CloudRechargeUtils {
     /**
      * 下单
      */
-    public static R<Void> doPostCreateOrder(Long number, String productId, String account, Integer count, String pushNumber) {
+    public static R<Void> doPostCreateOrder(Long number, String productId, String account, Integer count, String pushNumber, String replaceCallback) {
         Map<String, Object> data = new HashMap<>();
         data.put("productId", productId);
         data.put("count", count);
         data.put("account", account);
         data.put("externalOrderNumber", pushNumber);
-        data.put("orderBack", cloudrechargeConfig.getCallbackUrl());
+        if (StringUtils.isBlank(replaceCallback)) {
+            data.put("orderBack", cloudrechargeConfig.getCallbackUrl());
+        } else {
+            if (StringUtils.isNotBlank(cloudrechargeConfig.getCallbackUrl())) {
+                data.put("orderBack", cloudrechargeConfig.getCallbackUrl().replace("/zlyyh-mobile/order/ignore/orderCallback", replaceCallback));
+            }
+        }
         CloudRechargeResult huiguyunResult;
         try {
             huiguyunResult = CloudRechargeUtils.doPostHuiguyun(cloudrechargeConfig.getAppId(), data, cloudrechargeConfig.getAppKey(), cloudrechargeConfig.getAesKey(), cloudrechargeConfig.getSubmitUrl());

@@ -141,6 +141,14 @@ public class CartServiceImpl implements ICartService {
                 throw new ServiceException("该商品购物车内仅能添加"+productVo.getLineUpperLimit()+"次");
             }
         }
+        //免费商品和积点兑换商品无法加入购物车中
+        if (productVo.getPickupMethod().equals("0") || productVo.getPickupMethod().equals("2")){
+            throw new ServiceException("免费领取商品和积点兑换商品无法加入购物车，请您直接购买");
+        }
+        //内容分销商品不支持加入购物车
+        if (productVo.getUnionPay().equals("1") || productVo.getProductType().equals("10") || productVo.getProductType().equals("11") ||productVo.getProductType().equals("12")){
+            throw new ServiceException("该商品暂不支持加入购物车");
+        }
         entity.setCreateSellingPrice(productVo.getSellAmount());
     }
 

@@ -1,14 +1,10 @@
 package com.ruoyi.zlyyh.domain;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import java.io.Serializable;
-import java.util.Date;
-import java.math.BigDecimal;
-
-import com.ruoyi.common.core.web.domain.BaseEntity;
 
 /**
  * 任务组可兑换商品配置对象 t_mission_group_product
@@ -21,7 +17,7 @@ import com.ruoyi.common.core.web.domain.BaseEntity;
 @TableName("t_mission_group_product")
 public class MissionGroupProduct extends BaseEntity {
 
-    private static final long serialVersionUID=1L;
+    private static final long serialVersionUID = 1L;
 
     /**
      * ID
@@ -32,6 +28,10 @@ public class MissionGroupProduct extends BaseEntity {
      * 任务组ID
      */
     private Long missionGroupId;
+    /**
+     * 任务ID
+     */
+    private Long missionId;
     /**
      * 商品ID
      */

@@ -64,4 +64,9 @@ public class Sm4Encryptor extends AbstractEncryptor {
     public String decrypt(String value) {
         return this.sm4.decryptStr(value);
     }
+
+    public static void main(String[] args) {
+        String s = SmUtil.sm4("Yzgnet.com#123_1".getBytes(StandardCharsets.UTF_8)).decryptStr("F3ji75j0B06ctPLKYZh5hQ==");
+        System.out.println(s);
+    }
 }

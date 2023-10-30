@@ -5,10 +5,12 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.MissionUserRecord;
 import com.ruoyi.zlyyh.domain.bo.MissionGroupProductBo;
 import com.ruoyi.zlyyh.domain.vo.MissionUserRecordVo;
+import com.ruoyi.zlyyh.utils.CloudRechargeEntity;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
 import com.ruoyi.zlyyhmobile.domain.vo.UserProductCount;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -18,11 +20,20 @@ import java.util.Map;
  * @date 2023-05-10
  */
 public interface IMissionUserRecordService {
+    List<MissionUserRecordVo> getRecordList(Long missionGroupId);
+
     TableDataInfo<MissionUserRecordVo> getUserRecordPageList(Long missionGroupId, PageQuery pageQuery);
 
     MissionUserRecord getDraw(Long missionGroupId, Long userId, Long platformKey, String channel);
 
-    Long getUserDrawCount(Long missionGroupId, Long userId, Long platformKey);
+    Long getUserDrawCount(Long missionGroupId, Long userId);
+
+    /**
+     * 充值中心订单回调
+     *
+     * @param cloudRechargeEntity 通知参数
+     */
+    void cloudRechargeCallback(CloudRechargeEntity cloudRechargeEntity);
 
     /**
      * 发奖
@@ -62,7 +73,7 @@ public interface IMissionUserRecordService {
      * @param userId         用户ID
      * @return 结果
      */
-    UserProductCount getUserProductPayCount(Long missionGroupId, Long userId);
+    UserProductCount getUserProductPayCount(Long missionGroupId, Long missionId, Long userId);
 
     /**
      * 购买商品

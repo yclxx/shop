@@ -188,7 +188,6 @@ public class RemoteFoodServicelmpl implements RemoteFoodService {
                         setProductInfo(productJson, productInfoBo);
                         if (ObjectUtil.isNotEmpty(productVo)) {
                             //商品不为空 修改商品
-                            productBo.setPlatformKey(platformKey);
                             //商品修改为可以在用户侧退款
                             productBo.setCusRefund("1");
                             productBo.setProductId(productVo.getProductId());
@@ -203,7 +202,6 @@ public class RemoteFoodServicelmpl implements RemoteFoodService {
                             }
                         } else {
                             //新增商品
-                            productBo.setPlatformKey(platformKey);
                             //商品修改为可以在用户侧退款
                             productBo.setCusRefund("1");
                             productBo.setExternalProductId(commodityId);
@@ -301,6 +299,8 @@ public class RemoteFoodServicelmpl implements RemoteFoodService {
         productBo.setShowEndDate(DateUtils.parseDate(xjDate));
         productBo.setSellStartDate(DateUtils.parseDate(sjDate));
         productBo.setSellEndDate(DateUtils.parseDate(xjDate));
+        productBo.setLineUpperLimit(1L);
+        productBo.setSupplier("1711990613649190914");
 
     }
 
@@ -379,7 +379,6 @@ public class RemoteFoodServicelmpl implements RemoteFoodService {
         String state = data.getString("state");
         if ("0".equals(state) && ObjectUtil.isNotEmpty(latitude) && ObjectUtil.isNotEmpty(longitude)) {
             ShopBo shopBo = new ShopBo();
-            shopBo.setPlatformKey(platformKey);
             shopBo.setAdcode(adcode);
             shopBo.setShopName(shopName);
             shopBo.setShopTel(shopTel);

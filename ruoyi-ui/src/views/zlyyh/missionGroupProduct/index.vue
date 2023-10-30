@@ -77,12 +77,18 @@
             <el-option v-for="item in missionGroupList" :key="item.id" :value="item.id" :label="item.label"></el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="任务" prop="missionId">
+          <el-select v-model="form.missionId" placeholder="请选择任务" filterable clearable style="width: 100%;">
+            <el-option v-for="item in missionList" :key="item.id" :value="item.id" :label="item.label"></el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item label="商品" prop="productId">
-          <el-select style="width: 100%;" v-model="form.productId" placeholder="请选择商品">
+          <el-input v-model="form.productId" placeholder="请输入商品ID" />
+          <!-- <el-select style="width: 100%;" v-model="form.productId" placeholder="请选择商品">
             <el-option v-for="item in productList" :key="item.id" :label="item.label" :value="item.id">
               <span style="float: left">{{ item.label }}</span>
             </el-option>
-          </el-select>
+          </el-select> -->
         </el-form-item>
         <el-form-item label="排序" prop="sort">
           <el-input v-model="form.sort" placeholder="请输入排序" />
@@ -108,6 +114,9 @@
     listMissionGroupSelect
   } from "@/api/zlyyh/missionGroup"
   import {
+    listMissionSelect
+  } from "@/api/zlyyh/mission"
+  import {
     selectListProduct
   } from "@/api/zlyyh/product";
 
@@ -132,6 +141,7 @@
         // 任务组可兑换商品配置表格数据
         missionGroupProductList: [],
         missionGroupList: [],
+        missionList: [],
         //商品下拉列表
         productList: [],
         // 弹出层标题
@@ -174,14 +184,30 @@
       listMissionGroupSelect({}).then(res => {
         this.missionGroupList = res.data;
       })
-      //商品下拉列表
-      selectListProduct({
-        status: '0'
-      }).then(response => {
-        this.productList = response.data;
-      });
+      listMissionSelect({}).then(res => {
+        this.missionList = res.data;
+      })
+      // //商品下拉列表
+      // selectListProduct({
+      //   status: '0'
+      // }).then(response => {
+      //   this.productList = response.data;
+      // });
     },
     methods: {
+      formatterMission(row) {
+        let name = ''
+        this.missionList.forEach(item => {
+          if (row.missionId == item.id) {
+            name = item.label;
+          }
+        })
+        if (name && name.length > 0) {
+          row.name = name;
+          return name;
+        }
+        return row.missionId;
+      },
       formatterProduct(row) {
         let name = ''
         this.productList.forEach(item => {
@@ -227,6 +253,7 @@
         this.form = {
           id: undefined,
           missionGroupId: undefined,
+          missionId: undefined,
           productId: undefined,
           sort: undefined,
           createBy: undefined,

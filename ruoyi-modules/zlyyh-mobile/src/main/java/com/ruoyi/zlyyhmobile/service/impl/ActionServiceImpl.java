@@ -70,6 +70,7 @@ public class ActionServiceImpl implements IActionService {
         couponBo.setActionNo(bo.getActionNo());
         couponBo.setUserId(userId);
         couponBo.setUseStatus("1");
+        couponBo.setPlatformKey(bo.getPlatformKey());
         List<CouponVo> couponVos = couponService.queryList(couponBo);
         if (couponVos.size()>0){
             throw new ServiceException("您已领取该优惠券,请您使用后再来领取哦");

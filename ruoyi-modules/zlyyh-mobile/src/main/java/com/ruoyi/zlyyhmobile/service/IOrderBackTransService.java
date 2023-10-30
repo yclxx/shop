@@ -1,6 +1,5 @@
 package com.ruoyi.zlyyhmobile.service;
 
-import com.ruoyi.zlyyh.domain.bo.AppWxPayCallbackParams;
 import com.ruoyi.zlyyh.domain.bo.OrderBackTransBo;
 import com.ruoyi.zlyyh.domain.vo.OrderBackTransVo;
 
@@ -35,5 +34,5 @@ public interface IOrderBackTransService {
     /**
      * 微信退款回调业务处理
      */
-    void wxRefundCallBack(Long merchantId, AppWxPayCallbackParams appWxPayCallbackParams, HttpServletRequest request);
+    void wxRefundCallBack(Long merchantId, HttpServletRequest request);
 }

@@ -78,6 +78,6 @@ public class MissionController extends BaseController {
      */
     @GetMapping("/missionProduct/{missionGroupId}")
     public R<List<ProductVo>> missionProduct(@NotNull(message = "缺少任务编号") @PathVariable Long missionGroupId) {
-        return R.ok(missionGroupService.missionProduct(missionGroupId));
+        return R.ok(missionGroupService.missionProduct(missionGroupId, ZlyyhUtils.getPlatformId()));
     }
 }

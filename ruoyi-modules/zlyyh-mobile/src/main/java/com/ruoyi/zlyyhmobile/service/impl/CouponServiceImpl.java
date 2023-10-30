@@ -85,6 +85,7 @@ public class CouponServiceImpl implements ICouponService {
         // 查询兑换码
         LambdaQueryWrapper<Coupon> lqw = Wrappers.lambdaQuery();
         lqw.eq(Coupon::getRedeemCode, coupon.getRedeemCode());
+        lqw.eq(Coupon::getPlatformKey, coupon.getPlatformKey());
         Coupon code = baseMapper.selectOne(lqw);
         if (ObjectUtil.isEmpty(code)) {
             throw new ServiceException("兑换码不存在！");

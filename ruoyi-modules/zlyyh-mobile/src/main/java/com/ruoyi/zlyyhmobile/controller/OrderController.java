@@ -23,6 +23,7 @@ import com.ruoyi.zlyyh.utils.sdk.PayUtils;
 import com.ruoyi.zlyyh.utils.sdk.SDKConstants;
 import com.ruoyi.zlyyhmobile.domain.bo.CreateOrderBo;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
+import com.ruoyi.zlyyhmobile.domain.vo.PayResultVo;
 import com.ruoyi.zlyyhmobile.service.IHistoryOrderService;
 import com.ruoyi.zlyyhmobile.service.IOrderBackTransService;
 import com.ruoyi.zlyyhmobile.service.IOrderService;
@@ -74,36 +75,52 @@ public class OrderController {
     }
 
     /**
+     * 购物车创建订单
+     *
+     * @return 订单信息
+     */
+    @Log(title = "用户订单", businessType = BusinessType.INSERT, operatorType = OperatorType.MOBILE)
+    @RepeatSubmit(message = "操作频繁,请稍后重试")
+    @PostMapping("/createCarOrder")
+    public R<CreateOrderResult> createCarOrder(@Validated @RequestBody CreateOrderBo bo) {
+        bo.setUserId(LoginHelper.getUserId());
+        bo.setAdcode(ZlyyhUtils.getAdCode());
+        bo.setCityName(ZlyyhUtils.getCityName());
+        bo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        return R.ok(orderService.createCarOrder(bo, false));
+    }
+
+    /**
      * 订单支付
      *
      * @return 订单信息
      */
     @Log(title = "用户订单", businessType = BusinessType.PAY, operatorType = OperatorType.MOBILE)
     @RepeatSubmit(message = "操作频繁,请稍后重试")
-    @PostMapping("/payOrder/{number}")
-    public R<String> payOrder(@NotNull(message = "请求错误")
-                              @PathVariable("number") Long number) {
-        return R.ok("操作成功", orderService.payOrder(number, LoginHelper.getUserId()));
+    @PostMapping("/payOrder/{collectiveNumber}")
+    public R<PayResultVo> payOrder(@NotNull(message = "请求错误")
+                                   @PathVariable("collectiveNumber") Long collectiveNumber) {
+        return R.ok("操作成功", orderService.payOrder(collectiveNumber, LoginHelper.getUserId()));
     }
 
     /**
      * 查询订单支付状态
      *
-     * @param number 订单号
+     * @param collectiveNumber 订单号
      * @return 返回结果
      */
-    @GetMapping(value = "/queryOrderPay/{number}")
+    @GetMapping(value = "/queryOrderPay/{collectiveNumber}")
     public R<Void> queryOrderPay(@NotNull(message = "缺失必要参数")
-                                 @PathVariable("number") Long number) {
-        return R.ok(orderService.queryOrderPay(number));
+                                 @PathVariable("collectiveNumber") Long collectiveNumber) {
+        return R.ok(orderService.queryOrderPay(collectiveNumber));
     }
 
     /**
      * 微信支付回调
      */
     @RequestMapping("/ignore/wxCallBack/{merchantId}")
-    public R<Void> wxCallBack(@PathVariable("merchantId") Long merchantId, @RequestBody AppWxPayCallbackParams appWxPayCallbackParams, HttpServletRequest request) {
-        boolean b = orderService.wxCallBack(merchantId, appWxPayCallbackParams, request);
+    public R<Void> wxCallBack(@PathVariable("merchantId") Long merchantId, HttpServletRequest request) {
+        boolean b = orderService.wxCallBack(merchantId, request);
         if (!b) {
             R.fail("业务处理失败");
         }
@@ -115,8 +132,8 @@ public class OrderController {
      */
     @SaIgnore
     @RequestMapping("/ignore/wxRefundCallBack/{merchantId}")
-    public R<Void> wxRefundCallBack(@PathVariable("merchantId") Long merchantId, @RequestBody AppWxPayCallbackParams appWxPayCallbackParams, HttpServletRequest request) {
-        orderBackTransService.wxRefundCallBack(merchantId, appWxPayCallbackParams, request);
+    public R<Void> wxRefundCallBack(@PathVariable("merchantId") Long merchantId, HttpServletRequest request) {
+        orderBackTransService.wxRefundCallBack(merchantId, request);
         return R.ok();
     }
 
@@ -262,10 +279,10 @@ public class OrderController {
      * @return 订单列表
      */
     @Log(title = "用户订单", businessType = BusinessType.UPDATE, operatorType = OperatorType.MOBILE)
-    @PostMapping("/cancel/{number}")
+    @PostMapping("/cancel/{collectiveNumber}")
     public R<Void> cancel(@NotNull(message = "请求错误")
-                          @PathVariable("number") Long number) {
-        orderService.cancel(number, LoginHelper.getUserId());
+                          @PathVariable("collectiveNumber") Long collectiveNumber) {
+        orderService.cancel(collectiveNumber, LoginHelper.getUserId());
         return R.ok();
     }
 

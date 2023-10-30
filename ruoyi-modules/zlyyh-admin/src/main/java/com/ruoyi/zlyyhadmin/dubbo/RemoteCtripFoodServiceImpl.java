@@ -148,7 +148,6 @@ public class RemoteCtripFoodServiceImpl implements RemoteCtripFoodService {
                         }
                         if (ObjectUtil.isNotEmpty(productVo)) {
                             //商品不为空 修改商品
-                            productBo.setPlatformKey(platformKey);
                             //商品修改为可以在用户侧退款
                             productBo.setCusRefund("1");
                             productBo.setProductId(productVo.getProductId());
@@ -163,7 +162,6 @@ public class RemoteCtripFoodServiceImpl implements RemoteCtripFoodService {
                             }
                         } else {
                             //新增商品
-                            productBo.setPlatformKey(platformKey);
                             //商品修改为可以在用户侧退款
                             productBo.setCusRefund("1");
                             productBo.setExternalProductId(xcProductId);
@@ -281,6 +279,8 @@ public class RemoteCtripFoodServiceImpl implements RemoteCtripFoodService {
         productBo.setProductAffiliation("0");
         //重新调整为上架状态
         productBo.setStatus("0");
+        productBo.setLineUpperLimit(1L);
+        productBo.setSupplier("1711999541405609985");
     }
 
     /**
@@ -386,7 +386,6 @@ public class RemoteCtripFoodServiceImpl implements RemoteCtripFoodService {
 
         if (ObjectUtil.isNotEmpty(lat) && ObjectUtil.isNotEmpty(lon)) {
             ShopBo shopBo = new ShopBo();
-            shopBo.setPlatformKey(platformKey);
             shopBo.setSupplierShopId(poiId);
             shopBo.setShopName(shopName);
             shopBo.setLongitude(lon);

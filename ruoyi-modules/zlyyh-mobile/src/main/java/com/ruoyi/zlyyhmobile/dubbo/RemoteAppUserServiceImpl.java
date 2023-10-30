@@ -172,7 +172,8 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
         String channel = ZlyyhUtils.getPlatformChannel(platformType);
         UserChannelVo userChannelVo = userChannelService.queryByUserId(channel, userVo.getUserId(), platformKey);
         if (null == userChannelVo) {
-            return null;
+            insertUserChannel(userVo, openId, channel);
+            userChannelVo = userChannelService.queryByOpenId(channel, openId, platformKey);
         }
         if (StringUtils.isNotBlank(openId) && !openId.equals(userChannelVo.getOpenId())) {
             UserChannelVo openIdUserChannelVo = userChannelService.queryByOpenId(channel, openId, platformKey);
@@ -253,7 +254,6 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
                     PermissionUtils.setPlatformDeptIdAndUserId(user, user.getPlatformKey(), true, false);
                     // 新增用户
                     userMapper.insert(user);
-
                 } else {
                     // 修改openId
                     user.setUserId(userInfo.getUserId());

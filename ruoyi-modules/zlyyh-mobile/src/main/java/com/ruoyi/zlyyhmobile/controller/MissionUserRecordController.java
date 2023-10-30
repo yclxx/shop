@@ -13,6 +13,7 @@ import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.zlyyh.domain.MissionUserRecord;
 import com.ruoyi.zlyyh.domain.bo.MissionGroupProductBo;
 import com.ruoyi.zlyyh.domain.vo.MissionUserRecordVo;
+import com.ruoyi.zlyyh.utils.CloudRechargeEntity;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
 import com.ruoyi.zlyyhmobile.domain.vo.UserProductCount;
@@ -23,6 +24,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotNull;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,6 +42,16 @@ public class MissionUserRecordController extends BaseController {
 
     private final IMissionUserRecordService iMissionUserRecordService;
     private final AsyncService asyncService;
+
+    /**
+     * 获取抽奖记录 只显示最近50条
+     *
+     * @param missionGroupId 任务组ID
+     */
+    @GetMapping("/ignore/getRecordList/{missionGroupId}")
+    public R<List<MissionUserRecordVo>> getRecordList(@NotNull(message = "缺少任务组编号") @PathVariable Long missionGroupId) {
+        return R.ok(iMissionUserRecordService.getRecordList(missionGroupId));
+    }
 
     /**
      * 获取用户抽奖记录
@@ -67,13 +79,22 @@ public class MissionUserRecordController extends BaseController {
     }
 
     /**
+     * 订单回调通知
+     */
+    @RequestMapping("/ignore/orderCallback")
+    public R<Void> orderCallback(@RequestBody CloudRechargeEntity huiguyunEntity) {
+        iMissionUserRecordService.cloudRechargeCallback(huiguyunEntity);
+        return R.ok();
+    }
+
+    /**
      * 获取用户剩余抽奖机会
      *
      * @param missionGroupId 任务组ID
      */
     @GetMapping("/getUserDrawCount/{missionGroupId}")
     public R<Long> getUserDrawCount(@NotNull(message = "缺少任务组编号") @PathVariable Long missionGroupId) {
-        return R.ok(iMissionUserRecordService.getUserDrawCount(missionGroupId, LoginHelper.getUserId(), ZlyyhUtils.getPlatformId()));
+        return R.ok(iMissionUserRecordService.getUserDrawCount(missionGroupId, LoginHelper.getUserId()));
     }
 
     /**
@@ -103,7 +124,7 @@ public class MissionUserRecordController extends BaseController {
      */
     @GetMapping("/getUserProductPayCount/{missionGroupId}")
     public R<UserProductCount> getUserProductPayCount(@NotNull(message = "缺少任务编号") @PathVariable Long missionGroupId) {
-        return R.ok(iMissionUserRecordService.getUserProductPayCount(missionGroupId, LoginHelper.getUserId()));
+        return R.ok(iMissionUserRecordService.getUserProductPayCount(missionGroupId, missionGroupId, LoginHelper.getUserId()));
     }
 
     /**

@@ -92,7 +92,7 @@ public class MissionUserServiceImpl implements IMissionUserService {
         if (null == platformVo) {
             throw new ServiceException("平台信息错误");
         }
-        ZlyyhUtils.checkCity(missionGroupVo.getShowCity(), platformVo);
+        ZlyyhUtils.checkCity(missionGroupVo.getShowCity());
         PermissionUtils.setPlatformDeptIdAndUserId(add, missionGroupVo.getPlatformKey(), true, false);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {

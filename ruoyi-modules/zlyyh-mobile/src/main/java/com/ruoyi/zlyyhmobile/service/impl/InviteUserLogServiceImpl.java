@@ -162,7 +162,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
         // 校验用户是否满足条件
         MissionVo missionVo = missionService.queryById(bo.getMissionId());
         check(missionVo);
-        ZlyyhUtils.checkCity(missionVo.getShowCity(), platformService.queryById(platformId, ZlyyhUtils.getPlatformChannel()));
+        ZlyyhUtils.checkCity(missionVo.getShowCity());
         // 查询用户信息
         UserVo userVo = userService.queryById(userId, ZlyyhUtils.getPlatformChannel());
         if (null == userVo || !userVo.getPlatformKey().equals(platformId)) {
@@ -200,7 +200,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
             throw new ServiceException("只能助力一次");
         }
         // 查询用户今日是否已达标
-        List<ProductVo> productVos = missionGroupService.missionProduct(missionVo.getMissionGroupId());
+        List<ProductVo> productVos = missionGroupService.missionProduct(missionVo.getMissionGroupId(), missionVo.getPlatformKey());
         if (ObjectUtil.isEmpty(productVos)) {
             throw new ServiceException("感谢您的助力，本次活动已结束");
         }
@@ -209,9 +209,17 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
         if (null == userInviteLogCount) {
             userInviteLogCount = 0L;
         }
-        if (userInviteLogCount >= productVos.size()) {
-            throw new ServiceException("感谢您的助力，今日已达标");
+        if (productVos.size() > 1) {
+            if (userInviteLogCount >= productVos.size()) {
+                throw new ServiceException("感谢您的助力，今日已达标");
+            }
+        } else {
+            ProductVo productVo = productVos.get(0);
+            if (productVo.getDayUserCount() > 0 && userInviteLogCount >= productVo.getDayUserCount()) {
+                throw new ServiceException("感谢您的助力，今日已达标");
+            }
         }
+
         log.info("助力成功，被邀请用户ID：{}，邀请用户ID：{}", userId, bo.getUserId());
         InviteUserLog add = new InviteUserLog();
         add.setUserId(bo.getUserId());
