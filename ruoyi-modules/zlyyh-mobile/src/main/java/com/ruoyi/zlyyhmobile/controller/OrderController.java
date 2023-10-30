@@ -23,6 +23,7 @@ import com.ruoyi.zlyyh.utils.sdk.PayUtils;
 import com.ruoyi.zlyyh.utils.sdk.SDKConstants;
 import com.ruoyi.zlyyhmobile.domain.bo.CreateOrderBo;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
+import com.ruoyi.zlyyhmobile.domain.vo.PayResultVo;
 import com.ruoyi.zlyyhmobile.service.IHistoryOrderService;
 import com.ruoyi.zlyyhmobile.service.IOrderBackTransService;
 import com.ruoyi.zlyyhmobile.service.IOrderService;
@@ -97,8 +98,8 @@ public class OrderController {
     @Log(title = "用户订单", businessType = BusinessType.PAY, operatorType = OperatorType.MOBILE)
     @RepeatSubmit(message = "操作频繁,请稍后重试")
     @PostMapping("/payOrder/{collectiveNumber}")
-    public R<String> payOrder(@NotNull(message = "请求错误")
-                              @PathVariable("collectiveNumber") Long collectiveNumber) {
+    public R<PayResultVo> payOrder(@NotNull(message = "请求错误")
+                                   @PathVariable("collectiveNumber") Long collectiveNumber) {
         return R.ok("操作成功", orderService.payOrder(collectiveNumber, LoginHelper.getUserId()));
     }
 
@@ -118,8 +119,8 @@ public class OrderController {
      * 微信支付回调
      */
     @RequestMapping("/ignore/wxCallBack/{merchantId}")
-    public R<Void> wxCallBack(@PathVariable("merchantId") Long merchantId, @RequestBody AppWxPayCallbackParams appWxPayCallbackParams, HttpServletRequest request) {
-        boolean b = orderService.wxCallBack(merchantId, appWxPayCallbackParams, request);
+    public R<Void> wxCallBack(@PathVariable("merchantId") Long merchantId, HttpServletRequest request) {
+        boolean b = orderService.wxCallBack(merchantId, request);
         if (!b) {
             R.fail("业务处理失败");
         }
@@ -131,8 +132,8 @@ public class OrderController {
      */
     @SaIgnore
     @RequestMapping("/ignore/wxRefundCallBack/{merchantId}")
-    public R<Void> wxRefundCallBack(@PathVariable("merchantId") Long merchantId, @RequestBody AppWxPayCallbackParams appWxPayCallbackParams, HttpServletRequest request) {
-        orderBackTransService.wxRefundCallBack(merchantId, appWxPayCallbackParams, request);
+    public R<Void> wxRefundCallBack(@PathVariable("merchantId") Long merchantId, HttpServletRequest request) {
+        orderBackTransService.wxRefundCallBack(merchantId, request);
         return R.ok();
     }
 

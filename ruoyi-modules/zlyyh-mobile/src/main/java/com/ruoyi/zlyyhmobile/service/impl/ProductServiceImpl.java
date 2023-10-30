@@ -13,7 +13,6 @@ import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.common.satoken.utils.LoginHelper;
-import com.ruoyi.zlyyh.domain.Platform;
 import com.ruoyi.zlyyh.domain.Product;
 import com.ruoyi.zlyyh.domain.bo.ProductBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
@@ -21,9 +20,7 @@ import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
 import com.ruoyi.zlyyh.mapper.PlatformMapper;
 import com.ruoyi.zlyyh.mapper.ProductMapper;
-import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.service.*;
-import com.sun.javafx.PlatformUtil;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.cache.annotation.Cacheable;
@@ -407,11 +404,14 @@ public class ProductServiceImpl implements IProductService {
             }
             lqw.in(Product::getProductId, commercialTenantProductVos.stream().map(CommercialTenantProductVo::getProductId).collect(Collectors.toList()));
         }
-        if (ObjectUtil.isNotEmpty(bo.getPlatformKey())){
+        if (ObjectUtil.isNotEmpty(bo.getPlatformKey())) {
             PlatformVo platformVo = platformMapper.selectVoById(bo.getPlatformKey());
+            if (null == platformVo) {
+                return null;
+            }
             String supportSupplier = platformVo.getSupportSupplier();
-            if (ObjectUtil.isNotEmpty(supportSupplier)){
-                if ("All".equals(supportSupplier)){
+            if (ObjectUtil.isNotEmpty(supportSupplier)) {
+                if ("All".equals(supportSupplier)) {
                     lqw.and(lm -> {
                         lm.eq(bo.getPlatformKey() != null, Product::getPlatformKey, bo.getPlatformKey()).or().isNull(Product::getPlatformKey);
                     });
@@ -420,19 +420,17 @@ public class ProductServiceImpl implements IProductService {
                     List<String> supportSupplierIds = Arrays.asList(supportSupplier.split(","));
                     lqw.and(lm -> {
                         lm.eq(bo.getPlatformKey() != null, Product::getPlatformKey, bo.getPlatformKey());
-                        if(ObjectUtil.isNotEmpty(supportSupplierIds)){
-                            lm.in(Product::getSupplier,supportSupplierIds);
+                        if (ObjectUtil.isNotEmpty(supportSupplierIds)) {
+                            lm.in(Product::getSupplier, supportSupplierIds);
                         }
                     });
                 }
 
-            }else {
+            } else {
                 lqw.eq(bo.getPlatformKey() != null, Product::getPlatformKey, bo.getPlatformKey());
             }
 
         }
-
-
 
         lqw.last("order by sort asc,update_time desc,product_id desc");
         return lqw;

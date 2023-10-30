@@ -50,6 +50,11 @@ public class AppPlatformVo {
     private String encryptAppId;
 
     /**
+     * 云闪付62会员权限：0-无权限，1-有权限
+     */
+    private String unionPayVip;
+
+    /**
      * 客服电话
      */
     @ExcelProperty(value = "客服电话")

@@ -5,6 +5,7 @@ import cn.hutool.core.codec.Base64;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.TimeInterval;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.IdUtil;
@@ -53,6 +54,7 @@ import com.ruoyi.zlyyh.utils.sdk.UnionPayDistributionUtil;
 import com.ruoyi.zlyyhmobile.domain.bo.CreateOrderBo;
 import com.ruoyi.zlyyhmobile.domain.bo.OrderProductBo;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
+import com.ruoyi.zlyyhmobile.domain.vo.PayResultVo;
 import com.ruoyi.zlyyhmobile.event.SendCouponEvent;
 import com.ruoyi.zlyyhmobile.service.*;
 import com.ruoyi.zlyyhmobile.utils.AliasMethod;
@@ -124,7 +126,7 @@ public class OrderServiceImpl implements IOrderService {
     private final WxProperties wxProperties;
     private final ICartService cartService;
     private final IMissionUserDrawService missionUserDrawService;
-    @DubboReference(retries = 0,timeout = 5000)
+    @DubboReference(retries = 0, timeout = 5000)
     private RemoteOrderService remoteOrderService;
     @Autowired
     private LockTemplate lockTemplate;
@@ -771,7 +773,7 @@ public class OrderServiceImpl implements IOrderService {
                 }
                 //判断是否为专属商品|优惠券判断购买商品id是否存在于优惠券商品关联表中
                 List<ProductCoupon> productCoupons = productCouponMapper.selectList(new LambdaQueryWrapper<ProductCoupon>().eq(ProductCoupon::getCouponId, bo.getCouponId()));
-                if ((coupon.getCouponType().equals("1") || coupon.getCouponType().equals("3")) && ObjectUtil.isEmpty(productCoupons)){
+                if ((coupon.getCouponType().equals("1") || coupon.getCouponType().equals("3")) && ObjectUtil.isEmpty(productCoupons)) {
                     throw new ServiceException("该优惠券指定商品可用！");
                 }
                 if (ObjectUtil.isNotEmpty(productCoupons)) {
@@ -809,12 +811,10 @@ public class OrderServiceImpl implements IOrderService {
             order.setReducedPrice(reducedPrice.multiply(new BigDecimal(order.getCount())));
             order.setWantAmount(order.getTotalAmount().subtract(order.getReducedPrice()));
 
-
             //添加大订单价格
             collectiveOrder.setTotalAmount(amount.multiply(new BigDecimal(order.getCount())));
             collectiveOrder.setReducedPrice(reducedPrice.multiply(new BigDecimal(order.getCount())));
             collectiveOrder.setWantAmount(order.getTotalAmount().subtract(order.getReducedPrice()));
-
 
             if ("12".equals(productVo.getProductType()) || "1".equals(productVo.getUnionPay())) {
                 String externalProductId = "1".equals(productVo.getUnionPay()) ? productVo.getUnionProductId() : productVo.getExternalProductId();
@@ -1704,6 +1704,7 @@ public class OrderServiceImpl implements IOrderService {
      * @param productId   产品ID
      */
     private void callbackOrderCountCache(Long platformKey, Long userId, Long productId, Date createTime) {
+        TimeInterval timer = DateUtil.timer();
         DateType[] values = DateType.values();
         for (DateType value : values) {
             String productCacheKey = ProductUtils.countByProductIdRedisKey(platformKey, productId, value);
@@ -1744,6 +1745,7 @@ public class OrderServiceImpl implements IOrderService {
             String userCacheKey = ProductUtils.countByUserIdAndProductIdRedisKey(platformKey, userId, productId, value);
             RedisUtils.decrAtomicValue(userCacheKey);
         }
+        log.info("用户：{}，回退名额耗时：{}毫秒", userId, timer.interval());
     }
 
     /**
@@ -2093,7 +2095,8 @@ public class OrderServiceImpl implements IOrderService {
      * @return 支付tn 成功返回ok
      */
     @Override
-    public String payOrder(Long collectiveNumber, Long userId) {
+    public PayResultVo payOrder(Long collectiveNumber, Long userId) {
+        PayResultVo payResultVo = new PayResultVo();
         CollectiveOrder collectiveOrder = getCollectiveOrder(collectiveNumber);
         if (null == collectiveOrder) {
             throw new ServiceException("订单不存在");
@@ -2166,13 +2169,15 @@ public class OrderServiceImpl implements IOrderService {
                 if (null == productVo || !"0".equals(productVo.getStatus())) {
                     throw new ServiceException(productVo.getProductName() + "不存在或已下架[pay]");
                 }
-
+                payResultVo.setIsPoup(productVo.getIsPoup());
+                payResultVo.setPoupText(productVo.getPoupText());
                 if ("1".equals(order.getPickupMethod())) {
                     order.setPayMerchant(merchantVo.getId());
                     order = updateOrder(order);
                     // 直销走银联支付，代销走原先支付
                     if ("12".equals(productVo.getProductType()) || "1".equals(productVo.getUnionPay())) {
-                        return unionPayChannelService.getPayTn(order.getNumber(), order.getPlatformKey());
+                        payResultVo.setPayData(unionPayChannelService.getPayTn(order.getNumber(), order.getPlatformKey()));
+                        return payResultVo;
                     }
                 } else if ("2".equals(order.getPickupMethod())) {
                     R<Void> result = YsfUtils.memberPointDeduct(order.getNumber(), order.getWantAmount().longValue(), order.getProductName(), userVo.getOpenId(), order.getPlatformKey());
@@ -2192,7 +2197,8 @@ public class OrderServiceImpl implements IOrderService {
                         checkRandomProduct(order);
                     }
                     SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
-                    return "ok";
+                    payResultVo.setPayData("ok");
+                    return payResultVo;
                 }
 
             }
@@ -2207,7 +2213,8 @@ public class OrderServiceImpl implements IOrderService {
                 if (StringUtils.isEmpty(tn)) {
                     throw new ServiceException("支付异常，请稍后重试");
                 }
-                return tn;
+                payResultVo.setPayData(tn);
+                return payResultVo;
             } else if ("1".equals(merchantVo.getMerchantType())) {
                 // 微信支付
                 String payCallbackUrl = merchantVo.getPayCallbackUrl();
@@ -2216,7 +2223,8 @@ public class OrderServiceImpl implements IOrderService {
                 }
                 try {
                     Map<String, String> resultMap = WxUtils.wxPay(collectiveOrder.getCollectiveNumber().toString(), wxProperties.getPayUrl(), platformVo.getAppId(), merchantVo.getMerchantNo(), platformVo.getPlatformName(), amount, userVo.getOpenId(), payCallbackUrl, merchantVo.getCertPath(), merchantVo.getMerchantKey(), merchantVo.getApiKey());
-                    return JsonUtils.toJsonString(resultMap);
+                    payResultVo.setPayData(JsonUtils.toJsonString(resultMap));
+                    return payResultVo;
                 } catch (Exception e) {
                     log.error("微信支付异常，", e);
                     throw new ServiceException("支付异常，请稍后重试");
@@ -2228,7 +2236,8 @@ public class OrderServiceImpl implements IOrderService {
         } else if ("3".equals(collectiveOrder.getStatus())) {
             throw new ServiceException("订单已关闭");
         }
-        return "ok";
+        payResultVo.setPayData("ok");
+        return payResultVo;
     }
 
     /**
@@ -2362,14 +2371,16 @@ public class OrderServiceImpl implements IOrderService {
 
     /**
      * 微信支付回调
-     *
-     * @param appWxPayCallbackParams 回调参数
      */
     @SneakyThrows
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public boolean wxCallBack(Long merchantId, AppWxPayCallbackParams appWxPayCallbackParams, HttpServletRequest request) {
-        log.info("微信支付回调通知，商户号ID：{},通知内容：{}", merchantId, appWxPayCallbackParams);
+    public boolean wxCallBack(Long merchantId, HttpServletRequest request) {
+        //验证签名
+        BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream()));
+        String body = IoUtil.read(reader);
+        log.info("微信支付回调通知，商户号ID：{},通知内容：{}", merchantId, body);
+        AppWxPayCallbackParams appWxPayCallbackParams = JsonUtils.parseObject(body, AppWxPayCallbackParams.class);
         // 查询商户信息
         MerchantVo merchantVo = merchantService.queryById(merchantId);
         if (null == merchantVo) {
@@ -2390,10 +2401,6 @@ public class OrderServiceImpl implements IOrderService {
             throw new ServiceException("解密异常");
         }
         log.info("微信支付回调通知，商户号ID：{},解密后内容：{}", merchantId, s);
-
-        //验证签名
-        BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream()));
-        String body = IoUtil.read(reader);
 
         String wechatPayTimestamp = request.getHeader("Wechatpay-Timestamp");
         String wechatPayNonce = request.getHeader("Wechatpay-Nonce");
@@ -3164,8 +3171,11 @@ public class OrderServiceImpl implements IOrderService {
         ProductVo productVo = productService.queryById(order.getProductId());
         if (null != productVo && StringUtils.isNotBlank(productVo.getPayBankType()) && !"ALL".equalsIgnoreCase(productVo.getPayBankType())) {
             if (!productVo.getPayBankType().contains(payBank)) {
+                log.info("订单{}，未使用指定支付方式，系统自动退款", order.getNumber());
                 // 发起退款
                 remoteOrderService.refundOrder(order.getNumber(), order.getOutAmount(), "未使用特定付款方式");
+                // 回退名额
+                callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), order.getCreateTime());
                 return false;
             }
         }

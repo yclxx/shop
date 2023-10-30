@@ -47,9 +47,26 @@ public interface IUserService {
     String getOpenIdByMobile(Long platformKey, String mobile, String channel);
 
     /**
+     * 根据平台id和手机号获取用户信息
+     *
+     * @param platformKey 平台id
+     * @param mobile      手机号
+     * @return 用户信息
+     */
+    Long getUserIdByMobile(Long platformKey, String mobile);
+
+    /**
      * 缓存用户进入首页数据
      *
      * @param recordLog 缓存参数
      */
     void userLog(UserRecordLog recordLog);
+
+    /**
+     * 根据用户手机号创建用户
+     *
+     * @param platformKey 平台
+     * @param mobile      用户手机号
+     */
+    boolean insertUserByMobile(Long platformKey, String mobile);
 }

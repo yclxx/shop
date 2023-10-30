@@ -222,7 +222,7 @@
                 v-model="form.awardExpiryDate" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="请选择开始时间">
               </el-date-picker>
               <el-input-number style="width: 100%;" v-else-if="'2' == form.awardExpiryType"
-                v-model="form.awardExpiryDate" :min="1" :max="999" label="请输入多少天后失效"
+                v-model="form.awardExpiryDate" :min="0" :max="999" label="请输入多少天后失效"
                 controls-position="right"></el-input-number>
               <div v-else-if="'3' == form.awardExpiryType">
                 <el-input v-model="form.awardExpiryDate" placeholder="请输入次月失效时间" />

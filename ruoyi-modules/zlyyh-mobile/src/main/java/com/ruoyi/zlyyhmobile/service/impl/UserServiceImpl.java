@@ -154,6 +154,22 @@ public class UserServiceImpl implements IUserService {
         return user.getOpenId();
     }
 
+    /**
+     * 根据平台id和手机号获取用户信息
+     *
+     * @param platformKey 平台id
+     * @param mobile      手机号
+     * @return 用户信息
+     */
+    @Override
+    public Long getUserIdByMobile(Long platformKey, String mobile) {
+        User user = baseMapper.selectOneIncludeMobile(new LambdaQueryWrapper<User>().eq(User::getPlatformKey, platformKey), new User(mobile));
+        if (null == user) {
+            return null;
+        }
+        return user.getUserId();
+    }
+
     @Override
     public void userLog(UserRecordLog recordLog) {
         Long userId = LoginHelper.getUserId();
@@ -176,6 +192,20 @@ public class UserServiceImpl implements IUserService {
         if (!existsObject) {
             RedisUtils.expire(nowDate + ":userLogs", Duration.ofHours(50));
         }
+    }
+
+    /**
+     * 根据用户手机号创建用户
+     *
+     * @param platformKey 平台
+     * @param mobile      用户手机号
+     */
+    public boolean insertUserByMobile(Long platformKey, String mobile) {
+        User user = new User();
+        user.setPlatformKey(platformKey);
+        user.setMobile(mobile);
+
+        return baseMapper.insert(user) > 0;
     }
 
     private void setUserVoByChannel(UserVo userVo, String channel) {

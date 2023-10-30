@@ -274,7 +274,9 @@ public class WxUtils {
         HttpPost httpPost = getHttpPost(url);
         httpPost.setEntity(new StringEntity(bos.toString("UTF-8"), "UTF-8"));
         HttpResponse response = httpClient.execute(httpPost);
-        return EntityUtils.toString(response.getEntity());
+        String result = EntityUtils.toString(response.getEntity());
+        log.info("微信退款请求参数：{},返回结果{}", rootNode, result);
+        return result;
     }
 
     private final static int KEY_SIZE = 128;

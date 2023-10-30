@@ -132,7 +132,13 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
             }
         } else if ("2".equals(missionVo.getAwardExpiryType())) {
             if (NumberUtil.isLong(missionVo.getAwardExpiryDate())) {
-                expiryDate = DateUtil.endOfDay(DateUtil.offsetDay(new Date(), Integer.parseInt(missionVo.getAwardExpiryDate()))).offset(DateField.MILLISECOND, -999).toJdkDate();
+                int addDay = Integer.parseInt(missionVo.getAwardExpiryDate());
+                if (addDay < 1) {
+                    // TODO 填写当天的结束时间
+                    expiryDate = DateUtil.endOfDay(new Date()).offset(DateField.MILLISECOND, -999).toJdkDate();
+                } else {
+                    expiryDate = DateUtil.endOfDay(DateUtil.offsetDay(new Date(), addDay)).offset(DateField.MILLISECOND, -999).toJdkDate();
+                }
             }
         } else if ("3".equals(missionVo.getAwardExpiryType())) {
             String format = DateUtil.format(DateUtil.offsetMonth(new Date(), 1), DatePattern.NORM_MONTH_PATTERN);

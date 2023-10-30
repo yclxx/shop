@@ -88,7 +88,15 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
     public List<MissionUserRecordVo> getRecordList(Long missionGroupId) {
         String key = CacheNames.recordList + ":" + missionGroupId;
         List<MissionUserRecordVo> recordVos = RedisUtils.getCacheList(key);
-        if (ObjectUtil.isEmpty(recordVos)) {
+        if (ObjectUtil.isNotEmpty(recordVos)) {
+            return recordVos;
+        }
+        final LockInfo lockInfo = lockTemplate.lock("lock" + key, 30000L, 5000L, RedissonLockExecutor.class);
+        if (null == lockInfo) {
+            return new ArrayList<>();
+        }
+        // 获取锁成功，处理业务
+        try {
             MissionGroupVo missionGroupVo = missionGroupService.queryById(missionGroupId);
             if (null == missionGroupVo) {
                 return new ArrayList<>();
@@ -101,8 +109,11 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
             recordVos = baseMapper.selectVoList(lqw);
             RedisUtils.setCacheList(key, recordVos);
             RedisUtils.expire(key, Duration.ofMinutes(20));
+            return recordVos;
+        } finally {
+            //释放锁
+            lockTemplate.releaseLock(lockInfo);
         }
-        return recordVos;
     }
 
     /**
