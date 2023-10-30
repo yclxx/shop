@@ -83,19 +83,23 @@ public class CouponServiceImpl implements ICouponService {
             coupon.setCouponId(IdUtil.getSnowflakeNextId());
             coupon.setRedeemCode(RandomUtil.randomNumbers(10));
             coupon.setCouponName(action.getCouponName());
-            coupon.setCouponAmount(action.getCouponAmount());
-            coupon.setMinAmount(action.getMinAmount());
-            coupon.setCouponType(action.getCouponType());
-            coupon.setPeriodOfStart(action.getPeriodOfStart());
-            coupon.setPeriodOfValidity(action.getPeriodOfValidity());
-            coupon.setCouponDescription(action.getCouponDescription());
+            coupon.setPlatformKey(action.getPlatformKey());
             coupon.setUseStatus("0");
             coupon.setGenTime(DateUtils.getNowDate());
             coupon.setActionNo(action.getActionNo());
-            coupon.setCouponImage(action.getCouponImage());
-            coupon.setConversionStartDate(action.getConversionStartDate());
-            coupon.setConversionEndDate(action.getConversionEndDate());
-            coupon.setPlatformKey(action.getPlatformKey());
+            if (ObjectUtil.isNotEmpty(action.getCouponAmount())) coupon.setCouponAmount(action.getCouponAmount());
+            if (ObjectUtil.isNotEmpty(action.getMinAmount())) coupon.setMinAmount(action.getMinAmount());
+            if (StringUtils.isNotEmpty(action.getCouponType())) coupon.setCouponType(action.getCouponType());
+            if (ObjectUtil.isNotEmpty(action.getPeriodOfStart())) coupon.setPeriodOfStart(action.getPeriodOfStart());
+            if (ObjectUtil.isNotEmpty(action.getPeriodOfValidity()))
+                coupon.setPeriodOfValidity(action.getPeriodOfValidity());
+            if (StringUtils.isNotEmpty(action.getCouponDescription()))
+                coupon.setCouponDescription(action.getCouponDescription());
+            if (StringUtils.isNotEmpty(action.getCouponImage())) coupon.setCouponImage(action.getCouponImage());
+            if (ObjectUtil.isNotEmpty(action.getConversionStartDate()))
+                coupon.setConversionStartDate(action.getConversionStartDate());
+            if (ObjectUtil.isNotEmpty(action.getConversionEndDate()))
+                coupon.setConversionEndDate(action.getConversionEndDate());
             addList.add(coupon);
             if (ObjectUtil.isNotEmpty(productActions)) {
                 for (ProductAction productAction : productActions) {
@@ -168,7 +172,7 @@ public class CouponServiceImpl implements ICouponService {
         Coupon coupon = new Coupon();
         coupon.setUseStatus("5");
         LambdaQueryWrapper<Coupon> lqw = new LambdaQueryWrapper<>();
-        lqw.in(Coupon::getCouponId,ids);
+        lqw.in(Coupon::getCouponId, ids);
         lqw.in(Coupon::getUseStatus, "0", "1");
         return baseMapper.update(coupon, lqw) > 0;
     }

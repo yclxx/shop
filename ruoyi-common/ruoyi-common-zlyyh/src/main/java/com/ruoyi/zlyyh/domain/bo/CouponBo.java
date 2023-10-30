@@ -49,7 +49,7 @@ public class CouponBo extends BaseEntity {
     /**
      * 优惠金额
      */
-    @NotNull(message = "优惠金额不能为空", groups = { AddGroup.class, EditGroup.class })
+    //@NotNull(message = "优惠金额不能为空", groups = { AddGroup.class, EditGroup.class })
     private BigDecimal couponAmount;
 
     /**

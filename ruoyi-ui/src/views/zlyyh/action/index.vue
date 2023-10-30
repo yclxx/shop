@@ -9,29 +9,13 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="优惠券名称" prop="couponName">
+      <el-form-item label="名称" prop="couponName">
         <el-input
           v-model="queryParams.couponName"
-          placeholder="请输入优惠券名称"
+          placeholder="请输入名称"
           clearable
           @keyup.enter.native="handleQuery"
         />
-      </el-form-item>
-      <el-form-item label="可使用起始日期" prop="periodOfStart">
-        <el-date-picker clearable
-                        v-model="queryParams.periodOfStart"
-                        type="date"
-                        value-format="yyyy-MM-dd"
-                        placeholder="请选择可使用起始日期">
-        </el-date-picker>
-      </el-form-item>
-      <el-form-item label="使用有效截止日期" prop="periodOfValidity">
-        <el-date-picker clearable
-                        v-model="queryParams.periodOfValidity"
-                        type="date"
-                        value-format="yyyy-MM-dd"
-                        placeholder="请选择使用有效截止日期">
-        </el-date-picker>
       </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
@@ -43,22 +27,38 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="可兑换起始日期" prop="conversionStartDate">
-        <el-date-picker clearable
-                        v-model="queryParams.conversionStartDate"
-                        type="date"
-                        value-format="yyyy-MM-dd"
-                        placeholder="请选择可兑换起始日期">
-        </el-date-picker>
-      </el-form-item>
-      <el-form-item label="可兑换截止日期" prop="conversionEndDate">
-        <el-date-picker clearable
-                        v-model="queryParams.conversionEndDate"
-                        type="date"
-                        value-format="yyyy-MM-dd"
-                        placeholder="请选择可兑换截止日期">
-        </el-date-picker>
-      </el-form-item>
+      <!--<el-form-item label="起始日期" prop="periodOfStart">-->
+      <!--  <el-date-picker clearable-->
+      <!--                  v-model="queryParams.periodOfStart"-->
+      <!--                  type="date"-->
+      <!--                  value-format="yyyy-MM-dd"-->
+      <!--                  placeholder="请选择可使用起始日期">-->
+      <!--  </el-date-picker>-->
+      <!--</el-form-item>-->
+      <!--<el-form-item label="有效截止日期" prop="periodOfValidity">-->
+      <!--  <el-date-picker clearable-->
+      <!--                  v-model="queryParams.periodOfValidity"-->
+      <!--                  type="date"-->
+      <!--                  value-format="yyyy-MM-dd"-->
+      <!--                  placeholder="请选择使用有效截止日期">-->
+      <!--  </el-date-picker>-->
+      <!--</el-form-item>-->
+      <!--<el-form-item label="可兑换起始日期" prop="conversionStartDate">-->
+      <!--  <el-date-picker clearable-->
+      <!--                  v-model="queryParams.conversionStartDate"-->
+      <!--                  type="date"-->
+      <!--                  value-format="yyyy-MM-dd"-->
+      <!--                  placeholder="请选择可兑换起始日期">-->
+      <!--  </el-date-picker>-->
+      <!--</el-form-item>-->
+      <!--<el-form-item label="可兑换截止日期" prop="conversionEndDate">-->
+      <!--  <el-date-picker clearable-->
+      <!--                  v-model="queryParams.conversionEndDate"-->
+      <!--                  type="date"-->
+      <!--                  value-format="yyyy-MM-dd"-->
+      <!--                  placeholder="请选择可兑换截止日期">-->
+      <!--  </el-date-picker>-->
+      <!--</el-form-item>-->
       <el-form-item label="平台标识" prop="platformKey">
         <el-select v-model="queryParams.platformKey" placeholder="请选择平台标识" clearable>
           <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id"/>
@@ -124,10 +124,10 @@
       <el-table-column type="selection" width="55" align="center"/>
       <el-table-column fixed="left" label="平台标识" align="center" prop="platformKey" :formatter="platformFormatter"/>
       <el-table-column label="批次号" align="center" prop="actionNo"/>
-      <el-table-column label="优惠券名称" align="center" prop="couponName"/>
+      <el-table-column label="名称" align="center" prop="couponName" width="100px"/>
       <el-table-column label="优惠金额" align="center" prop="couponAmount"/>
       <el-table-column label="最低消费金额" align="center" prop="minAmount"/>
-      <el-table-column label="优惠券类型" align="center" prop="couponType">
+      <el-table-column label="类型" align="center" prop="couponType">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.t_coupon_type" :value="scope.row.couponType"/>
         </template>
@@ -138,7 +138,7 @@
         </template>
       </el-table-column>
       <el-table-column label="优惠券数量" align="center" prop="couponCount"/>
-      <el-table-column label="可使用起始日期" align="center" prop="periodOfStart" width="180">
+      <el-table-column label="使用起始日期" align="center" prop="periodOfStart" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.periodOfStart, '{y}-{m}-{d}') }}</span>
         </template>
@@ -148,12 +148,12 @@
           <span>{{ parseTime(scope.row.periodOfValidity, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="可兑换起始日期" align="center" prop="conversionStartDate" width="180">
+      <el-table-column label="兑换起始日期" align="center" prop="conversionStartDate" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.conversionStartDate, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="可兑换截止日期" align="center" prop="conversionEndDate" width="180">
+      <el-table-column label="兑换截止日期" align="center" prop="conversionEndDate" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.conversionEndDate, '{y}-{m}-{d}') }}</span>
         </template>
@@ -161,11 +161,11 @@
       <el-table-column fixed="right" label="操作" align="center" width="100">
         <template slot-scope="scope">
           <el-button v-if="scope.row.couponType !== '2'"
-            size="mini"
-            type="text"
-            icon="el-icon-edit"
-            @click="handleProductByAction(scope.row)"
-            v-hasPermi="['zlyyh:action:create']"
+                     size="mini"
+                     type="text"
+                     icon="el-icon-edit"
+                     @click="handleProductByAction(scope.row)"
+                     v-hasPermi="['zlyyh:action:create']"
           >商品维护
           </el-button>
           <el-button
@@ -210,7 +210,7 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="批次号" prop="actionNo">
-              <el-input v-model="form.actionNo" placeholder="请输入批次号"/>
+              <el-input v-model="form.actionNo" placeholder="请输入批次号" :disabled="isUpdate"/>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -228,7 +228,7 @@
               <el-input v-model="form.couponName" placeholder="请输入优惠优惠券名称"/>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="12" v-if="form.couponType !== '1'">
             <el-form-item label="优惠金额" prop="couponAmount">
               <el-input v-model="form.couponAmount" placeholder="请输入优惠金额"/>
             </el-form-item>
@@ -266,7 +266,7 @@
               </el-radio-group>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="12" v-if="form.couponType !== '1'">
             <el-form-item label="最低消费金额" prop="minAmount">
               <el-input v-model="form.minAmount" placeholder="请输入最低消费金额"/>
             </el-form-item>
@@ -274,7 +274,7 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="可使用起始日期" prop="periodOfStart">
+            <el-form-item label="使用起始日期" prop="periodOfStart">
               <el-date-picker clearable
                               v-model="form.periodOfStart"
                               type="datetime"
@@ -296,22 +296,22 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="可兑换起始日期" prop="conversionStartDate">
+            <el-form-item label="兑换起始日期" prop="conversionStartDate">
               <el-date-picker clearable
                               v-model="form.conversionStartDate"
                               type="datetime"
                               value-format="yyyy-MM-dd HH:mm:ss"
-                              placeholder="请选择可兑换起始日期">
+                              placeholder="请选择兑换起始日期">
               </el-date-picker>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="可兑换截止日期" prop="conversionEndDate">
+            <el-form-item label="兑换截止日期" prop="conversionEndDate">
               <el-date-picker clearable
                               v-model="form.conversionEndDate"
                               type="datetime"
                               value-format="yyyy-MM-dd HH:mm:ss"
-                              placeholder="请选择可兑换截止日期">
+                              placeholder="请选择兑换截止日期">
               </el-date-picker>
             </el-form-item>
           </el-col>
@@ -367,7 +367,7 @@ import ProductAction from "@/views/zlyyh/product/ProductAction.vue";
 
 export default {
   name: "Action",
-  dicts: ['sys_normal_disable','t_coupon_type'],
+  dicts: ['sys_normal_disable', 't_coupon_type'],
   components: {
     ProductAction
   },
@@ -379,6 +379,7 @@ export default {
       loading: true,
       // 选中数组
       ids: [],
+      isUpdate: false,
       // 非单个禁用
       single: true,
       // 非多个禁用
@@ -516,6 +517,7 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
+      this.isUpdate = false;
       this.title = "添加优惠券批次";
     },
     /** 修改按钮操作 */
@@ -525,6 +527,7 @@ export default {
       const actionId = row.actionId || this.ids
       getAction(actionId).then(response => {
         this.loading = false;
+        this.isUpdate = true;
         this.form = response.data;
         this.open = true;
         this.title = "修改优惠券批次";

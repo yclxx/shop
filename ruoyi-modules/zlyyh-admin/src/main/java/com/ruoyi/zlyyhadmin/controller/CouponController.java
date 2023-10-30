@@ -2,7 +2,6 @@ package com.ruoyi.zlyyhadmin.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.ruoyi.common.core.domain.R;
-import com.ruoyi.common.core.validate.EditGroup;
 import com.ruoyi.common.core.web.controller.BaseController;
 import com.ruoyi.common.excel.utils.ExcelUtil;
 import com.ruoyi.common.log.annotation.Log;
@@ -69,7 +68,7 @@ public class CouponController extends BaseController {
     }
 
     /**
-     * 指定批次作废优惠券
+     * 指定批次号作废优惠券
      */
     @SaCheckPermission("zlyyh:coupon:edit")
     @Log(title = "优惠券", businessType = BusinessType.UPDATE)
