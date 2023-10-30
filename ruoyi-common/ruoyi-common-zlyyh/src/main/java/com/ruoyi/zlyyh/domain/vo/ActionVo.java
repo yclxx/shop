@@ -68,7 +68,7 @@ public class ActionVo {
     /**
      * 优惠券可使用起始日期
      */
-    @ExcelProperty(value = "优惠券可使用起始日期")
+    @ExcelProperty(value = "使用起始日期")
     private Date periodOfStart;
 
     /**
@@ -105,13 +105,13 @@ public class ActionVo {
     /**
      * 可兑换起始日期
      */
-    @ExcelProperty(value = "可兑换起始日期")
+    @ExcelProperty(value = "兑换起始日期")
     private Date conversionStartDate;
 
     /**
      * 可兑换截止日期
      */
-    @ExcelProperty(value = "可兑换截止日期")
+    @ExcelProperty(value = "兑换截止日期")
     private Date conversionEndDate;
 
     /**
