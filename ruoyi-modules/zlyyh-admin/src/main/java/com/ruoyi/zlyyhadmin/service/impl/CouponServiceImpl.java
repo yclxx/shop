@@ -135,6 +135,7 @@ public class CouponServiceImpl implements ICouponService {
         lqw.eq(StringUtils.isNotBlank(bo.getCouponImage()), Coupon::getCouponImage, bo.getCouponImage());
         lqw.eq(bo.getUserId() != null, Coupon::getUserId, bo.getUserId());
         lqw.eq(bo.getPlatformKey() != null, Coupon::getPlatformKey, bo.getPlatformKey());
+        lqw.orderByDesc(Coupon::getCreateTime);
         return lqw;
     }
 
