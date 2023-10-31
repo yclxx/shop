@@ -9,6 +9,14 @@ export function listCoupon(query) {
   })
 }
 
+export function productList(query) {
+  return request({
+    url: '/zlyyh-admin/coupon/productList',
+    method: 'get',
+    params: query
+  })
+}
+
 // 查询优惠券详细
 export function getCoupon(couponId) {
   return request({

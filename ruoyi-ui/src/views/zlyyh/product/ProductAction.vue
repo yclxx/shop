@@ -158,7 +158,7 @@ export default {
     }
   },
   watch: {
-    shopId: {
+    actionId: {
       deep: true,
       handler() {
         this.getList()

@@ -10,6 +10,7 @@ import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.CouponBo;
 import com.ruoyi.zlyyh.domain.vo.CouponVo;
+import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyhadmin.service.ICouponService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -43,6 +44,11 @@ public class CouponController extends BaseController {
     @GetMapping("/list")
     public TableDataInfo<CouponVo> list(CouponBo bo, PageQuery pageQuery) {
         return iCouponService.queryPageList(bo, pageQuery);
+    }
+
+    @GetMapping("/productList")
+    public TableDataInfo<ProductVo> productList(CouponBo bo, PageQuery pageQuery) {
+        return iCouponService.queryProductPageList(bo, pageQuery);
     }
 
     /**

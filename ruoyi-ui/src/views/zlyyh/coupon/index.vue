@@ -143,10 +143,7 @@
           <dict-tag :options="dict.type.t_coupon_type" :value="scope.row.couponType"/>
         </template>
       </el-table-column>
-      <!--<el-table-column label="优惠券名称" align="center" prop="couponName"/>-->
       <el-table-column label="批次号" align="center" prop="actionNo"/>
-      <!--<el-table-column label="优惠金额" align="center" prop="couponAmount"/>-->
-      <!--<el-table-column label="最低消费金额" align="center" prop="minAmount"/>-->
       <el-table-column label="使用起始日期" align="center" prop="periodOfStart" width="100">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.periodOfStart, '{y}-{m}-{d}') }}</span>
@@ -173,12 +170,12 @@
           <image-preview :src="scope.row.couponImage" :width="50" :height="50"/>
         </template>
       </el-table-column>
-      <el-table-column label="可兑换起始日期" align="center" prop="conversionStartDate" width="100">
+      <el-table-column label="兑换起始日期" align="center" prop="conversionStartDate" width="100">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.conversionStartDate, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="可兑换截止日期" align="center" prop="conversionEndDate" width="100">
+      <el-table-column label="兑换截止日期" align="center" prop="conversionEndDate" width="100">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.conversionEndDate, '{y}-{m}-{d}') }}</span>
         </template>
@@ -190,6 +187,12 @@
         </template>
       </el-table-column>
       <el-table-column fixed="right" label="使用状态" align="center" prop="useStatus" :formatter="changeCouponStatus"/>
+      <el-table-column fixed="right" label="操作" align="center" width="100">
+        <template slot-scope="scope">
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleProductByCoupon(scope.row)">商品查看
+          </el-button>
+        </template>
+      </el-table-column>
     </el-table>
 
     <pagination
@@ -213,17 +216,26 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+    <el-dialog title="优惠券商品" :visible.sync="productOpen" width="30%" append-to-body>
+      <el-table :data="productList">
+        <el-table-column label="商品编号" align="center" prop="productId" fixed="left"/>
+        <el-table-column label="商品名称" align="center" prop="productName"  :show-overflow-tooltip="true"
+                         fixed="left"/>
+      </el-table>
+      <pagination v-show="productTotal>0" :total="productTotal" :page.sync="queryProductParams.pageNum" :limit.sync="queryProductParams.pageSize"
+                  @pagination="handleProductByCoupon()"/>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import {delCoupon, listCoupon, updateCoupon} from "@/api/zlyyh/coupon";
+import {delCoupon, listCoupon, updateCoupon, productList} from "@/api/zlyyh/coupon";
 import Treeselect from "@riophae/vue-treeselect";
 import {selectListPlatform} from "@/api/zlyyh/platform";
 
 export default {
   name: "Coupon",
-  dicts: ['coupon_status','t_coupon_type'],
+  dicts: ['coupon_status', 't_coupon_type'],
   components: {
     Treeselect
   },
@@ -246,6 +258,15 @@ export default {
       // 优惠券表格数据
       couponList: [],
       platformList: [],
+      // 商品列表信息
+      queryProductParams: {
+        pageNum: 1,
+        pageSize: 10,
+        couponId: undefined,
+      },
+      productOpen: false,
+      productTotal: 0,
+      productList: [],
       // 弹出层标题
       // 是否显示弹出层
       open: false,
@@ -305,6 +326,16 @@ export default {
         return platformName;
       }
       return row.platformKey;
+    },
+    handleProductByCoupon(row) {
+      if (row) {
+        this.queryProductParams.couponId = row.couponId;
+      }
+      productList(this.queryProductParams).then(response => {
+        this.productList = response.rows;
+        this.productTotal = response.total;
+        this.productOpen = true;
+      });
     },
     changeCouponStatus(row) {
       let couponStatusName = ''

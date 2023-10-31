@@ -11,14 +11,13 @@ import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
-import com.ruoyi.zlyyh.domain.Action;
-import com.ruoyi.zlyyh.domain.Coupon;
-import com.ruoyi.zlyyh.domain.ProductAction;
-import com.ruoyi.zlyyh.domain.ProductCoupon;
+import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.CouponBo;
 import com.ruoyi.zlyyh.domain.vo.CouponVo;
+import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyh.mapper.CouponMapper;
 import com.ruoyi.zlyyh.mapper.ProductCouponMapper;
+import com.ruoyi.zlyyh.mapper.ProductMapper;
 import com.ruoyi.zlyyhadmin.service.ICouponService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,6 +38,7 @@ public class CouponServiceImpl implements ICouponService {
 
     private final CouponMapper baseMapper;
     private final ProductCouponMapper productCouponMapper;
+    private final ProductMapper productMapper;
 
     /**
      * 查询优惠券
@@ -62,6 +62,17 @@ public class CouponServiceImpl implements ICouponService {
     public TableDataInfo<CouponVo> queryPageList(CouponBo bo, PageQuery pageQuery) {
         LambdaQueryWrapper<Coupon> lqw = buildQueryWrapper(bo);
         Page<CouponVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+        return TableDataInfo.build(result);
+    }
+
+    /**
+     * 查询优惠券列表
+     */
+    @Override
+    public TableDataInfo<ProductVo> queryProductPageList(CouponBo bo, PageQuery pageQuery) {
+        LambdaQueryWrapper<Product> lqw = Wrappers.lambdaQuery();
+        lqw.last("AND product_id IN ( SELECT product_id FROM `t_product_coupon` WHERE coupon_id =" + bo.getCouponId() + " );");
+        Page<ProductVo> result = productMapper.selectVoPage(pageQuery.build(), lqw);
         return TableDataInfo.build(result);
     }
 

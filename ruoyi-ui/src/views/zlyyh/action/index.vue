@@ -27,38 +27,6 @@
           />
         </el-select>
       </el-form-item>
-      <!--<el-form-item label="起始日期" prop="periodOfStart">-->
-      <!--  <el-date-picker clearable-->
-      <!--                  v-model="queryParams.periodOfStart"-->
-      <!--                  type="date"-->
-      <!--                  value-format="yyyy-MM-dd"-->
-      <!--                  placeholder="请选择可使用起始日期">-->
-      <!--  </el-date-picker>-->
-      <!--</el-form-item>-->
-      <!--<el-form-item label="有效截止日期" prop="periodOfValidity">-->
-      <!--  <el-date-picker clearable-->
-      <!--                  v-model="queryParams.periodOfValidity"-->
-      <!--                  type="date"-->
-      <!--                  value-format="yyyy-MM-dd"-->
-      <!--                  placeholder="请选择使用有效截止日期">-->
-      <!--  </el-date-picker>-->
-      <!--</el-form-item>-->
-      <!--<el-form-item label="可兑换起始日期" prop="conversionStartDate">-->
-      <!--  <el-date-picker clearable-->
-      <!--                  v-model="queryParams.conversionStartDate"-->
-      <!--                  type="date"-->
-      <!--                  value-format="yyyy-MM-dd"-->
-      <!--                  placeholder="请选择可兑换起始日期">-->
-      <!--  </el-date-picker>-->
-      <!--</el-form-item>-->
-      <!--<el-form-item label="可兑换截止日期" prop="conversionEndDate">-->
-      <!--  <el-date-picker clearable-->
-      <!--                  v-model="queryParams.conversionEndDate"-->
-      <!--                  type="date"-->
-      <!--                  value-format="yyyy-MM-dd"-->
-      <!--                  placeholder="请选择可兑换截止日期">-->
-      <!--  </el-date-picker>-->
-      <!--</el-form-item>-->
       <el-form-item label="平台标识" prop="platformKey">
         <el-select v-model="queryParams.platformKey" placeholder="请选择平台标识" clearable>
           <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id"/>

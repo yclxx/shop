@@ -6,6 +6,7 @@ import com.ruoyi.zlyyh.domain.Action;
 import com.ruoyi.zlyyh.domain.ProductAction;
 import com.ruoyi.zlyyh.domain.bo.CouponBo;
 import com.ruoyi.zlyyh.domain.vo.CouponVo;
+import com.ruoyi.zlyyh.domain.vo.ProductVo;
 
 import java.util.Collection;
 import java.util.List;
@@ -25,6 +26,7 @@ public interface ICouponService {
 
     /**
      * 根据批次号查询数量
+     *
      * @return
      */
     Long queryNumberByActionNo(String actionNo);
@@ -35,6 +37,11 @@ public interface ICouponService {
     TableDataInfo<CouponVo> queryPageList(CouponBo bo, PageQuery pageQuery);
 
     /**
+     * 查询优惠券对应商品列表
+     */
+    TableDataInfo<ProductVo> queryProductPageList(CouponBo bo, PageQuery pageQuery);
+
+    /**
      * 查询优惠券列表
      */
     List<CouponVo> queryList(CouponBo bo);
@@ -42,7 +49,7 @@ public interface ICouponService {
     /**
      * 批量创建优惠券
      */
-    Boolean addCoupon(Action action,Long number,List<ProductAction> productActions);
+    Boolean addCoupon(Action action, Long number, List<ProductAction> productActions);
 
     /**
      * 修改优惠券
