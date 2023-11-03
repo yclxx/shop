@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyhmobile.controller;
 
 import com.ruoyi.common.core.domain.R;
+import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.web.controller.BaseController;
 import com.ruoyi.common.idempotent.annotation.RepeatSubmit;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
@@ -9,6 +10,7 @@ import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.zlyyh.domain.bo.InviteUserLogBo;
 import com.ruoyi.zlyyh.domain.vo.InviteUserLogMobileOrderVo;
+import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.service.IInviteUserLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +48,10 @@ public class InviteUserLogController extends BaseController {
     @RepeatSubmit(message = "操作频繁,请稍后重试")
     @PostMapping("/add")
     public R<Void> add(@RequestBody InviteUserLogBo bo) {
-        iInviteUserLogService.insertByBo(bo);
+        Long platformId = ZlyyhUtils.getPlatformId();
+        // 被邀请用户ID
+        Long userId = LoginHelper.getUserId();
+        iInviteUserLogService.insertByBo(bo,platformId,userId);
         return R.ok();
     }
 

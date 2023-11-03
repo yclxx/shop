@@ -12,6 +12,7 @@
         <result property="status" column="status"/>
         <result property="startDate" column="start_date"/>
         <result property="endDate" column="end_date"/>
+        <result property="missionTime" column="mission_time"/>
         <result property="periodType" column="period_type"/>
         <result property="missionImg" column="mission_img"/>
         <result property="missionAwardType" column="mission_award_type"/>

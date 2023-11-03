@@ -13,6 +13,7 @@
         <result property="drawProbability" column="draw_probability"/>
         <result property="status" column="status"/>
         <result property="drawType" column="draw_type"/>
+        <result property="drawWinning" column="draw_winning"/>
         <result property="drawNo" column="draw_no"/>
         <result property="sendValue" column="send_value"/>
         <result property="drawQuota" column="draw_quota"/>

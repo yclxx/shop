@@ -63,6 +63,10 @@ public class Draw extends BaseEntity {
      */
     private BigDecimal sendValue;
     /**
+     * 是否能中奖
+     */
+    private String drawWinning;
+    /**
      * 奖品额度
      */
     private BigDecimal drawQuota;

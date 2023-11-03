@@ -22,6 +22,8 @@ import java.util.Map;
 public interface IMissionUserRecordService {
     List<MissionUserRecordVo> getRecordList(Long missionGroupId);
 
+    List<String> getRecordStringList(Long missionGroupId);
+
     TableDataInfo<MissionUserRecordVo> getUserRecordPageList(Long missionGroupId, PageQuery pageQuery);
 
     MissionUserRecord getDraw(Long missionGroupId, Long userId, Long platformKey, String channel);

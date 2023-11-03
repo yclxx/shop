@@ -25,4 +25,13 @@ public class AsyncService {
     public void sendDraw(Long missionUserRecordId) {
         missionUserRecordService.sendDraw(missionUserRecordId);
     }
+    /**
+     * 异步发送给邀请者抽奖机会（签到和购买时发送奖励）
+     */
+    public void sendInviteDraw() {
+        //先查询缓存
+
+
+
+    }
 }

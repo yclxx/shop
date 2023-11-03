@@ -67,6 +67,11 @@ public class DrawBo extends BaseEntity {
     private String drawType;
 
     /**
+     * 是否能中奖
+     */
+    private String drawWinning;
+
+    /**
      * 取码编号
      */
     private String drawNo;

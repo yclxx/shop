@@ -2,6 +2,7 @@ package com.ruoyi.zlyyhmobile.service.impl;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.TimeInterval;
+import cn.hutool.core.util.DesensitizedUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.http.HttpStatus;
@@ -110,6 +111,54 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
             RedisUtils.setCacheList(key, recordVos);
             RedisUtils.expire(key, Duration.ofMinutes(20));
             return recordVos;
+        } finally {
+            //释放锁
+            lockTemplate.releaseLock(lockInfo);
+        }
+    }
+
+    /**
+     * 查询奖品列表
+     *
+     * @param missionGroupId 任务组ID
+     * @return
+     */
+    @Override
+    public List<String> getRecordStringList(Long missionGroupId) {
+        String key = CacheNames.recordStringList + ":" + missionGroupId;
+        List<String> recordVosString = RedisUtils.getCacheList(key);
+        if (ObjectUtil.isNotEmpty(recordVosString)) {
+            return recordVosString;
+        }
+        final LockInfo lockInfo = lockTemplate.lock("lock" + key, 30000L, 5000L, RedissonLockExecutor.class);
+        if (null == lockInfo) {
+            return new ArrayList<>();
+        }
+        // 获取锁成功，处理业务
+        try {
+            MissionGroupVo missionGroupVo = missionGroupService.queryById(missionGroupId);
+            if (null == missionGroupVo) {
+                return new ArrayList<>();
+            }
+            LambdaQueryWrapper<MissionUserRecord> lqw = Wrappers.lambdaQuery();
+            lqw.eq(MissionUserRecord::getMissionGroupId, missionGroupId);
+            lqw.eq(MissionUserRecord::getStatus, "1");
+            lqw.ne(MissionUserRecord::getDrawType, "9");
+            lqw.last("order by draw_time desc limit 50");
+            List<MissionUserRecordVo> recordVos = baseMapper.selectVoList(lqw);
+            for (MissionUserRecordVo userDrawVo : recordVos) {
+                if (StringUtils.isEmpty(userDrawVo.getSendAccount())) {
+                    continue;
+                }
+                String str = DesensitizedUtil.mobilePhone(userDrawVo.getSendAccount()) + "获得" + userDrawVo.getDrawName();
+                recordVosString.add(str);
+                // 暂时提示真实内容
+
+            }
+            RedisUtils.setCacheList(key, recordVosString);
+            RedisUtils.expire(key, Duration.ofMinutes(20));
+
+            return recordVosString;
         } finally {
             //释放锁
             lockTemplate.releaseLock(lockInfo);
@@ -646,6 +695,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
         createOrderBo.setAdcode(ZlyyhUtils.getAdCode());
         createOrderBo.setCityName(ZlyyhUtils.getCityName());
         createOrderBo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        createOrderBo.setChannel(ZlyyhUtils.getPlatformChannel());
         return orderService.createOrder(createOrderBo, true);
     }
 
@@ -798,6 +848,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
             DrawBo bo = new DrawBo();
             bo.setMissionGroupId(missionGroupId);
             bo.setPlatformKey(platformKey);
+            bo.setDrawWinning("0");
             drawVos = drawService.queryList(bo);
             if (ObjectUtil.isEmpty(drawVos)) {
                 return new ArrayList<>();
@@ -1036,6 +1087,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
         createOrderBo.setAdcode(ZlyyhUtils.getAdCode());
         createOrderBo.setCityName(ZlyyhUtils.getCityName());
         createOrderBo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        createOrderBo.setChannel(ZlyyhUtils.getPlatformChannel());
         return orderService.createOrder(createOrderBo, true);
     }
 

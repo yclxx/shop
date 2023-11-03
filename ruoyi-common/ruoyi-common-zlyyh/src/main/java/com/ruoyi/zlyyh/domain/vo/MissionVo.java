@@ -65,6 +65,10 @@ public class MissionVo {
      */
     @ExcelProperty(value = "结束时间")
     private Date endDate;
+    /**
+     * 任务时间
+     */
+    private String missionTime;
 
     /**
      * 任务刷新周期: 0-无周期，1-日，2-周，3-月

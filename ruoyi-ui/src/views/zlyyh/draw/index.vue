@@ -183,6 +183,14 @@
               </el-select>
             </el-form-item>
           </el-col>
+          <el-col :span="8">
+            <el-form-item label="能否抽中" prop="drawWinning">
+              <el-radio-group v-model="form.drawWinning">
+                <el-radio v-for="dict in dict.type.t_draw_winner" :key="dict.value"
+                          :label="dict.value">{{dict.label}}</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
           <el-col :span="8" v-if="form.drawType == '1'">
             <el-form-item label="发放金额" prop="sendValue">
               <el-input v-model="form.sendValue" placeholder="请输入发放金额">
@@ -388,7 +396,7 @@
 
   export default {
     name: "Draw",
-    dicts: ['draw_type', 'sys_normal_disable', 't_banner_to_type'],
+    dicts: ['draw_type', 'sys_normal_disable', 't_banner_to_type','t_draw_winner'],
     data() {
       return {
         // 按钮loading
@@ -471,11 +479,6 @@
           drawQuota: [{
             required: true,
             message: "奖品额度不能为空",
-            trigger: "blur"
-          }],
-          platformKey: [{
-            required: true,
-            message: "平台标识不能为空",
             trigger: "blur"
           }],
         }
