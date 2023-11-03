@@ -76,6 +76,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
     private final IProductService productService;
     private final IOrderService orderService;
     private final IPlatformService platformService;
+    private final AsyncSecondService asyncSecondService;
     @Autowired
     private LockTemplate lockTemplate;
 
@@ -689,6 +690,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
                 }
             }
         }
+        asyncSecondService.sendInviteDraw(userId,ZlyyhUtils.getPlatformId(),missionVo.getMissionGroupId());
         CreateOrderBo createOrderBo = new CreateOrderBo();
         createOrderBo.setProductId(userProductPayCount.getProductId());
         createOrderBo.setUserId(userId);

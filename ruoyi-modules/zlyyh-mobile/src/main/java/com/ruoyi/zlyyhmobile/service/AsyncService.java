@@ -1,9 +1,20 @@
 package com.ruoyi.zlyyhmobile.service;
 
+import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.ruoyi.common.redis.utils.RedisUtils;
+import com.ruoyi.zlyyh.domain.Mission;
+import com.ruoyi.zlyyh.domain.bo.InviteUserLogBo;
+import com.ruoyi.zlyyh.domain.vo.MissionVo;
+import com.ruoyi.zlyyh.mapper.MissionMapper;
+import com.ruoyi.zlyyh.service.YsfConfigService;
+import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * 异步任务
@@ -25,13 +36,7 @@ public class AsyncService {
     public void sendDraw(Long missionUserRecordId) {
         missionUserRecordService.sendDraw(missionUserRecordId);
     }
-    /**
-     * 异步发送给邀请者抽奖机会（签到和购买时发送奖励）
-     */
-    public void sendInviteDraw() {
-        //先查询缓存
 
 
 
-    }
 }
