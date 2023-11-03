@@ -29,7 +29,7 @@ public interface IInviteUserLogService {
     /**
      * 修改邀请记录
      */
-    void insertByBo(InviteUserLogBo bo);
+    void insertByBo(InviteUserLogBo bo,Long platformId,Long userId);
 
     /**
      * 查询用户今日已获奖励次数

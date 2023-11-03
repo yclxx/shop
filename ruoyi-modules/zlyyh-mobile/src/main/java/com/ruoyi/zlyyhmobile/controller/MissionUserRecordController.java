@@ -52,6 +52,15 @@ public class MissionUserRecordController extends BaseController {
     public R<List<MissionUserRecordVo>> getRecordList(@NotNull(message = "缺少任务组编号") @PathVariable Long missionGroupId) {
         return R.ok(iMissionUserRecordService.getRecordList(missionGroupId));
     }
+    /**
+     * 获取抽奖记录 只显示最近50条
+     *
+     * @param missionGroupId 任务组ID
+     */
+    @GetMapping("/ignore/getRecordStringList/{missionGroupId}")
+    public R<List<String>> getRecordStringList(@NotNull(message = "缺少任务组编号") @PathVariable Long missionGroupId) {
+        return R.ok(iMissionUserRecordService.getRecordStringList(missionGroupId));
+    }
 
     /**
      * 获取用户抽奖记录

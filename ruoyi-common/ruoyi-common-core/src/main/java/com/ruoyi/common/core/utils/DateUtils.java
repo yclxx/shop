@@ -204,10 +204,12 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
 
     public static void main(String[] args) {
         Date nowDate = getNowDate();
-        DateTime yesterday = DateUtil.tomorrow();
+//        DateTime yesterday = DateUtil.tomorrow();
+        DateTime yesterday = DateUtil.endOfDay(nowDate);
         System.out.println(nowDate);
         System.out.println(yesterday);
-        System.out.println(DateUtils.compare(nowDate,yesterday));
+        System.out.println(getDatePoorMinutes(yesterday, nowDate));
+//        System.out.println(DateUtils.compare(nowDate,yesterday));
     }
 
     /**

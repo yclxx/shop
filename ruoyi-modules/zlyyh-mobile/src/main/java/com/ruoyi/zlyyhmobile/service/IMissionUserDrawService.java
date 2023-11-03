@@ -7,7 +7,7 @@ public interface IMissionUserDrawService {
     /**
      * 赠送抽奖机会
      */
-    String sendDrawCount(Long userId, Long productId);
+    String sendDrawCount(Long userId, Long productId,String exProductId);
 
     /**
      * 赠送奖励

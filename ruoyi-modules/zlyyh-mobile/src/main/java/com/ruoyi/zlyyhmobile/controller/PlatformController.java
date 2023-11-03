@@ -65,6 +65,17 @@ public class PlatformController extends BaseController {
     }
 
     /**
+     * 获取抽奖任务组Id
+     *
+     * @return 平台信息
+     */
+    @GetMapping("/ignore/getMissionGroupId")
+    public R<String> getMissionGroupId() {
+        String url = ysfConfigService.queryValueByKey(ZlyyhUtils.getPlatformId(), "MissionGroupId");
+        return R.ok(url);
+    }
+
+    /**
      * 获取平台城市自定义首页
      *
      * @param result 平台信息

@@ -70,7 +70,6 @@ public class ProductController extends BaseController {
     public R<List<SelectListEntity>> selectListProduct(ProductBo bo) {
         //查询下拉列表时加入时间和状态判断
         bo.setStatus("0");
-        bo.setSearchStatus("0");
         List<ProductVo> productVos = iProductService.queryProductList(bo);
         return R.ok(BeanCopyUtils.copyListToSelectListVo(productVos, ColumnUtil.getFieldName(ProductVo::getProductId), ColumnUtil.getFieldName(ProductVo::getProductName), null));
     }

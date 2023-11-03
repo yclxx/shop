@@ -157,6 +157,19 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
+            <el-form-item label="任务时间" prop="missionTime">
+                  <span slot="label">
+                    任务时间
+                    <el-tooltip content="限制购买时间,例如每天8点至9点可购买: 08:00:00-09:00:00" placement="top">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+              <el-time-picker is-range v-model="form.missionTime" range-separator="-" start-placeholder="开始时间"
+                              end-placeholder="结束时间" placeholder="选择时间范围" style="width: 100%;" value-format="HH:mm:ss">
+              </el-time-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
             <el-form-item label="规则图片" prop="missionImg">
               <image-upload :limit="1" :isShowTip="false" v-model="form.missionImg"></image-upload>
             </el-form-item>
@@ -526,6 +539,7 @@
           missionName: undefined,
           status: undefined,
           platformKey: undefined,
+          missionTime: undefined
         },
         // 表单参数
         form: {},
@@ -694,6 +708,7 @@
           appId: undefined,
           url: undefined,
           sort: undefined,
+          missionTime: undefined
         };
         this.resetForm("form");
       },
@@ -743,6 +758,9 @@
           if (this.form && this.form.weekDate) {
             this.form.weekDate = this.form.weekDate.split(",");
           }
+          if (this.form && this.form.missionTime) {
+            this.form.missionTime = this.form.missionTime.split("-")
+          }
           if (this.form.showCity == 'ALL') {
             this.cityNodeAll = true;
             this.$nextTick(() => {
@@ -779,6 +797,9 @@
             this.buttonLoading = true;
             if (this.form.weekDate) {
               this.form.weekDate = this.form.weekDate.toString();
+            }
+            if (this.form.missionTime) {
+              this.form.missionTime = this.form.missionTime[0] + "-" + this.form.missionTime[1];
             }
             if (this.cityNodeAll) {
               this.form.showCity = "ALL";

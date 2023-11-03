@@ -71,6 +71,11 @@ public class DrawVo {
     private String drawType;
 
     /**
+     * 是否能中奖
+     */
+    private String drawWinning;
+
+    /**
      * 取码编号
      */
     @ExcelProperty(value = "取码编号")

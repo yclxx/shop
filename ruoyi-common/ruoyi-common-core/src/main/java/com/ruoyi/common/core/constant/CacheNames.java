@@ -205,4 +205,5 @@ public interface CacheNames {
      * 新用户营销奖励信息
      */
     String recordList = "recordList#20m";
+    String recordStringList = "recordStringList#40m";
 }

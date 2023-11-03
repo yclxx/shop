@@ -58,6 +58,11 @@ public class CreateOrderBo {
     private List<OrderProductBo> orderProductBos;
 
     /**
+     * 平台端
+     */
+    private String channel;
+
+    /**
      * 获取城市编码
      *
      * @return 城市编码 例如杭州：330100

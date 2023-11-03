@@ -7,7 +7,10 @@ import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
+import com.ruoyi.common.core.utils.DateUtils;
+import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.zlyyh.domain.MissionGroupProduct;
 import com.ruoyi.zlyyh.domain.MissionUserRecord;
 import com.ruoyi.zlyyh.domain.vo.MissionGroupProductVo;
@@ -34,15 +37,22 @@ public class MissionUserDrawServiceImpl implements IMissionUserDrawService {
     private final MissionUserRecordMapper missionUserRecordMapper;
 
     @Override
-    public String sendDrawCount(Long userId, Long productId) {
+    public String sendDrawCount(Long userId, Long productId,String exProductId) {
+        MissionVo missionVo = null;
         List<MissionGroupProductVo> missionGroupProductVos = missionGroupProductMapper.selectVoList(new LambdaQueryWrapper<MissionGroupProduct>().eq(MissionGroupProduct::getProductId, productId));
         if (ObjectUtil.isEmpty(missionGroupProductVos)) {
-            throw new ServiceException("未找到产品对应任务信息");
+            if(NumberUtil.isLong(exProductId)){
+                missionVo = missionMapper.selectVoById(Long.valueOf(exProductId));
+            }
+            if(null == missionVo){
+                throw new ServiceException("未找到产品对应任务信息");
+            }
         }
-        MissionGroupProductVo missionGroupProductVo = missionGroupProductVos.get(missionGroupProductVos.size() - 1);
-        MissionVo missionVo = null;
-        if (null != missionGroupProductVo.getMissionId()) {
-            missionVo = missionMapper.selectVoById(missionGroupProductVo.getMissionId());
+        if(null == missionVo){
+            MissionGroupProductVo missionGroupProductVo = missionGroupProductVos.get(missionGroupProductVos.size() - 1);
+            if (null != missionGroupProductVo.getMissionId()) {
+                missionVo = missionMapper.selectVoById(missionGroupProductVo.getMissionId());
+            }
         }
         if (null == missionVo) {
             throw new ServiceException("任务不存在");
@@ -67,7 +77,18 @@ public class MissionUserDrawServiceImpl implements IMissionUserDrawService {
                     int addDay = Integer.parseInt(missionVo.getAwardExpiryDate());
                     if (addDay < 1) {
                         // TODO 填写当天的结束时间
-                        expiryDate = DateUtil.endOfDay(new Date()).offset(DateField.MILLISECOND, -999).toJdkDate();
+                        if (ObjectUtil.isNotEmpty(missionVo.getMissionTime()) && missionVo.getMissionTime().contains("-")){
+                            String[] split = missionVo.getMissionTime().split("-");
+                            if (split.length == 2) {
+                                String str2 = split[1];
+                                if (StringUtils.isNotBlank(str2) && str2.length() > 4) {
+                                    // 结束时间
+                                    expiryDate = DateUtils.parseDate(DateUtil.today() + " " + str2);
+                                }
+                            }
+                        }else {
+                            expiryDate = DateUtil.endOfDay(new Date()).offset(DateField.MILLISECOND, -999).toJdkDate();
+                        }
                     } else {
                         expiryDate = DateUtil.endOfDay(DateUtil.offsetDay(new Date(), addDay)).offset(DateField.MILLISECOND, -999).toJdkDate();
                     }

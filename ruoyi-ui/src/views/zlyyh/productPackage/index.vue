@@ -87,11 +87,19 @@
               :label="item.label"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="券包商品" prop="extProductId">
-          <el-select v-model="form.extProductId" placeholder="请选择券包商品" style="width: 100%;">
-            <el-option v-for="item in productList" :key="item.id" :value="item.id" :label="item.label"></el-option>
-          </el-select>
+        <el-form-item label="商品" prop="extProductId">
+          <el-input v-model="form.extProductId" placeholder="请输入商品ID" />
+          <!-- <el-select style="width: 100%;" v-model="form.productId" placeholder="请选择商品">
+            <el-option v-for="item in productList" :key="item.id" :label="item.label" :value="item.id">
+              <span style="float: left">{{ item.label }}</span>
+            </el-option>
+          </el-select> -->
         </el-form-item>
+<!--        <el-form-item label="券包商品" prop="extProductId">-->
+<!--          <el-select v-model="form.extProductId" placeholder="请选择券包商品" style="width: 100%;">-->
+<!--            <el-option v-for="item in productList" :key="item.id" :value="item.id" :label="item.label"></el-option>-->
+<!--          </el-select>-->
+<!--        </el-form-item>-->
         <el-form-item label="发放数量" prop="sendCount">
           <el-input v-model="form.sendCount" placeholder="请输入发放数量" />
         </el-form-item>
@@ -120,7 +128,7 @@
   } from "@/api/zlyyh/productPackage";
   import {
     selectListProduct
-  } from "@/api/zlyyh/product"
+  } from "@/api/zlyyh/product";
 
   export default {
     name: "ProductPackage",
@@ -192,7 +200,7 @@
     created() {
       this.getList();
       this.getProductPackageList()
-      this.getProductList()
+      //this.getProductList()
     },
     methods: {
       getProductList() {
@@ -208,6 +216,7 @@
           productType: '9',
         }).then(res => {
           this.productPackageSelectList = res.data;
+          console.log(this.productPackageSelectList)
         })
       },
       changeProductPackageName(row) {

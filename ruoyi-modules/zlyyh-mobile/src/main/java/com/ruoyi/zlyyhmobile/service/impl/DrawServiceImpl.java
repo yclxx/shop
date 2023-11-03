@@ -43,6 +43,7 @@ public class DrawServiceImpl implements IDrawService {
         LambdaQueryWrapper<Draw> lqw = Wrappers.lambdaQuery();
         lqw.eq(null != bo.getMissionGroupId(), Draw::getMissionGroupId, bo.getMissionGroupId());
         lqw.eq(null != bo.getPlatformKey(), Draw::getPlatformKey, bo.getPlatformKey());
+        lqw.eq(null != bo.getDrawWinning(), Draw::getDrawWinning, bo.getDrawWinning());
         lqw.eq(Draw::getStatus, "0");
         lqw.last("order by sort asc");
         return baseMapper.selectVoList(lqw);

@@ -149,10 +149,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void insertByBo(InviteUserLogBo bo) {
-        Long platformId = ZlyyhUtils.getPlatformId();
-        // 被邀请用户ID
-        Long userId = LoginHelper.getUserId();
+    public void insertByBo(InviteUserLogBo bo, Long platformId,Long userId) {
         if (null == userId || null == bo.getUserId() || bo.getUserId() < 1 || null == bo.getMissionId() || bo.getMissionId() < 1) {
             throw new ServiceException("请求错误，请关闭重试");
         }
@@ -236,6 +233,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
         createOrderBo.setAdcode(ZlyyhUtils.getAdCode());
         createOrderBo.setCityName(ZlyyhUtils.getCityName());
         createOrderBo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        createOrderBo.setChannel(ZlyyhUtils.getPlatformChannel());
         CreateOrderResult order = orderService.createOrder(createOrderBo, true);
         // 回填订单号
         add.setNumber(order.getNumber());

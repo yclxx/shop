@@ -382,7 +382,7 @@ public class OrderServiceImpl implements IOrderService {
                 sendResult(result, orderPushInfo, order, cache, false);
             } else if ("9".equals(order.getOrderType())) {
                 // 券包
-                R<Void> result = productPackageHandle(order.getNumber(), order.getProductId(), order.getUserId(), order.getOrderCityCode(), order.getOrderCityName(), order.getPlatformKey());
+                R<Void> result = productPackageHandle(order.getNumber(), order.getProductId(), order.getUserId(), order.getOrderCityCode(), order.getOrderCityName(), order.getPlatformKey(),order.getSupportChannel());
                 sendResult(result, orderPushInfo, order, cache, false);
             } else if ("11".equals(order.getOrderType())) {
                 // 代销（银联分销）
@@ -406,7 +406,7 @@ public class OrderServiceImpl implements IOrderService {
                 payCtripFoodOrder(order.getExternalOrderNumber());
             } else if ("16".equals(order.getOrderType())) {
                 try {
-                    String externalOrderNumber = missionUserDrawService.sendDrawCount(order.getUserId(), order.getProductId());
+                    String externalOrderNumber = missionUserDrawService.sendDrawCount(order.getUserId(), order.getProductId(),order.getExternalProductId());
                     order.setExternalOrderNumber(externalOrderNumber);
                     sendResult(R.ok("发放成功"), orderPushInfo, order, cache, false);
                 } catch (Exception e) {
@@ -520,18 +520,20 @@ public class OrderServiceImpl implements IOrderService {
                         Object cacheObject = RedisUtils.getCacheObject(ZlyyhConstants.ysfOrderErrorNum);
                         if (cacheObject != null) {
                             String errorCouponNumber = ysfConfigService.queryValueByKey(order.getPlatformKey(), "errorCouponNumber");
-                            Integer num = Integer.parseInt(errorCouponNumber);
-                            int number = Integer.parseInt(cacheObject.toString());
-                            // 满足条件,发送云闪付服务消息.
-                            if (number >= num) {
-                                PlatformVo platformVo = platformService.queryById(order.getPlatformKey(), PlatformEnumd.MP_YSF.getChannel());
-                                if (null != platformVo) {
-                                    String backendToken = YsfUtils.getBackendToken(platformVo.getAppId(), platformVo.getSecret(), false, platformVo.getPlatformKey());
-                                    this.ysfForewarningMessage(order.getPlatformKey(), backendToken, "errorDescDetails", "errorTemplateValue");
+                            if(StringUtils.isNotBlank(errorCouponNumber)){
+                                Integer num = Integer.parseInt(errorCouponNumber);
+                                int number = Integer.parseInt(cacheObject.toString());
+                                // 满足条件,发送云闪付服务消息.
+                                if (number >= num) {
+                                    PlatformVo platformVo = platformService.queryById(order.getPlatformKey(), PlatformEnumd.MP_YSF.getChannel());
+                                    if (null != platformVo) {
+                                        String backendToken = YsfUtils.getBackendToken(platformVo.getAppId(), platformVo.getSecret(), false, platformVo.getPlatformKey());
+                                        this.ysfForewarningMessage(order.getPlatformKey(), backendToken, "errorDescDetails", "errorTemplateValue");
+                                    }
                                 }
+                                long timeToLive = RedisUtils.getTimeToLive(ZlyyhConstants.ysfOrderErrorNum);
+                                RedisUtils.setCacheObject(ZlyyhConstants.ysfOrderErrorNum, Integer.valueOf(number + 1).toString(), Duration.ofMillis(timeToLive));
                             }
-                            long timeToLive = RedisUtils.getTimeToLive(ZlyyhConstants.ysfOrderErrorNum);
-                            RedisUtils.setCacheObject(ZlyyhConstants.ysfOrderErrorNum, Integer.valueOf(number + 1).toString(), Duration.ofMillis(timeToLive));
                         } else {
                             RedisUtils.setCacheObject(ZlyyhConstants.ysfOrderErrorNum, "1", Duration.ofMinutes(30));
                         }
@@ -569,7 +571,7 @@ public class OrderServiceImpl implements IOrderService {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public CreateOrderResult createOrder(CreateOrderBo bo, boolean system) {
-        PlatformVo platformVo = platformService.queryById(bo.getPlatformKey(), ZlyyhUtils.getPlatformChannel());
+        PlatformVo platformVo = platformService.queryById(bo.getPlatformKey(), bo.getChannel());
         if (null == platformVo) {
             throw new ServiceException("请求失败，请退出重试");
         }
@@ -580,6 +582,7 @@ public class OrderServiceImpl implements IOrderService {
 //        if (StringUtils.isNotBlank(platformVo.getPlatformCity()) && !"ALL".equalsIgnoreCase(platformVo.getPlatformCity()) && !platformVo.getPlatformCity().contains(bo.getCityCode())) {
 //            throw new ServiceException("您当前所在位置不在活动参与范围!");
 //        }
+
         // 校验是否有订单，有订单直接返回
         String cacheObject = RedisUtils.getCacheObject(OrderCacheUtils.getUsreOrderOneCacheKey(platformVo.getPlatformKey(), bo.getUserId(), bo.getProductId()));
         if (StringUtils.isNotBlank(cacheObject)) {
@@ -588,7 +591,7 @@ public class OrderServiceImpl implements IOrderService {
                 return new CreateOrderResult(order.getCollectiveNumber(), order.getNumber(), "1");
             }
         }
-        UserVo userVo = userService.queryById(bo.getUserId(), ZlyyhUtils.getPlatformChannel());
+        UserVo userVo = userService.queryById(bo.getUserId(), bo.getChannel());
         if (null == userVo || "0".equals(userVo.getReloadUser()) || StringUtils.isBlank(userVo.getMobile())) {
             throw new ServiceException("登录超时，请退出重试[user]", HttpStatus.HTTP_UNAUTHORIZED);
         }
@@ -642,7 +645,7 @@ public class OrderServiceImpl implements IOrderService {
         order.setProductName(productVo.getProductName());
         order.setProductImg(productVo.getProductImg());
         order.setPickupMethod(productVo.getPickupMethod());
-        order.setSupportChannel(ZlyyhUtils.getPlatformChannel());
+        order.setSupportChannel(bo.getChannel());
         order.setExpireDate(collectiveOrder.getExpireDate());
         if (null != bo.getPayCount() && bo.getPayCount() > 0) {
             if (bo.getPayCount() > 10) {
@@ -869,11 +872,11 @@ public class OrderServiceImpl implements IOrderService {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public CreateOrderResult createCarOrder(CreateOrderBo bo, boolean system) {
-        PlatformVo platformVo = platformService.queryById(bo.getPlatformKey(), ZlyyhUtils.getPlatformChannel());
+        PlatformVo platformVo = platformService.queryById(bo.getPlatformKey(), bo.getChannel());
         if (null == platformVo) {
             throw new ServiceException("请求失败，请退出重试");
         }
-        UserVo userVo = userService.queryById(bo.getUserId(), ZlyyhUtils.getPlatformChannel());
+        UserVo userVo = userService.queryById(bo.getUserId(), bo.getChannel());
         if (null == userVo || "0".equals(userVo.getReloadUser()) || StringUtils.isBlank(userVo.getMobile())) {
             throw new ServiceException("登录超时，请退出重试[user]", HttpStatus.HTTP_UNAUTHORIZED);
         }
@@ -1059,7 +1062,7 @@ public class OrderServiceImpl implements IOrderService {
             order.setProductName(productVo.getProductName());
             order.setProductImg(productVo.getProductImg());
             order.setPickupMethod(productVo.getPickupMethod());
-            order.setSupportChannel(ZlyyhUtils.getPlatformChannel());
+            order.setSupportChannel(bo.getChannel());
             order.setExpireDate(collectiveOrder.getExpireDate());
             if (null != orderProductBo.getQuantity() && orderProductBo.getQuantity() > 0) {
                 if (orderProductBo.getQuantity() > 99) {
@@ -3182,7 +3185,7 @@ public class OrderServiceImpl implements IOrderService {
         return true;
     }
 
-    private R<Void> productPackageHandle(Long number, Long productId, Long userId, String adcode, String cityName, Long platformKey) {
+    private R<Void> productPackageHandle(Long number, Long productId, Long userId, String adcode, String cityName, Long platformKey,String channel) {
         // 查询券包产品
         List<ProductPackageVo> productPackageVos = productPackageService.queryListByProductId(productId);
         if (ObjectUtil.isEmpty(productPackageVos)) {
@@ -3206,10 +3209,12 @@ public class OrderServiceImpl implements IOrderService {
             createOrderBo.setParentNumber(number);
             createOrderBo.setPlatformKey(platformKey);
             createOrderBo.setPayCount(productPackageVo.getSendCount());
+            createOrderBo.setChannel(channel);
             CreateOrderResult order;
             try {
                 order = this.createOrder(createOrderBo, true);
             } catch (Exception e) {
+                log.error("券包创建子订单异常：",e);
                 return R.fail(e.getMessage());
             }
             if (null == order || !"0".equals(order.getStatus())) {

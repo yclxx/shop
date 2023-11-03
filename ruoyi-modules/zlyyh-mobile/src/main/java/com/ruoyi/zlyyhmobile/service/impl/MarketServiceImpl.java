@@ -108,6 +108,7 @@ public class MarketServiceImpl implements IMarketService {
                 createOrderBo.setAdcode(ZlyyhUtils.getAdCode());
                 createOrderBo.setCityName(ZlyyhUtils.getCityName());
                 createOrderBo.setPlatformKey(bo.getPlatformKey());
+                createOrderBo.setChannel(ZlyyhUtils.getPlatformChannel());
                 CreateOrderResult order = orderService.createOrder(createOrderBo, true);
                 if (ObjectUtil.isNotEmpty(order)) {
                     if (ObjectUtil.isEmpty(marketLog)) {

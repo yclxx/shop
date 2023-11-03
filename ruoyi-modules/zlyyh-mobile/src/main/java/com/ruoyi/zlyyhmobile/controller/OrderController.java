@@ -71,6 +71,7 @@ public class OrderController {
         bo.setAdcode(ZlyyhUtils.getAdCode());
         bo.setCityName(ZlyyhUtils.getCityName());
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        bo.setChannel(ZlyyhUtils.getPlatformChannel());
         return R.ok(orderService.createOrder(bo, false));
     }
 
@@ -87,6 +88,7 @@ public class OrderController {
         bo.setAdcode(ZlyyhUtils.getAdCode());
         bo.setCityName(ZlyyhUtils.getCityName());
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        bo.setChannel(ZlyyhUtils.getPlatformChannel());
         return R.ok(orderService.createCarOrder(bo, false));
     }
 
