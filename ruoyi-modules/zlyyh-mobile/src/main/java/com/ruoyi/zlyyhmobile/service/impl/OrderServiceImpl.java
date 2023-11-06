@@ -2482,12 +2482,13 @@ public class OrderServiceImpl implements IOrderService {
         try {
             result = WxUtils.queryWxOrder(wxProperties.getQueryPayStatusUrl(), collectiveOrder.getCollectiveNumber().toString(), merchantVo.getMerchantNo(), merchantVo.getCertPath(), merchantVo.getMerchantKey(), merchantVo.getApiKey());
         } catch (IOException e) {
+            log.error("微信订单支付结果查询异常：", e);
             return "系统繁忙";
         }
+        log.info("订单号：{},查询微信订单返回结果：{}", collectiveOrder.getCollectiveNumber(), result);
         if (StringUtils.isBlank(result)) {
             return "支付结果查询失败，请稍后重试";
         }
-        log.info("订单号：{},查询微信订单返回结果：{}", collectiveOrder.getCollectiveNumber(), result);
         JSONObject resultData = JSONObject.parseObject(result);
         if (null == resultData.get("out_trade_no") || null == resultData.get("trade_state")) {
             if ("ORDER_NOT_EXIST".equals(resultData.getString("code"))) {

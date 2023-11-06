@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyhmobile.controller;
 
 import com.ruoyi.common.core.domain.R;
+import com.ruoyi.common.core.utils.ServletUtils;
 import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.web.controller.BaseController;
 import com.ruoyi.common.idempotent.annotation.RepeatSubmit;
@@ -10,6 +11,7 @@ import com.ruoyi.common.log.enums.OperatorType;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.satoken.utils.LoginHelper;
+import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.MissionUserRecord;
 import com.ruoyi.zlyyh.domain.bo.MissionGroupProductBo;
 import com.ruoyi.zlyyh.domain.vo.MissionUserRecordVo;
@@ -52,6 +54,7 @@ public class MissionUserRecordController extends BaseController {
     public R<List<MissionUserRecordVo>> getRecordList(@NotNull(message = "缺少任务组编号") @PathVariable Long missionGroupId) {
         return R.ok(iMissionUserRecordService.getRecordList(missionGroupId));
     }
+
     /**
      * 获取抽奖记录 只显示最近50条
      *
@@ -133,7 +136,7 @@ public class MissionUserRecordController extends BaseController {
      */
     @GetMapping("/getUserProductPayCount/{missionGroupId}")
     public R<UserProductCount> getUserProductPayCount(@NotNull(message = "缺少任务编号") @PathVariable Long missionGroupId) {
-        return R.ok(iMissionUserRecordService.getUserProductPayCount(missionGroupId, missionGroupId, LoginHelper.getUserId()));
+        return R.ok(iMissionUserRecordService.getUserProductPayCount(missionGroupId, missionGroupId, LoginHelper.getUserId(), ServletUtils.getHeader(ZlyyhConstants.CITY_CODE)));
     }
 
     /**

@@ -41,7 +41,7 @@ public class MissionServiceImpl implements IMissionService {
     /**
      * 查询任务配置列表
      */
-    @Cacheable(cacheNames = CacheNames.MISSION_LIST, key = "#bo.getPlatformKey()+'-'+#bo.showCity+'-'+#bo.showIndex+'-'+#bo.missionAffiliation+'-'+#bo.weekDate+'-'+#bo.getMissionGroupId()")
+    @Cacheable(cacheNames = CacheNames.MISSION_LIST, key = "#bo.getPlatformKey()+'-'+#bo.getSupportChannel()+'-'+#bo.showCity+'-'+#bo.showIndex+'-'+#bo.missionAffiliation+'-'+#bo.weekDate+'-'+#bo.getMissionGroupId()")
     @Override
     public List<MissionVo> queryList(MissionBo bo) {
         LambdaQueryWrapper<Mission> lqw = Wrappers.lambdaQuery();
@@ -63,6 +63,9 @@ public class MissionServiceImpl implements IMissionService {
         lqw.and(lm ->
             lm.isNull(Mission::getShowEndDate).or().gt(Mission::getShowEndDate, new Date())
         );
+        if (StringUtils.isNotBlank(bo.getSupportChannel())) {
+            lqw.and(lm -> lm.eq(Mission::getSupportChannel, "ALL").or().like(Mission::getSupportChannel, bo.getSupportChannel()));
+        }
         lqw.last("order by sort asc");
         return baseMapper.selectVoList(lqw);
     }

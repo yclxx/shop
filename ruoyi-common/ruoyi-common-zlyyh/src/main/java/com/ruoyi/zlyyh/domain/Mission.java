@@ -183,5 +183,8 @@ public class Mission extends BaseEntity {
      * 用户id
      */
     private Long sysUserId;
-
+    /**
+     * 支持端
+     */
+    private String supportChannel;
 }

@@ -4,8 +4,6 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.ruoyi.common.core.constant.CacheNames;
-import com.ruoyi.common.core.utils.ServletUtils;
-import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.MissionGroup;
 import com.ruoyi.zlyyh.domain.MissionGroupProduct;
 import com.ruoyi.zlyyh.domain.vo.MissionGroupProductVo;
@@ -69,13 +67,13 @@ public class MissionGroupServiceImpl implements IMissionGroupService {
      * @return 商品集合
      */
     @Override
-    public List<ProductVo> missionProduct(Long missionGroupId,Long platformKey) {
-        List<MissionGroupProductVo> missionGroupProductVos = missionGroupProductMapper.selectVoList(new LambdaQueryWrapper<MissionGroupProduct>().eq(MissionGroupProduct::getMissionGroupId, missionGroupId).or().eq(MissionGroupProduct::getMissionId,missionGroupId));
+    public List<ProductVo> missionProduct(Long missionGroupId, Long platformKey, String cityCode) {
+        List<MissionGroupProductVo> missionGroupProductVos = missionGroupProductMapper.selectVoList(new LambdaQueryWrapper<MissionGroupProduct>().eq(MissionGroupProduct::getMissionGroupId, missionGroupId).or().eq(MissionGroupProduct::getMissionId, missionGroupId));
         if (ObjectUtil.isEmpty(missionGroupProductVos)) {
             return new ArrayList<>();
         }
         Map<Long, Long> collect = missionGroupProductVos.stream().collect(HashMap::new, (m, v) -> m.put(v.getProductId(), Optional.ofNullable(v.getSort()).orElse(99L)), HashMap::putAll);
-        List<ProductVo> productVos = productService.queryGrabPeriodProduct((Set) collect.keySet(), ServletUtils.getHeader(ZlyyhConstants.CITY_CODE), null, platformKey);
+        List<ProductVo> productVos = productService.queryGrabPeriodProduct((Set) collect.keySet(), cityCode, null, platformKey);
         if (ObjectUtil.isNotEmpty(productVos)) {
             for (ProductVo productVo : productVos) {
                 productVo.setSort(collect.get(productVo.getProductId()));

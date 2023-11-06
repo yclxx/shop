@@ -17,6 +17,7 @@ import com.ruoyi.common.core.constant.CacheNames;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.DateUtils;
+import com.ruoyi.common.core.utils.ServletUtils;
 import com.ruoyi.common.core.utils.SpringUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
@@ -24,6 +25,7 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.common.satoken.utils.LoginHelper;
+import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.MissionGroupProduct;
 import com.ruoyi.zlyyh.domain.MissionUserRecord;
 import com.ruoyi.zlyyh.domain.MissionUserRecordLog;
@@ -109,6 +111,8 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
             lqw.ne(MissionUserRecord::getDrawType, "9");
             lqw.last("order by draw_time desc limit 50");
             recordVos = baseMapper.selectVoList(lqw);
+            // 先删除，防止重复
+            RedisUtils.deleteObject(key);
             RedisUtils.setCacheList(key, recordVos);
             RedisUtils.expire(key, Duration.ofMinutes(20));
             return recordVos;
@@ -568,7 +572,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
      * @return 结果
      */
     @Override
-    public UserProductCount getUserProductPayCount(Long missionGroupId, Long missionId, Long userId) {
+    public UserProductCount getUserProductPayCount(Long missionGroupId, Long missionId, Long userId, String cityCode) {
         MissionVo missionVo = null;
         if (null != missionId) {
             missionVo = missionService.queryById(missionId);
@@ -586,12 +590,12 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
         }
         List<ProductVo> productVos;
         if (null != missionVo) {
-            productVos = missionGroupService.missionProduct(missionId, missionGroupVo.getPlatformKey());
+            productVos = missionGroupService.missionProduct(missionId, missionGroupVo.getPlatformKey(), cityCode);
             if (ObjectUtil.isEmpty(productVos)) {
-                productVos = missionGroupService.missionProduct(missionGroupId, missionGroupVo.getPlatformKey());
+                productVos = missionGroupService.missionProduct(missionGroupId, missionGroupVo.getPlatformKey(), cityCode);
             }
         } else {
-            productVos = missionGroupService.missionProduct(missionGroupId, missionGroupVo.getPlatformKey());
+            productVos = missionGroupService.missionProduct(missionGroupId, missionGroupVo.getPlatformKey(), cityCode);
         }
         if (ObjectUtil.isEmpty(productVos)) {
             return new UserProductCount();
@@ -661,19 +665,23 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
     public CreateOrderResult payMissionGroupProduct(Long missionId, Long userId) {
         MissionVo missionVo = missionService.queryById(missionId);
         if (null == missionVo) {
+            log.error("任务不存在：{}", missionId);
             throw new ServiceException("任务不存在");
         }
         checkMissionStatus(missionVo.getStatus(), missionVo.getStartDate(), missionVo.getEndDate());
         MissionGroupVo missionGroupVo = missionGroupService.queryById(missionVo.getMissionGroupId());
         if (null == missionGroupVo) {
+            log.error("任务不存在：{}", missionId);
             throw new ServiceException("任务不存在");
         }
         checkMissionStatus(missionGroupVo.getStatus(), missionGroupVo.getStartDate(), missionGroupVo.getEndDate());
-        UserProductCount userProductPayCount = this.getUserProductPayCount(missionVo.getMissionGroupId(), missionId, userId);
+        UserProductCount userProductPayCount = this.getUserProductPayCount(missionVo.getMissionGroupId(), missionId, userId, ServletUtils.getHeader(ZlyyhConstants.CITY_CODE));
         if (null == userProductPayCount || null == userProductPayCount.getProductId()) {
+            log.error("任务配置错误：{}", missionId);
             throw new ServiceException("任务配置错误");
         }
         if (!userProductPayCount.isDayPay()) {
+            log.error("用户：{}，今日已达参与上限：{}", userId, missionId);
             throw new ServiceException("今日已达参与上限");
         }
         if ("1".equals(missionVo.getMissionAffiliation())) {
@@ -690,7 +698,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
                 }
             }
         }
-        asyncSecondService.sendInviteDraw(userId,ZlyyhUtils.getPlatformId(),missionVo.getMissionGroupId());
+        asyncSecondService.sendInviteDraw(userId, ZlyyhUtils.getPlatformId(), missionVo.getMissionGroupId());
         CreateOrderBo createOrderBo = new CreateOrderBo();
         createOrderBo.setProductId(userProductPayCount.getProductId());
         createOrderBo.setUserId(userId);

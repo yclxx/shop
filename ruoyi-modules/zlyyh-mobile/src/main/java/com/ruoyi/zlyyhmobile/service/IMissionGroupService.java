@@ -18,7 +18,7 @@ public interface IMissionGroupService {
      */
     MissionGroupVo queryById(Long missionGroupId);
 
-    List<ProductVo> missionProduct(Long missionGroupId, Long platformKey);
+    List<ProductVo> missionProduct(Long missionGroupId, Long platformKey, String cityCode);
 
     List<MissionGroupVo> queryList();
 }

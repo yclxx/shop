@@ -170,6 +170,14 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
+            <el-form-item label="支持端" prop="supportChannel">
+              <el-checkbox-group v-model="form.supportChannel">
+                <el-checkbox v-for="item in dict.type.channel_type" :name="item.value" :key="item.value"
+                  :label="item.value">
+                  {{ item.label }}
+                </el-checkbox>
+              </el-checkbox-group>
+            </el-form-item>
             <el-form-item label="规则图片" prop="missionImg">
               <image-upload :limit="1" :isShowTip="false" v-model="form.missionImg"></image-upload>
             </el-form-item>
@@ -502,7 +510,7 @@
     name: "Mission",
     dicts: ['award_expiry_type', 'mission_award_type', 'sys_normal_disable', 'period_type', 'mission_show_index',
       'show_content_type', 'sys_normal_disable', 't_product_to_type', 't_product_assign_date', 't_mission_type',
-      't_grad_period_date_list', 't_mission_affiliation'
+      't_grad_period_date_list', 't_mission_affiliation', 'channel_type'
     ],
     data() {
       return {
@@ -708,6 +716,7 @@
           appId: undefined,
           url: undefined,
           sort: undefined,
+          supportChannel: ['ALL'],
           missionTime: undefined
         };
         this.resetForm("form");
@@ -758,6 +767,11 @@
           if (this.form && this.form.weekDate) {
             this.form.weekDate = this.form.weekDate.split(",");
           }
+          if (response.data.supportChannel) {
+            this.form.supportChannel = response.data.supportChannel.split(",")
+          } else {
+            this.form.supportChannel = ['ALL']
+          }
           if (this.form && this.form.missionTime) {
             this.form.missionTime = this.form.missionTime.split("-")
           }
@@ -805,6 +819,11 @@
               this.form.showCity = "ALL";
             } else {
               this.form.showCity = this.getCityAllCheckedKeys().toString();
+            }
+            if (this.form.supportChannel && this.form.supportChannel.length > 0) {
+              this.form.supportChannel = this.form.supportChannel.join(",")
+            } else {
+              this.form.supportChannel = 'ALL'
             }
             if (this.form.missionId != null) {
               updateMission(this.form).then(response => {
@@ -858,3 +877,4 @@
     }
   };
 </script>
+

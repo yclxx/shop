@@ -44,7 +44,7 @@ public class PermissionUtils {
                             userId = loginUser.getUserId();
                         }
                     } catch (Exception e) {
-                        log.error("设置用户异常：", e);
+//                        log.error("设置用户异常：", e);
                     }
                     if (null != userId) {
                         ReflectUtils.invokeSetter(entity, "sysUserId", userId);

@@ -255,4 +255,9 @@ public class MissionVo {
     private String missionType;
 
     private String missionAffiliation;
+
+    /**
+     * 支持端
+     */
+    private String supportChannel;
 }

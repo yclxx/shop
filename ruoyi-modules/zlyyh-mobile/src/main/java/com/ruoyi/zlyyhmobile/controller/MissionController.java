@@ -46,6 +46,7 @@ public class MissionController extends BaseController {
     public R<List<MissionVo>> list(MissionBo bo) {
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
         bo.setShowCity(ServletUtils.getHeader(ZlyyhConstants.CITY_CODE));
+        bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         return R.ok(iMissionService.queryList(bo));
     }
 
@@ -78,6 +79,6 @@ public class MissionController extends BaseController {
      */
     @GetMapping("/missionProduct/{missionGroupId}")
     public R<List<ProductVo>> missionProduct(@NotNull(message = "缺少任务编号") @PathVariable Long missionGroupId) {
-        return R.ok(missionGroupService.missionProduct(missionGroupId, ZlyyhUtils.getPlatformId()));
+        return R.ok(missionGroupService.missionProduct(missionGroupId, ZlyyhUtils.getPlatformId(), ServletUtils.getHeader(ZlyyhConstants.CITY_CODE)));
     }
 }

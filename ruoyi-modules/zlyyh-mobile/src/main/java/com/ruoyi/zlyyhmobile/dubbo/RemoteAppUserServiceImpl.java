@@ -172,7 +172,12 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
         String channel = ZlyyhUtils.getPlatformChannel(platformType);
         UserChannelVo userChannelVo = userChannelService.queryByUserId(channel, userVo.getUserId(), platformKey);
         if (null == userChannelVo) {
-            insertUserChannel(userVo, openId, channel);
+            userChannelVo = userChannelService.queryByOpenId(channel, openId, platformKey);
+            if (null == userChannelVo) {
+                insertUserChannel(userVo, openId, channel);
+            } else {
+                updateUserChannel(userVo.getUserId(), openId, userChannelVo.getId());
+            }
             userChannelVo = userChannelService.queryByOpenId(channel, openId, platformKey);
         }
         if (StringUtils.isNotBlank(openId) && !openId.equals(userChannelVo.getOpenId())) {

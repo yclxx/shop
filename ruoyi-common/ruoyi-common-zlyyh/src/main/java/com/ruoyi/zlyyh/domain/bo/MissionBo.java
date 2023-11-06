@@ -197,4 +197,9 @@ public class MissionBo extends BaseEntity {
     private String missionType;
 
     private String missionAffiliation;
+
+    /**
+     * 支持端
+     */
+    private String supportChannel;
 }
