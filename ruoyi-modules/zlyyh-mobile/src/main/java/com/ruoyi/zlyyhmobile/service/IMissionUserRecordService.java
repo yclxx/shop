@@ -80,5 +80,5 @@ public interface IMissionUserRecordService {
     /**
      * 购买商品
      */
-    CreateOrderResult payMissionGroupProduct(Long missionId, Long userId);
+    CreateOrderResult payMissionGroupProduct(Long missionId, Long userId,Long platformId,String channel,String cityName,String adCode);
 }

@@ -84,7 +84,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
         // 校验用户是否满足条件
         MissionVo missionVo = missionService.queryById(bo.getMissionId());
         try {
-            check(missionVo);
+            this.check(missionVo);
         } catch (Exception e) {
             log.info("绑定用户邀请关系，绑定失败校验不通过，bo={}", bo, e);
             return;
@@ -150,7 +150,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void insertByBo(InviteUserLogBo bo, Long platformId, Long userId) {
+    public void insertByBo(InviteUserLogBo bo, Long platformId, Long userId,String channel,String cityName,String adCode) {
         if (null == userId || null == bo.getUserId() || bo.getUserId() < 1 || null == bo.getMissionId() || bo.getMissionId() < 1) {
             throw new ServiceException("请求错误，请关闭重试");
         }
@@ -159,10 +159,10 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
         }
         // 校验用户是否满足条件
         MissionVo missionVo = missionService.queryById(bo.getMissionId());
-        check(missionVo);
-        ZlyyhUtils.checkCity(missionVo.getShowCity());
+//        check(missionVo);
+//        ZlyyhUtils.checkCity(missionVo.getShowCity());
         // 查询用户信息
-        UserVo userVo = userService.queryById(userId, ZlyyhUtils.getPlatformChannel());
+        UserVo userVo = userService.queryById(userId, channel);
         if (null == userVo || !userVo.getPlatformKey().equals(platformId)) {
             throw new ServiceException("登录超时，请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
         }
@@ -222,19 +222,19 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
         InviteUserLog add = new InviteUserLog();
         add.setUserId(bo.getUserId());
         add.setInviteUserId(userId);
-        add.setInviteCityName(ZlyyhUtils.getCityName());
-        add.setInviteCityCode(ZlyyhUtils.getAdCode());
+        add.setInviteCityName(cityName);
+        add.setInviteCityCode(adCode);
         add.setMissionId(bo.getMissionId());
         add.setPlatformKey(platformId);
-        add.setSupportChannel(ZlyyhUtils.getPlatformChannel());
+        add.setSupportChannel(channel);
         // 生成订单
         CreateOrderBo createOrderBo = new CreateOrderBo();
         createOrderBo.setProductId(productVos.get(userInviteLogCount.intValue()).getProductId());
         createOrderBo.setUserId(add.getUserId());
-        createOrderBo.setAdcode(ZlyyhUtils.getAdCode());
-        createOrderBo.setCityName(ZlyyhUtils.getCityName());
-        createOrderBo.setPlatformKey(ZlyyhUtils.getPlatformId());
-        createOrderBo.setChannel(ZlyyhUtils.getPlatformChannel());
+        createOrderBo.setAdcode(adCode);
+        createOrderBo.setCityName(cityName);
+        createOrderBo.setPlatformKey(platformId);
+        createOrderBo.setChannel(channel);
         CreateOrderResult order = orderService.createOrder(createOrderBo, true);
         // 回填订单号
         add.setNumber(order.getNumber());
@@ -245,7 +245,8 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
         }
     }
 
-    private void check(MissionVo missionVo) {
+    @Override
+    public void check(MissionVo missionVo) {
         if (null == missionVo || "1".equals(missionVo.getStatus())) {
             throw new ServiceException("活动不存在或已结束");
         }

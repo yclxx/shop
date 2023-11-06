@@ -10,8 +10,10 @@ import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.zlyyh.domain.bo.InviteUserLogBo;
 import com.ruoyi.zlyyh.domain.vo.InviteUserLogMobileOrderVo;
+import com.ruoyi.zlyyh.domain.vo.MissionVo;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.service.IInviteUserLogService;
+import com.ruoyi.zlyyhmobile.service.IMissionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -32,6 +34,7 @@ import org.springframework.web.bind.annotation.*;
 public class InviteUserLogController extends BaseController {
 
     private final IInviteUserLogService iInviteUserLogService;
+    private final IMissionService missionService;
 
     /**
      * 邀请关系绑定
@@ -51,7 +54,15 @@ public class InviteUserLogController extends BaseController {
         Long platformId = ZlyyhUtils.getPlatformId();
         // 被邀请用户ID
         Long userId = LoginHelper.getUserId();
-        iInviteUserLogService.insertByBo(bo,platformId,userId);
+        String adCode = ZlyyhUtils.getAdCode();
+        String cityName = ZlyyhUtils.getCityName();
+        String platformChannel = ZlyyhUtils.getPlatformChannel();
+
+        // 校验用户是否满足条件
+        MissionVo missionVo = missionService.queryById(bo.getMissionId());
+        iInviteUserLogService.check(missionVo);
+        ZlyyhUtils.checkCity(missionVo.getShowCity());
+        iInviteUserLogService.insertByBo(bo,platformId,userId,platformChannel,cityName,adCode);
         return R.ok();
     }
 
@@ -85,6 +96,7 @@ public class InviteUserLogController extends BaseController {
      */
     @GetMapping("/getInviteLong/{missionId}")
     public TableDataInfo<InviteUserLogMobileOrderVo> getInviteLong(@PathVariable("missionId") Long missionId, PageQuery pageQuery) {
+
         return iInviteUserLogService.getInviteLong(LoginHelper.getUserId(), missionId, pageQuery);
     }
 

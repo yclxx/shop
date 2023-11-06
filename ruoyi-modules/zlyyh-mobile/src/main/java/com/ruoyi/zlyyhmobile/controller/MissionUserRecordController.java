@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyhmobile.controller;
 
 import com.ruoyi.common.core.domain.R;
+import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.ServletUtils;
 import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.web.controller.BaseController;
@@ -15,11 +16,14 @@ import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.MissionUserRecord;
 import com.ruoyi.zlyyh.domain.bo.MissionGroupProductBo;
 import com.ruoyi.zlyyh.domain.vo.MissionUserRecordVo;
+import com.ruoyi.zlyyh.domain.vo.MissionVo;
 import com.ruoyi.zlyyh.utils.CloudRechargeEntity;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
 import com.ruoyi.zlyyhmobile.domain.vo.UserProductCount;
 import com.ruoyi.zlyyhmobile.service.AsyncService;
+import com.ruoyi.zlyyhmobile.service.IInviteUserLogService;
+import com.ruoyi.zlyyhmobile.service.IMissionService;
 import com.ruoyi.zlyyhmobile.service.IMissionUserRecordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -44,6 +48,7 @@ public class MissionUserRecordController extends BaseController {
 
     private final IMissionUserRecordService iMissionUserRecordService;
     private final AsyncService asyncService;
+    private final IMissionService missionService;
 
     /**
      * 获取抽奖记录 只显示最近50条
@@ -146,6 +151,16 @@ public class MissionUserRecordController extends BaseController {
     @RepeatSubmit(message = "操作频繁,请稍后重试")
     @PostMapping("/payMissionGroupProduct/{missionId}")
     public R<CreateOrderResult> payMissionGroupProduct(@NotNull(message = "缺少任务编号") @PathVariable Long missionId) {
-        return R.ok(iMissionUserRecordService.payMissionGroupProduct(missionId, LoginHelper.getUserId()));
+        Long platformId = ZlyyhUtils.getPlatformId();
+        String adCode = ZlyyhUtils.getAdCode();
+        String cityName = ZlyyhUtils.getCityName();
+        String platformChannel = ZlyyhUtils.getPlatformChannel();
+        //判断位置是否在定位城市
+        MissionVo missionVo = missionService.queryById(missionId);
+        if (null == missionVo) {
+            throw new ServiceException("任务不存在");
+        }
+        ZlyyhUtils.checkCity(missionVo.getShowCity());
+        return R.ok(iMissionUserRecordService.payMissionGroupProduct(missionId, LoginHelper.getUserId(),platformId,platformChannel,cityName,adCode));
     }
 }

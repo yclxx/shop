@@ -26,7 +26,7 @@ public class AsyncSecondService {
     /**
      * 异步发送给邀请者抽奖机会（签到和购买时发送奖励）->创建订单时调用
      */
-    public void sendInviteDraw(Long inviteUserId,Long platformId,Long missionGroupId) {
+    public void sendInviteDraw(Long inviteUserId,Long platformId,Long missionGroupId,String channel,String cityName,String adCode) {
         //创建订单时先查询缓存
         List<MissionVo> missionVos = missionMapper.selectVoList(new LambdaQueryWrapper<Mission>().eq(Mission::getMissionGroupId, missionGroupId).eq(Mission::getMissionType, "2"));
         if (ObjectUtil.isEmpty(missionVos)){
@@ -44,7 +44,7 @@ public class AsyncSecondService {
             inviteUserLogBo.setUserId(cacheObject);
             inviteUserLogBo.setInviteUserId(inviteUserId);
             inviteUserLogBo.setPlatformKey(platformId);
-            inviteUserLogService.insertByBo(inviteUserLogBo,platformId, inviteUserLogBo.getUserId());
+            inviteUserLogService.insertByBo(inviteUserLogBo,platformId, inviteUserLogBo.getUserId(),channel,cityName,adCode);
         }
     }
 }

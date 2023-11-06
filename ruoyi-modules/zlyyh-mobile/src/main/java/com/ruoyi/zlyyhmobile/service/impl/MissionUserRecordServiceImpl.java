@@ -662,7 +662,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
      * 购买商品
      */
     @Override
-    public CreateOrderResult payMissionGroupProduct(Long missionId, Long userId) {
+    public CreateOrderResult payMissionGroupProduct(Long missionId, Long userId,Long platformId,String channel,String cityName,String adCode) {
         MissionVo missionVo = missionService.queryById(missionId);
         if (null == missionVo) {
             log.error("任务不存在：{}", missionId);
@@ -698,14 +698,14 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
                 }
             }
         }
-        asyncSecondService.sendInviteDraw(userId, ZlyyhUtils.getPlatformId(), missionVo.getMissionGroupId());
+        asyncSecondService.sendInviteDraw(userId, platformId, missionVo.getMissionGroupId(),channel,cityName,adCode);
         CreateOrderBo createOrderBo = new CreateOrderBo();
         createOrderBo.setProductId(userProductPayCount.getProductId());
         createOrderBo.setUserId(userId);
-        createOrderBo.setAdcode(ZlyyhUtils.getAdCode());
-        createOrderBo.setCityName(ZlyyhUtils.getCityName());
-        createOrderBo.setPlatformKey(ZlyyhUtils.getPlatformId());
-        createOrderBo.setChannel(ZlyyhUtils.getPlatformChannel());
+        createOrderBo.setAdcode(adCode);
+        createOrderBo.setCityName(cityName);
+        createOrderBo.setPlatformKey(platformId);
+        createOrderBo.setChannel(channel);
         return orderService.createOrder(createOrderBo, true);
     }
 

@@ -5,6 +5,7 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.InviteUserLogBo;
 import com.ruoyi.zlyyh.domain.vo.InviteUserLogMobileOrderVo;
 import com.ruoyi.zlyyh.domain.vo.InviteUserLogVo;
+import com.ruoyi.zlyyh.domain.vo.MissionVo;
 
 /**
  * 邀请记录Service接口
@@ -29,8 +30,9 @@ public interface IInviteUserLogService {
     /**
      * 修改邀请记录
      */
-    void insertByBo(InviteUserLogBo bo,Long platformId,Long userId);
+    void insertByBo(InviteUserLogBo bo,Long platformId,Long userId,String channel,String cityName,String adCode);
 
+    void check(MissionVo missionVo);
     /**
      * 查询用户今日已获奖励次数
      *
