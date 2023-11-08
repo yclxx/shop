@@ -66,7 +66,19 @@ public class Sm4Encryptor extends AbstractEncryptor {
     }
 
     public static void main(String[] args) {
-        String s = SmUtil.sm4("Yzgnet.com#123_1".getBytes(StandardCharsets.UTF_8)).decryptStr("F3ji75j0B06ctPLKYZh5hQ==");
+        String s = SmUtil.sm4("Yzgnet.com#123_1".getBytes(StandardCharsets.UTF_8)).decryptStr("FCq+L4RmZSL5Zvmpd7GDmQ==");
+        System.out.println(s);
+        s = SmUtil.sm4("Yzgnet.com#123_1".getBytes(StandardCharsets.UTF_8)).decryptStr("MJ5DOYt3BURyQ6WSGmBJXg==");
+        System.out.println(s);
+        s =SmUtil.sm4("Yzgnet.com#123_1".getBytes(StandardCharsets.UTF_8)).decryptStr("GhsLuFu2jmHkcTMKDKVf/A==");
+        System.out.println(s);
+        s =SmUtil.sm4("Yzgnet.com#123_1".getBytes(StandardCharsets.UTF_8)).decryptStr("jKSIsSjwHMosqI3ejBpwBQ==");
+        System.out.println(s);
+        s =SmUtil.sm4("Yzgnet.com#123_1".getBytes(StandardCharsets.UTF_8)).decryptStr("zBnH7dvMfkl/ggSGOHwHmA==");
+        System.out.println(s);
+        s =SmUtil.sm4("Yzgnet.com#123_1".getBytes(StandardCharsets.UTF_8)).decryptStr("HCTvPjwexkzp7tvmZ1plLQ==");
+        System.out.println(s);
+        s =SmUtil.sm4("Yzgnet.com#123_1".getBytes(StandardCharsets.UTF_8)).decryptStr("yaEDPlBHOY4k2qqj+8UiwA==");
         System.out.println(s);
     }
 }

@@ -267,10 +267,7 @@ public class ProductServiceImpl implements IProductService {
             if (null != productVo.getShowEndDate() && DateUtils.compare(productVo.getShowEndDate()) < 0) {
                 continue;
             }
-            if (!"ALL".equalsIgnoreCase(productVo.getShowCity())) {
-                if (StringUtils.isBlank(cityCode)) {
-                    continue;
-                }
+            if (StringUtils.isNotBlank(cityCode) && !"ALL".equalsIgnoreCase(productVo.getShowCity())) {
                 if (!productVo.getShowCity().contains(cityCode)) {
                     continue;
                 }
