@@ -179,6 +179,10 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
             }
             // 查询商品信息
             this.setProduct(ct, bo.getPlatformKey(), bo.getWeekDate(), cityCode, shopVo.getShopId());
+            if (ObjectUtil.isNotEmpty(shopVo.getDistance())){
+                BigDecimal distance = shopVo.getDistance().setScale(2, BigDecimal.ROUND_DOWN);
+                shopVo.setDistanceString(distance.toString());
+            }
             ct.setShopVo(shopVo);
             commercialTenantVos.add(ObjectUtil.clone(ct));
         }

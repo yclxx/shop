@@ -110,4 +110,8 @@ public class Platform extends BaseEntity {
      * 供应商
      */
     private String supportSupplier;
+    /**
+     * 首页瀑布流显示类型
+     */
+    private String indexShowType;
 }

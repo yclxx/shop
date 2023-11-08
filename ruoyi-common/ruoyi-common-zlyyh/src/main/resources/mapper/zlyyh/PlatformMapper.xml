@@ -28,6 +28,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <result property="sysUserId" column="sys_user_id"/>
     <result property="manangerDeptId" column="mananger_dept_id"/>
     <result property="unionPayVip" column="union_pay_vip"/>
+    <result property="unionPayVip" column="union_pay_vip"/>
+    <result property="indexShowType" column="index_show_type"/>
     </resultMap>
 
 
