@@ -74,4 +74,6 @@ public class HistoryOrderInfo extends BaseEntity {
      */
     private String commodityJson;
 
+    private String payBankType;
+
 }

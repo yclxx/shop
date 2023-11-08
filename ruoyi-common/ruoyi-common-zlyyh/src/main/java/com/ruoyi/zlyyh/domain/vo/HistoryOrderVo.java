@@ -221,4 +221,59 @@ public class HistoryOrderVo {
 
     private String verificationStatus;
 
+    /**
+     * 优惠券id
+     */
+    private Long couponId;
+    /**
+     * 可使用开始时间
+     */
+    private Date usedStartTime;
+
+    /**
+     * 可使用结束时间
+     */
+    private Date usedEndTime;
+
+    /**
+     * 使用时间
+     */
+    private Date usedTime;
+
+    /**
+     * 银联分销：0-不通过，1-通过
+     */
+    private String unionPay;
+
+    /**
+     * 银联产品编号
+     */
+    private String unionProductId;
+    /**
+     * 场次ID
+     */
+    private Long productSessionId;
+    /**
+     * 规格ID
+     */
+    private Long productSkuId;
+    /**
+     * 场次名称
+     */
+    private String productSessionName;
+    /**
+     * 规格名称
+     */
+    private String productSkuName;
+
+
+    /**
+     * 大订单编号
+     */
+    private Long collectiveNumber;
+    /**
+     * 支持端
+     */
+    private String supportChannel;
+
 }
