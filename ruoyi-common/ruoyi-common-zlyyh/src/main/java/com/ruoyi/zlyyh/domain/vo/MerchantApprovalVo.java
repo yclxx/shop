@@ -28,7 +28,11 @@ public class MerchantApprovalVo {
      */
     @ExcelProperty(value = "平台标识")
     private Long platformKey;
-
+    /**
+     * 管理员手机号
+     */
+    @ExcelProperty(value = "管理员手机号")
+    private String mobile;
     /**
      * 品牌名称
      */

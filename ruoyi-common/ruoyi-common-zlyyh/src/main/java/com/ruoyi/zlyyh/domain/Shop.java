@@ -185,4 +185,9 @@ public class Shop extends BaseEntity {
      */
     private Long sysUserId;
 
+    /**
+     * 商品类型
+     */
+    private String productType;
+
 }

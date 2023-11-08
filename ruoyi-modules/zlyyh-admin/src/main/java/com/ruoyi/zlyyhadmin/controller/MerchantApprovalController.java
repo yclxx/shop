@@ -41,17 +41,6 @@ public class MerchantApprovalController extends BaseController {
     }
 
     /**
-     * 导出商户申请审批列表
-     */
-    //@SaCheckPermission("zlyyh:merchantApproval:export")
-    //@Log(title = "商户申请审批", businessType = BusinessType.EXPORT)
-    //@PostMapping("/export")
-    //public void export(MerchantApprovalBo bo, HttpServletResponse response) {
-    //    List<MerchantApprovalVo> list = iMerchantApprovalService.queryList(bo);
-    //    ExcelUtil.exportExcel(list, "商户申请审批", MerchantApprovalVo.class, response);
-    //}
-
-    /**
      * 获取商户申请审批详细信息
      *
      * @param approvalId 主键

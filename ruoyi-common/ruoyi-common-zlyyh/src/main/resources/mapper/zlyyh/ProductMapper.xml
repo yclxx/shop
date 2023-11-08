@@ -80,5 +80,27 @@
         <result property="poupText" column="poup_text"/>
     </resultMap>
 
+    <select id="selectPageByShopId" resultMap="ProductResult">
+        SELECT
+        p.product_id, p.external_product_id, p.external_product_send_value, p.product_name, p.product_abbreviation,
+        p.product_subhead, p.product_img, p.product_small_img, p.product_affiliation, p.product_type, p.pickup_method,
+        p.show_original_amount, p.original_amount, p.sell_amount, p.vip_up_amount, p.vip_amount, p.status
+        FROM
+        t_product p
+        WHERE
+        p.del_flag = '0'
+        AND p.product_id IN (
+        SELECT
+        s.product_id
+        FROM
+        t_shop_product s
+        WHERE
+        s.shop_id IN
+        <foreach collection="shopIds" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        )
+    </select>
+
 
 </mapper>

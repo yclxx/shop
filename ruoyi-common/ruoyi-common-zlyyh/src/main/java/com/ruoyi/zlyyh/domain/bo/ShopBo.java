@@ -236,4 +236,9 @@ public class ShopBo extends BaseEntity {
 
     private Long categoryId;
 
+    /**
+     * 商品类型
+     */
+    private String productType;
+
 }

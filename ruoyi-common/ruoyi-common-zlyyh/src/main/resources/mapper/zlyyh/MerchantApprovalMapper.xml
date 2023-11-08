@@ -10,6 +10,7 @@
         <result property="updateBy" column="update_by"/>
         <result property="updateTime" column="update_time"/>
         <result property="platformKey" column="platform_key"/>
+        <result property="mobile" column="mobile"/>
         <result property="brandName" column="brand_name"/>
         <result property="brandLogo" column="brand_logo"/>
         <result property="shopName" column="shop_name"/>

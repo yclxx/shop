@@ -19,15 +19,16 @@ public class MerchantApproval extends BaseEntity {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     *
-     */
     @TableId(value = "approval_id")
     private Long approvalId;
     /**
      * 平台标识
      */
     private Long platformKey;
+    /**
+     * 管理员手机号
+     */
+    private String mobile;
     /**
      * 品牌名称
      */

@@ -261,6 +261,10 @@ public class ShopVo implements Serializable {
     @ExcelProperty(value = "用户id")
     private Long sysUserId;
 
+    /**
+     * 商品类型
+     */
+    private String productType;
 
     private String businessDistrictId;
 

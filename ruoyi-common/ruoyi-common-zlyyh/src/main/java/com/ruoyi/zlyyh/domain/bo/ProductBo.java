@@ -89,6 +89,11 @@ public class ProductBo extends BaseEntity {
     private BigDecimal sellAmount;
 
     /**
+     * 第三方产品结算价格（t_product_info）表中字段
+     */
+    private BigDecimal itemPrice;
+
+    /**
      * 62会员价格
      */
     private BigDecimal vipUpAmount;
