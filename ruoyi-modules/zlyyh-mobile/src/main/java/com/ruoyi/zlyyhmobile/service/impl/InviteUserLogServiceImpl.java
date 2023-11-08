@@ -159,8 +159,6 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
         }
         // 校验用户是否满足条件
         MissionVo missionVo = missionService.queryById(bo.getMissionId());
-//        check(missionVo);
-//        ZlyyhUtils.checkCity(missionVo.getShowCity());
         // 查询用户信息
         UserVo userVo = userService.queryById(userId, channel);
         if (null == userVo || !userVo.getPlatformKey().equals(platformId)) {
@@ -198,7 +196,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
             throw new ServiceException("只能助力一次");
         }
         // 查询用户今日是否已达标
-        List<ProductVo> productVos = missionGroupService.missionProduct(missionVo.getMissionGroupId(), missionVo.getPlatformKey(), ServletUtils.getHeader(ZlyyhConstants.CITY_CODE));
+        List<ProductVo> productVos = missionGroupService.missionProduct(missionVo.getMissionId(), missionVo.getPlatformKey(), ServletUtils.getHeader(ZlyyhConstants.CITY_CODE));
         if (ObjectUtil.isEmpty(productVos)) {
             throw new ServiceException("感谢您的助力，本次活动已结束");
         }

@@ -591,9 +591,9 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
         List<ProductVo> productVos;
         if (null != missionVo) {
             productVos = missionGroupService.missionProduct(missionId, missionGroupVo.getPlatformKey(), cityCode);
-            if (ObjectUtil.isEmpty(productVos)) {
-                productVos = missionGroupService.missionProduct(missionGroupId, missionGroupVo.getPlatformKey(), cityCode);
-            }
+//            if (ObjectUtil.isEmpty(productVos)) {
+//                productVos = missionGroupService.missionProduct(missionGroupId, missionGroupVo.getPlatformKey(), cityCode);
+//            }
         } else {
             productVos = missionGroupService.missionProduct(missionGroupId, missionGroupVo.getPlatformKey(), cityCode);
         }

@@ -1846,7 +1846,6 @@ public class OrderServiceImpl implements IOrderService {
         return delete > 0;
     }
 
-    @Transactional
     @Override
     public void cancel(Long collectiveNumber, Long userId) {
         CollectiveOrder collectiveOrder = getCollectiveOrder(collectiveNumber);
@@ -2248,7 +2247,6 @@ public class OrderServiceImpl implements IOrderService {
      *
      * @param collectiveOrder 大订单信息
      */
-    @Transactional(rollbackFor = Exception.class)
     public boolean updateOrderClose(CollectiveOrder collectiveOrder, List<Order> orders) {
         //查询支付是否成功
         String s = queryOrderPay(collectiveOrder.getCollectiveNumber());
@@ -2317,7 +2315,6 @@ public class OrderServiceImpl implements IOrderService {
      * @param collectiveNumber 大订单号
      * @return 支付结果
      */
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public String queryOrderPay(Long collectiveNumber) {
         CollectiveOrder collectiveOrder = getCollectiveOrder(collectiveNumber);

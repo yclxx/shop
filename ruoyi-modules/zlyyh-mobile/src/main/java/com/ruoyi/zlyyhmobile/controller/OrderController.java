@@ -13,7 +13,6 @@ import com.ruoyi.common.log.enums.OperatorType;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.satoken.utils.LoginHelper;
-import com.ruoyi.zlyyh.domain.bo.AppWxPayCallbackParams;
 import com.ruoyi.zlyyh.domain.bo.OrderBo;
 import com.ruoyi.zlyyh.domain.vo.OrderVo;
 import com.ruoyi.zlyyh.utils.CloudRechargeEntity;
@@ -350,7 +349,7 @@ public class OrderController {
      * @return
      */
     @PostMapping("/ignore/lianOrderCodeCall")
-    public R lianOrderCodeCall(@RequestBody JSONObject param) {
+    public R<Void> lianOrderCodeCall(@RequestBody JSONObject param) {
         log.info("新联联自动发码订单回调通知接收参数解密前：{}", param);
         orderService.lianOrderBack(param, 1);
         return R.ok();
@@ -363,7 +362,7 @@ public class OrderController {
      * @return
      */
     @PostMapping("/ignore/lianOrderReturn")
-    public R lianOrderReturn(@RequestBody JSONObject param) {
+    public R<Void> lianOrderReturn(@RequestBody JSONObject param) {
         log.info("联联订单退款通知接收参数解密前：{}", param);
         orderService.lianOrderBack(param, 2);
         return R.ok();
@@ -373,7 +372,7 @@ public class OrderController {
      * 联联订单核销
      */
     @PostMapping("/ignore/lianOrderCall")
-    public R lianOrderCall(@RequestBody JSONObject param) {
+    public R<Void> lianOrderCall(@RequestBody JSONObject param) {
         log.info("新联联订单核销回调通知接收参数解密前：{}", param);
         orderService.lianOrderBack(param, 3);
         return R.ok();
