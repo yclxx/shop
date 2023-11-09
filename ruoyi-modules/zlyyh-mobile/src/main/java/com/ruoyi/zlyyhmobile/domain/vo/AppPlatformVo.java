@@ -87,4 +87,8 @@ public class AppPlatformVo {
      * 平台城市首页
      */
     Map<String, PlatformCityIndexVo> cityIndex;
+    /**
+     * 首页显示类型
+     */
+    private String indexShowType;
 }

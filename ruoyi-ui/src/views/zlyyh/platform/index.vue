@@ -94,6 +94,14 @@
               </el-select>
             </el-form-item>
           </el-col>
+          <el-col :span="8">
+            <el-form-item label="首页显示" prop="indexShowType">
+              <el-select v-model="form.indexShowType" style="width: 100%;" placeholder="请选择显示内容">
+                <el-option v-for="dict in dict.type.t_show_index_type" :key="dict.value" :label="dict.label"
+                           :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
         </el-row>
         <el-row>
           <el-col :span="12">
@@ -258,7 +266,7 @@
 
   export default {
     name: "Platform",
-    dicts: ['t_platform_status', 't_platform_union_pay_vip', 'channel_type'],
+    dicts: ['t_platform_status', 't_platform_union_pay_vip', 'channel_type','t_show_index_type'],
     components: {
       Treeselect
     },
@@ -382,6 +390,7 @@
           platformName: undefined,
           platformTitle: undefined,
           status: undefined,
+          showIndexType: undefined,
           unionPayVip: undefined,
           appId: undefined,
           encryptAppId: undefined,

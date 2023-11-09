@@ -100,5 +100,6 @@ public class HistoryOrderInfoVo {
     @ExcelProperty(value = "商品快照信息json字符串")
     private String commodityJson;
 
+    private String payBankType;
 
 }

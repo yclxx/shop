@@ -123,4 +123,9 @@ public class PlatformBo extends BaseEntity {
     private String supportSupplier;
 
     private List<PlatformChannelBo> platformChannel;
+
+    /**
+     * 首页瀑布流显示类型
+     */
+    private String indexShowType;
 }
