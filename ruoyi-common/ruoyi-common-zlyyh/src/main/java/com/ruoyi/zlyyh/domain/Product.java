@@ -309,4 +309,8 @@ public class Product extends BaseEntity {
     private String isPoup;
 
     private String poupText;
+    private String sharePermission;
+    private String shareAmountType;
+    private String shareOneAmount;
+    private String shareTwoAmount;
 }

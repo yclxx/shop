@@ -151,4 +151,29 @@ public class PlatformVo implements Serializable {
      * 首页瀑布流显示类型
      */
     private String indexShowType;
+
+    /**
+     * 分销：0-关闭，1-开启
+     */
+    private String sharePermission;
+    /**
+     * 核销之后，分销奖励多久到账，默认T+1,0为实时到账
+     */
+    private String shareUsedDate;
+    /**
+     * 分销奖励类型：0-云闪付红包
+     */
+    private String shareAwardType;
+    /**
+     * 分销奖励第三方产品编号,例如：云闪付红包活动编号(对应云闪付小程序开放平台配置：营销能力包-专享红包活动编码)
+     */
+    private String shareAwardProductId;
+    /**
+     * 机构账户代码，最大32位，对应云闪付小程序开放平台配置：营销能力包-红包接入方账户
+     */
+    private String shareAwardInsAcctId;
+    /**
+     * 同一用户每月可获奖励上限,0为不限制
+     */
+    private String shareAwardMonthAmount;
 }

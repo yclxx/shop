@@ -78,6 +78,10 @@
         <result property="productSmallImg" column="product_small_img"/>
         <result property="isPoup" column="is_poup"/>
         <result property="poupText" column="poup_text"/>
+        <result property="sharePermission" column="share_permission"/>
+        <result property="shareAmountType" column="share_amount_type"/>
+        <result property="shareOneAmount" column="share_one_amount"/>
+        <result property="shareTwoAmount" column="share_two_amount"/>
     </resultMap>
 
     <select id="selectPageByShopId" resultMap="ProductResult">

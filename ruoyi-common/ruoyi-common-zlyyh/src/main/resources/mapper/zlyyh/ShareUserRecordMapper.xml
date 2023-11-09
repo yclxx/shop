@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.zlyyh.mapper.ShareUserRecordMapper">
+
+    <resultMap type="com.ruoyi.zlyyh.domain.ShareUserRecord" id="ShareUserRecordResult">
+    <result property="recordId" column="record_id"/>
+    <result property="userId" column="user_id"/>
+    <result property="inviteeUserId" column="invitee_user_id"/>
+    <result property="number" column="number"/>
+    <result property="orderUsedTime" column="order_used_time"/>
+    <result property="awardAmount" column="award_amount"/>
+    <result property="inviteeStatus" column="invitee_status"/>
+    <result property="awardStatus" column="award_status"/>
+    <result property="awardTime" column="award_time"/>
+    <result property="awardAccount" column="award_account"/>
+    <result property="createBy" column="create_by"/>
+    <result property="createTime" column="create_time"/>
+    <result property="updateBy" column="update_by"/>
+    <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+
+</mapper>

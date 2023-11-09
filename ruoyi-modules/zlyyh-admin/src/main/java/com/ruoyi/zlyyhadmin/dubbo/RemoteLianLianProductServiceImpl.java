@@ -132,7 +132,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 cityPageNum += PAGESIZE;
             }
         } catch (Exception e) {
-            log.info("联联商品更新定时任务异常:{}", e.getMessage());
+            log.error("联联商品更新定时任务异常:", e);
         }
         log.info("结束执行联联产品列表定时任务,耗时：{}分钟", timer.intervalMinute());
     }
