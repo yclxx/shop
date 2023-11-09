@@ -262,6 +262,8 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 //购物车内仅添加一个商品
                 product.setLineUpperLimit(1L);
                 product.setSupplier("1717473385180033026");
+                // 显示首页
+                product.setShowIndex("1");
                 // 商品扩展信息
                 //commodity.setCommodityInfo(commodityInfo);
                 //不存在则新增
@@ -280,6 +282,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                     }
                     ProductBo productBo = BeanUtil.toBean(product, ProductBo.class);
                     productService.insertByBo(productBo);
+                    product.setProductId(productBo.getProductId());
                     productInfo.setProductId(productBo.getProductId());
                     ProductInfoBo productInfoBo = BeanUtil.toBean(productInfo, ProductInfoBo.class);
                     productInfoService.insertByBo(productInfoBo);
