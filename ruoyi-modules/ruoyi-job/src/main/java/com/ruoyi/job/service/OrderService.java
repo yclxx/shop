@@ -67,4 +67,12 @@ public class OrderService {
     public void orderToHistory() {
         remoteAppOrderService.orderToHistory();
     }
+
+    /**
+     * 订单迁移至历史订单
+     */
+    @XxlJob("addCollectiveOrder")
+    public void addCollectiveOrder() {
+        remoteAppOrderService.addCollectiveOrder();
+    }
 }

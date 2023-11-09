@@ -60,4 +60,9 @@ public interface RemoteAppOrderService {
      * 订单迁移至历史订单
      */
     void orderToHistory();
+
+    /**
+     * 添加没有大订单的订单
+     */
+    void addCollectiveOrder();
 }
