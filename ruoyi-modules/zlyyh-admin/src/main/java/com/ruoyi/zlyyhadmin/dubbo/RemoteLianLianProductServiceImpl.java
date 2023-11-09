@@ -87,14 +87,15 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
         log.info("开始执行联联产品列表定时任务.");
         TimeInterval timer = DateUtil.timer();
         int cityPageNum = 0;
-        try {
-            String productList = basePath + queryProductList;
-            String productDetail = basePath + queryProductByCondition;
-            String productDetailHtml = basePath + detailHtml;
-            while (true) {
+        int pageSize = 20;
+
+        String productList = basePath + queryProductList;
+        String productDetail = basePath + queryProductByCondition;
+        String productDetailHtml = basePath + detailHtml;
+        while (true) {
+            try {
                 // 查询本地城市列表
-                int PAGESIZE = 20;
-                Page<LianlianCity> cityCodes = lianlianCityService.selectLlianCityCodeList("0", cityPageNum, PAGESIZE);
+                Page<LianlianCity> cityCodes = lianlianCityService.selectLlianCityCodeList("0", cityPageNum, pageSize);
                 if (!cityCodes.getRecords().isEmpty()) {
                     for (LianlianCity city : cityCodes.getRecords()) {
                         int pageNum = 1;
@@ -111,7 +112,11 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                                 break;
                             }
                             for (int i = 0; i < list.size(); i++) {
-                                this.saveLianLianProduct(channelId, secret, productDetailHtml, productDetail, platformKey, JSONObject.parseObject(list.get(i).toString()));
+                                try {
+                                    this.saveLianLianProduct(channelId, secret, productDetailHtml, productDetail, platformKey, JSONObject.parseObject(list.get(i).toString()));
+                                } catch (Exception e) {
+                                    log.error("联联产品，保存单个产品异常，", e);
+                                }
                             }
                             BigDecimal total = decryptedData.getBigDecimal("total");
                             if (total == null) {
@@ -121,18 +126,16 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                             //没有则跳出循环
                             if (BigDecimal.valueOf(pageNum).multiply(BigDecimal.TEN).compareTo(total) > 0) {
                                 break;
-                                //} else {
-                                //    TimeUnit.SECONDS.sleep(1);
                             }
                             pageNum += 1;
                         }
                     }
                 }
-                if (cityCodes.getRecords().size() < PAGESIZE) break;
-                cityPageNum += PAGESIZE;
+                if (cityCodes.getRecords().size() < pageSize) break;
+                cityPageNum += pageSize;
+            } catch (Exception e) {
+                log.error("联联商品更新定时任务异常:", e);
             }
-        } catch (Exception e) {
-            log.info("联联商品更新定时任务异常:{}", e.getMessage());
         }
         log.info("结束执行联联产品列表定时任务,耗时：{}分钟", timer.intervalMinute());
     }
