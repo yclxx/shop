@@ -56,6 +56,28 @@ public class CollectiveOrderServiceImpl implements ICollectiveOrderService {
         return collectiveOrderVo;
     }
 
+
+    /**
+     * 查询大订单列表
+     */
+    @Override
+    public TableDataInfo<CollectiveOrderVo> queryPageList(CollectiveOrderBo bo, PageQuery pageQuery) {
+        LambdaQueryWrapper<CollectiveOrder> lqw = buildQueryWrapper(bo);
+        Page<CollectiveOrderVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+        TableDataInfo<CollectiveOrderVo> build = TableDataInfo.build(result);
+        List<CollectiveOrderVo> resultCol =  new ArrayList<>(build.getRows().size());
+        for (CollectiveOrderVo collectiveOrderVo : build.getRows()) {
+            //把小订单列表加上
+            List<OrderVo> orderVos = orderMapper.selectVoList(new LambdaQueryWrapper<Order>().eq(Order::getCollectiveNumber, collectiveOrderVo.getCollectiveNumber()));
+            if (ObjectUtil.isNotEmpty(orderVos)){
+                collectiveOrderVo.setOrderVos(orderVos);
+            }
+            resultCol.add(collectiveOrderVo);
+        }
+        build.setRows(resultCol);
+        return build;
+    }
+
     /**
      * 创建之前没有的大订单 该接口仅使用一次
      */
@@ -98,27 +120,6 @@ public class CollectiveOrderServiceImpl implements ICollectiveOrderService {
     }
 
 
-    /**
-     * 查询大订单列表
-     */
-    @Override
-    public TableDataInfo<CollectiveOrderVo> queryPageList(CollectiveOrderBo bo, PageQuery pageQuery) {
-        LambdaQueryWrapper<CollectiveOrder> lqw = buildQueryWrapper(bo);
-        Page<CollectiveOrderVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
-        TableDataInfo<CollectiveOrderVo> build = TableDataInfo.build(result);
-        List<CollectiveOrderVo> resultCol =  new ArrayList<>(build.getRows().size());
-        for (CollectiveOrderVo collectiveOrderVo : build.getRows()) {
-            //把小订单列表加上
-            List<OrderVo> orderVos = orderMapper.selectVoList(new LambdaQueryWrapper<Order>().eq(Order::getCollectiveNumber, collectiveOrderVo.getCollectiveNumber()));
-            if (ObjectUtil.isNotEmpty(orderVos)){
-                collectiveOrderVo.setOrderVos(orderVos);
-            }
-            resultCol.add(collectiveOrderVo);
-        }
-        build.setRows(resultCol);
-        return build;
-    }
-
 
     @Transactional(rollbackFor = Exception.class)
     public void collectiveOrderSet(Order order) {
@@ -156,13 +157,6 @@ public class CollectiveOrderServiceImpl implements ICollectiveOrderService {
         }
         return lqw;
     }
-
-
-
-
-
-
-
 
 
 }

@@ -58,7 +58,7 @@ public class CollectiveOrderController extends BaseController {
      *
      * @param collectiveNumber 主键
      */
-    @GetMapping("/{collectiveNumber}")
+    @GetMapping("/getCollectiveOrderInfo/{collectiveNumber}")
     public R<CollectiveOrderVo> getInfo(@NotNull(message = "主键不能为空") @PathVariable Long collectiveNumber) {
         return R.ok(iCollectiveOrderService.queryById(collectiveNumber));
     }

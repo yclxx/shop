@@ -44,6 +44,7 @@ public class AsyncSecondService {
             inviteUserLogBo.setUserId(cacheObject);
             inviteUserLogBo.setInviteUserId(inviteUserId);
             inviteUserLogBo.setPlatformKey(platformId);
+            inviteUserLogBo.setMissionId(missionVo.getMissionId());
             inviteUserLogService.insertByBo(inviteUserLogBo,platformId, inviteUserLogBo.getUserId(),channel,cityName,adCode);
         }
     }
