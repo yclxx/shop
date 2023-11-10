@@ -128,11 +128,10 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
-    public Product queryByExternalProductId(String externalProductId, String productType, Long platformKey) {
+    public Product queryByExternalProductId(String externalProductId, String productType) {
         LambdaQueryWrapper<Product> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Product::getExternalProductId, externalProductId);
         wrapper.eq(Product::getProductType, productType);
-        wrapper.eq(Product::getPlatformKey, platformKey);
         return baseMapper.selectOne(wrapper);
     }
 

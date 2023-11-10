@@ -412,23 +412,19 @@ public class ProductServiceImpl implements IProductService {
                     lqw.and(lm -> {
                         lm.eq(bo.getPlatformKey() != null, Product::getPlatformKey, bo.getPlatformKey()).or().isNull(Product::getPlatformKey);
                     });
-
                 } else {
                     List<String> supportSupplierIds = Arrays.asList(supportSupplier.split(","));
                     lqw.and(lm -> {
                         lm.eq(bo.getPlatformKey() != null, Product::getPlatformKey, bo.getPlatformKey());
                         if (ObjectUtil.isNotEmpty(supportSupplierIds)) {
-                            lm.in(Product::getSupplier, supportSupplierIds);
+                            lm.or().in(Product::getSupplier, supportSupplierIds);
                         }
                     });
                 }
-
             } else {
                 lqw.eq(bo.getPlatformKey() != null, Product::getPlatformKey, bo.getPlatformKey());
             }
-
         }
-
         lqw.last("order by sort asc,update_time desc,product_id desc");
         return lqw;
     }
