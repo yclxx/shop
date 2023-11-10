@@ -177,12 +177,12 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
         Long cacheObject = RedisUtils.getCacheObject(cacheKey);
         if (null == cacheObject || !cacheObject.equals(bo.getUserId())) {
             if (null == userVo.getLastLoginDate()) {
-                // 查询用户订单
-                Long orderCount = orderService.countByUserId(userId, day);
-                if (null != orderCount && orderCount > 0) {
-                    log.info("绑定用户邀请关系，用户不是新用户，被邀请用户ID：{}，30天内有订单：{}，bo={}", userId, orderCount, bo);
-                    throw new ServiceException("您不符合助力条件");
-                }
+//                // 查询用户订单
+//                Long orderCount = orderService.countByUserId(userId, day);
+//                if (null != orderCount && orderCount > 0) {
+//                    log.info("绑定用户邀请关系，用户不是新用户，被邀请用户ID：{}，30天内有订单：{}，bo={}", userId, orderCount, bo);
+//                    throw new ServiceException("您不符合助力条件");
+//                }
             } else {
                 if (DateUtils.getDatePoorDay(new Date(), userVo.getLastLoginDate(), true) <= day) {
                     log.info("绑定用户邀请关系，用户不是新用户，被邀请用户ID：{}，上次登录时间：{}，bo={}", userId, DateUtils.parseDateToStr(DateUtils.YYYY_MM_DD_HH_MM_SS, userVo.getLastLoginDate()), bo);
