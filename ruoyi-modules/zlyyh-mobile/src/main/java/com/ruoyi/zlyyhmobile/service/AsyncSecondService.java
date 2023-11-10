@@ -40,6 +40,7 @@ public class AsyncSecondService {
             if (ObjectUtil.isEmpty(cacheObject)){
                 continue;
             }
+            log.info("邀请任务检测开始"+"邀请人："+cacheObject+"被邀请人："+cacheKey);
             InviteUserLogBo inviteUserLogBo = new InviteUserLogBo();
             inviteUserLogBo.setUserId(cacheObject);
             inviteUserLogBo.setInviteUserId(inviteUserId);
