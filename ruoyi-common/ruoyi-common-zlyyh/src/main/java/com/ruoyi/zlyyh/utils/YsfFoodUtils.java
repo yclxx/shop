@@ -1,19 +1,11 @@
 package com.ruoyi.zlyyh.utils;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.lang.Dict;
-import cn.hutool.core.util.HexUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.crypto.SecureUtil;
-import cn.hutool.crypto.symmetric.DESede;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.DateUtils;
-import com.ruoyi.common.core.utils.JsonUtils;
-import com.ruoyi.zlyyh.domain.vo.MemberVipBalanceVo;
-import com.ruoyi.zlyyh.domain.vo.ProductInfoVo;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
@@ -28,21 +20,20 @@ import java.util.Map;
 public class YsfFoodUtils {
     /**
      * 查询品牌列表
-     *
      */
-    public static String getBrandList(Integer pageSize, Integer pageNum, String appId, String privateKey,String url) {
+    public static String getBrandList(Integer pageSize, Integer pageNum, String appId, String privateKey, String url) {
         HashMap<String, Object> data = new HashMap<>();
-        data.put("pageNum",pageNum);
-        data.put("pageSize",pageSize);
+        data.put("pageNum", pageNum);
+        data.put("pageSize", pageSize);
         String s = Md5Utils.sortMap(data);
         Map<String, Object> params = new HashMap<>();
         params.put("appId", appId);
         params.put("timestamp", DateUtils.getTime());
-        params.put("data",s);
+        params.put("data", s);
         String sortMap = Md5Utils.sortMap(params);
         String sign;
-        sign = Md5Utils.signByPrivateKey(sortMap,privateKey);
-        params.put("sign",sign);
+        sign = Md5Utils.signByPrivateKey(sortMap, privateKey);
+        params.put("sign", sign);
         String paramsJson = JSONObject.toJSONString(params);
         // 发送https 请求
         String result;
@@ -52,7 +43,7 @@ public class YsfFoodUtils {
             log.error("查询品牌列表接口失败：", e);
             return null;
         }
-        log.info("查询品牌列表,请求参数：{},返回结果：{}", paramsJson, result);
+        log.debug("查询品牌列表,请求参数：{},返回结果：{}", paramsJson, result);
         JSONObject resultJson = JSONObject.parseObject(result);
         if (null == resultJson) {
             return null;
@@ -67,24 +58,24 @@ public class YsfFoodUtils {
         }
         return null;
     }
+
     /**
      * 查询品牌关联门店及商品
-     *
      */
-    public static String getShopAndCommodityByBrandId(Integer pageSize, Integer pageNum, String appId,Long brandId ,String privateKey,String url) {
+    public static String getShopAndCommodityByBrandId(Integer pageSize, Integer pageNum, String appId, Long brandId, String privateKey, String url) {
         HashMap<String, Object> data = new HashMap<>();
-        data.put("pageNum",pageNum);
-        data.put("pageSize",pageSize);
-        data.put("brandId",brandId);
+        data.put("pageNum", pageNum);
+        data.put("pageSize", pageSize);
+        data.put("brandId", brandId);
         String s = Md5Utils.sortMap(data);
         Map<String, Object> params = new HashMap<>();
         params.put("appId", appId);
         params.put("timestamp", DateUtils.getTime());
-        params.put("data",s);
+        params.put("data", s);
         String sortMap = Md5Utils.sortMap(params);
         String sign;
-        sign = Md5Utils.signByPrivateKey(sortMap,privateKey);
-        params.put("sign",sign);
+        sign = Md5Utils.signByPrivateKey(sortMap, privateKey);
+        params.put("sign", sign);
         String paramsJson = JSONObject.toJSONString(params);
         // 发送https 请求
         String result;
@@ -94,7 +85,7 @@ public class YsfFoodUtils {
             log.error("查询商品门店列表接口失败：", e);
             return null;
         }
-        log.info("查询商品门店列表,请求参数：{},返回结果：{}", paramsJson, result);
+        log.debug("查询商品门店列表,请求参数：{},返回结果：{}", paramsJson, result);
         JSONObject resultJson = JSONObject.parseObject(result);
         if (null == resultJson) {
             return null;
@@ -112,20 +103,19 @@ public class YsfFoodUtils {
 
     /**
      * 查询门店详情
-     *
      */
-    public static String getShopInfo(String appId,Long brandShopId ,String privateKey,String url) {
+    public static String getShopInfo(String appId, Long brandShopId, String privateKey, String url) {
         HashMap<String, Object> data = new HashMap<>();
-        data.put("brandShopId",brandShopId);
+        data.put("brandShopId", brandShopId);
         String s = Md5Utils.sortMap(data);
         Map<String, Object> params = new HashMap<>();
         params.put("appId", appId);
         params.put("timestamp", DateUtils.getTime());
-        params.put("data",s);
+        params.put("data", s);
         String sortMap = Md5Utils.sortMap(params);
         String sign;
-        sign = Md5Utils.signByPrivateKey(sortMap,privateKey);
-        params.put("sign",sign);
+        sign = Md5Utils.signByPrivateKey(sortMap, privateKey);
+        params.put("sign", sign);
         String paramsJson = JSONObject.toJSONString(params);
         // 发送https 请求
         String result;
@@ -135,7 +125,7 @@ public class YsfFoodUtils {
             log.error("查询商品门店详情接口失败：", e);
             return null;
         }
-        log.info("查询门店详情,请求参数：{},返回结果：{}", paramsJson, result);
+        log.debug("查询门店详情,请求参数：{},返回结果：{}", paramsJson, result);
         JSONObject resultJson = JSONObject.parseObject(result);
         if (null == resultJson) {
             return null;
@@ -153,20 +143,19 @@ public class YsfFoodUtils {
 
     /**
      * 查询商品详情
-     *
      */
-    public static String getProductInfo(String appId,String commodityId ,String privateKey,String url) {
+    public static String getProductInfo(String appId, String commodityId, String privateKey, String url) {
         HashMap<String, Object> data = new HashMap<>();
-        data.put("commodityId",commodityId);
+        data.put("commodityId", commodityId);
         String s = Md5Utils.sortMap(data);
         Map<String, Object> params = new HashMap<>();
         params.put("appId", appId);
         params.put("timestamp", DateUtils.getTime());
-        params.put("data",s);
+        params.put("data", s);
         String sortMap = Md5Utils.sortMap(params);
         String sign;
-        sign = Md5Utils.signByPrivateKey(sortMap,privateKey);
-        params.put("sign",sign);
+        sign = Md5Utils.signByPrivateKey(sortMap, privateKey);
+        params.put("sign", sign);
         String paramsJson = JSONObject.toJSONString(params);
         // 发送https 请求
         String result;
@@ -176,7 +165,7 @@ public class YsfFoodUtils {
             log.error("查询商品详情接口失败：", e);
             return null;
         }
-        log.info("查询商品详情,请求参数：{},返回结果：{}", paramsJson, result);
+        log.debug("查询商品详情,请求参数：{},返回结果：{}", paramsJson, result);
         JSONObject resultJson = JSONObject.parseObject(result);
         if (null == resultJson) {
             return null;
@@ -196,22 +185,22 @@ public class YsfFoodUtils {
      * * 创建订单
      * *
      */
-    public static String createOrder(String appId,String commodityId,String productId,String mobile,String privateKey,String url) {
+    public static String createOrder(String appId, String commodityId, String productId, String mobile, String privateKey, String url) {
         HashMap<String, Object> data = new HashMap<>();
-        data.put("commodityId",commodityId);
-        data.put("count",1);
-        data.put("consigneeName","匿名");
-        data.put("consigneeMobile",mobile);
-        data.put("productId",productId);
+        data.put("commodityId", commodityId);
+        data.put("count", 1);
+        data.put("consigneeName", "匿名");
+        data.put("consigneeMobile", mobile);
+        data.put("productId", productId);
         String s = Md5Utils.sortMap(data);
         Map<String, Object> params = new HashMap<>();
         params.put("appId", appId);
         params.put("timestamp", DateUtils.getTime());
-        params.put("data",s);
+        params.put("data", s);
         String sortMap = Md5Utils.sortMap(params);
         String sign;
-        sign = Md5Utils.signByPrivateKey(sortMap,privateKey);
-        params.put("sign",sign);
+        sign = Md5Utils.signByPrivateKey(sortMap, privateKey);
+        params.put("sign", sign);
         String paramsJson = JSONObject.toJSONString(params);
         // 发送https 请求
         String result;
@@ -237,23 +226,22 @@ public class YsfFoodUtils {
 
     }
 
-
     /**
      * 支付订单
      * *
      */
-    public static String payOrder(String appId,String number,String privateKey,String url) {
+    public static String payOrder(String appId, String number, String privateKey, String url) {
         HashMap<String, Object> data = new HashMap<>();
-        data.put("number",number);
+        data.put("number", number);
         String s = Md5Utils.sortMap(data);
         Map<String, Object> params = new HashMap<>();
         params.put("appId", appId);
         params.put("timestamp", DateUtils.getTime());
-        params.put("data",s);
+        params.put("data", s);
         String sortMap = Md5Utils.sortMap(params);
         String sign;
-        sign = Md5Utils.signByPrivateKey(sortMap,privateKey);
-        params.put("sign",sign);
+        sign = Md5Utils.signByPrivateKey(sortMap, privateKey);
+        params.put("sign", sign);
         String paramsJson = JSONObject.toJSONString(params);
         // 发送https 请求
         String result;
@@ -278,23 +266,22 @@ public class YsfFoodUtils {
         return null;
     }
 
-
     /**
      * 查询订单
      * * @param args
      */
-    public static String queryOrder(String appId,String number,String privateKey,String url) {
+    public static String queryOrder(String appId, String number, String privateKey, String url) {
         HashMap<String, Object> data = new HashMap<>();
-        data.put("number",number);
+        data.put("number", number);
         String s = Md5Utils.sortMap(data);
         Map<String, Object> params = new HashMap<>();
         params.put("appId", appId);
         params.put("timestamp", DateUtils.getTime());
-        params.put("data",s);
+        params.put("data", s);
         String sortMap = Md5Utils.sortMap(params);
         String sign;
-        sign = Md5Utils.signByPrivateKey(sortMap,privateKey);
-        params.put("sign",sign);
+        sign = Md5Utils.signByPrivateKey(sortMap, privateKey);
+        params.put("sign", sign);
         String paramsJson = JSONObject.toJSONString(params);
         // 发送https 请求
         String result;
@@ -319,23 +306,22 @@ public class YsfFoodUtils {
         return null;
     }
 
-
     /**
      * 退款
      * * @param args
      */
-    public static String cancelOrder(String appId,String number,String privateKey,String url) {
+    public static String cancelOrder(String appId, String number, String privateKey, String url) {
         HashMap<String, Object> data = new HashMap<>();
-        data.put("number",number);
+        data.put("number", number);
         String s = Md5Utils.sortMap(data);
         Map<String, Object> params = new HashMap<>();
         params.put("appId", appId);
         params.put("timestamp", DateUtils.getTime());
-        params.put("data",s);
+        params.put("data", s);
         String sortMap = Md5Utils.sortMap(params);
         String sign;
-        sign = Md5Utils.signByPrivateKey(sortMap,privateKey);
-        params.put("sign",sign);
+        sign = Md5Utils.signByPrivateKey(sortMap, privateKey);
+        params.put("sign", sign);
         String paramsJson = JSONObject.toJSONString(params);
         // 发送https 请求
         String result;
@@ -360,8 +346,6 @@ public class YsfFoodUtils {
         return null;
     }
 
-
-
     public static void main(String[] args) {
         String url = "https://yinlianmalladmin.yzgnet.com/prod-api/yinlianmall/api/brandList";
         String key = "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAJRRWWInHE/3Qsw0+35WT8eSR6XqeQVzdEz2Dsf6VdJS8c2eEaX+cCh7vjIFty7ENxkd7aKc4+HWSQO2dfy83p/cxsNXpJ7bfDB4SZ5S6Rr6irHCSZQymRuvGaBcjpnVX+qB3adp0UpGtG3z+AkTXnnnxKcFrYu3XF8GJb5Khbf5AgMBAAECgYACmRozufOpAu/Mm/D72Y80M7/FjEHqcodLAdRodF4kfQd3TpmIith0HRbL0YXP7+f3LKsI+i6Tuik1Q3D1qGlN5K2Xs+wPAh1br7nGVFPCJ39gO7081bY63fCDRt5rYcXyvNLXrr4hYp8HgKIO4dZCoObDpYipUz84f9uKuoXdwQJBAOG6UVIGgwtZrz1hQa9jgSF9OBTBtW5fOTJ1BLXFh88L/dy2OsdzOShR0AzfuGR8jRe01h2s3bs1S4ja5OICldUCQQCoNWRN6/MwYzfYdp8RqZ55RNakSGlCNGda4saaz7RSvfTyZ4jTBbtSBykgud9snuwbkex9yaGEgTkoi2M0pPeVAkEAsBpEwUKVT/CbF77dmPB/WNoxO3hYjJA7tlK25v0BVBWd62g7+Ui6aetR7glH+RV2me0aMrKfliMhF9b2RCESNQJAEExMEbjA8XlLme+0bfOvZTSkT3qsqDuHoCjE8Y8ae8HoD+y0Ny4g/kuvUnpwCYhEfE9hSLbWrY4PybvnutwZGQJAJ8mlk7C1i872Gx4zu+S89f/kS2WZzMHPJ7KHFHntzA2UxgXz6NxhX4UIALZSjh4nFvidhoZCPxpJbOC8APzX3w==";
@@ -385,65 +369,62 @@ public class YsfFoodUtils {
             }
             JSONArray shopList = data1.getJSONArray("shopList");
             System.out.println(totalProduct);
-            System.out.println("这是辣个"+shopList);
-
+            System.out.println("这是辣个" + shopList);
 
         }
 
-
         HashMap<String, Object> data = new HashMap<>();
-        data.put("pageNum",pageNum);
-        data.put("pageSize",pageSize);
+        data.put("pageNum", pageNum);
+        data.put("pageSize", pageSize);
         String s = Md5Utils.sortMap(data);
         HashMap<String, Object> testMap = new HashMap<>();
-        testMap.put("data",s);
+        testMap.put("data", s);
         testMap.put("timestamp", DateUtils.getTime());
-        testMap.put("appId","123456");
+        testMap.put("appId", "123456");
         String sortMap = Md5Utils.sortMap(testMap);
         String sign;
-        sign = Md5Utils.signByPrivateKey(sortMap,"MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAJRRWWInHE/3Qsw0+35WT8eSR6XqeQVzdEz2Dsf6VdJS8c2eEaX+cCh7vjIFty7ENxkd7aKc4+HWSQO2dfy83p/cxsNXpJ7bfDB4SZ5S6Rr6irHCSZQymRuvGaBcjpnVX+qB3adp0UpGtG3z+AkTXnnnxKcFrYu3XF8GJb5Khbf5AgMBAAECgYACmRozufOpAu/Mm/D72Y80M7/FjEHqcodLAdRodF4kfQd3TpmIith0HRbL0YXP7+f3LKsI+i6Tuik1Q3D1qGlN5K2Xs+wPAh1br7nGVFPCJ39gO7081bY63fCDRt5rYcXyvNLXrr4hYp8HgKIO4dZCoObDpYipUz84f9uKuoXdwQJBAOG6UVIGgwtZrz1hQa9jgSF9OBTBtW5fOTJ1BLXFh88L/dy2OsdzOShR0AzfuGR8jRe01h2s3bs1S4ja5OICldUCQQCoNWRN6/MwYzfYdp8RqZ55RNakSGlCNGda4saaz7RSvfTyZ4jTBbtSBykgud9snuwbkex9yaGEgTkoi2M0pPeVAkEAsBpEwUKVT/CbF77dmPB/WNoxO3hYjJA7tlK25v0BVBWd62g7+Ui6aetR7glH+RV2me0aMrKfliMhF9b2RCESNQJAEExMEbjA8XlLme+0bfOvZTSkT3qsqDuHoCjE8Y8ae8HoD+y0Ny4g/kuvUnpwCYhEfE9hSLbWrY4PybvnutwZGQJAJ8mlk7C1i872Gx4zu+S89f/kS2WZzMHPJ7KHFHntzA2UxgXz6NxhX4UIALZSjh4nFvidhoZCPxpJbOC8APzX3w==");
-        testMap.put("sign",sign);
+        sign = Md5Utils.signByPrivateKey(sortMap, "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAJRRWWInHE/3Qsw0+35WT8eSR6XqeQVzdEz2Dsf6VdJS8c2eEaX+cCh7vjIFty7ENxkd7aKc4+HWSQO2dfy83p/cxsNXpJ7bfDB4SZ5S6Rr6irHCSZQymRuvGaBcjpnVX+qB3adp0UpGtG3z+AkTXnnnxKcFrYu3XF8GJb5Khbf5AgMBAAECgYACmRozufOpAu/Mm/D72Y80M7/FjEHqcodLAdRodF4kfQd3TpmIith0HRbL0YXP7+f3LKsI+i6Tuik1Q3D1qGlN5K2Xs+wPAh1br7nGVFPCJ39gO7081bY63fCDRt5rYcXyvNLXrr4hYp8HgKIO4dZCoObDpYipUz84f9uKuoXdwQJBAOG6UVIGgwtZrz1hQa9jgSF9OBTBtW5fOTJ1BLXFh88L/dy2OsdzOShR0AzfuGR8jRe01h2s3bs1S4ja5OICldUCQQCoNWRN6/MwYzfYdp8RqZ55RNakSGlCNGda4saaz7RSvfTyZ4jTBbtSBykgud9snuwbkex9yaGEgTkoi2M0pPeVAkEAsBpEwUKVT/CbF77dmPB/WNoxO3hYjJA7tlK25v0BVBWd62g7+Ui6aetR7glH+RV2me0aMrKfliMhF9b2RCESNQJAEExMEbjA8XlLme+0bfOvZTSkT3qsqDuHoCjE8Y8ae8HoD+y0Ny4g/kuvUnpwCYhEfE9hSLbWrY4PybvnutwZGQJAJ8mlk7C1i872Gx4zu+S89f/kS2WZzMHPJ7KHFHntzA2UxgXz6NxhX4UIALZSjh4nFvidhoZCPxpJbOC8APzX3w==");
+        testMap.put("sign", sign);
         String s1 = JSONObject.toJSONString(testMap);
 
         System.out.println(s1);
         String post = HttpUtil.post(url, s1);
 
-
 //        String body = HttpUtil.createPost(url).body(s1).execute().body();
         System.out.println(post);
 
-        url= "https://yinlianmalladmin.yzgnet.com/prod-api/yinlianmall/api/shopAndCommodityByBrandId";
+        url = "https://yinlianmalladmin.yzgnet.com/prod-api/yinlianmall/api/shopAndCommodityByBrandId";
         HashMap<String, Object> objectObjectHashMap = new HashMap<>();
-        objectObjectHashMap.put("pageNum",pageNum);
-        objectObjectHashMap.put("pageSize",pageSize);
-        objectObjectHashMap.put("brandId","17");
+        objectObjectHashMap.put("pageNum", pageNum);
+        objectObjectHashMap.put("pageSize", pageSize);
+        objectObjectHashMap.put("brandId", "17");
         String s2 = Md5Utils.sortMap(objectObjectHashMap);
         HashMap<String, Object> objectObjectHashMap1 = new HashMap<>();
-        objectObjectHashMap1.put("data",s2);
-        objectObjectHashMap1.put("appId","123456");
+        objectObjectHashMap1.put("data", s2);
+        objectObjectHashMap1.put("appId", "123456");
         objectObjectHashMap1.put("timestamp", DateUtils.getTime());
         String sortMap1 = Md5Utils.sortMap(objectObjectHashMap1);
         String sign1;
-        sign1 = Md5Utils.signByPrivateKey(sortMap1,"MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAJRRWWInHE/3Qsw0+35WT8eSR6XqeQVzdEz2Dsf6VdJS8c2eEaX+cCh7vjIFty7ENxkd7aKc4+HWSQO2dfy83p/cxsNXpJ7bfDB4SZ5S6Rr6irHCSZQymRuvGaBcjpnVX+qB3adp0UpGtG3z+AkTXnnnxKcFrYu3XF8GJb5Khbf5AgMBAAECgYACmRozufOpAu/Mm/D72Y80M7/FjEHqcodLAdRodF4kfQd3TpmIith0HRbL0YXP7+f3LKsI+i6Tuik1Q3D1qGlN5K2Xs+wPAh1br7nGVFPCJ39gO7081bY63fCDRt5rYcXyvNLXrr4hYp8HgKIO4dZCoObDpYipUz84f9uKuoXdwQJBAOG6UVIGgwtZrz1hQa9jgSF9OBTBtW5fOTJ1BLXFh88L/dy2OsdzOShR0AzfuGR8jRe01h2s3bs1S4ja5OICldUCQQCoNWRN6/MwYzfYdp8RqZ55RNakSGlCNGda4saaz7RSvfTyZ4jTBbtSBykgud9snuwbkex9yaGEgTkoi2M0pPeVAkEAsBpEwUKVT/CbF77dmPB/WNoxO3hYjJA7tlK25v0BVBWd62g7+Ui6aetR7glH+RV2me0aMrKfliMhF9b2RCESNQJAEExMEbjA8XlLme+0bfOvZTSkT3qsqDuHoCjE8Y8ae8HoD+y0Ny4g/kuvUnpwCYhEfE9hSLbWrY4PybvnutwZGQJAJ8mlk7C1i872Gx4zu+S89f/kS2WZzMHPJ7KHFHntzA2UxgXz6NxhX4UIALZSjh4nFvidhoZCPxpJbOC8APzX3w==");
-        objectObjectHashMap1.put("sign",sign1);
+        sign1 = Md5Utils.signByPrivateKey(sortMap1, "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAJRRWWInHE/3Qsw0+35WT8eSR6XqeQVzdEz2Dsf6VdJS8c2eEaX+cCh7vjIFty7ENxkd7aKc4+HWSQO2dfy83p/cxsNXpJ7bfDB4SZ5S6Rr6irHCSZQymRuvGaBcjpnVX+qB3adp0UpGtG3z+AkTXnnnxKcFrYu3XF8GJb5Khbf5AgMBAAECgYACmRozufOpAu/Mm/D72Y80M7/FjEHqcodLAdRodF4kfQd3TpmIith0HRbL0YXP7+f3LKsI+i6Tuik1Q3D1qGlN5K2Xs+wPAh1br7nGVFPCJ39gO7081bY63fCDRt5rYcXyvNLXrr4hYp8HgKIO4dZCoObDpYipUz84f9uKuoXdwQJBAOG6UVIGgwtZrz1hQa9jgSF9OBTBtW5fOTJ1BLXFh88L/dy2OsdzOShR0AzfuGR8jRe01h2s3bs1S4ja5OICldUCQQCoNWRN6/MwYzfYdp8RqZ55RNakSGlCNGda4saaz7RSvfTyZ4jTBbtSBykgud9snuwbkex9yaGEgTkoi2M0pPeVAkEAsBpEwUKVT/CbF77dmPB/WNoxO3hYjJA7tlK25v0BVBWd62g7+Ui6aetR7glH+RV2me0aMrKfliMhF9b2RCESNQJAEExMEbjA8XlLme+0bfOvZTSkT3qsqDuHoCjE8Y8ae8HoD+y0Ny4g/kuvUnpwCYhEfE9hSLbWrY4PybvnutwZGQJAJ8mlk7C1i872Gx4zu+S89f/kS2WZzMHPJ7KHFHntzA2UxgXz6NxhX4UIALZSjh4nFvidhoZCPxpJbOC8APzX3w==");
+        objectObjectHashMap1.put("sign", sign1);
         String s3 = JSONObject.toJSONString(objectObjectHashMap1);
 
         System.out.println(s3);
         String post1 = HttpUtil.post(url, s3);
         System.out.println(post1);
 
-        url= "https://yinlianmalladmin.yzgnet.com/prod-api/yinlianmall/api/brandShopByShopId";
+        url = "https://yinlianmalladmin.yzgnet.com/prod-api/yinlianmall/api/brandShopByShopId";
         HashMap<String, Object> objectObjectHashMap3 = new HashMap<>();
-        objectObjectHashMap3.put("brandShopId","3841");
+        objectObjectHashMap3.put("brandShopId", "3841");
         String s4 = Md5Utils.sortMap(objectObjectHashMap3);
         HashMap<String, Object> objectObjectHashMap2 = new HashMap<>();
-        objectObjectHashMap2.put("data",s4);
-        objectObjectHashMap2.put("appId","123456");
+        objectObjectHashMap2.put("data", s4);
+        objectObjectHashMap2.put("appId", "123456");
         objectObjectHashMap2.put("timestamp", DateUtils.getTime());
         String sortMap2 = Md5Utils.sortMap(objectObjectHashMap2);
         String sign2;
-        sign2 = Md5Utils.signByPrivateKey(sortMap2,"MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAJRRWWInHE/3Qsw0+35WT8eSR6XqeQVzdEz2Dsf6VdJS8c2eEaX+cCh7vjIFty7ENxkd7aKc4+HWSQO2dfy83p/cxsNXpJ7bfDB4SZ5S6Rr6irHCSZQymRuvGaBcjpnVX+qB3adp0UpGtG3z+AkTXnnnxKcFrYu3XF8GJb5Khbf5AgMBAAECgYACmRozufOpAu/Mm/D72Y80M7/FjEHqcodLAdRodF4kfQd3TpmIith0HRbL0YXP7+f3LKsI+i6Tuik1Q3D1qGlN5K2Xs+wPAh1br7nGVFPCJ39gO7081bY63fCDRt5rYcXyvNLXrr4hYp8HgKIO4dZCoObDpYipUz84f9uKuoXdwQJBAOG6UVIGgwtZrz1hQa9jgSF9OBTBtW5fOTJ1BLXFh88L/dy2OsdzOShR0AzfuGR8jRe01h2s3bs1S4ja5OICldUCQQCoNWRN6/MwYzfYdp8RqZ55RNakSGlCNGda4saaz7RSvfTyZ4jTBbtSBykgud9snuwbkex9yaGEgTkoi2M0pPeVAkEAsBpEwUKVT/CbF77dmPB/WNoxO3hYjJA7tlK25v0BVBWd62g7+Ui6aetR7glH+RV2me0aMrKfliMhF9b2RCESNQJAEExMEbjA8XlLme+0bfOvZTSkT3qsqDuHoCjE8Y8ae8HoD+y0Ny4g/kuvUnpwCYhEfE9hSLbWrY4PybvnutwZGQJAJ8mlk7C1i872Gx4zu+S89f/kS2WZzMHPJ7KHFHntzA2UxgXz6NxhX4UIALZSjh4nFvidhoZCPxpJbOC8APzX3w==");
-        objectObjectHashMap2.put("sign",sign2);
+        sign2 = Md5Utils.signByPrivateKey(sortMap2, "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAJRRWWInHE/3Qsw0+35WT8eSR6XqeQVzdEz2Dsf6VdJS8c2eEaX+cCh7vjIFty7ENxkd7aKc4+HWSQO2dfy83p/cxsNXpJ7bfDB4SZ5S6Rr6irHCSZQymRuvGaBcjpnVX+qB3adp0UpGtG3z+AkTXnnnxKcFrYu3XF8GJb5Khbf5AgMBAAECgYACmRozufOpAu/Mm/D72Y80M7/FjEHqcodLAdRodF4kfQd3TpmIith0HRbL0YXP7+f3LKsI+i6Tuik1Q3D1qGlN5K2Xs+wPAh1br7nGVFPCJ39gO7081bY63fCDRt5rYcXyvNLXrr4hYp8HgKIO4dZCoObDpYipUz84f9uKuoXdwQJBAOG6UVIGgwtZrz1hQa9jgSF9OBTBtW5fOTJ1BLXFh88L/dy2OsdzOShR0AzfuGR8jRe01h2s3bs1S4ja5OICldUCQQCoNWRN6/MwYzfYdp8RqZ55RNakSGlCNGda4saaz7RSvfTyZ4jTBbtSBykgud9snuwbkex9yaGEgTkoi2M0pPeVAkEAsBpEwUKVT/CbF77dmPB/WNoxO3hYjJA7tlK25v0BVBWd62g7+Ui6aetR7glH+RV2me0aMrKfliMhF9b2RCESNQJAEExMEbjA8XlLme+0bfOvZTSkT3qsqDuHoCjE8Y8ae8HoD+y0Ny4g/kuvUnpwCYhEfE9hSLbWrY4PybvnutwZGQJAJ8mlk7C1i872Gx4zu+S89f/kS2WZzMHPJ7KHFHntzA2UxgXz6NxhX4UIALZSjh4nFvidhoZCPxpJbOC8APzX3w==");
+        objectObjectHashMap2.put("sign", sign2);
         String s5 = JSONObject.toJSONString(objectObjectHashMap2);
 
         System.out.println(s5);
