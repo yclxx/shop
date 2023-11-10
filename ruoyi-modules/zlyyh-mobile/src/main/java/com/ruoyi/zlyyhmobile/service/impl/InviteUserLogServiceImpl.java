@@ -196,7 +196,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
             throw new ServiceException("只能助力一次");
         }
         // 查询用户今日是否已达标
-        List<ProductVo> productVos = missionGroupService.missionProduct(missionVo.getMissionId(), missionVo.getPlatformKey(), ServletUtils.getHeader(ZlyyhConstants.CITY_CODE));
+        List<ProductVo> productVos = missionGroupService.missionProduct(missionVo.getMissionId(), missionVo.getPlatformKey(), adCode);
         if (ObjectUtil.isEmpty(productVos)) {
             throw new ServiceException("感谢您的助力，本次活动已结束");
         }
