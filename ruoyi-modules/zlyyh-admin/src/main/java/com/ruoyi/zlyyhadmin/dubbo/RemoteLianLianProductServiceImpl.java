@@ -86,53 +86,51 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
         String detailHtml = ysfConfigService.queryValueByKey(platformKey, "LianLian.detailHtml");
         log.info("开始执行联联产品列表定时任务.");
         TimeInterval timer = DateUtil.timer();
-        int cityPageNum = 0;
+
+        String productList = basePath + queryProductList;
+        String productDetail = basePath + queryProductByCondition;
+        String productDetailHtml = basePath + detailHtml;
         try {
-            String productList = basePath + queryProductList;
-            String productDetail = basePath + queryProductByCondition;
-            String productDetailHtml = basePath + detailHtml;
-            while (true) {
-                // 查询本地城市列表
-                int PAGESIZE = 20;
-                Page<LianlianCity> cityCodes = lianlianCityService.selectLlianCityCodeList("0", cityPageNum, PAGESIZE);
-                if (!cityCodes.getRecords().isEmpty()) {
-                    for (LianlianCity city : cityCodes.getRecords()) {
-                        int pageNum = 1;
-                        while (true) {
-                            //分页 请求产品列表
-                            JSONObject decryptedData = LianLianUtils.getProductList(channelId, secret, productList, city.getCityCode(), pageNum);
-                            if (decryptedData == null) {
-                                log.info("获取联联产品接口失败");
-                                break;
-                            }
-                            JSONArray list = decryptedData.getJSONArray("list");
-                            if (list == null) {
-                                log.info("获取联联产品接口数据列表失败");
-                                break;
-                            }
-                            for (int i = 0; i < list.size(); i++) {
-                                this.saveLianLianProduct(channelId, secret, productDetailHtml, productDetail, platformKey, JSONObject.parseObject(list.get(i).toString()));
-                            }
-                            BigDecimal total = decryptedData.getBigDecimal("total");
-                            if (total == null) {
-                                break;
-                            }
-                            //还有下一页，则继续循环请求，pageNum + 1
-                            //没有则跳出循环
-                            if (BigDecimal.valueOf(pageNum).multiply(BigDecimal.TEN).compareTo(total) > 0) {
-                                break;
-                                //} else {
-                                //    TimeUnit.SECONDS.sleep(1);
-                            }
-                            pageNum += 1;
+            // 查询本地城市列表
+            Page<LianlianCity> cityCodes = lianlianCityService.selectLlianCityCodeList("0", 1, 500);
+            if (!cityCodes.getRecords().isEmpty()) {
+                for (LianlianCity city : cityCodes.getRecords()) {
+                    int pageNum = 1;
+                    int pageSize = 10;
+                    while (true) {
+                        //分页 请求产品列表
+                        JSONObject decryptedData = LianLianUtils.getProductList(channelId, secret, productList, city.getCityCode(), pageNum, pageSize);
+                        if (decryptedData == null) {
+                            log.info("获取联联产品接口失败");
+                            break;
                         }
+                        JSONArray list = decryptedData.getJSONArray("list");
+                        if (list == null) {
+                            log.info("获取联联产品接口数据列表失败");
+                            break;
+                        }
+                        for (int i = 0; i < list.size(); i++) {
+                            try {
+                                this.saveLianLianProduct(channelId, secret, productDetailHtml, productDetail, platformKey, list.getJSONObject(i));
+                            } catch (Exception e) {
+                                log.error("联联产品，保存单个产品异常，", e);
+                            }
+                        }
+                        Integer total = decryptedData.getInteger("total");
+                        if (total == null) {
+                            break;
+                        }
+                        //还有下一页，则继续循环请求，pageNum + 1
+                        //没有则跳出循环
+                        if (pageNum * pageSize >= total) {
+                            break;
+                        }
+                        pageNum += 1;
                     }
                 }
-                if (cityCodes.getRecords().size() < PAGESIZE) break;
-                cityPageNum += PAGESIZE;
             }
         } catch (Exception e) {
-            log.info("联联商品更新定时任务异常:{}", e.getMessage());
+            log.error("联联商品更新定时任务异常:", e);
         }
         log.info("结束执行联联产品列表定时任务,耗时：{}分钟", timer.intervalMinute());
     }
@@ -140,7 +138,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
     /**
      * 获取联联商品
      */
-    void saveLianLianProduct(String channelId, String secret, String productDetailHtml, String productDetail, Long platformKey, JSONObject jsonObject) {
+    private void saveLianLianProduct(String channelId, String secret, String productDetailHtml, String productDetail, Long platformKey, JSONObject jsonObject) {
         LianLianProductVo lianProductVo = jsonObject.toJavaObject(LianLianProductVo.class);
         String productKey = "productLianLian:";
         Object cacheObject = RedisUtils.getCacheObject(productKey + lianProductVo.getProductId());
@@ -259,6 +257,8 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 //购物车内仅添加一个商品
                 product.setLineUpperLimit(1L);
                 product.setSupplier("1717473385180033026");
+                // 显示首页
+                product.setShowIndex("1");
                 // 商品扩展信息
                 //commodity.setCommodityInfo(commodityInfo);
                 //不存在则新增
@@ -277,6 +277,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                     }
                     ProductBo productBo = BeanUtil.toBean(product, ProductBo.class);
                     productService.insertByBo(productBo);
+                    product.setProductId(productBo.getProductId());
                     productInfo.setProductId(productBo.getProductId());
                     ProductInfoBo productInfoBo = BeanUtil.toBean(productInfo, ProductInfoBo.class);
                     productInfoService.insertByBo(productInfoBo);
