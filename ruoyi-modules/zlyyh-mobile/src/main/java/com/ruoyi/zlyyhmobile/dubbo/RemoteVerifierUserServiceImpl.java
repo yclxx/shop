@@ -122,6 +122,30 @@ public class RemoteVerifierUserServiceImpl implements RemoteVerifierUserService 
     }
 
     /**
+     * 微信获取openId
+     */
+    //public WxEntity wxLoginEntity(Long platformKey, String channel, String code) {
+    //    PlatformEnumd platformEnumd = PlatformEnumd.getPlatformEnumd(channel);
+    //    PlatformVo platformVo = platformService.queryById(platformKey, platformEnumd.getChannel());
+    //    String url = wxProperties.getCodeSessionUrl() + "?appid=" + platformVo.getAppId() + "&secret=" + platformVo.getSecret() + "&js_code=" + code + "&grant_type=authorization_code";
+    //    String result;
+    //    try {
+    //        result = HttpRequest.get(url).execute().body();
+    //    } catch (Exception e) {
+    //        log.error("平台【{}】请求获取微信用户openId异常，异常信息：", platformVo.getPlatformKey(), e);
+    //        throw new ServiceException("系统繁忙，请稍后重试！");
+    //    }
+    //    WxEntity wxEntity = JsonUtils.parseObject(result, WxEntity.class);
+    //    if (null == wxEntity || StringUtils.isEmpty(wxEntity.getOpenid())) {
+    //        log.info("平台【{}】请求获取微信用户openId失败，返回信息：{}", platformVo.getPlatformKey(), result);
+    //        throw new ServiceException("系统繁忙，请稍后重试！");
+    //    }
+    //    wxEntity.setOpenId(wxEntity.getOpenid());
+    //    return wxEntity;
+    //}
+
+
+    /**
      * 获取用户授权信息
      *
      * @return openId，令牌等相关信息
@@ -190,8 +214,6 @@ public class RemoteVerifierUserServiceImpl implements RemoteVerifierUserService 
         try {
             XcxLoginUser userInfo = getUserInfoByOpenId(loginEntity.getOpenId(), loginEntity.getPlatformKey(), platformType);
             Verifier user = new Verifier();
-            user.setId(user.getId());
-            user.setReloadUser("1");
             if (null == userInfo) {
                 userInfo = getUserInfoByMobile(loginEntity.getOpenId(), loginEntity.getMobile(), loginEntity.getPlatformKey(), platformType);
                 if (null == userInfo) {
@@ -199,12 +221,15 @@ public class RemoteVerifierUserServiceImpl implements RemoteVerifierUserService 
                 } else {
                     // 修改openId
                     //user.setUserId(userInfo.getUserId());
+                    user.setId(userInfo.getUserId());
+                    user.setReloadUser("1");
                     user.setOpenId(loginEntity.getOpenId());
                     verifierMapper.updateById(user);
                 }
             } else {
                 // 修改用户手机号
-                //user.setUserId(userInfo.getUserId());
+                user.setId(userInfo.getUserId());
+                user.setReloadUser("1");
                 user.setMobile(loginEntity.getMobile());
                 verifierMapper.updateById(user);
             }

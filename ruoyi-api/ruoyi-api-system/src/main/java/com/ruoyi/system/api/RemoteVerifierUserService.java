@@ -15,6 +15,10 @@ public interface RemoteVerifierUserService {
     String getWxMobile(String code, Long platformKey);
 
     /**
+     * 获取微信登录信息
+     */
+    //WxEntity wxLoginEntity(Long platformKey, String channel, String code);
+    /**
      * 获取用户授权信息
      *
      * @param code        授权code
