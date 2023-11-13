@@ -94,12 +94,10 @@ public class RemoteFoodServicelmpl implements RemoteFoodService {
                 if (ObjectUtil.isNotEmpty(commercialTenantVo)) {
                     //商户存在 - 修改
                     setCommercialTenant(brand, commercialTenantBo);
-                    commercialTenantBo.setPlatformKey(platformKey);
                     commercialTenantBo.setCommercialTenantId(commercialTenantVo.getCommercialTenantId());
                     commercialTenantService.updateByBo(commercialTenantBo);
                 } else {
                     //商户不存在 - 新增
-                    commercialTenantBo.setPlatformKey(platformKey);
                     setCommercialTenant(brand, commercialTenantBo);
                     commercialTenantService.insertByBo(commercialTenantBo);
                 }
