@@ -146,7 +146,7 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
         shop.setStatus("0");
         shop.setExtensionServiceProviderId(Long.valueOf(vo.getExtend()));
         shop.setProductType(vo.getProductType());
-        if (ObjectUtil.isEmpty(vo.getShopAddressInfo())) {
+        if (ObjectUtil.isNotEmpty(vo.getShopAddressInfo())) {
             String key = "importShop:" + vo.getShopAddressInfo();
             // 查询地址信息
             JSONObject addressInfo = AddressUtils.getAddressInfo(vo.getShopAddressInfo());
@@ -177,6 +177,7 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
         shop.setInvoice(vo.getInvoiceType());
         shop.setActivity(vo.getActivity());
         if (StringUtils.isNotEmpty(vo.getBusinessWeek())) {
+            shop.setAssignDate("1");
             shop.setWeekDate(vo.getBusinessWeek());
             shop.setBusinessHours(vo.getBusinessBegin() + "-" + vo.getBusinessEnd());
         }
@@ -216,7 +217,7 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
             verifierShop.setId(IdUtil.getSnowflakeNextId());
             verifierShop.setShopId(shop.getShopId());
             verifierShop.setVerifierId(verifier.getId());
-            verifierShop.setShopId(99L);
+            verifierShop.setSort(99L);
             verifierShopMapper.insert(verifierShop);
         }
         if (ObjectUtil.isNotEmpty(shopMerchants) && insert > 0) {

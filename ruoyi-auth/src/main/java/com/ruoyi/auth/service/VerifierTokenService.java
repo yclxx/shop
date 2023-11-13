@@ -59,6 +59,7 @@ public class VerifierTokenService {
         if (null == userInfo || "0".equals(userInfo.getReloadUser())) {
             return "isNullUser:" + openId;
         }
+        userInfo.setOpenid(openId);
         userInfo.setCityName(cityName);
         userInfo.setCityCode(cityCode);
         // 生成token

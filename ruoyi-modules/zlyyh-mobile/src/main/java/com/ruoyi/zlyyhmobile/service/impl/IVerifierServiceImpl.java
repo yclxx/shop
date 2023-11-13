@@ -94,6 +94,7 @@ public class IVerifierServiceImpl implements IVerifierService {
 
     @Override
     public TableDataInfo<Product> queryProductPageList(VerifierBo bo, PageQuery pageQuery) {
+        // 查询核销人员门店信息
         List<ShopVo> shopVos = queryShopList(bo);
         if (ObjectUtil.isNotEmpty(shopVos)) {
             List<Long> shopIds = shopVos.stream().map(ShopVo::getShopId).collect(Collectors.toList());
