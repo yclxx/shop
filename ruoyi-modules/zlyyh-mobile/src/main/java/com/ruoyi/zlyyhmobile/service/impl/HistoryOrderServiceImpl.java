@@ -62,6 +62,8 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
     private final OrderBackTransMapper orderBackTransMapper;
     private final RefundMapper refundMapper;
     private final OrderUnionSendService orderUnionSendService;
+    private final CollectiveOrderMapper collectiveOrderMapper;
+    private final HistoryCollectiveOrderMapper historyCollectiveOrderMapper;
 
     /**
      * 查询订单
@@ -392,6 +394,26 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
                 throw new ServiceException("删除原订单详情失败");
             }
         }
+        //存入大订单
+        HistoryCollectiveOrder historyCollectiveOrder = historyCollectiveOrderMapper.selectById(order.getCollectiveNumber());
+        if (ObjectUtil.isEmpty(historyCollectiveOrder)){
+            //如果历史大订单为空 说明没添加过 进行添加
+            CollectiveOrder collectiveOrder = collectiveOrderMapper.selectById(order.getCollectiveNumber());
+            if (ObjectUtil.isNotEmpty(collectiveOrder)) {
+                BeanUtil.copyProperties(collectiveOrder, historyCollectiveOrder);
+                //保存
+                int insert = historyCollectiveOrderMapper.insert(historyCollectiveOrder);
+                //删除原先订单详情
+                if (insert < 1) {
+                    throw new ServiceException("新增大订单失败");
+                }
+                Long delete = collectiveOrderMapper.deleteByCollectiveNumber(order.getCollectiveNumber().toString());
+                if (delete < 1) {
+                    throw new ServiceException("删除大订单失败");
+                }
+            }
+        }
+        //存入发放详情
         LambdaQueryWrapper<OrderPushInfo> orderPushInfoLambdaQueryWrapper = new LambdaQueryWrapper<>();
         orderPushInfoLambdaQueryWrapper.eq(OrderPushInfo::getNumber, order.getNumber());
         List<OrderPushInfo> orderPushInfos = orderPushInfoMapper.selectList(orderPushInfoLambdaQueryWrapper);

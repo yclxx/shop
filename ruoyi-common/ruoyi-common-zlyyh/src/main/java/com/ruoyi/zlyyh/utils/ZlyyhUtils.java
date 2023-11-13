@@ -26,6 +26,18 @@ import java.util.Map;
  */
 @Slf4j
 public class ZlyyhUtils {
+    /**
+     * 获取市级城市编码
+     *
+     * @param adCode 城市编码
+     * @return 市级 城市编码
+     */
+    public static String getCityCodeByAdCode(String adCode) {
+        if (StringUtils.isBlank(adCode)) {
+            return adCode;
+        }
+        return adCode.substring(0, 4) + "00";
+    }
 
     /**
      * 校验是否在活动城市

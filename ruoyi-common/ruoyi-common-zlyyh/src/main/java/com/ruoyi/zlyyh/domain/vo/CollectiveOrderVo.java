@@ -8,7 +8,7 @@ import com.ruoyi.common.excel.annotation.ExcelDictFormat;
 import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
 import java.util.Date;
-
+import java.util.List;
 
 
 /**
@@ -136,6 +136,11 @@ public class CollectiveOrderVo {
      * 数量
      */
     private Long count;
+
+    /**
+     * 小订单集合
+     */
+    private List<OrderVo> orderVos;
 
 
 }

@@ -28,10 +28,7 @@ import com.ruoyi.zlyyh.properties.utils.YsfDistributionPropertiesUtils;
 import com.ruoyi.zlyyh.utils.CtripUtils;
 import com.ruoyi.zlyyh.utils.YsfFoodUtils;
 import com.ruoyi.zlyyh.utils.sdk.UnionPayDistributionUtil;
-import com.ruoyi.zlyyhmobile.service.IHistoryOrderService;
-import com.ruoyi.zlyyhmobile.service.IMissionUserRecordService;
-import com.ruoyi.zlyyhmobile.service.IOrderService;
-import com.ruoyi.zlyyhmobile.service.IOrderUnionPayService;
+import com.ruoyi.zlyyhmobile.service.*;
 import com.ruoyi.zlyyhmobile.utils.redis.OrderCacheUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,7 +62,15 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
     private IMissionUserRecordService missionUserRecordService;
     @Autowired
     private IOrderUnionPayService orderUnionPayService;
+    @Autowired
+    private ICollectiveOrderService collectiveOrderService;
     private final OrderUnionSendMapper orderUnionSendMapper;
+
+    @Async
+    @Override
+    public void queryOrderHandler() {
+        orderService.queryOrderHandler();
+    }
 
     @Override
     public void sendCoupon(Long number) {
@@ -291,5 +296,14 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
     @Override
     public void orderToHistory() {
         historyOrderService.orderToHistory();
+    }
+
+    /**
+     * 添加大订单数据
+     */
+    @Async
+    @Override
+    public void addCollectiveOrder() {
+        collectiveOrderService.addCollectiveOrder();
     }
 }

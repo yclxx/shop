@@ -10,7 +10,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.BeanCopyUtils;
 import com.ruoyi.common.core.utils.DateUtils;
-import com.ruoyi.common.core.utils.ServletUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
@@ -150,7 +149,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void insertByBo(InviteUserLogBo bo, Long platformId, Long userId,String channel,String cityName,String adCode) {
+    public void insertByBo(InviteUserLogBo bo, Long platformId, Long userId, String channel, String cityName, String adCode) {
         if (null == userId || null == bo.getUserId() || bo.getUserId() < 1 || null == bo.getMissionId() || bo.getMissionId() < 1) {
             throw new ServiceException("请求错误，请关闭重试");
         }
@@ -177,12 +176,12 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
         Long cacheObject = RedisUtils.getCacheObject(cacheKey);
         if (null == cacheObject || !cacheObject.equals(bo.getUserId())) {
             if (null == userVo.getLastLoginDate()) {
-                // 查询用户订单
-                Long orderCount = orderService.countByUserId(userId, day);
-                if (null != orderCount && orderCount > 0) {
-                    log.info("绑定用户邀请关系，用户不是新用户，被邀请用户ID：{}，30天内有订单：{}，bo={}", userId, orderCount, bo);
-                    throw new ServiceException("您不符合助力条件");
-                }
+//                // 查询用户订单
+//                Long orderCount = orderService.countByUserId(userId, day);
+//                if (null != orderCount && orderCount > 0) {
+//                    log.info("绑定用户邀请关系，用户不是新用户，被邀请用户ID：{}，30天内有订单：{}，bo={}", userId, orderCount, bo);
+//                    throw new ServiceException("您不符合助力条件");
+//                }
             } else {
                 if (DateUtils.getDatePoorDay(new Date(), userVo.getLastLoginDate(), true) <= day) {
                     log.info("绑定用户邀请关系，用户不是新用户，被邀请用户ID：{}，上次登录时间：{}，bo={}", userId, DateUtils.parseDateToStr(DateUtils.YYYY_MM_DD_HH_MM_SS, userVo.getLastLoginDate()), bo);
@@ -196,7 +195,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
             throw new ServiceException("只能助力一次");
         }
         // 查询用户今日是否已达标
-        List<ProductVo> productVos = missionGroupService.missionProduct(missionVo.getMissionId(), missionVo.getPlatformKey(), ServletUtils.getHeader(ZlyyhConstants.CITY_CODE));
+        List<ProductVo> productVos = missionGroupService.missionProduct(missionVo.getMissionId(), missionVo.getPlatformKey(), ZlyyhUtils.getCityCodeByAdCode(adCode));
         if (ObjectUtil.isEmpty(productVos)) {
             throw new ServiceException("感谢您的助力，本次活动已结束");
         }

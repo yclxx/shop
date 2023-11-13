@@ -11,7 +11,6 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
-
 /**
  * 商户视图对象
  *
@@ -138,12 +137,16 @@ public class CommercialTenantVo implements Serializable {
 
     private List<ProductVo> productFoodList;
 
+    private ProductVo productVo;
+
     private ShopVo shopVo;
 
     private Long[] productIds;
 
     private Long[] categoryIds;
 
-    /** 距离 千米 */
+    /**
+     * 距离 千米
+     */
     private BigDecimal distance;
 }

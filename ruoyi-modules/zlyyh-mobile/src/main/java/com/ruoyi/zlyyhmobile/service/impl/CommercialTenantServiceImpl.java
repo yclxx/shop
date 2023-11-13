@@ -42,7 +42,6 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
     private final ICategoryProductService categoryProductService;
     private final IProductService productService;
     private final IShopService shopService;
-    private final IShopProductService shopProductService;
 
     /**
      * 查询门店商户列表
@@ -178,8 +177,8 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
                 CacheUtils.put(CacheNames.COMMERCIAL, shopVo.getCommercialTenantId(), ct);
             }
             // 查询商品信息
-            this.setProduct(ct, bo.getPlatformKey(), bo.getWeekDate(), cityCode, shopVo.getShopId());
-            if (ObjectUtil.isNotEmpty(shopVo.getDistance())){
+            this.setProduct(ct, bo.getPlatformKey(), shopVo.getShopId());
+            if (ObjectUtil.isNotEmpty(shopVo.getDistance())) {
                 BigDecimal distance = shopVo.getDistance().setScale(2, BigDecimal.ROUND_DOWN);
                 shopVo.setDistanceString(distance.toString());
             }
@@ -303,6 +302,17 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
 //            next.setProductActivityList(collect.get("2"));
 //        }
 
+    }
+
+    private void setProduct(CommercialTenantVo next, Long platformKey, Long shopId) {
+        // 如果是今日特惠 商品根据星期查
+        if (shopId != null) {
+            //如果传了shopId 查询商品门店关联表 就不按照商品类别分类了 统一进行作展示
+            List<ProductVo> list = productService.queryListByShopId(platformKey, shopId, null, null);
+            if (ObjectUtil.isNotEmpty(list)) {
+                next.setProductVo(list.get(0));
+            }
+        }
     }
 
     private void setShop(CommercialTenantVo next, CommercialTenantBo bo, String cityCode) {

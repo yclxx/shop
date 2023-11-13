@@ -21,6 +21,14 @@ public class OrderService {
     private RemoteOrderService remoteOrderService;
 
     /**
+     * 查询订单支付状态
+     */
+    @XxlJob("queryOrderHandler")
+    public void queryOrderHandler() {
+        remoteAppOrderService.queryOrderHandler();
+    }
+
+    /**
      * 过期取消订单
      */
     @XxlJob("cancelOrderHandler")
@@ -66,5 +74,13 @@ public class OrderService {
     @XxlJob("orderToHistory")
     public void orderToHistory() {
         remoteAppOrderService.orderToHistory();
+    }
+
+    /**
+     * 订单迁移至历史订单
+     */
+    @XxlJob("addCollectiveOrder")
+    public void addCollectiveOrder() {
+        remoteAppOrderService.addCollectiveOrder();
     }
 }

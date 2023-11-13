@@ -95,7 +95,7 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         if (null == productVo || !"0".equals(productVo.getStatus())) {
             throw new ServiceException("商品不存在或已下架!");
         }
-        if (!platformVo.getPlatformKey().equals(productVo.getPlatformKey())) {
+        if (null != productVo.getPlatformKey() && productVo.getPlatformKey() > 1 && !platformVo.getPlatformKey().equals(productVo.getPlatformKey())) {
             throw new ServiceException("商品错误!");
         }
         if ("1".equals(productVo.getProductAffiliation())) {
@@ -250,7 +250,6 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         }
         // 优惠金额
         order.setReducedPrice(order.getTotalAmount().subtract(order.getWantAmount()));
-
 
         // 身份信息 必填处理
         if (ticket.getTicketCard().equals("0")) {
