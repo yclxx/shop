@@ -260,7 +260,8 @@ public class OrderController {
     @GetMapping("/getOrderList")
     public TableDataInfo<OrderVo> getOrderList(OrderBo bo, PageQuery pageQuery) {
         bo.setUserId(LoginHelper.getUserId());
-        bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
+        //暂不需要支持端查订单
+        //bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         return orderService.queryPageList(bo, pageQuery);
     }
 

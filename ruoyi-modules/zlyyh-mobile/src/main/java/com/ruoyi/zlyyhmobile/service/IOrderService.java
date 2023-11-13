@@ -146,6 +146,11 @@ public interface IOrderService {
     /**
      * 定时任务取消订单
      */
+    void queryOrderHandler();
+
+    /**
+     * 定时任务取消订单
+     */
     void cancelOrder(Long userId);
 
     /**

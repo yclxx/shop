@@ -28,7 +28,7 @@ public class AsyncSecondService {
      */
     public void sendInviteDraw(Long inviteUserId,Long platformId,Long missionGroupId,String channel,String cityName,String adCode) {
         //创建订单时先查询缓存
-        List<MissionVo> missionVos = missionMapper.selectVoList(new LambdaQueryWrapper<Mission>().eq(Mission::getMissionGroupId, missionGroupId).eq(Mission::getMissionType, "2"));
+        List<MissionVo> missionVos = missionMapper.selectVoList(new LambdaQueryWrapper<Mission>().eq(Mission::getMissionGroupId, missionGroupId).eq(Mission::getMissionAffiliation, "2"));
         if (ObjectUtil.isEmpty(missionVos)){
             return;
         }
@@ -40,11 +40,13 @@ public class AsyncSecondService {
             if (ObjectUtil.isEmpty(cacheObject)){
                 continue;
             }
+            log.info("邀请任务检测开始"+"邀请人："+cacheObject+"被邀请人："+cacheKey);
             InviteUserLogBo inviteUserLogBo = new InviteUserLogBo();
             inviteUserLogBo.setUserId(cacheObject);
             inviteUserLogBo.setInviteUserId(inviteUserId);
             inviteUserLogBo.setPlatformKey(platformId);
-            inviteUserLogService.insertByBo(inviteUserLogBo,platformId, inviteUserLogBo.getUserId(),channel,cityName,adCode);
+            inviteUserLogBo.setMissionId(missionVo.getMissionId());
+            inviteUserLogService.insertByBo(inviteUserLogBo,platformId, inviteUserLogBo.getInviteUserId(),channel,cityName,adCode);
         }
     }
 }

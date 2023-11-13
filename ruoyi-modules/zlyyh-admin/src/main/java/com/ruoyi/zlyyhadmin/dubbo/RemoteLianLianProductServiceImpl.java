@@ -111,7 +111,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                         }
                         for (int i = 0; i < list.size(); i++) {
                             try {
-                                this.saveLianLianProduct(channelId, secret, productDetailHtml, productDetail, platformKey, list.getJSONObject(i));
+                                this.saveLianLianProduct(channelId, secret, productDetailHtml, productDetail, list.getJSONObject(i));
                             } catch (Exception e) {
                                 log.error("联联产品，保存单个产品异常，", e);
                             }
@@ -138,7 +138,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
     /**
      * 获取联联商品
      */
-    private void saveLianLianProduct(String channelId, String secret, String productDetailHtml, String productDetail, Long platformKey, JSONObject jsonObject) {
+    private void saveLianLianProduct(String channelId, String secret, String productDetailHtml, String productDetail, JSONObject jsonObject) {
         LianLianProductVo lianProductVo = jsonObject.toJavaObject(LianLianProductVo.class);
         String productKey = "productLianLian:";
         Object cacheObject = RedisUtils.getCacheObject(productKey + lianProductVo.getProductId());
@@ -167,7 +167,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 item.setSalePrice(item.getSalePrice().divide(HUNDRED, 2, RoundingMode.HALF_UP)); // 售价
                 item.setOriginPrice(item.getOriginPrice().divide(HUNDRED, 2, RoundingMode.HALF_UP));// 原价
                 // 根据第三方产品编号查询产品是否存在，如果存在则更新，不存在新增
-                Product product = productService.queryByExternalProductId(lianProductVo.getProductId().toString(), "14", platformKey);
+                Product product = productService.queryByExternalProductId(lianProductVo.getProductId().toString(), "14");
                 // 计算产品利润是否高于0.5元
                 if (item.getSalePrice().subtract(item.getChannelPrice()).compareTo(new BigDecimal("0.5")) < 0) {
                     if (ObjectUtil.isNotNull(product)) {
@@ -294,7 +294,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 if (ObjectUtil.isNotNull(productInfos)) {
                     String shops = productInfos.getString("shopList");
                     if (StringUtils.isNotEmpty(shops)) {
-                        i = this.saveShop(shops, product.getProductId(), platformKey);
+                        i = this.saveShop(shops, product.getProductId());
                     }
                 }
                 if (categorySupplier != null && StringUtils.isNotEmpty(categorySupplier.getCategoryId())) {
@@ -320,7 +320,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
         }
     }
 
-    private int saveShop(String shops, Long productId, Long platformKey) {
+    private int saveShop(String shops, Long productId) {
         int questionStore = 0;
         JSONArray jsonArray = JSONArray.parseArray(shops);
         List<LianLianParam.ShopList> shopsList = jsonArray.toJavaList(LianLianParam.ShopList.class);

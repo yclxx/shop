@@ -146,4 +146,9 @@ public class PlatformVo implements Serializable {
     private String supportSupplier;
 
     private List<PlatformChannelVo> platformChannel;
+
+    /**
+     * 首页瀑布流显示类型
+     */
+    private String indexShowType;
 }

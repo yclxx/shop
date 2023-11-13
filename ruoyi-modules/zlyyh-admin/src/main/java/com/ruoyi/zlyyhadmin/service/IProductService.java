@@ -26,7 +26,7 @@ public interface IProductService {
 
     ProductVo queryByExternalProductId(String externalProductId);
 
-    Product queryByExternalProductId(String externalProductId, String productType, Long platformKey);
+    Product queryByExternalProductId(String externalProductId, String productType);
 
     /**
      * 查询商品列表

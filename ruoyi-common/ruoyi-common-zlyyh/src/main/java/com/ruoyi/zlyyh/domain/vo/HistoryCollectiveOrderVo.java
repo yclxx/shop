@@ -8,18 +8,18 @@ import com.ruoyi.common.excel.annotation.ExcelDictFormat;
 import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
 import java.util.Date;
-import java.util.List;
+
 
 
 /**
- * 大订单视图对象
+ * 历史大订单视图对象
  *
  * @author yzg
- * @date 2023-10-16
+ * @date 2023-11-08
  */
 @Data
 @ExcelIgnoreUnannotated
-public class CollectiveOrderVo {
+public class HistoryCollectiveOrderVo {
 
     private static final long serialVersionUID = 1L;
 
@@ -61,6 +61,12 @@ public class CollectiveOrderVo {
     private BigDecimal outAmount;
 
     /**
+     * 购买数量
+     */
+    @ExcelProperty(value = "购买数量")
+    private Long count;
+
+    /**
      * 优惠券id
      */
     @ExcelProperty(value = "优惠券id")
@@ -84,16 +90,16 @@ public class CollectiveOrderVo {
     @ExcelProperty(value = "订单状态 0-待付款 1-支付确认中 2-支付成功 3-已关闭 4-退款处理中,5-退款成功,6-退款失败")
     private String status;
 
-
     /**
      * 退款状态0-退款中 1-退款成功 2-退款失败 3-部分退款成功
      */
-    @ExcelProperty(value = "供应商退款状态0-退款中 1-退款成功 2-退款失败")
-
+    @ExcelProperty(value = "退款状态0-退款中 1-退款成功 2-退款失败 3-部分退款成功")
     private String cancelStatus;
+
     /**
-     * 已退款金额
+     * 已退金额
      */
+    @ExcelProperty(value = "已退金额")
     private BigDecimal cancelAmount;
 
     /**
@@ -131,16 +137,6 @@ public class CollectiveOrderVo {
      */
     @ExcelProperty(value = "用户id")
     private Long sysUserId;
-
-    /**
-     * 数量
-     */
-    private Long count;
-
-    /**
-     * 小订单集合
-     */
-    private List<OrderVo> orderVos;
 
 
 }

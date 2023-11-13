@@ -11,11 +11,11 @@
         <result property="productName" column="product_name"/>
         <result property="productImg" column="product_img"/>
         <result property="pickupMethod" column="pickup_method"/>
-        <result property="orderType" column="order_type"/>
         <result property="totalAmount" column="total_amount"/>
         <result property="reducedPrice" column="reduced_price"/>
         <result property="wantAmount" column="want_amount"/>
         <result property="outAmount" column="out_amount"/>
+        <result property="couponId" column="coupon_id"/>
         <result property="payTime" column="pay_time"/>
         <result property="expireDate" column="expire_date"/>
         <result property="count" column="count"/>
@@ -24,9 +24,7 @@
         <result property="account" column="account"/>
         <result property="sendStatus" column="send_status"/>
         <result property="sendTime" column="send_time"/>
-        <result property="cancelStatus" column="cancel_status"/>
         <result property="externalProductId" column="external_product_id"/>
-        <result property="externalProductSendValue" column="external_product_send_value"/>
         <result property="externalOrderNumber" column="external_order_number"/>
         <result property="pushNumber" column="push_number"/>
         <result property="failReason" column="fail_reason"/>
@@ -39,10 +37,23 @@
         <result property="updateTime" column="update_time"/>
         <result property="delFlag" column="del_flag"/>
         <result property="payMerchant" column="pay_merchant"/>
+        <result property="externalProductSendValue" column="external_product_send_value"/>
+        <result property="orderType" column="order_type"/>
+        <result property="cancelStatus" column="cancel_status"/>
         <result property="parentNumber" column="parent_number"/>
         <result property="sysDeptId" column="sys_dept_id"/>
         <result property="sysUserId" column="sys_user_id"/>
+        <result property="usedStartTime" column="used_start_time"/>
+        <result property="usedEndTime" column="used_end_time"/>
+        <result property="usedTime" column="used_time"/>
+        <result property="unionPay" column="union_pay"/>
+        <result property="unionProductId" column="union_product_id"/>
+        <result property="productSessionId" column="product_session_id"/>
+        <result property="productSkuId" column="product_sku_id"/>
+        <result property="productSessionName" column="product_session_name"/>
+        <result property="productSkuName" column="product_sku_name"/>
         <result property="verificationStatus" column="verification_status"/>
+        <result property="collectiveNumber" column="collective_number"/>
     </resultMap>
 
 

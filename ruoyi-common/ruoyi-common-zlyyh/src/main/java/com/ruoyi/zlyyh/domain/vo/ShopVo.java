@@ -203,6 +203,12 @@ public class ShopVo implements Serializable {
      */
     private BigDecimal distance;
 
+
+    /**
+     * 距离 千米
+     */
+    private String distanceString;
+
     /**
      * 商户拓展服务商表
      */
