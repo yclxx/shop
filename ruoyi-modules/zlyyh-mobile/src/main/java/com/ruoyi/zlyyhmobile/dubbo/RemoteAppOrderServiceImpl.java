@@ -66,6 +66,12 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
     private ICollectiveOrderService collectiveOrderService;
     private final OrderUnionSendMapper orderUnionSendMapper;
 
+    @Async
+    @Override
+    public void queryOrderHandler() {
+        orderService.queryOrderHandler();
+    }
+
     @Override
     public void sendCoupon(Long number) {
         String key = "sendCoupon:" + number;

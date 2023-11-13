@@ -25,13 +25,16 @@ public class YsfConfigServiceImpl implements YsfConfigService {
                 if (StringUtils.isNotBlank(result)) {
                     return result;
                 }
+                if (StringUtils.isBlank(result)) {
+                    return queryValueByKeys(key);
+                }
             }
         } catch (Exception ignored) {
         }
         return "";
     }
 
-    //@Cacheable(cacheNames = CacheNames.ysfConfig, key = "'-1-'+#key")
+    @Cacheable(cacheNames = CacheNames.ysfConfig, key = "#key")
     @Override
     public String queryValueByKeys(String key) {
         try {

@@ -382,7 +382,7 @@ public class OrderServiceImpl implements IOrderService {
                 sendResult(result, orderPushInfo, order, cache, false);
             } else if ("9".equals(order.getOrderType())) {
                 // 券包
-                R<Void> result = productPackageHandle(order.getNumber(), order.getProductId(), order.getUserId(), order.getOrderCityCode(), order.getOrderCityName(), order.getPlatformKey(),order.getSupportChannel());
+                R<Void> result = productPackageHandle(order.getNumber(), order.getProductId(), order.getUserId(), order.getOrderCityCode(), order.getOrderCityName(), order.getPlatformKey(), order.getSupportChannel());
                 sendResult(result, orderPushInfo, order, cache, false);
             } else if ("11".equals(order.getOrderType())) {
                 // 代销（银联分销）
@@ -406,7 +406,7 @@ public class OrderServiceImpl implements IOrderService {
                 payCtripFoodOrder(order.getExternalOrderNumber());
             } else if ("16".equals(order.getOrderType())) {
                 try {
-                    String externalOrderNumber = missionUserDrawService.sendDrawCount(order.getUserId(), order.getProductId(),order.getExternalProductId());
+                    String externalOrderNumber = missionUserDrawService.sendDrawCount(order.getUserId(), order.getProductId(), order.getExternalProductId());
                     order.setExternalOrderNumber(externalOrderNumber);
                     sendResult(R.ok("发放成功"), orderPushInfo, order, cache, false);
                 } catch (Exception e) {
@@ -520,7 +520,7 @@ public class OrderServiceImpl implements IOrderService {
                         Object cacheObject = RedisUtils.getCacheObject(ZlyyhConstants.ysfOrderErrorNum);
                         if (cacheObject != null) {
                             String errorCouponNumber = ysfConfigService.queryValueByKey(order.getPlatformKey(), "errorCouponNumber");
-                            if(StringUtils.isNotBlank(errorCouponNumber)){
+                            if (StringUtils.isNotBlank(errorCouponNumber)) {
                                 Integer num = Integer.parseInt(errorCouponNumber);
                                 int number = Integer.parseInt(cacheObject.toString());
                                 // 满足条件,发送云闪付服务消息.
@@ -610,7 +610,7 @@ public class OrderServiceImpl implements IOrderService {
         if (null == productVo || !"0".equals(productVo.getStatus())) {
             throw new ServiceException("商品不存在或已下架!");
         }
-        if (!platformVo.getPlatformKey().equals(productVo.getPlatformKey())) {
+        if (null != productVo.getPlatformKey() && productVo.getPlatformKey() > 1 && !platformVo.getPlatformKey().equals(productVo.getPlatformKey())) {
             throw new ServiceException("商品错误!");
         }
         if ("1".equals(productVo.getProductAffiliation())) {
@@ -2578,10 +2578,23 @@ public class OrderServiceImpl implements IOrderService {
      */
     @Override
     public void cancelOrder() {
-        List<CollectiveOrderVo> orderVos = collectiveOrderMapper.selectVoList(new LambdaQueryWrapper<CollectiveOrder>().in(CollectiveOrder::getStatus, "0", "1").lt(CollectiveOrder::getExpireDate, new Date()));
+        List<CollectiveOrderVo> orderVos = collectiveOrderMapper.selectVoList(new LambdaQueryWrapper<CollectiveOrder>().in(CollectiveOrder::getStatus, "0", "1").lt(CollectiveOrder::getExpireDate, new Date()).last("limit 300"));
         if (CollectionUtils.isNotEmpty(orderVos)) {
             for (CollectiveOrderVo orderVo : orderVos) {
                 cancel(orderVo.getCollectiveNumber(), orderVo.getUserId());
+            }
+        }
+    }
+
+    /**
+     * 定时任务取消订单
+     */
+    @Override
+    public void queryOrderHandler() {
+        List<CollectiveOrderVo> orderVos = collectiveOrderMapper.selectVoList(new LambdaQueryWrapper<CollectiveOrder>().in(CollectiveOrder::getStatus, "0", "1").lt(CollectiveOrder::getExpireDate, new Date()).last("limit 300"));
+        if (CollectionUtils.isNotEmpty(orderVos)) {
+            for (CollectiveOrderVo orderVo : orderVos) {
+                queryOrderPay(orderVo.getCollectiveNumber());
             }
         }
     }
@@ -3183,7 +3196,7 @@ public class OrderServiceImpl implements IOrderService {
         return true;
     }
 
-    private R<Void> productPackageHandle(Long number, Long productId, Long userId, String adcode, String cityName, Long platformKey,String channel) {
+    private R<Void> productPackageHandle(Long number, Long productId, Long userId, String adcode, String cityName, Long platformKey, String channel) {
         // 查询券包产品
         List<ProductPackageVo> productPackageVos = productPackageService.queryListByProductId(productId);
         if (ObjectUtil.isEmpty(productPackageVos)) {
@@ -3212,7 +3225,7 @@ public class OrderServiceImpl implements IOrderService {
             try {
                 order = this.createOrder(createOrderBo, true);
             } catch (Exception e) {
-                log.error("券包创建子订单异常：",e);
+                log.error("券包创建子订单异常：", e);
                 return R.fail(e.getMessage());
             }
             if (null == order || !"0".equals(order.getStatus())) {

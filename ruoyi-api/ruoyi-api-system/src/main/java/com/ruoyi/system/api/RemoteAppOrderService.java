@@ -9,6 +9,8 @@ import com.ruoyi.common.core.domain.R;
  */
 public interface RemoteAppOrderService {
 
+    void queryOrderHandler();
+
     /**
      * 订单发券
      */

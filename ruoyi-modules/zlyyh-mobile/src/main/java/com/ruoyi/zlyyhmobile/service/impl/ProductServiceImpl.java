@@ -250,9 +250,6 @@ public class ProductServiceImpl implements IProductService {
             if (null == productVo) {
                 continue;
             }
-            if (!productVo.getPlatformKey().equals(platformKey)) {
-                continue;
-            }
             if (!"0".equals(productVo.getStatus())) {
                 continue;
             }
