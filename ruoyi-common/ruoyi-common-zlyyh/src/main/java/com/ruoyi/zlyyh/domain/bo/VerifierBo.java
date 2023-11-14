@@ -54,11 +54,6 @@ public class VerifierBo extends BaseEntity {
     @NotBlank(message = "第三方平台联登唯一标识不能为空", groups = {AddGroup.class, EditGroup.class})
     private String openId;
 
-    /***
-     * 上级id
-     */
-    private Long superiorId;
-
     /**
      * 最后登录IP
      */

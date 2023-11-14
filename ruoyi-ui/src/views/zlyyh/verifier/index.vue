@@ -116,7 +116,6 @@
                 </template>
             </el-table-column>
             <el-table-column label="openId" align="center" prop="openId"/>
-            <el-table-column label="上级id" align="center" prop="superiorId"/>
             <el-table-column label="最后登录IP" align="center" prop="loginIp"/>
             <el-table-column label="最后登录时间" align="center" prop="loginDate" width="180">
                 <template slot-scope="scope">
@@ -169,9 +168,6 @@
                 </el-form-item>
                 <el-form-item v-if="!isUpdate" label="openId" prop="openId">
                     <el-input v-model="form.openId" placeholder="请输入openId"/>
-                </el-form-item>
-                <el-form-item v-if="!isUpdate" label="上级id" prop="superiorId">
-                    <el-input v-model="form.superiorId" placeholder="请输入上级id"/>
                 </el-form-item>
             </el-form>
             <div slot="footer" class="dialog-footer">
@@ -246,9 +242,6 @@ export default {
                 openId: [
                     {required: true, message: "openId不能为空", trigger: "blur"}
                 ],
-                superiorId: [
-                    {required: true, message: "上级id不能为空", trigger: "blur"}
-                ],
                 loginIp: [
                     {required: true, message: "最后登录IP不能为空", trigger: "blur"}
                 ],
@@ -295,7 +288,6 @@ export default {
                 verifierType: undefined,
                 status: undefined,
                 openId: undefined,
-                superiorId: undefined,
                 createBy: undefined,
                 createTime: undefined,
                 updateBy: undefined,

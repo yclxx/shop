@@ -12,7 +12,6 @@ import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.BeanCopyUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
-import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.*;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
@@ -143,10 +142,10 @@ public class IVerifierServiceImpl implements IVerifierService {
         VerifierVo verifierVo = baseMapper.selectVoOne(lqw);
         // 判断核销人员是否存在
         if (ObjectUtil.isNotEmpty(verifierVo)) {
-            // 判断核销人员是否与添加人为上下级关系
-            if (!verifierVo.getSuperiorId().equals(LoginHelper.getUserId())) {
-                return false;
-            }
+            //// 判断核销人员是否与添加人为上下级关系
+            //if (!verifierVo.getSuperiorId().equals(LoginHelper.getUserId())) {
+            //    return false;
+            //}
             // 绑定核销人员与门店
             LambdaQueryWrapper<VerifierShop> lqw2 = Wrappers.lambdaQuery();
             lqw2.eq(VerifierShop::getVerifierId, verifierVo.getId());
@@ -164,7 +163,7 @@ public class IVerifierServiceImpl implements IVerifierService {
             verifier.setMobile(bo.getVerifierMobile());
             verifier.setVerifierType("verifier");
             verifier.setStatus("0");
-            verifier.setSuperiorId(LoginHelper.getUserId());
+            //verifier.setSuperiorId(LoginHelper.getUserId());
             if (baseMapper.insert(verifier) <= 0) return false;
             // 核销人员绑定门店
             return handleVerifierShop(verifier.getId(), bo.getShopId());

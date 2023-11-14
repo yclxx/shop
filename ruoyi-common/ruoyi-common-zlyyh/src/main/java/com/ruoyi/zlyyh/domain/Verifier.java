@@ -42,10 +42,6 @@ public class Verifier extends BaseEntity {
      * 第三方平台联登唯一标识
      */
     private String openId;
-    /***
-     * 上级id
-     */
-    private Long superiorId;
     /**
      * 最后登录IP
      */

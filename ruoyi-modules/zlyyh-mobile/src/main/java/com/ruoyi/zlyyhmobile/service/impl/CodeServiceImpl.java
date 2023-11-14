@@ -407,14 +407,11 @@ public class CodeServiceImpl implements ICodeService {
         }
         // 核销人员处理
         if (verifier.getVerifierType().equals("admin")) {
-            List<Long> longs = verifierMapper.selectIdBySuperior(verifier.getId());
-            if (ObjectUtil.isNotEmpty(longs)) {
-                longs.add(verifier.getId());
-            } else {
-                longs = new ArrayList<>();
-                longs.add(verifier.getId());
-            }
-            lqw.in(Code::getVerifierId, longs);
+            LambdaQueryWrapper<VerifierShop> queryWrapper = Wrappers.lambdaQuery();
+            queryWrapper.eq(VerifierShop::getVerifierId, verifier.getId());
+            List<VerifierShopVo> verifierShopVos = verifierShopMapper.selectVoList(queryWrapper);
+            List<Long> collect = verifierShopVos.stream().map(VerifierShopVo::getShopId).collect(Collectors.toList());
+            lqw.in(Code::getShopId, collect);
         } else {
             lqw.eq(Code::getVerifierId, verifier.getId());
         }
@@ -471,12 +468,19 @@ public class CodeServiceImpl implements ICodeService {
     private List<Long> getVerifierList(Verifier verifier) {
         List<Long> longs;
         if (verifier.getVerifierType().equals("admin")) {
-            longs = verifierMapper.selectIdBySuperior(verifier.getId());
-            if (ObjectUtil.isNotEmpty(longs)) {
-                longs.add(verifier.getId());
-            } else {
-                longs = new ArrayList<>();
-                longs.add(verifier.getId());
+            longs = new ArrayList<>();
+            longs.add(verifier.getId());
+            LambdaQueryWrapper<VerifierShop> queryWrapper = Wrappers.lambdaQuery();
+            queryWrapper.eq(VerifierShop::getVerifierId, verifier.getId());
+            List<VerifierShopVo> verifierShopVos = verifierShopMapper.selectVoList(queryWrapper);
+            List<Long> collect = verifierShopVos.stream().map(VerifierShopVo::getShopId).collect(Collectors.toList());
+            LambdaQueryWrapper<VerifierShop> queryWrapper2 = Wrappers.lambdaQuery();
+            queryWrapper2.in(VerifierShop::getShopId, collect);
+            List<VerifierShop> verifierShops = verifierShopMapper.selectList(queryWrapper2);
+
+            List<Long> collect1 = verifierShops.stream().map(VerifierShop::getVerifierId).collect(Collectors.toList());
+            if (ObjectUtil.isNotEmpty(collect1)) {
+                longs.addAll(collect1);
             }
         } else {
             longs = new ArrayList<>();
