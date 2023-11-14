@@ -20,6 +20,7 @@ import com.ruoyi.zlyyh.domain.LianlianCity;
 import com.ruoyi.zlyyh.domain.Product;
 import com.ruoyi.zlyyh.domain.ProductInfo;
 import com.ruoyi.zlyyh.domain.bo.*;
+import com.ruoyi.zlyyh.domain.vo.ShopVo;
 import com.ruoyi.zlyyh.param.LianLianParam;
 import com.ruoyi.zlyyh.utils.LianLianUtils;
 import com.ruoyi.zlyyhadmin.domain.vo.LianLianProductItem;
@@ -324,6 +325,10 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
         int questionStore = 0;
         JSONArray jsonArray = JSONArray.parseArray(shops);
         List<LianLianParam.ShopList> shopsList = jsonArray.toJavaList(LianLianParam.ShopList.class);
+        if (ObjectUtil.isNotEmpty(shopsList)) {
+            // 删除原有的商品门店关联信息
+            shopProductService.deleteByProductId(productId);
+        }
         for (LianLianParam.ShopList shop : shopsList) {
             //判断店铺是否有电话或者省市
             String address = shop.getAddress();
@@ -337,26 +342,31 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
             }
             BigDecimal longitude = new BigDecimal(shop.getLongitude());
             BigDecimal latitude = new BigDecimal(shop.getLatitude());
-            // 删除原有门店
-            shopService.deleteByCommercialTenantId(shop.getId()); // 此方法下次使用之后，必须删除
-            shopService.deleteBySupplierShopId(shop.getId());
 
-            // 新增门店
-            ShopBo shopBo = new ShopBo();
-            shopBo.setShopId(IdUtil.getSnowflakeNextId());
-            shopBo.setSupplierShopId(shop.getId().toString());
-            shopBo.setShopName(shop.getName());
-            shopBo.setShopTel(StringUtils.isEmpty(checkCellphone(shop.getPhoneNumber())) ? checkTelephone(shop.getPhoneNumber()) : checkCellphone(shop.getPhoneNumber()));
-            shopBo.setFormattedAddress(shop.getAddress());
-            shopBo.setCitycode(shop.getCityCode());
-            shopBo.setAddress(shop.getAddress());
-            shopBo.setLongitude(longitude);
-            shopBo.setLatitude(latitude);
-            shopService.insertByBo(shopBo);
-
+            // 查询门店是否存在
+            Long shopId = null;
+            ShopVo shopVo = shopService.queryByNameAndSupplierId(shop.getName(), "" + shop.getId());
+            if (null != shopVo) {
+                shopId = shopVo.getShopId();
+            }
+            if (ObjectUtil.isNull(shopId) || shopId == 0) {
+                // 新增门店
+                ShopBo shopBo = new ShopBo();
+                shopBo.setShopId(IdUtil.getSnowflakeNextId());
+                shopBo.setSupplierShopId(shop.getId().toString());
+                shopBo.setShopName(shop.getName());
+                shopBo.setShopTel(StringUtils.isEmpty(checkCellphone(shop.getPhoneNumber())) ? checkTelephone(shop.getPhoneNumber()) : checkCellphone(shop.getPhoneNumber()));
+                shopBo.setFormattedAddress(shop.getAddress());
+                shopBo.setCitycode(shop.getCityCode());
+                shopBo.setAddress(shop.getAddress());
+                shopBo.setLongitude(longitude);
+                shopBo.setLatitude(latitude);
+                shopService.insertByBo(shopBo);
+                shopId = shopBo.getShopId();
+            }
             ShopProductBo shopProductBo = new ShopProductBo();
             shopProductBo.setProductId(productId);
-            shopProductBo.setShopId(shopBo.getShopId());
+            shopProductBo.setShopId(shopId);
             shopProductService.insertByBo(shopProductBo);
         }
         return questionStore;
