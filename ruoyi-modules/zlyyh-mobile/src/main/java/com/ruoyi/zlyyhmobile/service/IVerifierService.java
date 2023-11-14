@@ -36,4 +36,6 @@ public interface IVerifierService {
     Boolean addVerifier(CodeBo bo);
 
     Boolean updateProductById(ProductBo bo);
+
+    Boolean insertProduct(ProductBo bo);
 }

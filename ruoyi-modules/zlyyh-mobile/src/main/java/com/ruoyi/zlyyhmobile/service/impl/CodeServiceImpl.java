@@ -208,8 +208,8 @@ public class CodeServiceImpl implements ICodeService {
                 throw new ServiceException("核销失败");
             }
         }
-        // 向银联发送请求 暂时注释 2023-11-3
-        //callback(codeVo, orderVo, UnionPayCallbackBizMethodType.VERIFY_BOND);
+        // 向银联发送请求
+        callback(codeVo, orderVo, UnionPayCallbackBizMethodType.VERIFY_BOND);
         return true;
     }
 

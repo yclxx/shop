@@ -80,7 +80,7 @@ public class VerifierController extends BaseController {
      */
     @GetMapping("/shopPage")
     public TableDataInfo<ShopVo> shopPage(VerifierBo bo, PageQuery pageQuery) {
-        bo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        //bo.setPlatformKey(ZlyyhUtils.getPlatformId());
         bo.setId(LoginHelper.getUserId());
         return verifierService.queryShopPageList(bo, pageQuery);
     }
@@ -105,12 +105,21 @@ public class VerifierController extends BaseController {
     }
 
     /**
-     * 修改商品详情
+     * 修改商品信息
      * @return 商品列表
      */
     @PostMapping("/updateProductById")
     public R<Boolean> updateProductById(@RequestBody ProductBo bo) {
         return R.ok(verifierService.updateProductById(bo));
+    }
+
+    /**
+     * 新增商品信息
+     * @return 商品列表
+     */
+    @PostMapping("/insertProduct")
+    public R<Boolean> insertProduct(@RequestBody ProductBo bo) {
+        return R.ok(verifierService.insertProduct(bo));
     }
 
     /**

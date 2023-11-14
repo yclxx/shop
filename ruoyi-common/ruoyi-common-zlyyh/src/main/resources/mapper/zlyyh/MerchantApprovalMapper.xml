@@ -26,9 +26,8 @@
         <result property="activity" column="activity"/>
         <result property="invoiceType" column="invoice_type"/>
         <result property="account" column="account"/>
-        <result property="ysfMerchant" column="ysf_merchant"/>
-        <result property="wxMerchant" column="wx_merchant"/>
-        <result property="payMerchant" column="pay_merchant"/>
+        <result property="merchantPlatformKey" column="merchant_platform_key"/>
+        <result property="merchant" column="merchant"/>
         <result property="productType" column="product_type"/>
         <result property="approvalStatus" column="approval_status"/>
         <result property="rejectReason" column="reject_reason"/>
