@@ -40,7 +40,9 @@
     <select id="selectProductList" resultType="com.ruoyi.zlyyh.domain.vo.CodeVo">
         SELECT product_id,product_name FROM `t_code`
         WHERE (used_status = '1' OR appointment_status = '1')
-        AND product_name LIKE CONCAT('%',#{productName},'%')
+        <if test="productName != null and productName !=''">
+            AND product_name LIKE CONCAT('%',#{productName},'%')
+        </if>
         AND shop_id = #{shopId}
         AND verifier_id IN
         <foreach collection="verifierId" item="item" open="(" close=")" separator=",">

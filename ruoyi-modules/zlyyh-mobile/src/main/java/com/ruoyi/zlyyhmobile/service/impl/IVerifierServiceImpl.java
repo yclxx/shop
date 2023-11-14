@@ -73,7 +73,7 @@ public class IVerifierServiceImpl implements IVerifierService {
     public TableDataInfo<ShopVo> queryShopPageList(VerifierBo bo, PageQuery pageQuery) {
         LambdaQueryWrapper<Shop> lqw = Wrappers.lambdaQuery();
         lqw.eq(Shop::getStatus, "0");
-        lqw.last("AND shop_id IN(SELECT shop_id FROM t_verifier_shop WHERE verifier_id = " + bo.getId() + ")");
+        lqw.last("AND shop_id IN(SELECT shop_id FROM t_verifier_shop WHERE verifier_id = " + bo.getId() + ") ORDER BY create_time DESC");
         Page<ShopVo> result = shopMapper.selectVoPage(pageQuery.build(), lqw);
         return TableDataInfo.build(result);
     }
