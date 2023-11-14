@@ -688,16 +688,14 @@
                   <el-input v-model="form.appId" placeholder="请输入小程序ID" />
                 </el-form-item>
               </el-col>
-            </el-row>
-            <el-row>
-              <el-col :span="8">
+              <!-- <el-col :span="8">
                 <el-form-item label="提供方名称" prop="providerName">
                   <el-input v-model="form.providerName" placeholder="请输入活动提供方名称" />
                 </el-form-item>
-              </el-col>
+              </el-col> -->
               <el-col :span="8">
                 <el-form-item label="标签" prop="tags">
-                  <el-select v-model="form.tagsList" multiple placeholder="请选择标签" style="width: 90%;">
+                  <el-select v-model="form.tagsList" multiple placeholder="请选择标签" style="width: 100%;">
                     <el-option v-for="item in tagsList" :key="item.tagsId" :label="item.tagsName" :value="item.tagsId">
                     </el-option>
                   </el-select>
@@ -708,11 +706,9 @@
                   <el-input v-model="form.btnText" placeholder="请输入按钮名称" />
                 </el-form-item>
               </el-col>
-            </el-row>
-            <el-row>
               <el-col :span="8">
                 <el-form-item label="共享" prop="isShare">
-                  <el-select v-model="form.isShare" placeholder="请选择是否共享">
+                  <el-select v-model="form.isShare" style="width: 100%;" placeholder="请选择是否共享">
                     <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label"
                       :value="dict.value"></el-option>
                   </el-select>
@@ -720,7 +716,7 @@
               </el-col>
               <el-col :span="8">
                 <el-form-item label="支持优惠券" prop="isCoupon">
-                  <el-select v-model="form.isCoupon" placeholder="请选择是否支持优惠券">
+                  <el-select v-model="form.isCoupon" style="width: 100%;" placeholder="请选择是否支持优惠券">
                     <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label"
                       :value="dict.value"></el-option>
                   </el-select>
@@ -728,14 +724,12 @@
               </el-col>
               <el-col :span="8">
                 <el-form-item label="供应商" prop="supplier">
-                  <el-select v-model="form.supplier" placeholder="请选择供应商">
+                  <el-select v-model="form.supplier" style="width: 100%;" placeholder="请选择供应商">
                     <el-option v-for="dict in supplierList" :key="dict.id" :label="dict.label"
                       :value="dict.id"></el-option>
                   </el-select>
                 </el-form-item>
               </el-col>
-            </el-row>
-            <el-row>
               <el-col :span="8">
                 <el-form-item label="分享标题" prop="shareTitle">
                   <el-input v-model="form.shareTitle" placeholder="请输入分享标题" />
@@ -743,22 +737,64 @@
               </el-col>
               <el-col :span="8">
                 <el-form-item label="分享描述" prop="shareName">
-                  <el-input v-model="form.shareName" type="textarea" placeholder="请输入内容" />
+                  <el-input v-model="form.shareName" placeholder="请输入内容" />
                 </el-form-item>
               </el-col>
-            </el-row>
-            <el-row>
               <el-col :span="8">
-                <el-form-item label="需要弹窗提示" prop="isPoup">
-                  <el-select v-model="form.isPoup" placeholder="请选择是否支持优惠券">
+                <el-form-item label="弹窗提示" prop="isPoup">
+                  <el-select v-model="form.isPoup" style="width: 100%;" placeholder="请选择购买前是否弹窗提示">
                     <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label"
-                               :value="dict.value"></el-option>
+                      :value="dict.value"></el-option>
                   </el-select>
                 </el-form-item>
               </el-col>
               <el-col v-if="form.isPoup == 'Y'" :span="8">
                 <el-form-item label="弹窗内容" prop="poupText">
-                  <el-input v-model="form.poupText" type="textarea" placeholder="请输入内容" />
+                  <el-input v-model="form.poupText" placeholder="请输入内容" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="分销功能" prop="sharePermission">
+                  <el-select v-model="form.sharePermission" style="width: 100%;" placeholder="请选择是否开通分销功能">
+                    <el-option v-for="dict in dict.type.t_platform_share_permission" :key="dict.value"
+                      :label="dict.label" :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8" v-if="form.sharePermission && form.sharePermission == '1'">
+                <el-form-item label="奖励类型" prop="shareAmountType">
+                  <el-select v-model="form.shareAmountType" style="width: 100%;" placeholder="请选择分销奖励金额类型">
+                    <el-option v-for="dict in dict.type.share_amount_type" :key="dict.value" :label="dict.label"
+                      :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8" v-if="form.sharePermission && form.sharePermission == '1'">
+                <el-form-item label="分销员奖励" prop="shareTwoAmount">
+                  <span slot="label">
+                    分销员奖励
+                    <el-tooltip content="分销员可获奖励" placement="top">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input v-model="form.shareTwoAmount" placeholder="请输入分销员奖励">
+                    <template slot="append" v-if="form.shareAmountType && form.shareAmountType == '1'">%</template>
+                    <template slot="append" v-else>元</template>
+                  </el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8" v-if="form.sharePermission && form.sharePermission == '1'">
+                <el-form-item label="上级奖励" prop="shareOneAmount">
+                  <span slot="label">
+                    上级奖励
+                    <el-tooltip content="分销员的上级可获奖励" placement="top">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input v-model="form.shareOneAmount" placeholder="请输入分销员上级奖励">
+                    <template slot="append" v-if="form.shareAmountType && form.shareAmountType == '1'">%</template>
+                    <template slot="append" v-else>元</template>
+                  </el-input>
                 </el-form-item>
               </el-col>
             </el-row>
@@ -768,11 +804,11 @@
                   <image-upload v-model="form.shareImage" :limit="1" />
                 </el-form-item>
               </el-col>
-              <el-col :span="8">
+              <!-- <el-col :span="8">
                 <el-form-item label="提供方logo" prop="providerLogo">
                   <image-upload v-model="form.providerLogo" :limit="1" />
                 </el-form-item>
-              </el-col>
+              </el-col> -->
               <el-col :span="8" v-if="form.toType == '4'">
                 <el-form-item label="页面地址" prop="url">
                   <image-upload v-model="form.url" :limit="1" />
@@ -883,7 +919,8 @@
     dicts: ['t_product_to_type', 't_product_status', 't_product_affiliation', 't_product_assign_date', 't_product_type',
       't_product_show_original_amount', 't_product_pickup_method', 't_grad_period_date_list', 't_product_search',
       't_search_status', 't_product_pay_user', 't_show_index', 't_product_send_account_type', 't_cus_refund',
-      'sys_normal_disable', 't_product_check_pay_city', 't_product_union_pay', 'sys_yes_no', 'channel_type'
+      'sys_normal_disable', 't_product_check_pay_city', 't_product_union_pay', 'sys_yes_no', 'channel_type',
+      't_platform_share_permission', 'share_amount_type'
     ],
     data() {
       return {
@@ -1123,9 +1160,11 @@
             message: "请选择是否是涉及银联分销",
             trigger: "blur"
           }],
-          supportChannel: [
-            {required: true, message: "支持端不能为空", trigger: "blur"}
-          ],
+          supportChannel: [{
+            required: true,
+            message: "支持端不能为空",
+            trigger: "blur"
+          }],
         },
         isUpdate: false
       };
@@ -1314,6 +1353,10 @@
           isCoupon: undefined,
           isShare: undefined,
           supplier: undefined,
+          sharePermission: undefined,
+          shareAmountType: undefined,
+          shareOneAmount: undefined,
+          shareTwoAmount: undefined,
           supportChannel: ['ALL'],
           ticket: {
             ticketChooseSeat: undefined,
@@ -1418,6 +1461,14 @@
           } else {
             this.form.supportChannel = []
           }
+          if (this.form.shareAmountType && this.form.shareAmountType == '1') {
+            if (this.form.shareOneAmount) {
+              this.form.shareOneAmount = this.form.shareOneAmount * 100;
+            }
+            if (this.form.shareTwoAmount) {
+              this.form.shareTwoAmount = this.form.shareTwoAmount * 100;
+            }
+          }
           this.cityNodeAll = false;
           this.$nextTick(() => {
             showCity.then(res => {
@@ -1495,6 +1546,14 @@
             }
             if (this.form.supportChannel) {
               this.form.supportChannel = this.form.supportChannel.join(",")
+            }
+            if (this.form.shareAmountType && this.form.shareAmountType == '1') {
+              if (this.form.shareOneAmount) {
+                this.form.shareOneAmount = this.form.shareOneAmount * 0.01;
+              }
+              if (this.form.shareTwoAmount) {
+                this.form.shareTwoAmount = this.form.shareTwoAmount * 0.01;
+              }
             }
             if (this.form.productId != null) {
               updateProduct(this.form).then(response => {

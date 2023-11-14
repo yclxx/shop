@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 查询分销员列表
 export function listShareUser(query) {
   return request({
-    url: '/zlyyh/shareUser/list',
+    url: '/zlyyh-admin/shareUser/list',
     method: 'get',
     params: query
   })
@@ -12,7 +12,7 @@ export function listShareUser(query) {
 // 查询分销员详细
 export function getShareUser(userId) {
   return request({
-    url: '/zlyyh/shareUser/' + userId,
+    url: '/zlyyh-admin/shareUser/' + userId,
     method: 'get'
   })
 }
@@ -20,7 +20,7 @@ export function getShareUser(userId) {
 // 新增分销员
 export function addShareUser(data) {
   return request({
-    url: '/zlyyh/shareUser',
+    url: '/zlyyh-admin/shareUser',
     method: 'post',
     data: data
   })
@@ -29,7 +29,7 @@ export function addShareUser(data) {
 // 修改分销员
 export function updateShareUser(data) {
   return request({
-    url: '/zlyyh/shareUser',
+    url: '/zlyyh-admin/shareUser',
     method: 'put',
     data: data
   })
@@ -38,7 +38,7 @@ export function updateShareUser(data) {
 // 删除分销员
 export function delShareUser(userId) {
   return request({
-    url: '/zlyyh/shareUser/' + userId,
+    url: '/zlyyh-admin/shareUser/' + userId,
     method: 'delete'
   })
 }

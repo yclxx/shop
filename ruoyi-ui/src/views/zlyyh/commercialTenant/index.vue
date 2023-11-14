@@ -176,56 +176,51 @@
           <el-col :span="8">
             <el-form-item label="共享" prop="isShare" label-width="95px">
               <el-select v-model="form.isShare" placeholder="请选择是否共享">
-                <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value"
-                  :label="dict.label" :value="dict.value"></el-option>
+                <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="供应商" prop="supplier">
               <el-select v-model="form.supplier" placeholder="请选择供应商" style="width: 100%;">
-                <el-option v-for="dict in supplierList" :key="dict.id" :label="dict.label"
-                           :value="dict.id"></el-option>
+                <el-option v-for="dict in supplierList" :key="dict.id" :label="dict.label" :value="dict.id"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="收款账户" prop="account" label-width="95px">
-                <el-input v-model="form.account" placeholder="请输入收款账户" />
+              <el-input v-model="form.account" placeholder="请输入收款账户" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="性质" prop="nature" label-width="95px">
               <el-select v-model="form.nature" placeholder="请选择性质">
-                <el-option v-for="dict in dict.type.nature_type" :key="dict.value"
-                  :label="dict.label" :value="dict.value"></el-option>
+                <el-option v-for="dict in dict.type.nature_type" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="活动类型" prop="activity" label-width="95px">
               <el-select v-model="form.activity" placeholder="请选择活动类型">
-                <el-option v-for="dict in dict.type.activity_type" :key="dict.value"
-                  :label="dict.label" :value="dict.value"></el-option>
+                <el-option v-for="dict in dict.type.activity_type" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="发票类型" prop="invoice" label-width="95px">
               <el-select v-model="form.invoice" placeholder="请选择发票类型">
-                <el-option v-for="dict in dict.type.invoice_type" :key="dict.value"
-                  :label="dict.label" :value="dict.value"></el-option>
+                <el-option v-for="dict in dict.type.invoice_type" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item label="标签" prop="tags">
               <el-select v-model="form.tags" multiple placeholder="请选择标签">
-                <el-option
-                  v-for="item in tagsList"
-                  :key="item.tagsId"
-                  :label="item.tagsName"
-                  :value="item.tagsName">
+                <el-option v-for="item in tagsList" :key="item.tagsId" :label="item.tagsName" :value="item.tagsName">
                 </el-option>
               </el-select>
             </el-form-item>
@@ -260,16 +255,27 @@
     addCommercialTenant,
     updateCommercialTenant
   } from "@/api/zlyyh/commercialTenant";
-  import { selectListPlatform } from "@/api/zlyyh/platform";
-  import { selectListProduct } from "@/api/zlyyh/product";
-  import { selectListCategory } from "@/api/zlyyh/category";
-  import { exportTags } from "@/api/zlyyh/tags";
-  import {selectSupplier} from "@/api/zlyyh/supplier";
+  import {
+    selectListPlatform
+  } from "@/api/zlyyh/platform";
+  import {
+    selectListProduct
+  } from "@/api/zlyyh/product";
+  import {
+    selectListCategory
+  } from "@/api/zlyyh/category";
+  import {
+    exportTags
+  } from "@/api/zlyyh/tags";
+  import {
+    selectSupplier
+  } from "@/api/zlyyh/supplier";
 
   export default {
     name: "CommercialTenant",
     dicts: ['t_commercial_tenant_index_show', 't_commercial_tenant_status',
-      'nature_type','invoice_type','activity_type','sys_yes_no'],
+      'nature_type', 'invoice_type', 'activity_type', 'sys_yes_no'
+    ],
     data() {
       return {
         //栏目下拉列表
@@ -497,7 +503,7 @@
         const commercialTenantId = row.commercialTenantId || this.ids
         getCommercialTenant(commercialTenantId).then(response => {
           this.loading = false;
-          if(response.data.tags != undefined && response.data.tags != null && response.data.tags != '') {
+          if (response.data.tags != undefined && response.data.tags != null && response.data.tags != '') {
             response.data.tags = response.data.tags.split(',');
           }
           this.form = response.data;
@@ -510,8 +516,10 @@
         this.$refs["form"].validate(valid => {
           if (valid) {
             this.buttonLoading = true;
-            if(this.form.tags != undefined && this.form.tags != null && this.form.tags != '') {
+            if (this.form.tags != undefined && this.form.tags != null && this.form.tags != '') {
               this.form.tags = this.form.tags.join(',')
+            } else {
+              this.form.tags = ''
             }
             if (this.form.commercialTenantId != null) {
               updateCommercialTenant(this.form).then(response => {
@@ -560,8 +568,7 @@
       selectSupplierList() {
         selectSupplier(this.form).then(response => {
           this.supplierList = response.data;
-        }).finally(() => {
-        });
+        }).finally(() => {});
       },
       /** 导出按钮操作 */
       handleExport() {

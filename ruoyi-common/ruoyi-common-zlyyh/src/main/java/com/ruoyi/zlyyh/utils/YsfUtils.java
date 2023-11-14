@@ -747,29 +747,80 @@ public class YsfUtils {
     }
 
     public static void main(String[] args) {
-        String appId = "d27c0217490d4e35a901abb2e874f383";
-        String secret = "92d7f2f9e56243618077bebf34bb8da0";
-        String openId = "Yt476r36uzge3OFTr/yxUNLUnPa4Fjc5u1ZOO9WQbWLCsU7bvF5PX8elM0Dzid+8";
-        String activityId = "HD2023101800301";
-        List<String> missionIdList = new ArrayList<>();
-        missionIdList.add("JYRW2023101800509");
-        missionIdList.add("JYRW2023101800511");
-        HashMap<String, Object> param = new HashMap<>();
-        param.put("appId", appId);
-//        param.put("backendToken", getBackendTokenTest(appId, secret, "https://open.95516.com/open/access/1.0/backendToken"));
-        param.put("backendToken", "08d9e1f82006003d1YRkYuPW");
-        param.put("openId", openId);
-        param.put("activityId", activityId);
-        param.put("missionIdList", missionIdList);
-        param.put("logId", IdUtil.getSnowflakeNextIdStr());
-        String result = HttpUtil.post("https://open.95516.com/open/access/1.0/searchProgress", JSONObject.toJSONString(param));
-        log.info("用户任务进度查询返回结果：{}", result);
-        JSONObject jsonObject = JSONObject.parseObject(result);
-        JSONObject params = jsonObject.getJSONObject("params");
-        String missionProcessMap = params.getString("missionProcessMap");
-        DESede desede = SecureUtil.desede(HexUtil.decodeHex("9e3d1fdf342370b926d564e5d91cba0b9e3d1fdf342370b9"));
-        missionProcessMap = desede.decryptStr(missionProcessMap);
-        log.info("解密后：{}", missionProcessMap);
+        String privateKey = "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAKHUoivd4a74+UUgXP4ombNWuQN5H5on7fxGBmt0ymmxSvLfKmCCyH1xwYb2OVmAOHTaurFoWvSibNfA388ISyc8PRx+cTrbYXiivczxL/AwZMoZmnR+74ozAMNpA1PTMvS5Ec9fWKmwkBa+QkvTBFcZ3Bm0a+OaVHNzECg7STRhAgMBAAECgYA6DaNXhTMup5YUXDW/3yS0Fwor2smhbW2MMDqhVbY/ECDI25HCKWhux94a4j1UhBC8qrKKbdsjIxlUlJY1GM6MYlHbHI6o7gkGI6+LdyGE/0nNM34oL9Guvfcd6x33E7X4J5XNPnz/cqGRL48DB/RnyrezIYOVkN7MyxvxR6XOIQJBAPMZxzeCjuHlM0gIxiihbmHAXGxFQ2BJkcL22yvH4NhVCm7LoANmHOw/bG1vLAFAxNtKDLXxxH7aabg4VUFNaj0CQQCqaubWJY7OaLvzDCXJsz6+eW7yqLa/5NDIp5/eUzqDYaxhVmaKl937HoM72bHfqhgDpRYbFeM2hV3AD8+gjSj1AkBKlJwDsbA4KWMENHzmti/xGVzBcrZq8ecgEy/GTLn0ZJKgzyO2Jzu0Vvji0fqEH+TFCgDASP3plQReGho9wIxZAkAkcY4B17BNZcpjtIJUOve9Bfz6+adzK/yWHHqsscG+nOGfQznUg5ud+y13XBuUyCwwg1pR2oFnhGfDDd6J6AYNAkEAixOr1gxoSBclU1jBPODw4ToYAdl5XtBH2r8SSH2SPg0EtPRSOPiqJ2OnpI+qec//4HZyG0e1+4aZuMWSQs5agQ==";
+        String url = "https://open.95516.com/open/access/1.0/activity.quota";
+        String appId = "e2f26f96e3c745b984451c7728fcc729";
+        String activityType = "5";
+        String activityNo = "3102023101729225";
+        String transSeqId = IdUtil.getSnowflakeNextIdStr();
+
+        Map<String, String> requestBody = new HashMap<>();
+        requestBody.put("appId", appId);
+        requestBody.put("activityType", activityType);
+        requestBody.put("activityNo", activityNo);
+        requestBody.put("transSeqId", transSeqId);
+//        requestBody.put("backendToken", getBackendTokenTest(appId,"82cf4d7ceffb4e62baf3c08f4b727f68","https://open.95516.com/open/access/1.0/backendToken"));
+        requestBody.put("backendToken", "08ec9df8200000b11OOA3STq");
+
+
+        String body = HttpUtil.createPost(url).body(JSONObject.toJSONString(requestBody)).execute().body();
+        System.out.println(body);
+
+
+//        String privateKey = "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAKHUoivd4a74+UUgXP4ombNWuQN5H5on7fxGBmt0ymmxSvLfKmCCyH1xwYb2OVmAOHTaurFoWvSibNfA388ISyc8PRx+cTrbYXiivczxL/AwZMoZmnR+74ozAMNpA1PTMvS5Ec9fWKmwkBa+QkvTBFcZ3Bm0a+OaVHNzECg7STRhAgMBAAECgYA6DaNXhTMup5YUXDW/3yS0Fwor2smhbW2MMDqhVbY/ECDI25HCKWhux94a4j1UhBC8qrKKbdsjIxlUlJY1GM6MYlHbHI6o7gkGI6+LdyGE/0nNM34oL9Guvfcd6x33E7X4J5XNPnz/cqGRL48DB/RnyrezIYOVkN7MyxvxR6XOIQJBAPMZxzeCjuHlM0gIxiihbmHAXGxFQ2BJkcL22yvH4NhVCm7LoANmHOw/bG1vLAFAxNtKDLXxxH7aabg4VUFNaj0CQQCqaubWJY7OaLvzDCXJsz6+eW7yqLa/5NDIp5/eUzqDYaxhVmaKl937HoM72bHfqhgDpRYbFeM2hV3AD8+gjSj1AkBKlJwDsbA4KWMENHzmti/xGVzBcrZq8ecgEy/GTLn0ZJKgzyO2Jzu0Vvji0fqEH+TFCgDASP3plQReGho9wIxZAkAkcY4B17BNZcpjtIJUOve9Bfz6+adzK/yWHHqsscG+nOGfQznUg5ud+y13XBuUyCwwg1pR2oFnhGfDDd6J6AYNAkEAixOr1gxoSBclU1jBPODw4ToYAdl5XtBH2r8SSH2SPg0EtPRSOPiqJ2OnpI+qec//4HZyG0e1+4aZuMWSQs5agQ==";
+//        String url = "https://openapi.unionpay.com/upapi/mkt/agg/aggQueryCpnRemain/v1";
+//        String chnlId = "e2f26f96e3c745b984451c7728fcc729";
+//        String activityTp = "02";
+//        String activityNo = "3102023102431191";
+//        String transSeq = IdUtil.getSnowflakeNextIdStr();
+//
+//        Map<String, String> requestBody = new HashMap<>();
+//        requestBody.put("chnlId", chnlId);
+//        requestBody.put("activityTp", activityTp);
+//        requestBody.put("activityNo", activityNo);
+//        requestBody.put("transSeq", transSeq);
+//
+//        Map<String, String> headers = new HashMap<>();
+//        headers.put("version", "1.0.0");
+//        headers.put("appType", "02");
+//        headers.put("appId", chnlId);
+//        headers.put("bizMethod", "mkt.agg.aggQueryCpnRemain.v1");
+//        headers.put("signMethod", "RSA2");
+//        headers.put("reqId", transSeq);
+//        headers.put("reqTs", DateUtils.createTimestampStr(false));
+//        String str = "version=1.0.0&appId=" + chnlId + "&bizMethod=mkt.agg.aggQueryCpnRemain.v1&reqId=" + transSeq + "&body=" + JSONObject.toJSONString(requestBody);
+//        try {
+//            headers.put("sign", sign(str,privateKey));
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        String body = HttpUtil.createPost(url).addHeaders(headers).body(JSONObject.toJSONString(requestBody)).execute().body();
+//        System.out.println(body);
+
+//        String appId = "d27c0217490d4e35a901abb2e874f383";
+//        String secret = "92d7f2f9e56243618077bebf34bb8da0";
+//        String openId = "Yt476r36uzge3OFTr/yxUNLUnPa4Fjc5u1ZOO9WQbWLCsU7bvF5PX8elM0Dzid+8";
+//        String activityId = "HD2023101800301";
+//        List<String> missionIdList = new ArrayList<>();
+//        missionIdList.add("JYRW2023101800509");
+//        missionIdList.add("JYRW2023101800511");
+//        HashMap<String, Object> param = new HashMap<>();
+//        param.put("appId", appId);
+////        param.put("backendToken", getBackendTokenTest(appId, secret, "https://open.95516.com/open/access/1.0/backendToken"));
+//        param.put("backendToken", "08d9e1f82006003d1YRkYuPW");
+//        param.put("openId", openId);
+//        param.put("activityId", activityId);
+//        param.put("missionIdList", missionIdList);
+//        param.put("logId", IdUtil.getSnowflakeNextIdStr());
+//        String result = HttpUtil.post("https://open.95516.com/open/access/1.0/searchProgress", JSONObject.toJSONString(param));
+//        log.info("用户任务进度查询返回结果：{}", result);
+//        JSONObject jsonObject = JSONObject.parseObject(result);
+//        JSONObject params = jsonObject.getJSONObject("params");
+//        String missionProcessMap = params.getString("missionProcessMap");
+//        DESede desede = SecureUtil.desede(HexUtil.decodeHex("9e3d1fdf342370b926d564e5d91cba0b9e3d1fdf342370b9"));
+//        missionProcessMap = desede.decryptStr(missionProcessMap);
+//        log.info("解密后：{}", missionProcessMap);
 
 //        String str = "gL416Eiprtewi34YEJ6633j8jptV6/D1RtcswyzqKnNWEC6Z81gen2jIt2iukAWBZ0aWOKPMD7OJ1uyXG3/ZwqbqtA0HIIZxJ685tawcCx3FXZ5IW4MlhLUAhPCLawzLaTaiLtfp5dGpFn67e6+7DmFTIfDvnedfcf+Lsk044AYt0pd/YdoVA/JuRYm2U5ADjf0ypb935s4v0feSq2xUJXmRhcA0Fg2r/EdRz5S2UcY1+jIfV0CQnhivarwh5mShgAfMfVG6+anDkTw7Nmx3Pb8Tm8UpjguiH245XrQ/NgvO4UZRR/ZWe4pov+wwLk1nG7F/CiUw831TSwiQBVID9J2CPBfbR207TxIWJ3DnTUJiJDWCX2Phu/64GhAA6ypBUyZh5u+8B3wSInrHs2HY8e7CWEDnjJOxSJLbpR5n881fqXF5yQOj6n9NQg0duSXXflSk71Icoz8=";
 //        String key = "9e3d1fdf342370b926d564e5d91cba0b9e3d1fdf342370b9";

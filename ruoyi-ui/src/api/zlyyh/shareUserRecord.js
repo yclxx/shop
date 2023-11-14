@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 查询分销记录列表
 export function listShareUserRecord(query) {
   return request({
-    url: '/zlyyh/shareUserRecord/list',
+    url: '/zlyyh-admin/shareUserRecord/list',
     method: 'get',
     params: query
   })
@@ -12,7 +12,7 @@ export function listShareUserRecord(query) {
 // 查询分销记录详细
 export function getShareUserRecord(recordId) {
   return request({
-    url: '/zlyyh/shareUserRecord/' + recordId,
+    url: '/zlyyh-admin/shareUserRecord/' + recordId,
     method: 'get'
   })
 }
@@ -20,7 +20,7 @@ export function getShareUserRecord(recordId) {
 // 新增分销记录
 export function addShareUserRecord(data) {
   return request({
-    url: '/zlyyh/shareUserRecord',
+    url: '/zlyyh-admin/shareUserRecord',
     method: 'post',
     data: data
   })
@@ -29,7 +29,7 @@ export function addShareUserRecord(data) {
 // 修改分销记录
 export function updateShareUserRecord(data) {
   return request({
-    url: '/zlyyh/shareUserRecord',
+    url: '/zlyyh-admin/shareUserRecord',
     method: 'put',
     data: data
   })
@@ -38,7 +38,7 @@ export function updateShareUserRecord(data) {
 // 删除分销记录
 export function delShareUserRecord(recordId) {
   return request({
-    url: '/zlyyh/shareUserRecord/' + recordId,
+    url: '/zlyyh-admin/shareUserRecord/' + recordId,
     method: 'delete'
   })
 }
