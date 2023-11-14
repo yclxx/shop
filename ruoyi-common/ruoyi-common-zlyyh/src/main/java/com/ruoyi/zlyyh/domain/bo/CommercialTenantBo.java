@@ -110,7 +110,7 @@ public class CommercialTenantBo extends BaseEntity {
     /**
      * 平台标识
      */
-    @NotNull(message = "平台标识不能为空", groups = {AddGroup.class, EditGroup.class})
+    //@NotNull(message = "平台标识不能为空", groups = {AddGroup.class, EditGroup.class})
     private Long platformKey;
 
     private Long categoryId;
