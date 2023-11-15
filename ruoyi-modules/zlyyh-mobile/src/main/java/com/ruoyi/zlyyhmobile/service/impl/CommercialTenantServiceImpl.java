@@ -78,7 +78,6 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
         }
         // 如果是今日特惠 商品根据星期查
         this.setProduct(commercialTenantVo, bo.getPlatformKey(), bo.getWeekDate(), cityCode, bo.getShopId());
-        this.setProduct(commercialTenantVo, bo.getPlatformKey(), bo.getShopId());
         ShopVo shopVo = null;
         if (null != bo.getShopId()) {
             shopVo = shopService.queryById(bo.getShopId());
@@ -88,6 +87,10 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
                 String mv = "" + v;
                 shopVo.setDistance(new BigDecimal(mv));
                 commercialTenantVo.setDistance(shopVo.getDistance());
+                if (ObjectUtil.isNotEmpty(shopVo.getDistance())) {
+                    BigDecimal distance = shopVo.getDistance().setScale(2, BigDecimal.ROUND_DOWN);
+                    shopVo.setDistanceString(distance.toString());
+                }
             }
             commercialTenantVo.setShopVo(shopVo);
         }
