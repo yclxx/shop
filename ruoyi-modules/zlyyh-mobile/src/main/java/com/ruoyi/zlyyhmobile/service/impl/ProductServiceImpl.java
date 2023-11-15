@@ -346,30 +346,18 @@ public class ProductServiceImpl implements IProductService {
         lqw.eq(StringUtils.isNotBlank(bo.getSearch()), Product::getSearch, bo.getSearch());
         lqw.eq(StringUtils.isNotBlank(bo.getSearchStatus()), Product::getSearchStatus, bo.getSearchStatus());
         lqw.eq(StringUtils.isNotBlank(bo.getShowIndex()), Product::getShowIndex, bo.getShowIndex());
-        lqw.and(lm -> {
-            lm.isNull(Product::getShowStartDate).or().lt(Product::getShowStartDate, new Date());
-        });
-        lqw.and(lm -> {
-            lm.isNull(Product::getShowEndDate).or().gt(Product::getShowEndDate, new Date());
-        });
-        lqw.and(lm -> {
-            lm.eq(Product::getShowCity, "ALL").or().like(Product::getShowCity, bo.getShowCity());
-        });
+        lqw.and(lm -> lm.isNull(Product::getShowStartDate).or().lt(Product::getShowStartDate, new Date()));
+        lqw.and(lm -> lm.isNull(Product::getShowEndDate).or().gt(Product::getShowEndDate, new Date()));
+        lqw.and(lm -> lm.eq(Product::getShowCity, "ALL").or().like(Product::getShowCity, bo.getShowCity()));
         if (StringUtils.isNotBlank(bo.getProductName())) {
-            lqw.and(lm -> {
-                lm.like(Product::getProductName, bo.getProductName()).or().like(Product::getProductAbbreviation, bo.getProductName())
-                    .or().like(Product::getProductSubhead, bo.getProductName());
-            });
+            lqw.and(lm -> lm.like(Product::getProductName, bo.getProductName()).or().like(Product::getProductAbbreviation, bo.getProductName())
+                .or().like(Product::getProductSubhead, bo.getProductName()));
         }
         if (StringUtils.isNotBlank(bo.getSupportChannel())) {
-            lqw.and(lm -> {
-                lm.eq(Product::getSupportChannel, "ALL").or().like(Product::getSupportChannel, bo.getSupportChannel());
-            });
+            lqw.and(lm -> lm.eq(Product::getSupportChannel, "ALL").or().like(Product::getSupportChannel, bo.getSupportChannel()));
         }
         if (StringUtils.isNotBlank(bo.getWeekDate())) {
-            lqw.and(lm -> {
-                lm.eq(Product::getAssignDate, "0").or().like(Product::getWeekDate, bo.getWeekDate());
-            });
+            lqw.and(lm -> lm.eq(Product::getAssignDate, "0").or().like(Product::getWeekDate, bo.getWeekDate()));
         }
         if (ObjectUtil.isNotEmpty(bo.getCategoryId())) {
             //查询类别下的商品列表
@@ -384,7 +372,6 @@ public class ProductServiceImpl implements IProductService {
             }
             lqw.in(Product::getProductId, categoryProductVos.stream().map(CategoryProductVo::getProductId).collect(Collectors.toList()));
         }
-
         if (ObjectUtil.isNotEmpty(bo.getCommercialTenantId())) {
             //查询商户下的商品列表
             CommercialTenantVo commercialTenantVo = commercialTenantMapper.selectVoById(bo.getCommercialTenantId());
