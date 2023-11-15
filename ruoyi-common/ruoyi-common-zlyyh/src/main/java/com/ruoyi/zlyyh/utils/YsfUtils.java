@@ -36,14 +36,14 @@ import org.springframework.util.Base64Utils;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyFactory;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.Signature;
+import java.security.*;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.Duration;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * 云闪付相关接口帮助类
@@ -747,56 +747,61 @@ public class YsfUtils {
     }
 
     public static void main(String[] args) {
-        String privateKey = "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAKHUoivd4a74+UUgXP4ombNWuQN5H5on7fxGBmt0ymmxSvLfKmCCyH1xwYb2OVmAOHTaurFoWvSibNfA388ISyc8PRx+cTrbYXiivczxL/AwZMoZmnR+74ozAMNpA1PTMvS5Ec9fWKmwkBa+QkvTBFcZ3Bm0a+OaVHNzECg7STRhAgMBAAECgYA6DaNXhTMup5YUXDW/3yS0Fwor2smhbW2MMDqhVbY/ECDI25HCKWhux94a4j1UhBC8qrKKbdsjIxlUlJY1GM6MYlHbHI6o7gkGI6+LdyGE/0nNM34oL9Guvfcd6x33E7X4J5XNPnz/cqGRL48DB/RnyrezIYOVkN7MyxvxR6XOIQJBAPMZxzeCjuHlM0gIxiihbmHAXGxFQ2BJkcL22yvH4NhVCm7LoANmHOw/bG1vLAFAxNtKDLXxxH7aabg4VUFNaj0CQQCqaubWJY7OaLvzDCXJsz6+eW7yqLa/5NDIp5/eUzqDYaxhVmaKl937HoM72bHfqhgDpRYbFeM2hV3AD8+gjSj1AkBKlJwDsbA4KWMENHzmti/xGVzBcrZq8ecgEy/GTLn0ZJKgzyO2Jzu0Vvji0fqEH+TFCgDASP3plQReGho9wIxZAkAkcY4B17BNZcpjtIJUOve9Bfz6+adzK/yWHHqsscG+nOGfQznUg5ud+y13XBuUyCwwg1pR2oFnhGfDDd6J6AYNAkEAixOr1gxoSBclU1jBPODw4ToYAdl5XtBH2r8SSH2SPg0EtPRSOPiqJ2OnpI+qec//4HZyG0e1+4aZuMWSQs5agQ==";
-        String url = "https://open.95516.com/open/access/1.0/activity.quota";
-        String appId = "e2f26f96e3c745b984451c7728fcc729";
-        String activityType = "5";
-        String activityNo = "3102023101729225";
-        String transSeqId = IdUtil.getSnowflakeNextIdStr();
-
-        Map<String, String> requestBody = new HashMap<>();
-        requestBody.put("appId", appId);
-        requestBody.put("activityType", activityType);
-        requestBody.put("activityNo", activityNo);
-        requestBody.put("transSeqId", transSeqId);
-//        requestBody.put("backendToken", getBackendTokenTest(appId,"82cf4d7ceffb4e62baf3c08f4b727f68","https://open.95516.com/open/access/1.0/backendToken"));
-        requestBody.put("backendToken", "08ec9df8200000b11OOA3STq");
-
-
-        String body = HttpUtil.createPost(url).body(JSONObject.toJSONString(requestBody)).execute().body();
-        System.out.println(body);
-
+//        KeyPair rsa = SecureUtil.generateKeyPair("RSA", 2048);
+//        System.out.println("================公钥================");
+//        System.out.println(Base64.encode(rsa.getPublic().getEncoded()));
+//        System.out.println("================私钥================");
+//        System.out.println(Base64.encode(rsa.getPrivate().getEncoded()));
 
 //        String privateKey = "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAKHUoivd4a74+UUgXP4ombNWuQN5H5on7fxGBmt0ymmxSvLfKmCCyH1xwYb2OVmAOHTaurFoWvSibNfA388ISyc8PRx+cTrbYXiivczxL/AwZMoZmnR+74ozAMNpA1PTMvS5Ec9fWKmwkBa+QkvTBFcZ3Bm0a+OaVHNzECg7STRhAgMBAAECgYA6DaNXhTMup5YUXDW/3yS0Fwor2smhbW2MMDqhVbY/ECDI25HCKWhux94a4j1UhBC8qrKKbdsjIxlUlJY1GM6MYlHbHI6o7gkGI6+LdyGE/0nNM34oL9Guvfcd6x33E7X4J5XNPnz/cqGRL48DB/RnyrezIYOVkN7MyxvxR6XOIQJBAPMZxzeCjuHlM0gIxiihbmHAXGxFQ2BJkcL22yvH4NhVCm7LoANmHOw/bG1vLAFAxNtKDLXxxH7aabg4VUFNaj0CQQCqaubWJY7OaLvzDCXJsz6+eW7yqLa/5NDIp5/eUzqDYaxhVmaKl937HoM72bHfqhgDpRYbFeM2hV3AD8+gjSj1AkBKlJwDsbA4KWMENHzmti/xGVzBcrZq8ecgEy/GTLn0ZJKgzyO2Jzu0Vvji0fqEH+TFCgDASP3plQReGho9wIxZAkAkcY4B17BNZcpjtIJUOve9Bfz6+adzK/yWHHqsscG+nOGfQznUg5ud+y13XBuUyCwwg1pR2oFnhGfDDd6J6AYNAkEAixOr1gxoSBclU1jBPODw4ToYAdl5XtBH2r8SSH2SPg0EtPRSOPiqJ2OnpI+qec//4HZyG0e1+4aZuMWSQs5agQ==";
-//        String url = "https://openapi.unionpay.com/upapi/mkt/agg/aggQueryCpnRemain/v1";
-//        String chnlId = "e2f26f96e3c745b984451c7728fcc729";
-//        String activityTp = "02";
-//        String activityNo = "3102023102431191";
-//        String transSeq = IdUtil.getSnowflakeNextIdStr();
+//        String url = "https://open.95516.com/open/access/1.0/activity.quota";
+//        String appId = "e2f26f96e3c745b984451c7728fcc729";
+//        String activityType = "5";
+//        String activityNo = "3102023101729225";
+//        String transSeqId = IdUtil.getSnowflakeNextIdStr();
 //
 //        Map<String, String> requestBody = new HashMap<>();
-//        requestBody.put("chnlId", chnlId);
-//        requestBody.put("activityTp", activityTp);
+//        requestBody.put("appId", appId);
+//        requestBody.put("activityType", activityType);
 //        requestBody.put("activityNo", activityNo);
-//        requestBody.put("transSeq", transSeq);
+//        requestBody.put("transSeqId", transSeqId);
+////        requestBody.put("backendToken", getBackendTokenTest(appId,"82cf4d7ceffb4e62baf3c08f4b727f68","https://open.95516.com/open/access/1.0/backendToken"));
+//        requestBody.put("backendToken", "08ec9df8200000b11OOA3STq");
 //
-//        Map<String, String> headers = new HashMap<>();
-//        headers.put("version", "1.0.0");
-//        headers.put("appType", "02");
-//        headers.put("appId", chnlId);
-//        headers.put("bizMethod", "mkt.agg.aggQueryCpnRemain.v1");
-//        headers.put("signMethod", "RSA2");
-//        headers.put("reqId", transSeq);
-//        headers.put("reqTs", DateUtils.createTimestampStr(false));
-//        String str = "version=1.0.0&appId=" + chnlId + "&bizMethod=mkt.agg.aggQueryCpnRemain.v1&reqId=" + transSeq + "&body=" + JSONObject.toJSONString(requestBody);
-//        try {
-//            headers.put("sign", sign(str,privateKey));
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
 //
-//        String body = HttpUtil.createPost(url).addHeaders(headers).body(JSONObject.toJSONString(requestBody)).execute().body();
+//        String body = HttpUtil.createPost(url).body(JSONObject.toJSONString(requestBody)).execute().body();
 //        System.out.println(body);
+
+        String privateKey = "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCl3hTxgwNUgkHaFNVKYWq9Feag40E3CxRxHWuzE09bwLcaWgXOvwqeVcZsVQjIHlSizcUfWeGY7/DF+M4vCw8qNyFLtSRN2VV+SlK7mdTSVys1Iet3m96xc+vmrODwfT6Yx+KoOHi64nKh31WS4SxXqT8i5fcRHWiYFpX8c9wVy0/mb0Ak25yaZ6Bbs/s6h5+dkAmOB7ouL5PXyTDxg7LYPsT7RuuJ3Ts+HkCiDK3RjIb0rQlCfmezCwob4qOQJJ/vOFlf50ZYtf6E2aj7EO2HWKr3Q7JFFFEnQZS9V+/ETDur04vCfnW4yGPjl3wtZlftraW6L2A1sKUdm0rhUxWxAgMBAAECggEACtWKfyr8VvMKK51EQE9EKlUpoxUs/5Qq8eeGzyPiAV+BZkh+jB5Y6nY2V4GnaPDoPNkdeNqFXJjBnKDPkO2TQEHpHBmZJTeeuLjQlh3qc5HLifUs/PtSrLsia8cbi0HXCqI1ySClLCnZ7H5ax9UK8S/mJpioTnciC5sgEWUc+VRbL8awan/H/gz08I3AGFTo/OS98J9SoV35fKyLEJVaf8LUB0Vp/fgA7bzkm78nl8zwfC3EicA6QbJLyQOOlClKcSJ8UgIygjMNm1RLG4jK/+JoWF0PtxV1IJEPKclfvfHwpwX/Ace+YaSsEZ4Kt6hdMEAy5cD0UmA0qg8gYoDAVQKBgQDYs6iMSsWA66ACr1oVo8eyruYXPKFZ6z0ys27vWiz4XggnD52B8JRbNY+9jpNXRxuRVVS7cKDqQVAFNAiarWoKQFNEU1rChrFCXEBfsQx3zHdGql/2MPhYFNwEObVPdkgXDD9UJeHUfE8rzeWyO+ULYjAt6Vb2pqVnXCXXBJ8ItQKBgQDD8nNyIe1puGGQN49tHJKbHn4AaNtR4fDRgJD9wKMqimZ4t6bikk2PkcykI3hrstnWDfbyg9oNCOxfUtkWV9hYY9T7qcTVP3BJX+CW99Me5qWEAmk5blskSvGja8loDme9DCRHpvj8O47uAHzjbBxJYiiGRqKs2Ms4W41/II5ijQKBgQDSrV/o/OylGO7YjWg0b6U/h6B06OIpTHWT7DSnCPF9idW9PAYyhRWG0zzq2klO6ffYRLB7BtW6yUKlvF+9GWlljAIoBC3RvydoT83Z+oQXmDZCAnQHIrbe03DPvtcR6PnPRn3vLmEutqg1+xgcPvTAK3aRvDBq3bsjEMhNEdYXnQKBgEwReWPba/FY1PdJunJfX0K86al7C3mUPwr14FPCTxWauQEwOqdGqLmNnmYyJvOYcRy6Ox4WtbXNuwWeggw8eg6GYw5376PhhtPVVrkE6H7ch3DiBrt27gb+2SPaGkw9G2S2q/btCUfST0ByDAm11J1gb98A2PJFD0+HqzypBN2ZAoGARieLD+1MM1ZBqbnlSiygK85lmupa9sFoTkHmwxmA6yFoHyfH4GQ5PWbWXpF8UpkhsLr5E2XU1lSeZPG7S1/ueD+BQ5rgW2paX/dpfIQf95WTdd3+LezMTcvVkVg1qa/3OXKmpLleLV54n5mFsmlXQjQH2QdwCYqibydlTKtumEw=";
+        String url = "https://openapi.unionpay.com/upapi/mkt/agg/aggQueryCpnRemain/v1";
+        String chnlId = "8126";
+        String activityTp = "02";
+        String activityNo = "3102023102431191";
+        String transSeq = IdUtil.getSnowflakeNextIdStr();
+
+        Map<String, String> requestBody = new HashMap<>();
+        requestBody.put("chnlId", chnlId);
+        requestBody.put("activityTp", activityTp);
+        requestBody.put("activityNo", activityNo);
+        requestBody.put("transSeq", transSeq);
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("version", "1.0.0");
+        headers.put("appType", "02");
+        headers.put("appId", "up_49pfnfkryxb4v_s28");
+        headers.put("bizMethod", "mkt.agg.aggQueryCpnRemain.v1");
+        headers.put("signMethod", "RSA2");
+        headers.put("reqId", transSeq);
+        headers.put("reqTs", DateUtils.createTimestampStr(false));
+        String str = "version=1.0.0&appId=up_49pfnfkryxb4v_s28&bizMethod=mkt.agg.aggQueryCpnRemain.v1&reqId=" + transSeq + "&body=" + JSONObject.toJSONString(requestBody);
+        try {
+            headers.put("sign", sign(str,privateKey));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        String body = HttpUtil.createPost(url).addHeaders(headers).body(JSONObject.toJSONString(requestBody)).execute().body();
+        System.out.println(body);
 
 //        String appId = "d27c0217490d4e35a901abb2e874f383";
 //        String secret = "92d7f2f9e56243618077bebf34bb8da0";
