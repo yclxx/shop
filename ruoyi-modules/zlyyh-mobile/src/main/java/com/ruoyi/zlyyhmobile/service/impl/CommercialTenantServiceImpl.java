@@ -78,6 +78,7 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
         }
         // 如果是今日特惠 商品根据星期查
         this.setProduct(commercialTenantVo, bo.getPlatformKey(), bo.getWeekDate(), cityCode, bo.getShopId());
+        this.setProduct(commercialTenantVo, bo.getPlatformKey(), bo.getShopId());
         ShopVo shopVo = null;
         if (null != bo.getShopId()) {
             shopVo = shopService.queryById(bo.getShopId());
