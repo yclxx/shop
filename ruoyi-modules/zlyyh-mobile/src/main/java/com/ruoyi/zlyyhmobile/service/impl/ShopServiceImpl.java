@@ -165,10 +165,12 @@ public class ShopServiceImpl implements IShopService {
     }
 
     public boolean addApproval(MerchantApprovalBo bo) {
+        if (StringUtils.isEmpty(bo.getMobile())) throw new ServiceException("管理员手机号为空");
         LambdaQueryWrapper<MerchantApproval> lqw = Wrappers.lambdaQuery();
         lqw.eq(MerchantApproval::getMobile, bo.getMobile());
-        if (merchantApprovalMapper.selectCount(lqw) > 0) {
-            throw new ServiceException("此管理员手机号已申请");
+        Long l = merchantApprovalMapper.selectCount(lqw);
+        if ( l > 0) {
+            throw new ServiceException("此管理员手机号已申请商户");
         }
         if (StringUtils.isNotEmpty(bo.getExtend())) {
             ExtensionServiceProvider extensionServiceProvider = extensionServiceProviderMapper.selectById(bo.getExtend());

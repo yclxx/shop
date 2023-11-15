@@ -217,7 +217,7 @@ public class RemoteVerifierUserServiceImpl implements RemoteVerifierUserService 
             if (null == userInfo) {
                 userInfo = getUserInfoByMobile(loginEntity.getOpenId(), loginEntity.getMobile(), loginEntity.getPlatformKey(), platformType);
                 if (null == userInfo) {
-                    throw new ServiceException("无此用户");
+                    return null;
                 } else {
                     // 修改openId
                     //user.setUserId(userInfo.getUserId());
