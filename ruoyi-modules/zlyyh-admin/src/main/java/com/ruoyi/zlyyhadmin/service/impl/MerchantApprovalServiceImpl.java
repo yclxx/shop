@@ -143,7 +143,7 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
         shop.setShopTel(vo.getShopMobile());
         shop.setShopImgs(vo.getShopImage());
         shop.setShopLogo(vo.getBrandLogo());
-        shop.setAddress(vo.getShopAddress());
+        shop.setAddress(vo.getShopAddressInfo());
         shop.setStatus("0");
         if (StringUtils.isNotEmpty(vo.getExtend())) {
             shop.setExtensionServiceProviderId(Long.valueOf(vo.getExtend()));

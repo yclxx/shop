@@ -430,7 +430,6 @@ public class CodeServiceImpl implements ICodeService {
         Verifier verifier = verifierMapper.selectById(bo.getVerifierId());
         List<Long> longs = getVerifierList(verifier);
         // 查询满足信息的数据
-        List<CodeVo> codeVos = baseMapper.selectProductList(bo.getProductName(), bo.getShopId(), longs);
         // 核销日期处理
         Date startTime;
         Date endTime;
@@ -444,13 +443,15 @@ public class CodeServiceImpl implements ICodeService {
         } else {
             endTime = DateUtil.endOfDay(DateUtils.getNowDate());
         }
-
-        codeVos.forEach(o -> {
-            Long usedCount = buildQueryWrapper(bo.getShopId(), o.getProductId(), longs, startTime, endTime, "1");
-            Long appointmentCount = buildQueryWrapper(bo.getShopId(), o.getProductId(), longs, startTime, endTime, "2");
-            o.setUsedCount(usedCount);
-            o.setAppointmentCount(appointmentCount);
-        });
+        List<CodeVo> codeVos = baseMapper.selectProductList(bo.getProductName(), bo.getShopId(), longs, startTime, endTime);
+        if (ObjectUtil.isNotEmpty(codeVos)) {
+            codeVos.forEach(o -> {
+                Long usedCount = buildQueryWrapper(bo.getShopId(), o.getProductId(), longs, startTime, endTime, "1");
+                Long appointmentCount = buildQueryWrapper(bo.getShopId(), o.getProductId(), longs, startTime, endTime, "2");
+                o.setUsedCount(usedCount);
+                o.setAppointmentCount(appointmentCount);
+            });
+        }
         return codeVos;
     }
 

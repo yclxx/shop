@@ -39,9 +39,15 @@
 
     <select id="selectProductList" resultType="com.ruoyi.zlyyh.domain.vo.CodeVo">
         SELECT product_id,product_name FROM `t_code`
-        WHERE (used_status = '1' OR appointment_status = '1')
+        WHERE used_status = '1'
         <if test="productName != null and productName !=''">
             AND product_name LIKE CONCAT('%',#{productName},'%')
+        </if>
+        <if test="startTime != null">
+            AND used_time <![CDATA[>=]]> #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND used_time <![CDATA[<=]]>  #{endTime}
         </if>
         AND shop_id = #{shopId}
         AND verifier_id IN
