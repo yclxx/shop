@@ -5,8 +5,11 @@ import com.ruoyi.common.core.utils.ServletUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
+import com.ruoyi.zlyyh.domain.Shop;
 import com.ruoyi.zlyyh.domain.bo.MerchantApprovalBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
+import com.ruoyi.zlyyh.domain.bo.ShopMerchantBo;
+import com.ruoyi.zlyyh.domain.vo.ShopMerchantVo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.service.IShopService;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 商户门店控制器
@@ -66,6 +70,28 @@ public class ShopController {
         return R.ok(shopService.queryById(shopId));
     }
 
+    /**
+     * 获取商品门店信息(去除电话脱敏)
+     *
+     * @return 门店列表
+     */
+    @GetMapping("/details/{shopId}")
+    public R<Shop> getShopBytId(@NotNull(message = "主键不能为空") @PathVariable Long shopId) {
+        return R.ok(shopService.getShopBytId(shopId));
+    }
+
+    /**
+     * 门店商品关联表
+     */
+    @GetMapping("getShopMerchant")
+    public R<List<ShopMerchantVo>> getShopMerchantVo(ShopMerchantBo bo) {
+        List<ShopMerchantVo> shopMerchantVo = shopService.getShopMerchantVo(bo);
+        return R.ok(shopMerchantVo);
+    }
+
+    /**
+     * 商户门店申请
+     */
     @PostMapping("/addApproval")
     public R addApproval(@RequestBody MerchantApprovalBo bo) {
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());

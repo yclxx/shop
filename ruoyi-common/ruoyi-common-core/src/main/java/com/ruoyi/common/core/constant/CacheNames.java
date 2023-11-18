@@ -206,4 +206,14 @@ public interface CacheNames {
      */
     String recordList = "recordList#20m";
     String recordStringList = "recordStringList#40m";
+
+    /* *************************** 以下缓存key皆为商户端使用 ************************************/
+    /**
+     * 微信用户令牌缓存
+     */
+    String M_WX_ENTITY = "mwxEntity#1d";
+    /**
+     * 核销人员信息缓存
+     */
+    String M_VERIFIER = "m_verifier#1d";
 }

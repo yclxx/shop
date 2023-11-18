@@ -28,7 +28,11 @@ public class MerchantApprovalVo {
      */
     @ExcelProperty(value = "平台标识")
     private Long platformKey;
-
+    /**
+     * 管理员手机号
+     */
+    @ExcelProperty(value = "管理员手机号")
+    private String mobile;
     /**
      * 品牌名称
      */
@@ -125,23 +129,15 @@ public class MerchantApprovalVo {
     private String account;
 
     /**
-     * 云闪付商户号
+     * 商户所在平台
      */
-    @ExcelProperty(value = "云闪付商户号")
-    private String ysfMerchant;
-
+    @ExcelProperty(value = "商户所在平台")
+    private Long merchantPlatformKey;
     /**
-     * 微信商户号
+     * 商户号信息
      */
-    @ExcelProperty(value = "微信商户号")
-    private String wxMerchant;
-
-    /**
-     * 支付宝商户号
-     */
-    @ExcelProperty(value = "支付宝商户号")
-    private String payMerchant;
-
+    @ExcelProperty(value = "商户号信息")
+    private String merchant;
     /**
      * 商品类型
      */

@@ -408,20 +408,9 @@
           updateTime: undefined,
           delFlag: undefined,
           sysDeptId: undefined,
-          platformChannel: [{
-            channel: '0',
-            id: undefined,
-            platformTitle: undefined,
-            appId: undefined,
-            encryptAppId: undefined,
-            secret: undefined,
-            symmetricKey: undefined,
-            rsaPrivateKey: undefined,
-            rsaPublicKey: undefined,
-            merchantId: undefined
-          }],
+          platformChannel: [],
           manangerDeptId: undefined,
-          supportChannel: ['ALL'],
+          supportChannel: [],
           supportSupplier: [],
         };
         this.resetForm("form");
@@ -590,26 +579,51 @@
         }).finally(() => {});
       },
       changeChannel(check, item) {
-        if (check) {
-          //增加支持端
-          const platformChannel = {
-            channel: item.value,
-            id: undefined,
-            platformTitle: undefined,
-            appId: undefined,
-            encryptAppId: undefined,
-            secret: undefined,
-            symmetricKey: undefined,
-            rsaPrivateKey: undefined,
-            rsaPublicKey: undefined,
-            merchantId: undefined
+        if (item.value === 'ALL') {
+          if (check) {
+            for (let i = 0; i < this.dict.type.channel_type.length; i++) {
+              if (this.dict.type.channel_type[i].value !== 'ALL') {
+                //增加支持端
+                const platformChannel = {
+                  channel: this.dict.type.channel_type[i].value,
+                  id: undefined,
+                  platformTitle: undefined,
+                  appId: undefined,
+                  encryptAppId: undefined,
+                  secret: undefined,
+                  symmetricKey: undefined,
+                  rsaPrivateKey: undefined,
+                  rsaPublicKey: undefined,
+                  merchantId: undefined
+                }
+                this.form.platformChannel.push(platformChannel);
+              }
+            }
+          } else {
+            this.form.platformChannel = [];
           }
-          this.form.platformChannel.push(platformChannel);
         } else {
-          // 删除支持端
-          for (let i = 0; i < this.form.platformChannel.length; i++) {
-            if (item.value === this.form.platformChannel[i].channel) {
-              this.form.platformChannel.splice(i, 1)
+          if (check) {
+            //增加支持端
+            const platformChannel = {
+              channel: item.value,
+              id: undefined,
+              platformTitle: undefined,
+              appId: undefined,
+              encryptAppId: undefined,
+              secret: undefined,
+              symmetricKey: undefined,
+              rsaPrivateKey: undefined,
+              rsaPublicKey: undefined,
+              merchantId: undefined
+            }
+            this.form.platformChannel.push(platformChannel);
+          } else {
+            // 删除支持端
+            for (let i = 0; i < this.form.platformChannel.length; i++) {
+              if (item.value === this.form.platformChannel[i].channel) {
+                this.form.platformChannel.splice(i, 1)
+              }
             }
           }
         }

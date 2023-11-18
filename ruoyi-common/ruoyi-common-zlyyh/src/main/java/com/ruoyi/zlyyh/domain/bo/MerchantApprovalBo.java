@@ -24,6 +24,10 @@ public class MerchantApprovalBo extends BaseEntity {
      * 平台标识
      */
     private Long platformKey;
+    /**
+     * 管理员手机号
+     */
+    private String mobile;
 
     /**
      * 品牌名称
@@ -104,20 +108,14 @@ public class MerchantApprovalBo extends BaseEntity {
      * 收款账户
      */
     private String account;
-
     /**
-     * 云闪付商户号
+     * 商户所在平台
      */
-    private String ysfMerchant;
+    private Long merchantPlatformKey;
     /**
-     * 微信商户号
+     * 商户号信息
      */
-    private String wxMerchant;
-
-    /**
-     * 支付宝商户号
-     */
-    private String payMerchant;
+    private String merchant;
 
     /**
      * 商品类型

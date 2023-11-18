@@ -81,4 +81,9 @@ public interface IProductService {
      * @return 商品信息
      */
     Map<Long, ProductVo> queryGrabPeriodProductMap(Set<Object> productIds, String cityCode, String weekDate, Long platformKey);
+
+    /**
+     * 编辑商品
+     */
+    Boolean updateProductById(ProductBo bo);
 }
