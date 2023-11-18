@@ -55,6 +55,15 @@ import java.util.Map;
 @Slf4j
 public class WxUtils {
 
+    public static byte[] genQrCode(String accessToken, String scene, String page, String env_version) {
+        String url = "https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=" + accessToken;
+        Map<String, String> body = new HashMap<>();
+        body.put("scene", scene);
+        body.put("page", page);
+        body.put("env_version", env_version);
+        return HttpUtil.createPost(url).body(JsonUtils.toJsonString(body)).execute().bodyBytes();
+    }
+
     /**
      * 获取微信接口基础访问令牌
      *

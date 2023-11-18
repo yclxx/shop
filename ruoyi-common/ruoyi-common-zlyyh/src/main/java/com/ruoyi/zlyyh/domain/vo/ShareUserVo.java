@@ -2,6 +2,8 @@ package com.ruoyi.zlyyh.domain.vo;
 
 import com.alibaba.excel.annotation.ExcelIgnoreUnannotated;
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.ruoyi.common.core.annotation.Sensitive;
+import com.ruoyi.common.core.enums.SensitiveStrategy;
 import com.ruoyi.common.excel.annotation.ExcelDictFormat;
 import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
@@ -48,6 +50,7 @@ public class ShareUserVo {
     /**
      * 云闪付手机号
      */
+    @Sensitive(strategy = SensitiveStrategy.PHONE)
     @ExcelProperty(value = "云闪付手机号")
     private String upMobile;
 

@@ -1,15 +1,15 @@
 package com.ruoyi.zlyyh.domain.vo;
 
-import java.math.BigDecimal;
-import java.util.Date;
 import com.alibaba.excel.annotation.ExcelIgnoreUnannotated;
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.ruoyi.common.core.annotation.Sensitive;
+import com.ruoyi.common.core.enums.SensitiveStrategy;
 import com.ruoyi.common.excel.annotation.ExcelDictFormat;
 import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
+
+import java.math.BigDecimal;
 import java.util.Date;
-
-
 
 /**
  * 分销记录视图对象
@@ -40,6 +40,13 @@ public class ShareUserRecordVo {
      */
     @ExcelProperty(value = "被分销用户ID")
     private Long inviteeUserId;
+
+    /**
+     * 被分销用户手机号
+     */
+    @Sensitive(strategy = SensitiveStrategy.PHONE)
+    @ExcelProperty(value = "被分销用户手机号")
+    private String inviteeUserMobile;
 
     /**
      * 订单号
@@ -96,6 +103,5 @@ public class ShareUserRecordVo {
      */
     @ExcelProperty(value = "更新时间")
     private Date updateTime;
-
 
 }

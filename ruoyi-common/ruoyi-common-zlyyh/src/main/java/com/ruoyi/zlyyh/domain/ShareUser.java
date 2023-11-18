@@ -1,14 +1,12 @@
 package com.ruoyi.zlyyh.domain;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.ruoyi.common.core.web.domain.TreeEntity;
+import com.ruoyi.common.encrypt.annotation.EncryptField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import java.io.Serializable;
-import java.util.Date;
-import java.math.BigDecimal;
-
-import com.ruoyi.common.core.web.domain.TreeEntity;
 
 /**
  * 分销员对象 t_share_user
@@ -43,6 +41,7 @@ public class ShareUser extends TreeEntity<ShareUser> {
     /**
      * 云闪付手机号
      */
+    @EncryptField()
     private String upMobile;
     /**
      * 状态

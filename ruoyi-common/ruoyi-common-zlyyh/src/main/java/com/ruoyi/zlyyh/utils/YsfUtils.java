@@ -36,14 +36,14 @@ import org.springframework.util.Base64Utils;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.security.*;
+import java.security.KeyFactory;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.Duration;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * 云闪付相关接口帮助类
@@ -753,55 +753,127 @@ public class YsfUtils {
 //        System.out.println("================私钥================");
 //        System.out.println(Base64.encode(rsa.getPrivate().getEncoded()));
 
-//        String privateKey = "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAKHUoivd4a74+UUgXP4ombNWuQN5H5on7fxGBmt0ymmxSvLfKmCCyH1xwYb2OVmAOHTaurFoWvSibNfA388ISyc8PRx+cTrbYXiivczxL/AwZMoZmnR+74ozAMNpA1PTMvS5Ec9fWKmwkBa+QkvTBFcZ3Bm0a+OaVHNzECg7STRhAgMBAAECgYA6DaNXhTMup5YUXDW/3yS0Fwor2smhbW2MMDqhVbY/ECDI25HCKWhux94a4j1UhBC8qrKKbdsjIxlUlJY1GM6MYlHbHI6o7gkGI6+LdyGE/0nNM34oL9Guvfcd6x33E7X4J5XNPnz/cqGRL48DB/RnyrezIYOVkN7MyxvxR6XOIQJBAPMZxzeCjuHlM0gIxiihbmHAXGxFQ2BJkcL22yvH4NhVCm7LoANmHOw/bG1vLAFAxNtKDLXxxH7aabg4VUFNaj0CQQCqaubWJY7OaLvzDCXJsz6+eW7yqLa/5NDIp5/eUzqDYaxhVmaKl937HoM72bHfqhgDpRYbFeM2hV3AD8+gjSj1AkBKlJwDsbA4KWMENHzmti/xGVzBcrZq8ecgEy/GTLn0ZJKgzyO2Jzu0Vvji0fqEH+TFCgDASP3plQReGho9wIxZAkAkcY4B17BNZcpjtIJUOve9Bfz6+adzK/yWHHqsscG+nOGfQznUg5ud+y13XBuUyCwwg1pR2oFnhGfDDd6J6AYNAkEAixOr1gxoSBclU1jBPODw4ToYAdl5XtBH2r8SSH2SPg0EtPRSOPiqJ2OnpI+qec//4HZyG0e1+4aZuMWSQs5agQ==";
-//        String url = "https://open.95516.com/open/access/1.0/activity.quota";
-//        String appId = "e2f26f96e3c745b984451c7728fcc729";
-//        String activityType = "5";
-//        String activityNo = "3102023101729225";
-//        String transSeqId = IdUtil.getSnowflakeNextIdStr();
-//
-//        Map<String, String> requestBody = new HashMap<>();
-//        requestBody.put("appId", appId);
-//        requestBody.put("activityType", activityType);
-//        requestBody.put("activityNo", activityNo);
-//        requestBody.put("transSeqId", transSeqId);
-////        requestBody.put("backendToken", getBackendTokenTest(appId,"82cf4d7ceffb4e62baf3c08f4b727f68","https://open.95516.com/open/access/1.0/backendToken"));
-//        requestBody.put("backendToken", "08ec9df8200000b11OOA3STq");
-//
-//
-//        String body = HttpUtil.createPost(url).body(JSONObject.toJSONString(requestBody)).execute().body();
-//        System.out.println(body);
-
         String privateKey = "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCl3hTxgwNUgkHaFNVKYWq9Feag40E3CxRxHWuzE09bwLcaWgXOvwqeVcZsVQjIHlSizcUfWeGY7/DF+M4vCw8qNyFLtSRN2VV+SlK7mdTSVys1Iet3m96xc+vmrODwfT6Yx+KoOHi64nKh31WS4SxXqT8i5fcRHWiYFpX8c9wVy0/mb0Ak25yaZ6Bbs/s6h5+dkAmOB7ouL5PXyTDxg7LYPsT7RuuJ3Ts+HkCiDK3RjIb0rQlCfmezCwob4qOQJJ/vOFlf50ZYtf6E2aj7EO2HWKr3Q7JFFFEnQZS9V+/ETDur04vCfnW4yGPjl3wtZlftraW6L2A1sKUdm0rhUxWxAgMBAAECggEACtWKfyr8VvMKK51EQE9EKlUpoxUs/5Qq8eeGzyPiAV+BZkh+jB5Y6nY2V4GnaPDoPNkdeNqFXJjBnKDPkO2TQEHpHBmZJTeeuLjQlh3qc5HLifUs/PtSrLsia8cbi0HXCqI1ySClLCnZ7H5ax9UK8S/mJpioTnciC5sgEWUc+VRbL8awan/H/gz08I3AGFTo/OS98J9SoV35fKyLEJVaf8LUB0Vp/fgA7bzkm78nl8zwfC3EicA6QbJLyQOOlClKcSJ8UgIygjMNm1RLG4jK/+JoWF0PtxV1IJEPKclfvfHwpwX/Ace+YaSsEZ4Kt6hdMEAy5cD0UmA0qg8gYoDAVQKBgQDYs6iMSsWA66ACr1oVo8eyruYXPKFZ6z0ys27vWiz4XggnD52B8JRbNY+9jpNXRxuRVVS7cKDqQVAFNAiarWoKQFNEU1rChrFCXEBfsQx3zHdGql/2MPhYFNwEObVPdkgXDD9UJeHUfE8rzeWyO+ULYjAt6Vb2pqVnXCXXBJ8ItQKBgQDD8nNyIe1puGGQN49tHJKbHn4AaNtR4fDRgJD9wKMqimZ4t6bikk2PkcykI3hrstnWDfbyg9oNCOxfUtkWV9hYY9T7qcTVP3BJX+CW99Me5qWEAmk5blskSvGja8loDme9DCRHpvj8O47uAHzjbBxJYiiGRqKs2Ms4W41/II5ijQKBgQDSrV/o/OylGO7YjWg0b6U/h6B06OIpTHWT7DSnCPF9idW9PAYyhRWG0zzq2klO6ffYRLB7BtW6yUKlvF+9GWlljAIoBC3RvydoT83Z+oQXmDZCAnQHIrbe03DPvtcR6PnPRn3vLmEutqg1+xgcPvTAK3aRvDBq3bsjEMhNEdYXnQKBgEwReWPba/FY1PdJunJfX0K86al7C3mUPwr14FPCTxWauQEwOqdGqLmNnmYyJvOYcRy6Ox4WtbXNuwWeggw8eg6GYw5376PhhtPVVrkE6H7ch3DiBrt27gb+2SPaGkw9G2S2q/btCUfST0ByDAm11J1gb98A2PJFD0+HqzypBN2ZAoGARieLD+1MM1ZBqbnlSiygK85lmupa9sFoTkHmwxmA6yFoHyfH4GQ5PWbWXpF8UpkhsLr5E2XU1lSeZPG7S1/ueD+BQ5rgW2paX/dpfIQf95WTdd3+LezMTcvVkVg1qa/3OXKmpLleLV54n5mFsmlXQjQH2QdwCYqibydlTKtumEw=";
-        String url = "https://openapi.unionpay.com/upapi/mkt/agg/aggQueryCpnRemain/v1";
         String chnlId = "8126";
+        String appId = "up_49pfnfkryxb4v_s28";
         String activityTp = "02";
-        String activityNo = "3102023102431191";
+        String activityNo = "3102023022257962";
         String transSeq = IdUtil.getSnowflakeNextIdStr();
 
+        // 获取活动剩余名额查询
+        String url = "https://openapi.unionpay.com/upapi/mkt/agg/aggQueryCpnRemain/v1";
+        String bizMethod = "mkt.agg.aggQueryCpnRemain.v1";
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("chnlId", chnlId);
         requestBody.put("activityTp", activityTp);
         requestBody.put("activityNo", activityNo);
         requestBody.put("transSeq", transSeq);
 
+        // 接口请求参数：version=1.0.0&appId=up_49pfnfkryxb4v_s28&bizMethod=mkt.agg.aggQueryCpnRemain.v1&reqId=1725465406076178432&body={"activityTp":"02","chnlId":"8126","activityNo":"3102023022257962","transSeq":"1725465406076178432"}
+        // 接口请求返回结果：{"activityInfo":{"activityNo":"3102023022257962","activityTp":"02","activityNm":"0.1元购誉达白茶20元优惠券（满200元可用）","beginTime":"2023-02-23 00:00:00","endTime":"2023-12-31 23:59:59","activitySt":"01","limitTp":"02","activityMark":"02","startMark":"1","dayCount":"1000","dayRemainCount":"1000","dayRemainCountPercent":"1.0","lastRemainTime":"","allCount":"1000","allRemainCount":"1000","allRemainCountPercent":"1.0","allCountUseupTime":"","dayAmount":"","dayRemainAmount":"","dayRemainAmountPercent":"","lastRemainAmtTime":"","allAmount":"","allRemainAmount":"","allRemainAmountPercent":"","allAmountUseupTime":"","awardQuotas":[]},"code":"0000000000","msg":"查询成功"}
+
+        // 赠送优惠券
+//        String url = "https://openapi.unionpay.com/upapi/mkt/cpn/couponAcquire/v1";
+//        String bizMethod = "mkt.cpn.couponAcquire.v1";
+//        String mobile = "17767132971";
+//        Map<String, String> requestBody = new HashMap<>();
+//        requestBody.put("chnlId", chnlId);
+//        requestBody.put("cmd", "couponAcquire");
+//        requestBody.put("accessId", "UP");
+//        requestBody.put("qid", transSeq);
+//        requestBody.put("orderDt", DateUtils.getDate("yyyyMMdd"));
+//        requestBody.put("traceId", transSeq);
+//        requestBody.put("discountId", activityNo);
+//        requestBody.put("discountNum", "1");
+//        requestBody.put("entityTp", "01");
+//        try {
+//            requestBody.put("mobile", YsfSm4Utils.encryptSM4(mobile, "d33fc2573c5ed170009a7525b7244786"));
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//        requestBody.put("logId", transSeq);
+        // 赠送优惠券成功
+        // 接口请求参数：version=1.0.0&appId=up_49pfnfkryxb4v_s28&bizMethod=mkt.cpn.couponAcquire.v1&reqId=1725459638736150528&body={"accessId":"UP","traceId":"1725459638736150528","chnlId":"8126","orderDt":"20231117","discountNum":"1","mobile":"rYh9h0ub0r+XphziAYGL5Q==","logId":"1725459638736150528","cmd":"couponAcquire","entityTp":"01","discountId":"3102023022257962","qid":"1725459638736150528"}
+        // {"discountId":"3102023022257962","qid":"1725459638736150528","couponCd":"INNER_23111718233203369865239260001621","couponBeginTs":"20231117182332","couponEndTs":"20231124182332","code":"0000000000","msg":"交易成功"}
+
+        // 优惠券赠送结果查询
+//        String url = "https://openapi.unionpay.com/upapi/mkt/cpn/couponAcqQuery/v1";
+//        String bizMethod = "mkt.cpn.couponAcqQuery.v1";
+//        Map<String, String> requestBody = new HashMap<>();
+//        requestBody.put("chnlId", chnlId);
+//        requestBody.put("cmd", "couponAcqQuery");
+//        requestBody.put("origQid", "1725459638736150528");
+//        requestBody.put("origDate", "20231117");
+
+        // 接口请求参数：version=1.0.0&appId=up_49pfnfkryxb4v_s28&bizMethod=mkt.cpn.couponAcqQuery.v1&reqId=1725460699555385344&body={"chnlId":"8126","origQid":"1725459638736150528","cmd":"couponAcqQuery","origDate":"20231117"}
+        // 接口请求返回结果：{"origQid":"1725459638736150528","operaSt":"00","couponCd":"INNER_23111718233203369865239260001621","couponBeginTs":"20231117182332","couponEndTs":"20231124182332","code":"0000000000","msg":"交易成功"}
+
+//        // 查询用户账户票券详情
+//        String url = "https://openapi.unionpay.com/upapi/mkt/kol/userCoupon/v1";
+//        String bizMethod = "mkt.kol.userCoupon.v1";
+//        String mobile = "17767132971";
+//        Map<String, Object> requestBody = new HashMap<>();
+//        requestBody.put("chnlId", chnlId);
+//        requestBody.put("transSeq", transSeq);
+//        requestBody.put("acctEntityTp", "UP01");
+//        try {
+//            requestBody.put("mobile", YsfSm4Utils.encryptSM4(mobile, "d33fc2573c5ed170009a7525b7244786"));
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//        List<String> couponIdList = new ArrayList<>(1);
+//        couponIdList.add(activityNo);
+//        requestBody.put("activityIdList", couponIdList);
+//        requestBody.put("currentPage", "0");
+//        requestBody.put("pageSize", "20");
+
+        // 接口请求参数：version=1.0.0&appId=up_49pfnfkryxb4v_s28&bizMethod=mkt.kol.userCoupon.v1&reqId=1725462035252416512&body={"chnlId":"8126","activityIdList":["3102023022257962"],"mobile":"rYh9h0ub0r+XphziAYGL5Q==","pageSize":"20","acctEntityTp":"UP01","currentPage":"0","transSeq":"1725462035252416512"}
+        // 接口请求返回结果：{"params":{"activityInfoList":[{"acctSt":"1","activityId":"3102023022257962","activityName":"0.1元购誉达白茶20元优惠券（满200元可用）","avlBalance":"1","couponCd":"INNER_23111718233203369865239260001621","couponThumbnailIm":"https://mpool.unionpay.com/file/00010000/20230222/11c349b0-0cae-4b37-9f55-feba206cbc1b.jpg","validBeginTm":"20231117182332","validEndTm":"20231124182332"}],"totalPageNum":"1"},"code":"0000000000","msg":"交易成功"}
+
+        // 删除票券
+//        String url = "https://openapi.unionpay.com/upapi/mkt/cpn/couponDelete/v1";
+//        String bizMethod = "mkt.cpn.couponDelete.v1";
+////        String mobile = "17767132971";
+//        String mobile = "15797878126";
+//        Map<String, Object> requestBody = new HashMap<>();
+//        requestBody.put("chnlId", chnlId);
+//        requestBody.put("cmd", "couponDelete");
+//        requestBody.put("accessId", "UP");
+//        requestBody.put("qid", transSeq);
+//        requestBody.put("orderDt", DateUtils.getDate("yyyyMMdd"));
+//        requestBody.put("traceId", transSeq);
+//        requestBody.put("discountId", activityNo);
+//        requestBody.put("discountNum", 1);
+//        requestBody.put("entityTp", "01");
+//        try {
+//            requestBody.put("mobile", mobile);
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//        requestBody.put("logId", transSeq);
+
         Map<String, String> headers = new HashMap<>();
         headers.put("version", "1.0.0");
         headers.put("appType", "02");
-        headers.put("appId", "up_49pfnfkryxb4v_s28");
-        headers.put("bizMethod", "mkt.agg.aggQueryCpnRemain.v1");
+        headers.put("appId", appId);
+        headers.put("bizMethod", bizMethod);
         headers.put("signMethod", "RSA2");
         headers.put("reqId", transSeq);
         headers.put("reqTs", DateUtils.createTimestampStr(false));
-        String str = "version=1.0.0&appId=up_49pfnfkryxb4v_s28&bizMethod=mkt.agg.aggQueryCpnRemain.v1&reqId=" + transSeq + "&body=" + JSONObject.toJSONString(requestBody);
+        String str = "version=1.0.0&appId=" + appId + "&bizMethod=" + bizMethod + "&reqId=" + transSeq + "&body=" + JSONObject.toJSONString(requestBody);
+        log.info("接口请求参数：{}", str);
+        str = SecureUtil.sha256(str);
         try {
-            headers.put("sign", sign(str,privateKey));
+            headers.put("sign", sign(str, privateKey));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         String body = HttpUtil.createPost(url).addHeaders(headers).body(JSONObject.toJSONString(requestBody)).execute().body();
-        System.out.println(body);
+        log.info("接口请求返回结果：{}", body);
+
+        // 接口请求参数：version=1.0.0&appId=up_49pfnfkryxb4v_s28&bizMethod=mkt.cpn.couponDelete.v1&reqId=1725465040462843904&body={"accessId":"UP","traceId":"1725465040462843904","chnlId":"8126","orderDt":"20231117","discountNum":1,"mobile":"17767132971","logId":"1725465040462843904","cmd":"couponDelete","entityTp":"01","discountId":"3102023022257962","qid":"1725465040462843904"}
+        // 接口请求返回结果：{"discountId":"3102023022257962","qid":"1725465040462843904","couponCd":"INNER_23111718233203369865239260001621","code":"0000000000","msg":"交易成功"}
 
 //        String appId = "d27c0217490d4e35a901abb2e874f383";
 //        String secret = "92d7f2f9e56243618077bebf34bb8da0";
