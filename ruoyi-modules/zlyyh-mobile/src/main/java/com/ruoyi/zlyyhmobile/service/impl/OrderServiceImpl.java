@@ -3352,6 +3352,7 @@ public class OrderServiceImpl implements IOrderService {
         lqw.eq(bo.getUserId() != null, Order::getUserId, bo.getUserId());
         lqw.eq(StringUtils.isNotBlank(bo.getPickupMethod()), Order::getPickupMethod, bo.getPickupMethod());
         lqw.eq(StringUtils.isNotBlank(bo.getVerificationStatus()), Order::getVerificationStatus, bo.getVerificationStatus());
+        lqw.eq(StringUtils.isNotBlank(bo.getOrderType()), Order::getOrderType, bo.getOrderType());
         if (StringUtils.isNotBlank(bo.getStatus())) {
             lqw.in(Order::getStatus, bo.getStatus().split(","));
         }
