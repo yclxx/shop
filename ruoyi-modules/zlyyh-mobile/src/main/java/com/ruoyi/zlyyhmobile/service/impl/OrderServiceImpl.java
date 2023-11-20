@@ -582,7 +582,6 @@ public class OrderServiceImpl implements IOrderService {
 //        if (StringUtils.isNotBlank(platformVo.getPlatformCity()) && !"ALL".equalsIgnoreCase(platformVo.getPlatformCity()) && !platformVo.getPlatformCity().contains(bo.getCityCode())) {
 //            throw new ServiceException("您当前所在位置不在活动参与范围!");
 //        }
-
         // 校验是否有订单，有订单直接返回
         String cacheObject = RedisUtils.getCacheObject(OrderCacheUtils.getUsreOrderOneCacheKey(platformVo.getPlatformKey(), bo.getUserId(), bo.getProductId()));
         if (StringUtils.isNotBlank(cacheObject)) {

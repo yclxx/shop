@@ -13,6 +13,7 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.crypto.SecureUtil;
 import cn.hutool.crypto.symmetric.DESede;
 import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -746,6 +747,165 @@ public class YsfUtils {
         return signature.verify(Base64Utils.decodeFromString(sign));
     }
 
+    /**
+     * 活动剩余名额查询
+     *
+     * @param number     商户订单号
+     * @param activityNo 优惠券活动号
+     * @param chnlId     渠道ID
+     * @param appId      AppID
+     * @param privateKey 私钥
+     * @return {"activityInfo":{"activityNo":"3102023022257962","activityTp":"02","activityNm":"0.1元购誉达白茶20元优惠券（满200元可用）","beginTime":"2023-02-23 00:00:00","endTime":"2023-12-31 23:59:59","activitySt":"01","limitTp":"02","activityMark":"02","startMark":"1","dayCount":"1000","dayRemainCount":"1000","dayRemainCountPercent":"1.0","lastRemainTime":"","allCount":"1000","allRemainCount":"1000","allRemainCountPercent":"1.0","allCountUseupTime":"","dayAmount":"","dayRemainAmount":"","dayRemainAmountPercent":"","lastRemainAmtTime":"","allAmount":"","allRemainAmount":"","allRemainAmountPercent":"","allAmountUseupTime":"","awardQuotas":[]},"code":"0000000000","msg":"查询成功"}
+     */
+    public static R<JSONObject> aggQueryCpnRemain(String number, String activityNo, String chnlId, String appId, String privateKey) {
+        // 活动剩余名额查询
+        String url = "https://openapi.unionpay.com/upapi/mkt/agg/aggQueryCpnRemain/v1";
+        String bizMethod = "mkt.agg.aggQueryCpnRemain.v1";
+        String transSeq = IdUtil.getSnowflakeNextIdStr();
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("chnlId", chnlId);
+        // 活动类型 01:精准营销，02:优惠券，03立减
+        requestBody.put("activityTp", "02");
+        requestBody.put("activityNo", activityNo);
+        requestBody.put("transSeq", transSeq);
+        return postUpApi(url, appId, bizMethod, number, requestBody, privateKey);
+    }
+
+    /**
+     * 赠送优惠券
+     *
+     * @param number     商户订单号
+     * @param activityNo 优惠券活动号
+     * @param mobile     手机号
+     * @param count      赠送数量
+     * @param entityTp   实体类型
+     * @param chnlId     渠道ID
+     * @param appId      AppID
+     * @param privateKey 私钥
+     * @param sm4Key     sm4密钥
+     * @return {"discountId":"3102023022257962","qid":"1725459638736150528","couponCd":"INNER_23111718233203369865239260001621","couponBeginTs":"20231117182332","couponEndTs":"20231124182332","code":"0000000000","msg":"交易成功"}
+     */
+    public static R<JSONObject> couponAcquire(String number, String activityNo, String mobile, String count, String entityTp, String chnlId, String appId, String privateKey, String sm4Key) {
+        // 赠送优惠券
+        String url = "https://openapi.unionpay.com/upapi/mkt/cpn/couponAcquire/v1";
+        String bizMethod = "mkt.cpn.couponAcquire.v1";
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("chnlId", chnlId);
+        requestBody.put("cmd", "couponAcquire");
+        requestBody.put("accessId", "UP");
+        requestBody.put("qid", number);
+        requestBody.put("orderDt", DateUtils.getDate("yyyyMMdd"));
+        requestBody.put("traceId", number);
+        requestBody.put("discountId", activityNo);
+        requestBody.put("discountNum", count);
+        requestBody.put("entityTp", entityTp);
+        try {
+            requestBody.put("mobile", YsfSm4Utils.encryptSM4(mobile, sm4Key));
+        } catch (Exception e) {
+            log.error("银联开放平台接口调用手机号加密失败", e);
+            return R.fail("加密异常" + e.getMessage());
+        }
+        requestBody.put("logId", number);
+        return postUpApi(url, appId, bizMethod, number, requestBody, privateKey);
+    }
+
+    /**
+     * 优惠券赠送结果查询
+     *
+     * @param number     商户订单号
+     * @param origDate   优惠券赠送结果查询日期
+     * @param chnlId     渠道ID
+     * @param appId      AppID
+     * @param privateKey 私钥
+     * @return {"origQid":"1725459638736150528","operaSt":"00","couponCd":"INNER_23111718233203369865239260001621","couponBeginTs":"20231117182332","couponEndTs":"20231124182332","code":"0000000000","msg":"交易成功"}
+     */
+    public static R<JSONObject> couponAcqQuery(String number, String origDate, String chnlId, String appId, String privateKey) {
+        // 优惠券赠送结果查询
+        String url = "https://openapi.unionpay.com/upapi/mkt/cpn/couponAcqQuery/v1";
+        String bizMethod = "mkt.cpn.couponAcqQuery.v1";
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("chnlId", chnlId);
+        requestBody.put("cmd", "couponAcqQuery");
+        requestBody.put("origQid", number);
+        requestBody.put("origDate", origDate);
+        return postUpApi(url, appId, bizMethod, number, requestBody, privateKey);
+    }
+
+    /**
+     * 用户优惠券查询
+     *
+     * @param mobile       手机号
+     * @param couponIdList 优惠券ID列表
+     * @param chnlId       渠道ID
+     * @param appId        AppID
+     * @param privateKey   私钥
+     * @param sm4Key       sm4密钥
+     * @return {"params":{"activityInfoList":[{"acctSt":"1","activityId":"3102023022257962","activityName":"0.1元购誉达白茶20元优惠券（满200元可用）","avlBalance":"1","couponCd":"INNER_23111718233203369865239260001621","couponThumbnailIm":"https://mpool.unionpay.com/file/00010000/20230222/11c349b0-0cae-4b37-9f55-feba206cbc1b.jpg","validBeginTm":"20231117182332","validEndTm":"20231124182332"}],"totalPageNum":"1"},"code":"0000000000","msg":"交易成功"}
+     */
+    public static R<JSONObject> userCoupon(String mobile, List<String> couponIdList, String chnlId, String appId, String privateKey, String sm4Key) {
+        String url = "https://openapi.unionpay.com/upapi/mkt/kol/userCoupon/v1";
+        String bizMethod = "mkt.kol.userCoupon.v1";
+        String transSeq = IdUtil.getSnowflakeNextIdStr();
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("chnlId", chnlId);
+        requestBody.put("transSeq", transSeq);
+        requestBody.put("acctEntityTp", "UP01");
+        try {
+            requestBody.put("mobile", YsfSm4Utils.encryptSM4(mobile, sm4Key));
+        } catch (Exception e) {
+            log.error("银联开放平台接口调用手机号加密失败", e);
+            return R.fail("加密异常" + e.getMessage());
+        }
+        requestBody.put("activityIdList", couponIdList);
+        requestBody.put("currentPage", "0");
+        requestBody.put("pageSize", "20");
+        return postUpApi(url, appId, bizMethod, transSeq, requestBody, privateKey);
+    }
+
+    /**
+     * 发送请求至银联开放平台
+     *
+     * @param url         请求url
+     * @param appId       appId由开放平台网关分配，取值开放平台网关API认证账号
+     * @param bizMethod   接口类型
+     * @param transSeq    发送方流水号 目前和订单号一致
+     * @param requestBody 请求参数body
+     * @param privateKey  签名私钥
+     * @return 响应结果
+     */
+    private static R<JSONObject> postUpApi(String url, String appId, String bizMethod, String transSeq, Map<String, Object> requestBody, String privateKey) {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("version", "1.0.0");
+        headers.put("appType", "02");
+        headers.put("appId", appId);
+        headers.put("bizMethod", bizMethod);
+        headers.put("signMethod", "RSA2");
+        headers.put("reqId", transSeq);
+        headers.put("reqTs", DateUtils.createTimestampStr(false));
+        String str = "version=1.0.0&appId=" + appId + "&bizMethod=" + bizMethod + "&reqId=" + transSeq + "&body=" + JSONObject.toJSONString(requestBody);
+        str = SecureUtil.sha256(str);
+        try {
+            headers.put("sign", sign(str, privateKey));
+        } catch (Exception e) {
+            log.error("银联开放平台接口调用签名异常", e);
+            return R.fail("银联开放平台接口签名异常");
+        }
+        HttpRequest request = HttpUtil.createPost(url).addHeaders(headers).body(JSONObject.toJSONString(requestBody));
+        log.info("银联开放平台接口调用开始，reqId：{},请求参数：{}", transSeq, request.toString());
+        HttpResponse execute = request.execute();
+        log.info("银联开放平台接口调用结束，reqId：{},返回结果：{}", transSeq, execute.toString());
+        String s = execute.body();
+        if (StringUtils.isEmpty(s)) {
+            return R.fail("银联开放平台接口调用失败,返回结果为空");
+        }
+        JSONObject result = JSONObject.parseObject(s);
+        if (!"0000000000".equals(result.getString("code"))) {
+            return R.fail(result.getString("code") + "_" + result.getString("msg") + ";" + result.getString("subCode") + "_" + result.getString("subMsg"));
+        }
+        // 成功
+        return R.ok(result);
+    }
+
     public static void main(String[] args) {
 //        KeyPair rsa = SecureUtil.generateKeyPair("RSA", 2048);
 //        System.out.println("================公钥================");
@@ -760,14 +920,14 @@ public class YsfUtils {
         String activityNo = "3102023022257962";
         String transSeq = IdUtil.getSnowflakeNextIdStr();
 
-        // 获取活动剩余名额查询
-        String url = "https://openapi.unionpay.com/upapi/mkt/agg/aggQueryCpnRemain/v1";
-        String bizMethod = "mkt.agg.aggQueryCpnRemain.v1";
-        Map<String, String> requestBody = new HashMap<>();
-        requestBody.put("chnlId", chnlId);
-        requestBody.put("activityTp", activityTp);
-        requestBody.put("activityNo", activityNo);
-        requestBody.put("transSeq", transSeq);
+//        // 获取活动剩余名额查询
+//        String url = "https://openapi.unionpay.com/upapi/mkt/agg/aggQueryCpnRemain/v1";
+//        String bizMethod = "mkt.agg.aggQueryCpnRemain.v1";
+//        Map<String, String> requestBody = new HashMap<>();
+//        requestBody.put("chnlId", chnlId);
+//        requestBody.put("activityTp", activityTp);
+//        requestBody.put("activityNo", activityNo);
+//        requestBody.put("transSeq", transSeq);
 
         // 接口请求参数：version=1.0.0&appId=up_49pfnfkryxb4v_s28&bizMethod=mkt.agg.aggQueryCpnRemain.v1&reqId=1725465406076178432&body={"activityTp":"02","chnlId":"8126","activityNo":"3102023022257962","transSeq":"1725465406076178432"}
         // 接口请求返回结果：{"activityInfo":{"activityNo":"3102023022257962","activityTp":"02","activityNm":"0.1元购誉达白茶20元优惠券（满200元可用）","beginTime":"2023-02-23 00:00:00","endTime":"2023-12-31 23:59:59","activitySt":"01","limitTp":"02","activityMark":"02","startMark":"1","dayCount":"1000","dayRemainCount":"1000","dayRemainCountPercent":"1.0","lastRemainTime":"","allCount":"1000","allRemainCount":"1000","allRemainCountPercent":"1.0","allCountUseupTime":"","dayAmount":"","dayRemainAmount":"","dayRemainAmountPercent":"","lastRemainAmtTime":"","allAmount":"","allRemainAmount":"","allRemainAmountPercent":"","allAmountUseupTime":"","awardQuotas":[]},"code":"0000000000","msg":"查询成功"}
@@ -775,7 +935,8 @@ public class YsfUtils {
         // 赠送优惠券
 //        String url = "https://openapi.unionpay.com/upapi/mkt/cpn/couponAcquire/v1";
 //        String bizMethod = "mkt.cpn.couponAcquire.v1";
-//        String mobile = "17767132971";
+////        String mobile = "17767132971";
+//        String mobile = "18340897551";
 //        Map<String, String> requestBody = new HashMap<>();
 //        requestBody.put("chnlId", chnlId);
 //        requestBody.put("cmd", "couponAcquire");
@@ -809,23 +970,24 @@ public class YsfUtils {
         // 接口请求返回结果：{"origQid":"1725459638736150528","operaSt":"00","couponCd":"INNER_23111718233203369865239260001621","couponBeginTs":"20231117182332","couponEndTs":"20231124182332","code":"0000000000","msg":"交易成功"}
 
 //        // 查询用户账户票券详情
-//        String url = "https://openapi.unionpay.com/upapi/mkt/kol/userCoupon/v1";
-//        String bizMethod = "mkt.kol.userCoupon.v1";
+        String url = "https://openapi.unionpay.com/upapi/mkt/kol/userCoupon/v1";
+        String bizMethod = "mkt.kol.userCoupon.v1";
 //        String mobile = "17767132971";
-//        Map<String, Object> requestBody = new HashMap<>();
-//        requestBody.put("chnlId", chnlId);
-//        requestBody.put("transSeq", transSeq);
-//        requestBody.put("acctEntityTp", "UP01");
-//        try {
-//            requestBody.put("mobile", YsfSm4Utils.encryptSM4(mobile, "d33fc2573c5ed170009a7525b7244786"));
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
-//        List<String> couponIdList = new ArrayList<>(1);
-//        couponIdList.add(activityNo);
-//        requestBody.put("activityIdList", couponIdList);
-//        requestBody.put("currentPage", "0");
-//        requestBody.put("pageSize", "20");
+        String mobile = "18340897551";
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("chnlId", chnlId);
+        requestBody.put("transSeq", transSeq);
+        requestBody.put("acctEntityTp", "UP01");
+        try {
+            requestBody.put("mobile", YsfSm4Utils.encryptSM4(mobile, "d33fc2573c5ed170009a7525b7244786"));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        List<String> couponIdList = new ArrayList<>(1);
+        couponIdList.add(activityNo);
+        requestBody.put("activityIdList", couponIdList);
+        requestBody.put("currentPage", "0");
+        requestBody.put("pageSize", "20");
 
         // 接口请求参数：version=1.0.0&appId=up_49pfnfkryxb4v_s28&bizMethod=mkt.kol.userCoupon.v1&reqId=1725462035252416512&body={"chnlId":"8126","activityIdList":["3102023022257962"],"mobile":"rYh9h0ub0r+XphziAYGL5Q==","pageSize":"20","acctEntityTp":"UP01","currentPage":"0","transSeq":"1725462035252416512"}
         // 接口请求返回结果：{"params":{"activityInfoList":[{"acctSt":"1","activityId":"3102023022257962","activityName":"0.1元购誉达白茶20元优惠券（满200元可用）","avlBalance":"1","couponCd":"INNER_23111718233203369865239260001621","couponThumbnailIm":"https://mpool.unionpay.com/file/00010000/20230222/11c349b0-0cae-4b37-9f55-feba206cbc1b.jpg","validBeginTm":"20231117182332","validEndTm":"20231124182332"}],"totalPageNum":"1"},"code":"0000000000","msg":"交易成功"}
@@ -852,25 +1014,27 @@ public class YsfUtils {
 //        }
 //        requestBody.put("logId", transSeq);
 
-        Map<String, String> headers = new HashMap<>();
-        headers.put("version", "1.0.0");
-        headers.put("appType", "02");
-        headers.put("appId", appId);
-        headers.put("bizMethod", bizMethod);
-        headers.put("signMethod", "RSA2");
-        headers.put("reqId", transSeq);
-        headers.put("reqTs", DateUtils.createTimestampStr(false));
-        String str = "version=1.0.0&appId=" + appId + "&bizMethod=" + bizMethod + "&reqId=" + transSeq + "&body=" + JSONObject.toJSONString(requestBody);
-        log.info("接口请求参数：{}", str);
-        str = SecureUtil.sha256(str);
-        try {
-            headers.put("sign", sign(str, privateKey));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        postUpApi(url, appId, bizMethod, transSeq, requestBody, privateKey);
 
-        String body = HttpUtil.createPost(url).addHeaders(headers).body(JSONObject.toJSONString(requestBody)).execute().body();
-        log.info("接口请求返回结果：{}", body);
+//        Map<String, String> headers = new HashMap<>();
+//        headers.put("version", "1.0.0");
+//        headers.put("appType", "02");
+//        headers.put("appId", appId);
+//        headers.put("bizMethod", bizMethod);
+//        headers.put("signMethod", "RSA2");
+//        headers.put("reqId", transSeq);
+//        headers.put("reqTs", DateUtils.createTimestampStr(false));
+//        String str = "version=1.0.0&appId=" + appId + "&bizMethod=" + bizMethod + "&reqId=" + transSeq + "&body=" + JSONObject.toJSONString(requestBody);
+//        log.info("接口请求参数：{}", str);
+//        str = SecureUtil.sha256(str);
+//        try {
+//            headers.put("sign", sign(str, privateKey));
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        String body = HttpUtil.createPost(url).addHeaders(headers).body(JSONObject.toJSONString(requestBody)).execute().body();
+//        log.info("接口请求返回结果：{}", body);
 
         // 接口请求参数：version=1.0.0&appId=up_49pfnfkryxb4v_s28&bizMethod=mkt.cpn.couponDelete.v1&reqId=1725465040462843904&body={"accessId":"UP","traceId":"1725465040462843904","chnlId":"8126","orderDt":"20231117","discountNum":1,"mobile":"17767132971","logId":"1725465040462843904","cmd":"couponDelete","entityTp":"01","discountId":"3102023022257962","qid":"1725465040462843904"}
         // 接口请求返回结果：{"discountId":"3102023022257962","qid":"1725465040462843904","couponCd":"INNER_23111718233203369865239260001621","code":"0000000000","msg":"交易成功"}

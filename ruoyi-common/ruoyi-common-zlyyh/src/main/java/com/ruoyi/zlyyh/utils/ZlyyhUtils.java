@@ -113,6 +113,17 @@ public class ZlyyhUtils {
     }
 
     /**
+     * 分享用户ID
+     */
+    public static Long getShareUserId() {
+        String header = ServletUtils.getHeader(Constants.SHARE_USER_ID);
+        if (NumberUtil.isLong(header)) {
+            return Long.valueOf(header);
+        }
+        return null;
+    }
+
+    /**
      * 平台渠道
      */
     public static PlatformEnumd getPlatformType() {

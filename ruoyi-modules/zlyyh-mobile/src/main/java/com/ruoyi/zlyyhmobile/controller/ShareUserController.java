@@ -1,10 +1,7 @@
 package com.ruoyi.zlyyhmobile.controller;
 
 import cn.hutool.core.codec.Base64;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.crypto.SecureUtil;
 import com.ruoyi.common.core.domain.R;
-import com.ruoyi.common.core.utils.JsonUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.core.web.controller.BaseController;
 import com.ruoyi.common.idempotent.annotation.RepeatSubmit;
@@ -13,8 +10,6 @@ import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.satoken.utils.LoginHelper;
-import com.ruoyi.resource.api.RemoteFileService;
-import com.ruoyi.resource.api.domain.SysFile;
 import com.ruoyi.zlyyh.domain.bo.ShareUserBo;
 import com.ruoyi.zlyyh.domain.bo.ShareUserRecordBo;
 import com.ruoyi.zlyyh.domain.vo.*;
@@ -26,7 +21,6 @@ import com.ruoyi.zlyyhmobile.domain.bo.GenWxQrCodeBo;
 import com.ruoyi.zlyyhmobile.domain.vo.ShareUserInfoVo;
 import com.ruoyi.zlyyhmobile.service.*;
 import lombok.RequiredArgsConstructor;
-import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,8 +45,6 @@ public class ShareUserController extends BaseController {
     private final IUserService userService;
     private final WxProperties wxProperties;
     private final IPlatformService platformService;
-    @DubboReference
-    private RemoteFileService remoteFileService;
 
     /**
      * 获取分销员详细信息
@@ -127,7 +119,6 @@ public class ShareUserController extends BaseController {
     @GetMapping("/genShareQrCode")
     public R<String> genShareQrCode(GenWxQrCodeBo genWxQrCodeBo) {
         // 生成key
-        String cacheKey = SecureUtil.md5(JsonUtils.toJsonString(genWxQrCodeBo));
         PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId(), PlatformEnumd.MP_WX.getChannel());
         if (null == platformVo) {
             return R.fail("访问错误[platform]");
@@ -137,15 +128,6 @@ public class ShareUserController extends BaseController {
             return R.fail("系统繁忙，请稍后重试");
         }
         byte[] bytes = WxUtils.genQrCode(accessToken, genWxQrCodeBo.getScene(), genWxQrCodeBo.getPage(), genWxQrCodeBo.getEnv_version());
-        String fileName = cacheKey + ".png";
-        SysFile sysFile = null;
-        try {
-            sysFile = remoteFileService.upload(fileName, fileName, "image/png", bytes);
-        } catch (Exception ignored) {
-        }
-        if (ObjectUtil.isNull(sysFile)) {
-            return R.ok("操作成功", Base64.encode(bytes));
-        }
-        return R.ok(sysFile.getUrl());
+        return R.ok("操作成功", Base64.encode(bytes));
     }
 }
