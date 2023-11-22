@@ -2462,7 +2462,7 @@ public class OrderServiceImpl implements IOrderService {
                 log.error("微信支付回调订单【{}】不存在,通知内容：{}", orderId, s);
                 return false;
             }
-            handleOrder(collectiveOrder, BigDecimalUtils.toMoney(payerTotal), queryId, pay_time, queryId, pay_time, issAddnData, bank_type);
+            handleOrder(collectiveOrder, BigDecimalUtils.toMoney(total), queryId, pay_time, queryId, pay_time, issAddnData, bank_type);
             return true;
         }
         return false;
@@ -2522,7 +2522,7 @@ public class OrderServiceImpl implements IOrderService {
             // 用户支付金额
             Integer payerTotal = amount.getInteger("payer_total");
 
-            handleOrder(collectiveOrder, BigDecimalUtils.toMoney(payerTotal), queryId, pay_time, queryId, pay_time, issAddnData, bank_type);
+            handleOrder(collectiveOrder, BigDecimalUtils.toMoney(total), queryId, pay_time, queryId, pay_time, issAddnData, bank_type);
             return "订单支付成功。";
         } else if ("NOTPAY".equals(trade_state)) {
             return "订单未支付。";
