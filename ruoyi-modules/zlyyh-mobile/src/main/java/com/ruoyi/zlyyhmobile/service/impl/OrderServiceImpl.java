@@ -397,6 +397,7 @@ public class OrderServiceImpl implements IOrderService {
                 // 记录联联订单的发码数据
             } else if ("14".equals(order.getOrderType())) {
                 OrderFoodInfo lianFoodInfo = orderFoodInfoMapper.selectById(order.getNumber());
+                // 没有联联订单记录，创建订单
                 if (ObjectUtil.isEmpty(lianFoodInfo)) {
                     lianlianCreateOrder(order, productVo, userVo);
                 } else {
@@ -1418,12 +1419,15 @@ public class OrderServiceImpl implements IOrderService {
         if (StringUtils.isNotEmpty(validToken)) {
             //先查商品详情
             ProductInfoVo productInfoVo = productInfoService.queryById(productVo.getProductId());
-            JSONObject lianLianOrder = LianLianUtils.createOrder(channelId, secret, basePath + createOrder, order.getNumber().toString(),
-                productInfoVo.getItemPrice(), validToken, productVo.getExternalProductId(), productInfoVo.getItemId(), userVo.getMobile());
+            // 创建联联订单
+            JSONObject lianLianOrder = LianLianUtils.createOrder(channelId, secret, basePath + createOrder, order.getNumber().toString(), productInfoVo.getItemPrice(), validToken, productVo.getExternalProductId(), productInfoVo.getItemId(), userVo.getMobile());
             if (ObjectUtil.isNotEmpty(lianLianOrder)) {
                 String channelOrderId = lianLianOrder.getString("channelOrderId");
                 order.setExternalOrderNumber(channelOrderId);
                 order.setSendStatus("2");
+                lianLianOrderCode(order);
+            } else {
+                order.setSendStatus("3");
                 lianLianOrderCode(order);
             }
         } else {
@@ -1440,13 +1444,16 @@ public class OrderServiceImpl implements IOrderService {
                 validToken = result.getString("validToken");
             }
             if (StringUtils.isNotEmpty(validToken)) {
-                //先查商品详情
+                // 创建联联订单
                 JSONObject lianLianOrder = LianLianUtils.createOrder(channelId, secret, basePath + createOrder, order.getNumber().toString(),
                     productInfoVo.getItemPrice(), validToken, productVo.getExternalProductId(), productInfoVo.getItemId(), userVo.getMobile());
                 if (ObjectUtil.isNotEmpty(lianLianOrder)) {
                     String channelOrderId = lianLianOrder.getString("channelOrderId");
                     order.setExternalOrderNumber(channelOrderId);
-                    order.setSendStatus("0");
+                    order.setSendStatus("2");
+                    lianLianOrderCode(order);
+                } else {
+                    order.setStatus("3");
                     lianLianOrderCode(order);
                 }
             }
