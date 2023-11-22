@@ -27,6 +27,10 @@ public class Verifier extends BaseEntity {
      */
     private Long platformKey;
     /**
+     * 名称
+     */
+    private String username;
+    /**
      * 手机号
      */
     private String mobile;
@@ -67,6 +71,30 @@ public class Verifier extends BaseEntity {
      * 用户id
      */
     private Long sysUserId;
+    /**
+     * 服务商表id
+     */
+    private Long extensionServiceProviderId;
+    /**
+     * 是否BD
+     */
+    private Boolean isBd;
+    /**
+     * 是否管理员
+     */
+    private Boolean isAdmin;
+    /**
+     * 是否核销人员
+     */
+    private Boolean isVerifier;
+    /**
+     * 所处地处
+     */
+    private String cityCode;
+    /**
+     * 归属公司
+     */
+    private String org;
 
     public Verifier() {
     }

@@ -100,6 +100,12 @@ public class VerifierServiceImpl implements IVerifierService {
      */
     private void validEntityBeforeSave(Verifier entity) {
         //TODO 做一些数据校验,如唯一约束
+        if (entity.getIsBd()) {
+            entity.setIsAdmin(true);
+            entity.setIsVerifier(true);
+        } else if (entity.getIsAdmin()) {
+            entity.setIsVerifier(true);
+        }
     }
 
     /**

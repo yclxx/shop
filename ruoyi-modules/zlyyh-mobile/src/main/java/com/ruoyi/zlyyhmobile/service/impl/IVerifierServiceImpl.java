@@ -202,10 +202,10 @@ public class IVerifierServiceImpl implements IVerifierService {
                 product.setProductId(IdUtil.getSnowflakeNextId());
                 ProductInfo productInfo = new ProductInfo();
                 productInfo.setProductId(product.getProductId());
-                productInfo.setItemId("0");
+                productInfo.setItemId(product.getProductId().toString());
                 productInfo.setDiscount("0.00");
                 productInfo.setStock(bo.getTotalCount());
-                productInfo.setItemPrice(bo.getItemPrice());
+                productInfo.setItemPrice(bo.getProductInfo().getItemPrice());
                 productInfoMapper.insert(productInfo);
                 int insert = productMapper.insert(product);
                 if (insert > 0) {

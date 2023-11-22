@@ -120,14 +120,14 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
         Verifier verifier = verifierMapper.selectOne(new LambdaQueryWrapper<Verifier>().eq(Verifier::getMobile, vo.getShopMobile()).eq(Verifier::getPlatformKey, vo.getPlatformKey()));
         if (ObjectUtil.isNotEmpty(verifier)) {
             verifier.setPlatformKey(vo.getPlatformKey());
-            verifier.setMobile(vo.getMobile());
+            verifier.setMobile(vo.getBrandMobile());
             verifier.setVerifierType("admin");
             verifierMapper.updateById(verifier);
         } else {
             verifier = new Verifier();
             verifier.setId(IdUtil.getSnowflakeNextId());
             verifier.setPlatformKey(vo.getPlatformKey());
-            verifier.setMobile(vo.getMobile());
+            verifier.setMobile(vo.getBrandMobile());
             verifier.setStatus("0");
             verifier.setVerifierType("admin");
             verifierMapper.insert(verifier);
@@ -148,7 +148,6 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
         if (StringUtils.isNotEmpty(vo.getExtend())) {
             shop.setExtensionServiceProviderId(Long.valueOf(vo.getExtend()));
         }
-        shop.setProductType(vo.getProductType());
         if (ObjectUtil.isNotEmpty(vo.getShopAddressInfo())) {
             String key = "importShop:" + vo.getShopAddressInfo();
             // 查询地址信息
