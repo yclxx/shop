@@ -422,6 +422,6 @@ public class ProductVo implements Serializable {
 
     private String sharePermission;
     private String shareAmountType;
-    private String shareOneAmount;
-    private String shareTwoAmount;
+    private BigDecimal shareOneAmount;
+    private BigDecimal shareTwoAmount;
 }

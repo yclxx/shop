@@ -19,6 +19,7 @@ import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.bo.CreateOrderTicketBo;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
 import com.ruoyi.zlyyhmobile.event.SendCouponEvent;
+import com.ruoyi.zlyyhmobile.event.ShareOrderEvent;
 import com.ruoyi.zlyyhmobile.service.*;
 import com.ruoyi.zlyyhmobile.utils.redis.OrderCacheUtils;
 import lombok.RequiredArgsConstructor;
@@ -282,6 +283,8 @@ public class OrderTicketServiceImpl implements OrderTicketService {
             baseMapper.insert(orderTicket);
             collectiveOrder.setStatus("2");
             collectiveOrderMapper.insert(collectiveOrder);
+            // 分销处理
+            SpringUtils.context().publishEvent(new ShareOrderEvent(bo.getShareUserId(), order.getNumber()));
             return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), order.getNumber(), "1");
         }
 
@@ -302,6 +305,8 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         collectiveOrder = collectiveOrderMapper.selectById(collectiveOrder.getCollectiveNumber());
         // 缓存订单数据
         cacheOrder(order);
+        // 分销处理
+        SpringUtils.context().publishEvent(new ShareOrderEvent(bo.getShareUserId(), order.getNumber()));
         return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), order.getNumber(), "1");
     }
 

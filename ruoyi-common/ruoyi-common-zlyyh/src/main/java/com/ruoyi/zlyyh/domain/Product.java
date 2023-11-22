@@ -311,6 +311,6 @@ public class Product extends BaseEntity {
     private String poupText;
     private String sharePermission;
     private String shareAmountType;
-    private String shareOneAmount;
-    private String shareTwoAmount;
+    private BigDecimal shareOneAmount;
+    private BigDecimal shareTwoAmount;
 }

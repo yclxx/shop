@@ -53,4 +53,13 @@ public interface IShareUserRecordService {
      * 校验并批量删除分销记录信息
      */
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
+
+    /**
+     * 根据分享用户ID和订单编号查询分享记录
+     *
+     * @param shareUserId 分享用户ID
+     * @param number      订单编号
+     * @return 分享记录
+     */
+    ShareUserRecordVo queryByShareUserIdAndNumber(Long shareUserId, Long number);
 }

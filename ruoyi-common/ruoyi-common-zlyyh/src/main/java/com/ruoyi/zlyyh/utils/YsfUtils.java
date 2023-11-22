@@ -817,6 +817,7 @@ public class YsfUtils {
      * @param appId      AppID
      * @param privateKey 私钥
      * @return {"origQid":"1725459638736150528","operaSt":"00","couponCd":"INNER_23111718233203369865239260001621","couponBeginTs":"20231117182332","couponEndTs":"20231124182332","code":"0000000000","msg":"交易成功"}
+     * 订单不存在返回：{"origQid":"1726791806355816448","operaSt":"10","code":"0000000000","msg":"交易成功"}
      */
     public static R<JSONObject> couponAcqQuery(String number, String origDate, String chnlId, String appId, String privateKey) {
         // 优惠券赠送结果查询
@@ -827,7 +828,19 @@ public class YsfUtils {
         requestBody.put("cmd", "couponAcqQuery");
         requestBody.put("origQid", number);
         requestBody.put("origDate", origDate);
-        return postUpApi(url, appId, bizMethod, number, requestBody, privateKey);
+        R<JSONObject> result = postUpApi(url, appId, bizMethod, number, requestBody, privateKey);
+        if (R.isSuccess(result)) {
+            JSONObject data = result.getData();
+            if (data.getString("operaSt").equals("01")) {
+                return R.warn("状态不明，等待下次查询");
+            }
+            if (data.getString("operaSt").equals("00")) {
+                return result;
+            } else {
+                return R.fail("原操作未被受理或失败");
+            }
+        }
+        return R.warn("查询请求失败");
     }
 
     /**
@@ -895,7 +908,7 @@ public class YsfUtils {
         log.info("银联开放平台接口调用结束，reqId：{},返回结果：{}", transSeq, execute.toString());
         String s = execute.body();
         if (StringUtils.isEmpty(s)) {
-            return R.fail("银联开放平台接口调用失败,返回结果为空");
+            return R.warn("银联开放平台接口调用失败,返回结果为空");
         }
         JSONObject result = JSONObject.parseObject(s);
         if (!"0000000000".equals(result.getString("code"))) {
@@ -923,7 +936,13 @@ public class YsfUtils {
         // 查询活动剩余名额查询
 //        aggQueryCpnRemain(activityNo, chnlId, appId, privateKey);
         // 赠送优惠券
-        couponAcquire(transSeq,activityNo,mobile,"1","01",chnlId,appId,privateKey,sm4Key);
+//        couponAcquire(transSeq,activityNo,mobile,"1","01",chnlId,appId,privateKey,sm4Key);
+        // 用户优惠券状态查询
+//        List<String> activityNoList = new ArrayList<>();
+//        activityNoList.add(activityNo);
+//        userCoupon("18340897551",activityNoList,chnlId,appId,privateKey,sm4Key);
+        // 查询优惠券赠送结果
+        couponAcqQuery(transSeq, "20231121", chnlId, appId, privateKey);
 
 //        // 获取活动剩余名额查询
 //        String url = "https://openapi.unionpay.com/upapi/mkt/agg/aggQueryCpnRemain/v1";

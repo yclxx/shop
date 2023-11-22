@@ -130,4 +130,13 @@ public class ShareUserRecordServiceImpl implements IShareUserRecordService {
         }
         return baseMapper.deleteBatchIds(ids) > 0;
     }
+
+    @Override
+    public ShareUserRecordVo queryByShareUserIdAndNumber(Long userId, Long number) {
+        LambdaQueryWrapper<ShareUserRecord> lqw = Wrappers.lambdaQuery();
+        lqw.eq(ShareUserRecord::getUserId, userId);
+        lqw.eq(ShareUserRecord::getNumber, number);
+        lqw.last("limit 1");
+        return baseMapper.selectVoOne(lqw);
+    }
 }

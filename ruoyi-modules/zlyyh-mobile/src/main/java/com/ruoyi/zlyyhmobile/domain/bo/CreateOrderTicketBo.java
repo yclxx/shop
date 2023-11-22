@@ -57,6 +57,11 @@ public class CreateOrderTicketBo {
     private String reservation;
 
     /**
+     * 分享用户ID
+     */
+    private Long shareUserId;
+
+    /**
      * 获取城市编码
      *
      * @return 城市编码 例如杭州：330100

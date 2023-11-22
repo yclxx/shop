@@ -30,6 +30,7 @@ import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.system.api.RemoteOrderService;
+import com.ruoyi.zlyyh.constant.YsfUpConstants;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.AppWxPayCallbackParams;
@@ -56,6 +57,7 @@ import com.ruoyi.zlyyhmobile.domain.bo.OrderProductBo;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
 import com.ruoyi.zlyyhmobile.domain.vo.PayResultVo;
 import com.ruoyi.zlyyhmobile.event.SendCouponEvent;
+import com.ruoyi.zlyyhmobile.event.ShareOrderEvent;
 import com.ruoyi.zlyyhmobile.service.*;
 import com.ruoyi.zlyyhmobile.utils.AliasMethod;
 import com.ruoyi.zlyyhmobile.utils.ProductUtils;
@@ -412,6 +414,16 @@ public class OrderServiceImpl implements IOrderService {
                 } catch (Exception e) {
                     sendResult(R.fail(e.getMessage()), orderPushInfo, order, cache, false);
                 }
+            } else if ("18".equals(order.getOrderType())) {
+                String chnlId = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.chnlId);
+                String appId = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.appId);
+                String sm4Key = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.sm4Key);
+                String rsaPrivateKey = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.rsaPrivateKey);
+                String entityTp = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.entityTp);
+                // 银联开放平台发券
+                R<JSONObject> result = YsfUtils.couponAcquire(orderPushInfo.getPushNumber(), order.getExternalProductId(), order.getAccount(), order.getCount().toString(), entityTp, chnlId, appId, rsaPrivateKey, sm4Key);
+                // 处理结果
+                sendResult(result, orderPushInfo, order, cache, true);
             } else {
                 sendResult(R.fail("订单类型无处理方式，请联系技术人员"), orderPushInfo, order, cache, false);
             }
@@ -469,6 +481,13 @@ public class OrderServiceImpl implements IOrderService {
                 orderPushInfoMapper.updateById(orderPushCache);
                 order = updateOrder(order);
             }
+        } else if ("18".equals(order.getOrderType())) {
+            String chnlId = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.chnlId);
+            String appId = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.appId);
+            String rsaPrivateKey = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.rsaPrivateKey);
+            R<JSONObject> result = YsfUtils.couponAcqQuery(orderPushCache.getPushNumber(), DateUtil.format(orderPushCache.getCreateTime(), DatePattern.PURE_DATE_PATTERN), chnlId, appId, rsaPrivateKey);
+            // 处理结果
+            sendResult(result, orderPushCache, order, cache, false);
         }
     }
 
@@ -494,6 +513,16 @@ public class OrderServiceImpl implements IOrderService {
                 orderPushCache.setStatus("1");
                 order.setSendStatus("2");
                 if (null != result.getData()) {
+                    if ("18".equals(order.getOrderType())) {
+                        try {
+                            JSONObject data = (JSONObject) result.getData();
+                            order.setExternalOrderNumber(data.getString("couponCd"));
+                            orderPushCache.setExternalOrderNumber(order.getExternalOrderNumber());
+                            order.setUsedStartTime(DateUtil.parse(data.getString("couponBeginTs")));
+                            order.setUsedEndTime(DateUtil.parse(data.getString("couponEndTs")));
+                        } catch (Exception ignored) {
+                        }
+                    }
                     orderPushCache.setRemark(JSONObject.toJSONString(result.getData()));
                 } else {
                     orderPushCache.setRemark(result.getMsg());
@@ -732,7 +761,8 @@ public class OrderServiceImpl implements IOrderService {
                 order = baseMapper.selectById(order.getNumber());
                 collectiveOrder = getCollectiveOrder(collectiveOrder.getCollectiveNumber());
                 SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
-                //orderStreamProducer.streamOrderMsg(order.getNumber().toString());
+                // 分销处理
+                SpringUtils.context().publishEvent(new ShareOrderEvent(bo.getShareUserId(), order.getNumber()));
                 return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), order.getNumber(), "0");
             }
             // 需支付
@@ -842,6 +872,8 @@ public class OrderServiceImpl implements IOrderService {
                 order = baseMapper.selectById(order.getNumber());
                 collectiveOrder = getCollectiveOrder(collectiveOrder.getCollectiveNumber());
                 SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
+                // 分销处理
+                SpringUtils.context().publishEvent(new ShareOrderEvent(bo.getShareUserId(), order.getNumber()));
                 return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), order.getNumber(), "0");
             }
             // 保存订单 后续如需改动成缓存订单，需注释
@@ -857,6 +889,8 @@ public class OrderServiceImpl implements IOrderService {
 //            OrderCacheUtils.setOrderInfoCache(orderInfo);
             //方法里加入小订单
             cacheOrder(order);
+            // 分销处理
+            SpringUtils.context().publishEvent(new ShareOrderEvent(bo.getShareUserId(), order.getNumber()));
             return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), order.getNumber(), "1");
         } catch (Exception e) {
             // 如果发生异常 回退名额
@@ -1149,6 +1183,8 @@ public class OrderServiceImpl implements IOrderService {
                 log.error("保存订单异常：", e);
                 throw new ServiceException("系统繁忙，请稍后重试");
             }
+            // 分销处理
+            SpringUtils.context().publishEvent(new ShareOrderEvent(bo.getShareUserId(), order.getNumber()));
             orderCount++;
         }
 
@@ -2460,7 +2496,7 @@ public class OrderServiceImpl implements IOrderService {
                 log.error("微信支付回调订单【{}】不存在,通知内容：{}", orderId, s);
                 return false;
             }
-            handleOrder(collectiveOrder, BigDecimalUtils.toMoney(payerTotal), queryId, pay_time, queryId, pay_time, issAddnData, bank_type);
+            handleOrder(collectiveOrder, BigDecimalUtils.toMoney(total), queryId, pay_time, queryId, pay_time, issAddnData, bank_type);
             return true;
         }
         return false;
@@ -2520,7 +2556,7 @@ public class OrderServiceImpl implements IOrderService {
             // 用户支付金额
             Integer payerTotal = amount.getInteger("payer_total");
 
-            handleOrder(collectiveOrder, BigDecimalUtils.toMoney(payerTotal), queryId, pay_time, queryId, pay_time, issAddnData, bank_type);
+            handleOrder(collectiveOrder, BigDecimalUtils.toMoney(total), queryId, pay_time, queryId, pay_time, issAddnData, bank_type);
             return "订单支付成功。";
         } else if ("NOTPAY".equals(trade_state)) {
             return "订单未支付。";

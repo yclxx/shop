@@ -372,6 +372,6 @@ public class ProductBo extends BaseEntity {
 
     private String sharePermission;
     private String shareAmountType;
-    private String shareOneAmount;
-    private String shareTwoAmount;
+    private BigDecimal shareOneAmount;
+    private BigDecimal shareTwoAmount;
 }
