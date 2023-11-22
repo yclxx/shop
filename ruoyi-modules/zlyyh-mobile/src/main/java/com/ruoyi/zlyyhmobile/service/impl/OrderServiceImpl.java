@@ -1506,7 +1506,7 @@ public class OrderServiceImpl implements IOrderService {
                         }
                     }
                     orderFoodInfo.setTotalAmount(1);
-                    orderFoodInfo.setUsedAmount(1);
+                    orderFoodInfo.setUsedAmount(0);
                     String code = orderItem.getString("code");
                     String qrCodeImgUrl = orderItem.getString("qrCodeImgUrl");
                     if (StringUtils.isNotEmpty(code) || StringUtils.isNotEmpty(qrCodeImgUrl)) {
@@ -1523,6 +1523,15 @@ public class OrderServiceImpl implements IOrderService {
                     orderFoodInfo.setEffectTime(DateUtils.getTime());
                     orderFoodInfoList.add(orderFoodInfo);
                 }
+            }
+            OrderPushInfo orderPushInfo = orderPushInfoMapper.selectOne(new LambdaQueryWrapper<OrderPushInfo>().eq(OrderPushInfo::getNumber, order.getNumber()));
+            if (ObjectUtil.isNotEmpty(orderPushInfo)) {
+                if (order.getSendStatus().equals("2")) {
+                    orderPushInfo.setStatus("1");
+                } else if (order.getSendStatus().equals("3")) {
+                    orderPushInfo.setStatus("2");
+                }
+                orderPushInfoMapper.updateById(orderPushInfo);
             }
             orderFoodInfoMapper.insertOrUpdateBatch(orderFoodInfoList);
             baseMapper.updateById(order);
