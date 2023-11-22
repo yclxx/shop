@@ -6,6 +6,8 @@ import cn.hutool.http.HttpStatus;
 import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
+import com.ruoyi.common.core.utils.JsonUtils;
+import com.ruoyi.common.core.utils.ServletUtils;
 import com.ruoyi.common.idempotent.annotation.RepeatSubmit;
 import com.ruoyi.common.log.annotation.Log;
 import com.ruoyi.common.log.enums.BusinessType;
@@ -376,6 +378,17 @@ public class OrderController {
     public R<Void> lianOrderCall(@RequestBody JSONObject param) {
         log.info("新联联订单核销回调通知接收参数解密前：{}", param);
         orderService.lianOrderBack(param, 3);
+        return R.ok();
+    }
+
+    /**
+     * 银联票券状态变动通知
+     */
+    @PostMapping("/ignore/couponStatusCallback")
+    public R<Void> couponStatusCallback(HttpServletRequest request) {
+        String body = ServletUtils.getParamJson(request);
+        String headers = JsonUtils.toJsonString(ServletUtils.getHeaderMap(request));
+        log.info("银联票券状态变动通知，请求头：{}，接收参数：{}", headers, body);
         return R.ok();
     }
 }

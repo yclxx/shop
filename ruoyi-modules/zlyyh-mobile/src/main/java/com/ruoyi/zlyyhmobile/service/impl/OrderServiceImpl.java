@@ -2469,7 +2469,7 @@ public class OrderServiceImpl implements IOrderService {
                 log.error("微信支付回调订单【{}】不存在,通知内容：{}", orderId, s);
                 return false;
             }
-            handleOrder(collectiveOrder, BigDecimalUtils.toMoney(payerTotal), queryId, pay_time, queryId, pay_time, issAddnData, bank_type);
+            handleOrder(collectiveOrder, BigDecimalUtils.toMoney(total), queryId, pay_time, queryId, pay_time, issAddnData, bank_type);
             return true;
         }
         return false;
@@ -2529,7 +2529,7 @@ public class OrderServiceImpl implements IOrderService {
             // 用户支付金额
             Integer payerTotal = amount.getInteger("payer_total");
 
-            handleOrder(collectiveOrder, BigDecimalUtils.toMoney(payerTotal), queryId, pay_time, queryId, pay_time, issAddnData, bank_type);
+            handleOrder(collectiveOrder, BigDecimalUtils.toMoney(total), queryId, pay_time, queryId, pay_time, issAddnData, bank_type);
             return "订单支付成功。";
         } else if ("NOTPAY".equals(trade_state)) {
             return "订单未支付。";
@@ -3359,6 +3359,7 @@ public class OrderServiceImpl implements IOrderService {
         lqw.eq(bo.getUserId() != null, Order::getUserId, bo.getUserId());
         lqw.eq(StringUtils.isNotBlank(bo.getPickupMethod()), Order::getPickupMethod, bo.getPickupMethod());
         lqw.eq(StringUtils.isNotBlank(bo.getVerificationStatus()), Order::getVerificationStatus, bo.getVerificationStatus());
+        lqw.eq(StringUtils.isNotBlank(bo.getOrderType()), Order::getOrderType, bo.getOrderType());
         if (StringUtils.isNotBlank(bo.getStatus())) {
             lqw.in(Order::getStatus, bo.getStatus().split(","));
         }

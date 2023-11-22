@@ -117,7 +117,7 @@
             or s.address like concat('%', #{bo.shopName}, '%')
             or s.formatted_address like concat('%', #{bo.shopName}, '%'))
         </if>
-        ORDER BY distance
+        ORDER BY sort asc,distance asc
     </select>
 
     <select id="selectShopListByCommercialTenantId" resultMap="ShopVo">

@@ -142,5 +142,8 @@ public class CollectiveOrderVo {
      */
     private List<OrderVo> orderVos;
 
+    @ExcelProperty(value = "创建时间")
+    private Date createTime;
+
 
 }
