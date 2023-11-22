@@ -86,6 +86,13 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
         return baseMapper.selectVoOne(wrapper);
     }
 
+    @Override
+    public CommercialTenantVo queryByCommercialTenantName(String tenantName) {
+        LambdaQueryWrapper<CommercialTenant> lqw = Wrappers.lambdaQuery();
+        lqw.eq(CommercialTenant::getCommercialTenantName,tenantName);
+        return baseMapper.selectVoOne(lqw);
+    }
+
     /**
      * 查询商户列表
      */
