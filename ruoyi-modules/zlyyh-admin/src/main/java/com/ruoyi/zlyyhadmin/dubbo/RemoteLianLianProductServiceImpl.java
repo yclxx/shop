@@ -20,6 +20,7 @@ import com.ruoyi.zlyyh.domain.LianlianCity;
 import com.ruoyi.zlyyh.domain.Product;
 import com.ruoyi.zlyyh.domain.ProductInfo;
 import com.ruoyi.zlyyh.domain.bo.*;
+import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
 import com.ruoyi.zlyyh.param.LianLianParam;
 import com.ruoyi.zlyyh.utils.LianLianUtils;
@@ -55,6 +56,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
     // 云闪付参数配置表
     private final IYsfConfigService ysfConfigService;
     private final IProductService productService;
+    private final ICommercialTenantService commercialTenantService;
     private final ICategorySupplierService categorySupplierService;
     private final ICategoryProductService categoryProductService;
     private final IProductInfoService productInfoService;
@@ -171,7 +173,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 item.setSalePrice(item.getSalePrice().divide(HUNDRED, 2, RoundingMode.HALF_UP)); // 售价
                 item.setOriginPrice(item.getOriginPrice().divide(HUNDRED, 2, RoundingMode.HALF_UP));// 原价
                 // 根据第三方产品编号查询产品是否存在，如果存在则更新，不存在新增
-                Product product = productService.queryByExternalProductId(lianProductVo.getProductId()+":"+ item.getItemId(), "14");
+                Product product = productService.queryByExternalProductId(lianProductVo.getProductId() + ":" + item.getItemId(), "14");
                 // 计算产品利润是否高于0.5元
                 if (item.getSalePrice().subtract(item.getChannelPrice()).compareTo(new BigDecimal("0.5")) < 0) {
                     if (ObjectUtil.isNotNull(product)) {
@@ -266,7 +268,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                     product.setProductId(IdUtil.getSnowflakeNextId());
                     product.setProductType("14");
                     // 联联产品id
-                    product.setExternalProductId(lianProductVo.getProductId()+":"+ item.getItemId());
+                    product.setExternalProductId(lianProductVo.getProductId() + ":" + item.getItemId());
                     product.setStatus("0");//上架
                     if (lianProductVo.getSingleMin() > 1) {//如果单次最小购买量大于1
                         //将状态改成下架
@@ -291,7 +293,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 if (ObjectUtil.isNotNull(productInfos)) {
                     String shops = productInfos.getString("shopList");
                     if (StringUtils.isNotEmpty(shops)) {
-                        i = this.saveShop(shops, product.getProductId());
+                        i = this.saveShop(shops, product.getProductId(), lianProductVo.getOnlyName());
                     }
                 }
                 if (ObjectUtil.isNotNull(categorySupplier) && ObjectUtil.isNotNull(categorySupplier.getCategoryId()) && i == 0) {
@@ -315,7 +317,24 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
         }
     }
 
-    private int saveShop(String shops, Long productId) {
+    private int saveShop(String shops, Long productId, String brandName) {
+        // 处理商户字段
+        Long commercialTenantId = null;
+        if (StringUtils.isNotEmpty(brandName)) {
+            CommercialTenantVo commercialTenantVo = commercialTenantService.queryByCommercialTenantName(brandName);
+            if (ObjectUtil.isNotEmpty(commercialTenantVo)) {
+                commercialTenantId = commercialTenantVo.getCommercialTenantId();
+            } else {
+                CommercialTenantBo bo = new CommercialTenantBo();
+                bo.setCommercialTenantId(IdUtil.getSnowflakeNextId());
+                bo.setCommercialTenantName(brandName);
+                Boolean b = commercialTenantService.insertByBo(bo);
+                if (b) {
+                    commercialTenantId = bo.getCommercialTenantId();
+                }
+            }
+        }
+
         int questionStore = 0;
         JSONArray jsonArray = JSONArray.parseArray(shops);
         List<LianLianParam.ShopList> shopsList = jsonArray.toJavaList(LianLianParam.ShopList.class);
@@ -355,6 +374,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 shopBo.setAddress(shop.getAddress());
                 shopBo.setLongitude(longitude);
                 shopBo.setLatitude(latitude);
+                shopBo.setCommercialTenantId(commercialTenantId);
                 shopService.insertByBo(shopBo);
                 shopId = shopBo.getShopId();
             }
