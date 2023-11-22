@@ -20,6 +20,7 @@ import com.ruoyi.zlyyh.domain.LianlianCity;
 import com.ruoyi.zlyyh.domain.Product;
 import com.ruoyi.zlyyh.domain.ProductInfo;
 import com.ruoyi.zlyyh.domain.bo.*;
+import com.ruoyi.zlyyh.domain.vo.ShopVo;
 import com.ruoyi.zlyyh.param.LianLianParam;
 import com.ruoyi.zlyyh.utils.LianLianUtils;
 import com.ruoyi.zlyyhadmin.domain.vo.LianLianProductItem;
@@ -104,9 +105,12 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                             log.info("获取联联产品接口失败");
                             break;
                         }
+                        if (pageNum == 1) {
+                            log.info("获取联联产品，城市：{},共：{}个产品", city, decryptedData.getInteger("total"));
+                        }
                         JSONArray list = decryptedData.getJSONArray("list");
                         if (list == null) {
-                            log.info("获取联联产品接口数据列表失败");
+                            log.info("获取联联产品接口数据列表失败，decryptedData={}", decryptedData);
                             break;
                         }
                         for (int i = 0; i < list.size(); i++) {
@@ -218,6 +222,9 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 //productInfo.setItemContentImage(lianProductVo.getFaceImg());
                 productInfo.setBuyLimit(Long.valueOf(lianProductVo.getSingleMax()));
                 productInfo.setReserveDesc(lianProductVo.getAttention()); // 订单注意事项配置补充说明
+                productInfo.setItemPrice(item.getChannelPrice());
+                // 联联套餐id
+                productInfo.setItemId(item.getItemId().toString());
                 //String appointMent = lianProductVo.getBookingType().equals("0") ? "1" : lianProductVo.getBookingType().equals("1") ? "3" : "2";
                 //productInfo.setAppointMent(appointMent);
                 // 如果需要填身份证，日期，配送地址 设置产品为下架状态
@@ -234,18 +241,12 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                     product.setStatus("1");
                 }
                 // 查询产品图文详情(文案)
-                String htmlContent = null;
+                String htmlContent;
                 String spxz = null;
                 JSONObject htmlObject = LianLianUtils.getProductDetail(channelId, secret, productDetailHtml, lianProductVo.getProductId().toString());
                 if (htmlObject != null) {
                     htmlContent = htmlObject.getString("htmlContent");
                     if (StringUtils.isNotEmpty(htmlContent)) { // 获取商品须知
-                        //Document doc = Jsoup.parse(htmlContent);
-                        //Elements elementsByClass = doc.getElementsByClass("body-center body-center-border-bottom");
-                        //Element body = doc.body();
-                        //body.html(elementsByClass.html());
-                        //// 获取联联商品购买须知内容
-                        //spxz = doc.outerHtml();
                         String fileName = product.getProductId() + ".html";
                         InputStream inputStream = new ByteArrayInputStream(htmlContent.getBytes());
                         byte[] bytes = IoUtil.readBytes(inputStream);
@@ -259,17 +260,12 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 product.setSupplier("1717473385180033026");
                 // 显示首页
                 product.setShowIndex("1");
-                // 商品扩展信息
-                //commodity.setCommodityInfo(commodityInfo);
                 //不存在则新增
                 if (product.getProductId() == null) {
                     product.setProductId(IdUtil.getSnowflakeNextId());
                     product.setProductType("14");
                     // 联联产品id
                     product.setExternalProductId(lianProductVo.getProductId().toString());
-                    // 联联套餐id
-                    productInfo.setItemId(item.getItemId().toString());
-                    productInfo.setItemPrice(item.getChannelPrice());
                     product.setStatus("0");//上架
                     if (lianProductVo.getSingleMin() > 1) {//如果单次最小购买量大于1
                         //将状态改成下架
@@ -297,19 +293,17 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                         i = this.saveShop(shops, product.getProductId());
                     }
                 }
-                if (categorySupplier != null && StringUtils.isNotEmpty(categorySupplier.getCategoryId())) {
-                    if (ObjectUtil.isNotNull(categorySupplier) && ObjectUtil.isNotNull(categorySupplier.getCategoryId()) && i == 0 && Long.parseLong(lianProductVo.getValidEndDate()) >= Long.parseLong(lianProductVo.getEndTime())) {
-                        String categoryId = categorySupplier.getCategoryId();
-                        String[] categorySplit = categoryId.split(",");
-                        for (int n = 0; n < categorySplit.length; n++) {
-                            Long l = Long.valueOf(categorySplit[n]);
-                            Long categoryProduct = categoryProductService.queryByCategoryAndProduct(l, product.getProductId());
-                            if (ObjectUtil.isNull(categoryProduct) || categoryProduct == 0) {
-                                CategoryProductBo categoryProductBo = new CategoryProductBo();
-                                categoryProductBo.setProductId(productInfo.getProductId());
-                                categoryProductBo.setCategoryId(l);
-                                categoryProductService.insertByBo(categoryProductBo);
-                            }
+                if (ObjectUtil.isNotNull(categorySupplier) && ObjectUtil.isNotNull(categorySupplier.getCategoryId()) && i == 0) {
+                    String categoryId = categorySupplier.getCategoryId();
+                    String[] categorySplit = categoryId.split(",");
+                    for (int n = 0; n < categorySplit.length; n++) {
+                        Long l = Long.valueOf(categorySplit[n]);
+                        Long categoryProduct = categoryProductService.queryByCategoryAndProduct(l, product.getProductId());
+                        if (ObjectUtil.isNull(categoryProduct) || categoryProduct == 0) {
+                            CategoryProductBo categoryProductBo = new CategoryProductBo();
+                            categoryProductBo.setProductId(productInfo.getProductId());
+                            categoryProductBo.setCategoryId(l);
+                            categoryProductService.insertByBo(categoryProductBo);
                         }
                     }
                 }
@@ -324,6 +318,10 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
         int questionStore = 0;
         JSONArray jsonArray = JSONArray.parseArray(shops);
         List<LianLianParam.ShopList> shopsList = jsonArray.toJavaList(LianLianParam.ShopList.class);
+        if (ObjectUtil.isNotEmpty(shopsList)) {
+            // 删除原有的商品门店关联信息
+            shopProductService.deleteByProductId(productId);
+        }
         for (LianLianParam.ShopList shop : shopsList) {
             //判断店铺是否有电话或者省市
             String address = shop.getAddress();
@@ -337,26 +335,31 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
             }
             BigDecimal longitude = new BigDecimal(shop.getLongitude());
             BigDecimal latitude = new BigDecimal(shop.getLatitude());
-            // 删除原有门店
-            shopService.deleteByCommercialTenantId(shop.getId()); // 此方法下次使用之后，必须删除
-            shopService.deleteBySupplierShopId(shop.getId());
 
-            // 新增门店
-            ShopBo shopBo = new ShopBo();
-            shopBo.setShopId(IdUtil.getSnowflakeNextId());
-            shopBo.setSupplierShopId(shop.getId().toString());
-            shopBo.setShopName(shop.getName());
-            shopBo.setShopTel(StringUtils.isEmpty(checkCellphone(shop.getPhoneNumber())) ? checkTelephone(shop.getPhoneNumber()) : checkCellphone(shop.getPhoneNumber()));
-            shopBo.setFormattedAddress(shop.getAddress());
-            shopBo.setCitycode(shop.getCityCode());
-            shopBo.setAddress(shop.getAddress());
-            shopBo.setLongitude(longitude);
-            shopBo.setLatitude(latitude);
-            shopService.insertByBo(shopBo);
-
+            // 查询门店是否存在
+            Long shopId = null;
+            ShopVo shopVo = shopService.queryByNameAndSupplierId(shop.getName(), "" + shop.getId());
+            if (null != shopVo) {
+                shopId = shopVo.getShopId();
+            }
+            if (ObjectUtil.isNull(shopId) || shopId == 0) {
+                // 新增门店
+                ShopBo shopBo = new ShopBo();
+                shopBo.setShopId(IdUtil.getSnowflakeNextId());
+                shopBo.setSupplierShopId(shop.getId().toString());
+                shopBo.setShopName(shop.getName());
+                shopBo.setShopTel(StringUtils.isEmpty(checkCellphone(shop.getPhoneNumber())) ? checkTelephone(shop.getPhoneNumber()) : checkCellphone(shop.getPhoneNumber()));
+                shopBo.setFormattedAddress(shop.getAddress());
+                shopBo.setCitycode(shop.getCityCode());
+                shopBo.setAddress(shop.getAddress());
+                shopBo.setLongitude(longitude);
+                shopBo.setLatitude(latitude);
+                shopService.insertByBo(shopBo);
+                shopId = shopBo.getShopId();
+            }
             ShopProductBo shopProductBo = new ShopProductBo();
             shopProductBo.setProductId(productId);
-            shopProductBo.setShopId(shopBo.getShopId());
+            shopProductBo.setShopId(shopId);
             shopProductService.insertByBo(shopProductBo);
         }
         return questionStore;

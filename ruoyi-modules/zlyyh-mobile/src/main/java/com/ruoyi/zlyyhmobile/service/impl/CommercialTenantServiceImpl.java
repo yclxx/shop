@@ -87,6 +87,10 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
                 String mv = "" + v;
                 shopVo.setDistance(new BigDecimal(mv));
                 commercialTenantVo.setDistance(shopVo.getDistance());
+                if (ObjectUtil.isNotEmpty(shopVo.getDistance())) {
+                    BigDecimal distance = shopVo.getDistance().setScale(2, BigDecimal.ROUND_DOWN);
+                    shopVo.setDistanceString(distance.toString());
+                }
             }
             commercialTenantVo.setShopVo(shopVo);
         }

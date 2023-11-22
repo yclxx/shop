@@ -1233,8 +1233,8 @@ public class OrderServiceImpl implements IOrderService {
             JSONObject result = LianLianUtils.getValidToken(channelId, secret, basePath + validToken, order.getNumber().toString(),
                 productInfoVo.getItemPrice(), productVo.getExternalProductId(), productInfoVo.getItemId(), userVo.getMobile());
             if (ObjectUtil.isEmpty(result)) {//请求失败
-                log.error("联联创建第{}单时失败，失败原因：{}", order.getNumber(), result.getString("message"));
-                throw new ServiceException(result.getString("该产品库存不足，请购买其他产品"));
+                log.error("联联创建第{}单时失败", order.getNumber());
+                throw new ServiceException("该产品库存不足，请购买其他产品");
             } else {
                 validToken = result.getString("validToken");
                 RedisUtils.setCacheObject(order.getNumber().toString(), validToken, Duration.ofMinutes(2));
@@ -1467,9 +1467,10 @@ public class OrderServiceImpl implements IOrderService {
             // 验证订单创建条件
             JSONObject result = LianLianUtils.getValidToken(channelId, secret, basePath + validTokenUrl, order.getNumber().toString(),
                 productInfoVo.getItemPrice(), productVo.getExternalProductId(), productInfoVo.getItemId(), userVo.getMobile());
-            if (ObjectUtil.isEmpty(result)) {//请求失败
-                log.error("联联创建第{}单时失败，失败原因：{}", order.getNumber(), result.getString("message"));
-                throw new ServiceException(result.getString("该产品库存不足，请购买其他产品"));
+            if (ObjectUtil.isEmpty(result)) {
+                // 请求失败
+                log.error("联联创建第{}单时失败", order.getNumber());
+                throw new ServiceException("该产品库存不足，请购买其他产品");
             } else {
                 validToken = result.getString("validToken");
             }
@@ -3386,6 +3387,7 @@ public class OrderServiceImpl implements IOrderService {
         lqw.eq(bo.getUserId() != null, Order::getUserId, bo.getUserId());
         lqw.eq(StringUtils.isNotBlank(bo.getPickupMethod()), Order::getPickupMethod, bo.getPickupMethod());
         lqw.eq(StringUtils.isNotBlank(bo.getVerificationStatus()), Order::getVerificationStatus, bo.getVerificationStatus());
+        lqw.eq(StringUtils.isNotBlank(bo.getOrderType()), Order::getOrderType, bo.getOrderType());
         if (StringUtils.isNotBlank(bo.getStatus())) {
             lqw.in(Order::getStatus, bo.getStatus().split(","));
         }
