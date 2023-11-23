@@ -15,6 +15,7 @@ import com.ruoyi.zlyyh.domain.bo.ShareUserRecordBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.properties.WxProperties;
+import com.ruoyi.zlyyh.utils.CloudRechargeEntity;
 import com.ruoyi.zlyyh.utils.WxUtils;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.bo.GenWxQrCodeBo;
@@ -129,5 +130,14 @@ public class ShareUserController extends BaseController {
         }
         byte[] bytes = WxUtils.genQrCode(accessToken, genWxQrCodeBo.getScene(), genWxQrCodeBo.getPage(), genWxQrCodeBo.getEnv_version());
         return R.ok("操作成功", Base64.encode(bytes));
+    }
+
+    /**
+     * 订单回调通知
+     */
+    @RequestMapping("/ignore/orderCallback")
+    public R<Void> orderCallback(@RequestBody CloudRechargeEntity huiguyunEntity) {
+        shareUserRecordService.cloudRechargeCallback(huiguyunEntity);
+        return R.ok();
     }
 }

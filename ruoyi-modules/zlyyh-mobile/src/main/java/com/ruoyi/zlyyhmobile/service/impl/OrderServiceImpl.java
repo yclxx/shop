@@ -164,6 +164,7 @@ public class OrderServiceImpl implements IOrderService {
         if (insert <= 0) {
             throw new ServiceException("更新订单失败");
         }
+        SpringUtils.context().publishEvent(new ShareOrderEvent(null, order.getNumber()));
         return baseMapper.selectById(order.getNumber());
     }
 
@@ -416,11 +417,11 @@ public class OrderServiceImpl implements IOrderService {
                     sendResult(R.fail(e.getMessage()), orderPushInfo, order, cache, false);
                 }
             } else if ("18".equals(order.getOrderType())) {
-                String chnlId = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.chnlId);
-                String appId = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.appId);
-                String sm4Key = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.sm4Key);
-                String rsaPrivateKey = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.rsaPrivateKey);
-                String entityTp = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.entityTp);
+                String chnlId = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.up_chnlId);
+                String appId = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.up_appId);
+                String sm4Key = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.up_sm4Key);
+                String rsaPrivateKey = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.up_rsaPrivateKey);
+                String entityTp = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.up_entityTp);
                 // 银联开放平台发券
                 R<JSONObject> result = YsfUtils.couponAcquire(orderPushInfo.getPushNumber(), order.getExternalProductId(), order.getAccount(), order.getCount().toString(), entityTp, chnlId, appId, rsaPrivateKey, sm4Key);
                 // 处理结果
@@ -483,9 +484,9 @@ public class OrderServiceImpl implements IOrderService {
                 order = updateOrder(order);
             }
         } else if ("18".equals(order.getOrderType())) {
-            String chnlId = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.chnlId);
-            String appId = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.appId);
-            String rsaPrivateKey = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.rsaPrivateKey);
+            String chnlId = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.up_chnlId);
+            String appId = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.up_appId);
+            String rsaPrivateKey = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.up_rsaPrivateKey);
             R<JSONObject> result = YsfUtils.couponAcqQuery(orderPushCache.getPushNumber(), DateUtil.format(orderPushCache.getCreateTime(), DatePattern.PURE_DATE_PATTERN), chnlId, appId, rsaPrivateKey);
             // 处理结果
             sendResult(result, orderPushCache, order, cache, false);
@@ -1643,9 +1644,10 @@ public class OrderServiceImpl implements IOrderService {
         orderFoodInfo.setVoucherStatus("USED");
         orderFoodInfo.setOrderStatus("310");
         //订单表核销状态更改为已失效
-        order.setVerificationStatus("2");
+        order.setVerificationStatus("1");
         baseMapper.updateById(order);
         orderFoodInfoMapper.updateById(orderFoodInfo);
+        SpringUtils.context().publishEvent(new ShareOrderEvent(null, order.getNumber()));
     }
 
     /**
@@ -2004,6 +2006,7 @@ public class OrderServiceImpl implements IOrderService {
                     order.setStatus("4");
                     baseMapper.updateById(order);
                     refundMapper.insert(refund);
+                    SpringUtils.context().publishEvent(new ShareOrderEvent(null, order.getNumber()));
                 }
             }
             return;
@@ -2020,6 +2023,7 @@ public class OrderServiceImpl implements IOrderService {
             order.setCancelStatus("0");
             order.setStatus("4");
             baseMapper.updateById(order);
+            SpringUtils.context().publishEvent(new ShareOrderEvent(null, order.getNumber()));
             //如果电子券为未使用状态 在这里先走退款接口
             if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
                 String accessToken = CtripUtils.getAccessToken();
@@ -3534,5 +3538,80 @@ public class OrderServiceImpl implements IOrderService {
             return null;
         }
         return collectiveOrderMapper.selectById(orderVo.getCollectiveNumber());
+    }
+
+    /**
+     * 查询未核销的订单列表 根据订单类型
+     *
+     * @param orderTypeList 订单类型
+     * @return 订单集合
+     */
+    public TableDataInfo<OrderVo> queryOrderByOrderTypeList(List<String> orderTypeList, Long userId, PageQuery pageQuery) {
+        LambdaQueryWrapper<Order> lqw = Wrappers.lambdaQuery();
+        lqw.in(Order::getOrderType, orderTypeList);
+        lqw.eq(Order::getStatus, "2");
+        lqw.eq(Order::getSendStatus, "2");
+        lqw.eq(Order::getVerificationStatus, "0");
+        lqw.eq(null != userId, Order::getUserId, userId);
+        lqw.gt(Order::getUsedEndTime, DateUtil.offsetDay(new Date(), -3));
+        Page<OrderVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+        return TableDataInfo.build(result);
+    }
+
+    /**
+     * 查询订单核销状态
+     *
+     * @param orderVo 订单信息
+     */
+    public void queryOrderUsedStatus(OrderVo orderVo) {
+        if (null == orderVo || !orderVo.getVerificationStatus().equals("0") || !"2".equals(orderVo.getStatus()) || !"2".equals(orderVo.getSendStatus())) {
+            return;
+        }
+        if ("18".equals(orderVo.getOrderType())) {
+            if (StringUtils.isBlank(orderVo.getExternalOrderNumber())) {
+                return;
+            }
+            List<String> activityNoList = new ArrayList<>();
+            activityNoList.add(orderVo.getExternalProductId());
+            String chnlId = ysfConfigService.queryValueByKey(orderVo.getPlatformKey(), YsfUpConstants.up_chnlId);
+            String appId = ysfConfigService.queryValueByKey(orderVo.getPlatformKey(), YsfUpConstants.up_appId);
+            String sm4Key = ysfConfigService.queryValueByKey(orderVo.getPlatformKey(), YsfUpConstants.up_sm4Key);
+            String rsaPrivateKey = ysfConfigService.queryValueByKey(orderVo.getPlatformKey(), YsfUpConstants.up_rsaPrivateKey);
+            String entityTp = ysfConfigService.queryValueByKey(orderVo.getPlatformKey(), YsfUpConstants.up_entityTp);
+            R<JSONObject> result = YsfUtils.userCoupon(orderVo.getAccount(), activityNoList, entityTp, chnlId, appId, rsaPrivateKey, sm4Key);
+            if (R.isSuccess(result)) {
+                JSONObject data = result.getData();
+                JSONObject params = data.getJSONObject("params");
+                if (null != params) {
+                    JSONArray activityInfoList = params.getJSONArray("activityInfoList");
+                    if (null != activityInfoList) {
+                        for (int i = 0; i < activityInfoList.size(); i++) {
+                            UpUserCouponInfo upUserCouponInfo = activityInfoList.getObject(i, UpUserCouponInfo.class);
+                            if (orderVo.getExternalOrderNumber().equals(upUserCouponInfo.getCouponCd())) {
+                                // 已使用
+                                boolean updateFlag = false;
+                                Order order = new Order();
+                                order.setNumber(orderVo.getNumber());
+                                if ("6".equals(upUserCouponInfo.getAcctSt())) {
+                                    order.setVerificationStatus("1");
+                                    updateFlag = true;
+                                } else if ("2".equals(upUserCouponInfo.getAcctSt())) {
+                                    // 已销户 已删除
+                                    order.setVerificationStatus("2");
+                                    updateFlag = true;
+                                } else if ("5".equals(upUserCouponInfo.getAcctSt())) {
+                                    // 已失效
+                                    order.setVerificationStatus("2");
+                                    updateFlag = true;
+                                }
+                                if (updateFlag) {
+                                    updateOrder(order);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

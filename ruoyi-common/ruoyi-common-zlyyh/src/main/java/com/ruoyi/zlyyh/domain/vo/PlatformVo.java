@@ -7,6 +7,7 @@ import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -159,7 +160,7 @@ public class PlatformVo implements Serializable {
     /**
      * 核销之后，分销奖励多久到账，默认T+1,0为实时到账
      */
-    private String shareUsedDate;
+    private Integer shareUsedDate;
     /**
      * 分销奖励类型：0-云闪付红包
      */
@@ -175,5 +176,5 @@ public class PlatformVo implements Serializable {
     /**
      * 同一用户每月可获奖励上限,0为不限制
      */
-    private String shareAwardMonthAmount;
+    private BigDecimal shareAwardMonthAmount;
 }

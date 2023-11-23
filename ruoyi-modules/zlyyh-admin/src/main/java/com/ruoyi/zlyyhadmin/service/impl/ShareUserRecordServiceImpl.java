@@ -4,16 +4,20 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.zlyyh.domain.ShareUserAccount;
 import com.ruoyi.zlyyh.domain.ShareUserRecord;
 import com.ruoyi.zlyyh.domain.bo.ShareUserRecordBo;
 import com.ruoyi.zlyyh.domain.vo.ShareUserRecordVo;
+import com.ruoyi.zlyyh.mapper.ShareUserAccountMapper;
 import com.ruoyi.zlyyh.mapper.ShareUserRecordMapper;
 import com.ruoyi.zlyyhadmin.service.IShareUserRecordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 import java.util.List;
@@ -30,12 +34,13 @@ import java.util.Map;
 public class ShareUserRecordServiceImpl implements IShareUserRecordService {
 
     private final ShareUserRecordMapper baseMapper;
+    private final ShareUserAccountMapper shareUserAccountMapper;
 
     /**
      * 查询分销记录
      */
     @Override
-    public ShareUserRecordVo queryById(Long recordId){
+    public ShareUserRecordVo queryById(Long recordId) {
         return baseMapper.selectVoById(recordId);
     }
 
@@ -71,7 +76,7 @@ public class ShareUserRecordServiceImpl implements IShareUserRecordService {
         lqw.eq(bo.getAwardTime() != null, ShareUserRecord::getAwardTime, bo.getAwardTime());
         lqw.eq(StringUtils.isNotBlank(bo.getAwardAccount()), ShareUserRecord::getAwardAccount, bo.getAwardAccount());
         lqw.between(params.get("beginCreateTime") != null && params.get("endCreateTime") != null,
-            ShareUserRecord::getCreateTime ,params.get("beginCreateTime"), params.get("endCreateTime"));
+            ShareUserRecord::getCreateTime, params.get("beginCreateTime"), params.get("endCreateTime"));
         return lqw;
     }
 
@@ -92,6 +97,7 @@ public class ShareUserRecordServiceImpl implements IShareUserRecordService {
     /**
      * 修改分销记录
      */
+    @Transactional
     @Override
     public Boolean updateByBo(ShareUserRecordBo bo) {
         ShareUserRecord update = BeanUtil.toBean(bo, ShareUserRecord.class);
@@ -102,8 +108,28 @@ public class ShareUserRecordServiceImpl implements IShareUserRecordService {
     /**
      * 保存前的数据校验
      */
-    private void validEntityBeforeSave(ShareUserRecord entity){
-        //TODO 做一些数据校验,如唯一约束
+    private void validEntityBeforeSave(ShareUserRecord entity) {
+        ShareUserAccount shareUserAccount = shareUserAccountMapper.selectById(entity.getUserId());
+        if (null == shareUserAccount) {
+            throw new ServiceException("分销用户账户不存在");
+        }
+        // 操作邀请人用户账户
+        if (null != entity.getRecordId()) {
+            ShareUserRecordVo shareUserRecordVo = baseMapper.selectVoById(entity.getRecordId());
+            if (null == shareUserRecordVo) {
+                return;
+            }
+            if (shareUserRecordVo.getInviteeStatus().equals(entity.getInviteeStatus())) {
+                return;
+            }
+            if (entity.getInviteeStatus().equals("0") || entity.getInviteeStatus().equals("1")) {
+                return;
+            }
+            if ("3".equals(entity.getInviteeStatus()) || "4".equals(entity.getInviteeStatus()) || "5".equals(entity.getInviteeStatus())) {
+                shareUserAccount.setFreezeBalance(shareUserAccount.getFreezeBalance().subtract(entity.getAwardAmount()));
+                shareUserAccountMapper.updateById(shareUserAccount);
+            }
+        }
     }
 
     /**
@@ -111,7 +137,7 @@ public class ShareUserRecordServiceImpl implements IShareUserRecordService {
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
-        if(isValid){
+        if (isValid) {
             //TODO 做一些业务上的校验,判断是否需要校验
         }
         return baseMapper.deleteBatchIds(ids) > 0;

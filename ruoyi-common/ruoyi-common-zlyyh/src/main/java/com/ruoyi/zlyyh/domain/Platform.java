@@ -7,6 +7,8 @@ import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.math.BigDecimal;
+
 /**
  * 平台信息对象 t_platform
  *
@@ -121,7 +123,7 @@ public class Platform extends BaseEntity {
     /**
      * 核销之后，分销奖励多久到账，默认T+1,0为实时到账
      */
-    private String shareUsedDate;
+    private Integer shareUsedDate;
     /**
      * 分销奖励类型：0-云闪付红包
      */
@@ -137,5 +139,5 @@ public class Platform extends BaseEntity {
     /**
      * 同一用户每月可获奖励上限,0为不限制
      */
-    private String shareAwardMonthAmount;
+    private BigDecimal shareAwardMonthAmount;
 }

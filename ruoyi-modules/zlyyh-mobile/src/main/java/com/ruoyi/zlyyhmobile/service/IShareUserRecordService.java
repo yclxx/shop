@@ -4,7 +4,9 @@ import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.ShareUserRecordBo;
 import com.ruoyi.zlyyh.domain.vo.ShareUserRecordVo;
+import com.ruoyi.zlyyh.utils.CloudRechargeEntity;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 
@@ -57,9 +59,31 @@ public interface IShareUserRecordService {
     /**
      * 根据分享用户ID和订单编号查询分享记录
      *
-     * @param shareUserId 分享用户ID
-     * @param number      订单编号
+     * @param number 订单编号
      * @return 分享记录
      */
-    ShareUserRecordVo queryByShareUserIdAndNumber(Long shareUserId, Long number);
+    List<ShareUserRecordVo> queryByNumber(Long number);
+
+    /**
+     * 发送奖励
+     *
+     * @param recordId 分享记录ID
+     */
+    void sendAward(Long recordId);
+
+    /**
+     * 查询状态
+     *
+     * @param recordId 分享记录ID
+     */
+    void querySendAwardStatus(Long recordId);
+
+    BigDecimal sumAwardAmount(Long userId);
+
+    /**
+     * 充值中心订单回调
+     *
+     * @param cloudRechargeEntity 通知参数
+     */
+    void cloudRechargeCallback(CloudRechargeEntity cloudRechargeEntity);
 }

@@ -2,15 +2,13 @@ package com.ruoyi.zlyyh.domain.bo;
 
 import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
+import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import javax.validation.constraints.*;
 
-import java.util.Date;
-
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.Date;
-import com.ruoyi.common.core.web.domain.BaseEntity;
 
 /**
  * 分销记录业务对象
@@ -26,25 +24,25 @@ public class ShareUserRecordBo extends BaseEntity {
     /**
      * ID
      */
-    @NotNull(message = "ID不能为空", groups = { EditGroup.class })
+    @NotNull(message = "ID不能为空", groups = {EditGroup.class})
     private Long recordId;
 
     /**
      * 分销员用户ID
      */
-    @NotNull(message = "分销员用户ID不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotNull(message = "分销员用户ID不能为空", groups = {AddGroup.class, EditGroup.class})
     private Long userId;
 
     /**
      * 被分销用户ID
      */
-    @NotNull(message = "被分销用户ID不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotNull(message = "被分销用户ID不能为空", groups = {AddGroup.class, EditGroup.class})
     private Long inviteeUserId;
 
     /**
      * 订单号
      */
-    @NotNull(message = "订单号不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotNull(message = "订单号不能为空", groups = {AddGroup.class, EditGroup.class})
     private Long number;
 
     /**
@@ -77,5 +75,12 @@ public class ShareUserRecordBo extends BaseEntity {
      */
     private String awardAccount;
 
-
+    /**
+     * 奖励订单号
+     */
+    private String awardPushNumber;
+    /**
+     * 发放结果
+     */
+    private String pushRemake;
 }

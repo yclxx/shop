@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -24,13 +25,13 @@ public class PlatformBo extends BaseEntity {
     /**
      * 平台标识
      */
-    @NotNull(message = "平台标识不能为空", groups = { EditGroup.class })
+    @NotNull(message = "平台标识不能为空", groups = {EditGroup.class})
     private Long platformKey;
 
     /**
      * 平台名称
      */
-    @NotBlank(message = "平台名称不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotBlank(message = "平台名称不能为空", groups = {AddGroup.class, EditGroup.class})
     private String platformName;
 
     /**
@@ -41,7 +42,7 @@ public class PlatformBo extends BaseEntity {
     /**
      * 状态（0正常 1停用）
      */
-    @NotBlank(message = "状态不能为空", groups = { AddGroup.class, EditGroup.class })
+    @NotBlank(message = "状态不能为空", groups = {AddGroup.class, EditGroup.class})
     private String status;
 
     /**
@@ -136,7 +137,7 @@ public class PlatformBo extends BaseEntity {
     /**
      * 核销之后，分销奖励多久到账，默认T+1,0为实时到账
      */
-    private String shareUsedDate;
+    private Integer shareUsedDate;
     /**
      * 分销奖励类型：0-云闪付红包
      */
@@ -152,5 +153,5 @@ public class PlatformBo extends BaseEntity {
     /**
      * 同一用户每月可获奖励上限,0为不限制
      */
-    private String shareAwardMonthAmount;
+    private BigDecimal shareAwardMonthAmount;
 }

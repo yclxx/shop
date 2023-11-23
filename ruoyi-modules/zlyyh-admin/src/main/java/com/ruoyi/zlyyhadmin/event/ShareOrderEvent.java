@@ -1,4 +1,4 @@
-package com.ruoyi.zlyyhmobile.event;
+package com.ruoyi.zlyyhadmin.event;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

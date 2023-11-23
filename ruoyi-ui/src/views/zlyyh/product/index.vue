@@ -161,7 +161,7 @@
           <el-tab-pane label="基本信息" name="basicCoupon" key="basicCoupon" :style="{height: tableHeight}">
             <el-row>
               <el-col :span="8">
-                <el-form-item label="平台" class="label-color"  prop="platformKey">
+                <el-form-item label="平台" class="label-color" prop="platformKey">
                   <el-select v-model="form.platformKey" placeholder="请选择平台" filterable clearable style="width: 100%;">
                     <el-option v-for="item in platformList" :key="item.id" :value="item.id" :label="item.label">
                     </el-option>
@@ -742,8 +742,6 @@
                 </el-form-item>
               </el-col>
               <el-col :span="8">
-                <el-form-item label="弹窗提示" prop="isPoup">
-                  <el-select v-model="form.isPoup" style="width: 100%;" placeholder="请选择购买前是否弹窗提示">
                 <el-form-item label="票券描述" prop="couponTip">
                   <el-input v-model="form.couponTip" type="textarea" placeholder="请输入内容" />
                 </el-form-item>
@@ -1732,4 +1730,3 @@
     }
   };
 </script>
-

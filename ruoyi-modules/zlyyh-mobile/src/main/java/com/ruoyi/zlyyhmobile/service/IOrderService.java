@@ -266,4 +266,19 @@ public interface IOrderService {
      * 联联通知回调统一分配方法
      */
     void lianOrderBack(JSONObject param, Integer number);
+
+    /**
+     * 查询订单列表 根据订单类型
+     *
+     * @param orderTypeList 订单类型
+     * @return 订单集合
+     */
+    TableDataInfo<OrderVo> queryOrderByOrderTypeList(List<String> orderTypeList, Long userId, PageQuery pageQuery);
+
+    /**
+     * 查询订单核销状态
+     *
+     * @param orderVo 订单信息
+     */
+    void queryOrderUsedStatus(OrderVo orderVo);
 }

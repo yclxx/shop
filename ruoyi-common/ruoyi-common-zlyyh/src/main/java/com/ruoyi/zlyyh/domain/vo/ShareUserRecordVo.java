@@ -93,6 +93,15 @@ public class ShareUserRecordVo {
     private String awardAccount;
 
     /**
+     * 奖励订单号
+     */
+    private String awardPushNumber;
+    /**
+     * 发放结果
+     */
+    private String pushRemake;
+
+    /**
      * 创建时间
      */
     @ExcelProperty(value = "创建时间")

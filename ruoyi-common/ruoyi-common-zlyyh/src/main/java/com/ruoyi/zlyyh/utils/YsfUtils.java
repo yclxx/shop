@@ -854,14 +854,14 @@ public class YsfUtils {
      * @param sm4Key       sm4密钥
      * @return {"params":{"activityInfoList":[{"acctSt":"1","activityId":"3102023022257962","activityName":"0.1元购誉达白茶20元优惠券（满200元可用）","avlBalance":"1","couponCd":"INNER_23111718233203369865239260001621","couponThumbnailIm":"https://mpool.unionpay.com/file/00010000/20230222/11c349b0-0cae-4b37-9f55-feba206cbc1b.jpg","validBeginTm":"20231117182332","validEndTm":"20231124182332"}],"totalPageNum":"1"},"code":"0000000000","msg":"交易成功"}
      */
-    public static R<JSONObject> userCoupon(String mobile, List<String> couponIdList, String chnlId, String appId, String privateKey, String sm4Key) {
+    public static R<JSONObject> userCoupon(String mobile, List<String> couponIdList, String entityTp, String chnlId, String appId, String privateKey, String sm4Key) {
         String url = "https://openapi.unionpay.com/upapi/mkt/kol/userCoupon/v1";
         String bizMethod = "mkt.kol.userCoupon.v1";
         String transSeq = IdUtil.getSnowflakeNextIdStr();
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("chnlId", chnlId);
         requestBody.put("transSeq", transSeq);
-        requestBody.put("acctEntityTp", "UP01");
+        requestBody.put("acctEntityTp", "UP" + entityTp);
         try {
             requestBody.put("mobile", YsfSm4Utils.encryptSM4(mobile, sm4Key));
         } catch (Exception e) {
@@ -929,20 +929,22 @@ public class YsfUtils {
         String chnlId = "8126";
         String appId = "up_49pfnfkryxb4v_s28";
         String activityTp = "02";
-        String activityNo = "3102023022257962";
-        String mobile = "17767132971";
+        String activityNo = "3102023112040116";
+        String mobile = "15542432188";
+//        String mobile = "17767132971";
+//        String mobile = "18340897551";
         String sm4Key = "d33fc2573c5ed170009a7525b7244786";
         String transSeq = IdUtil.getSnowflakeNextIdStr();
         // 查询活动剩余名额查询
 //        aggQueryCpnRemain(activityNo, chnlId, appId, privateKey);
         // 赠送优惠券
-//        couponAcquire(transSeq,activityNo,mobile,"1","01",chnlId,appId,privateKey,sm4Key);
+//        couponAcquire(transSeq,activityNo,mobile,"2","03",chnlId,appId,privateKey,sm4Key);
         // 用户优惠券状态查询
-//        List<String> activityNoList = new ArrayList<>();
-//        activityNoList.add(activityNo);
-//        userCoupon("18340897551",activityNoList,chnlId,appId,privateKey,sm4Key);
+        List<String> activityNoList = new ArrayList<>();
+        activityNoList.add(activityNo);
+        userCoupon(mobile, activityNoList, "03", chnlId, appId, privateKey, sm4Key);
         // 查询优惠券赠送结果
-        couponAcqQuery(transSeq, "20231121", chnlId, appId, privateKey);
+//        couponAcqQuery(transSeq, "20231121", chnlId, appId, privateKey);
 
 //        // 获取活动剩余名额查询
 //        String url = "https://openapi.unionpay.com/upapi/mkt/agg/aggQueryCpnRemain/v1";
