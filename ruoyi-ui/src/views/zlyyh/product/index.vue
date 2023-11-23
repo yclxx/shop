@@ -161,6 +161,14 @@
           <el-tab-pane label="基本信息" name="basicCoupon" key="basicCoupon" :style="{height: tableHeight}">
             <el-row>
               <el-col :span="8">
+                <el-form-item label="平台" class="label-color"  prop="platformKey">
+                  <el-select v-model="form.platformKey" placeholder="请选择平台" filterable clearable style="width: 100%;">
+                    <el-option v-for="item in platformList" :key="item.id" :value="item.id" :label="item.label">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
                 <el-form-item label="商品名称" prop="productName">
                   <el-input maxlength="64" v-model="form.productName" placeholder="请输入商品名称" />
                 </el-form-item>
@@ -318,14 +326,7 @@
                   </el-date-picker>
                 </el-form-item>
               </el-col>
-              <el-col :span="8">
-                <el-form-item label="平台" prop="platformKey">
-                  <el-select v-model="form.platformKey" placeholder="请选择平台" filterable clearable style="width: 100%;">
-                    <el-option v-for="item in platformList" :key="item.id" :value="item.id" :label="item.label">
-                    </el-option>
-                  </el-select>
-                </el-form-item>
-              </el-col>
+
               <el-col :span="8">
                 <el-form-item label="支付商户号" prop="merchantId"
                   v-if="form.productAffiliation == '0' && form.pickupMethod == '1'">
@@ -743,6 +744,13 @@
               <el-col :span="8">
                 <el-form-item label="弹窗提示" prop="isPoup">
                   <el-select v-model="form.isPoup" style="width: 100%;" placeholder="请选择购买前是否弹窗提示">
+                <el-form-item label="票券描述" prop="couponTip">
+                  <el-input v-model="form.couponTip" type="textarea" placeholder="请输入内容" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="需要弹窗提示" prop="isPoup">
+                  <el-select v-model="form.isPoup" placeholder="请选择是否支持优惠券">
                     <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label"
                       :value="dict.value"></el-option>
                   </el-select>
@@ -1125,11 +1133,7 @@
             message: "周几能领不能为空",
             trigger: "blur"
           }],
-          platformKey: [{
-            required: true,
-            message: "平台不能为空",
-            trigger: "blur"
-          }],
+
           externalProductSendValue: [{
             required: true,
             message: "发放金额不能为空",
@@ -1295,6 +1299,7 @@
           productSmallImg: undefined,
           isPoup: undefined,
           poupText: undefined,
+          couponTip: undefined,
           productAffiliation: undefined,
           productType: undefined,
           pickupMethod: undefined,
@@ -1727,3 +1732,4 @@
     }
   };
 </script>
+

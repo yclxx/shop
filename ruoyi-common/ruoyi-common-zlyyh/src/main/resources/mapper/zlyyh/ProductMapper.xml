@@ -82,6 +82,7 @@
         <result property="shareAmountType" column="share_amount_type"/>
         <result property="shareOneAmount" column="share_one_amount"/>
         <result property="shareTwoAmount" column="share_two_amount"/>
+        <result property="couponTip" column="coupon_tip"/>
     </resultMap>
 
     <select id="selectPageByShopId" resultMap="ProductResult">

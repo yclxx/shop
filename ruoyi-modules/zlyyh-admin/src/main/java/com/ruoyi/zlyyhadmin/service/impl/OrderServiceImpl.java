@@ -95,7 +95,7 @@ public class OrderServiceImpl implements IOrderService {
         Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<Order> lqw = Wrappers.lambdaQuery();
         if(null != bo.getNumber()){
-            lqw.and(lq -> lq.eq(Order::getNumber, bo.getNumber()).or().eq(Order::getParentNumber, bo.getNumber()));
+            lqw.and(lq -> lq.eq(Order::getNumber, bo.getNumber()).or().eq(Order::getParentNumber, bo.getNumber()).or().eq(Order::getCollectiveNumber,bo.getNumber()));
         }
         if (StringUtils.isNumeric(bo.getProductName())) {
             bo.setProductId(Long.parseLong(bo.getProductName()));

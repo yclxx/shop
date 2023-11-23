@@ -424,4 +424,6 @@ public class ProductVo implements Serializable {
     private String shareAmountType;
     private BigDecimal shareOneAmount;
     private BigDecimal shareTwoAmount;
+
+    private String couponTip;
 }

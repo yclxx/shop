@@ -264,7 +264,7 @@ public class ProductBo extends BaseEntity {
     /**
      * 平台标识
      */
-    @NotNull(message = "平台不能为空", groups = {AddGroup.class, EditGroup.class})
+//    @NotNull(message = "平台不能为空", groups = {AddGroup.class, EditGroup.class})
     private Long platformKey;
 
     /**
@@ -374,6 +374,8 @@ public class ProductBo extends BaseEntity {
     private String isPoup;
 
     private String poupText;
+
+    private String couponTip;
 
     private String sharePermission;
     private String shareAmountType;

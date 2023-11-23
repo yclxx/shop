@@ -65,10 +65,11 @@
     </el-row>
 
     <el-table v-loading="loading" :data="orderList" @selection-change="handleSelectionChange">
-      <el-table-column label="订单号" align="left" prop="number" width="170">
+      <el-table-column label="订单号" align="left" prop="number" width="270">
         <template slot-scope="scope">
-          <span>{{ scope.row.number }}</span><br>
-          <span>{{ scope.row.parentNumber }}</span>
+          <span>订单号：{{ scope.row.number }}</span><br>
+          <span v-if="scope.row.parentNumber">券包母订单：{{ scope.row.parentNumber }}</span><br v-if="scope.row.parentNumber">
+          <span>大订单编号：{{ scope.row.collectiveNumber }}</span>
         </template>
       </el-table-column>
       <el-table-column label="商品信息" align="left" prop="productId" width="230">
