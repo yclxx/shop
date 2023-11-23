@@ -78,6 +78,7 @@
         <result property="productSmallImg" column="product_small_img"/>
         <result property="isPoup" column="is_poup"/>
         <result property="poupText" column="poup_text"/>
+        <result property="couponTip" column="coupon_tip"/>
     </resultMap>
 
 

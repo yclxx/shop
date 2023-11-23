@@ -419,4 +419,6 @@ public class ProductVo implements Serializable {
     private String isPoup;
 
     private String poupText;
+
+    private String couponTip;
 }

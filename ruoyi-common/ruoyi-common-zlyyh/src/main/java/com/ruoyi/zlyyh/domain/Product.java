@@ -309,4 +309,6 @@ public class Product extends BaseEntity {
     private String isPoup;
 
     private String poupText;
+
+    private String couponTip;
 }
