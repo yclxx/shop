@@ -44,6 +44,15 @@ public class ShopMerchantBo extends BaseEntity {
     private String merchantType;
 
     /**
+     * 收款方式
+     */
+    private String paymentMethod;
+    /**
+     * 收单机构
+     */
+    private String acquirer;
+
+    /**
      * 状态（0正常 1停用）
      */
     @NotBlank(message = "状态不能为空", groups = { AddGroup.class, EditGroup.class })

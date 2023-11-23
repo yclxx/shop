@@ -208,8 +208,8 @@ public class CodeServiceImpl implements ICodeService {
                 throw new ServiceException("核销失败");
             }
         }
-        // 向银联发送请求 暂时注释 2023-11-3
-        //callback(codeVo, orderVo, UnionPayCallbackBizMethodType.VERIFY_BOND);
+        // 向银联发送请求
+        callback(codeVo, orderVo, UnionPayCallbackBizMethodType.VERIFY_BOND);
         return true;
     }
 
@@ -368,19 +368,23 @@ public class CodeServiceImpl implements ICodeService {
     public Map<String, Long> getCodeTimeCount() {
         Long userId = LoginHelper.getUserId();
         Verifier verifier = verifierMapper.selectById(userId);
-        getVerifierList(verifier);
+        List<Long> longs = getVerifierList(verifier);
+        Date date = DateUtil.date();
+        Date startTime = DateUtil.beginOfDay(date);
+        Date endTime = DateUtil.endOfDay(date);
         // 查询已核销数据量
         LambdaQueryWrapper<Code> lqw1 = Wrappers.lambdaQuery();
-        List<Long> longs = getVerifierList(verifier);
         lqw1.in(Code::getVerifierId, longs);
-        lqw1.ge(Code::getUsedTime, DateUtil.beginOfDay(DateUtil.date()));
-        lqw1.ge(Code::getUsedStatus, "1");
+        lqw1.ge(Code::getUsedTime, startTime);
+        lqw1.le(Code::getUsedTime, endTime);
+        lqw1.eq(Code::getUsedStatus, "1");
         long usedCount = baseMapper.selectCount(lqw1);
         // 查询已预约数量
         LambdaQueryWrapper<Code> lqw2 = Wrappers.lambdaQuery();
         lqw2.in(Code::getVerifierId, longs);
-        lqw2.ge(Code::getAppointmentDate, DateUtil.beginOfDay(DateUtil.date()));
-        lqw2.ge(Code::getAllocationState, "1");
+        lqw2.ge(Code::getAppointmentDate, startTime);
+        lqw2.le(Code::getAppointmentDate, endTime);
+        lqw2.eq(Code::getAllocationState, "1");
         long appointmentCount = baseMapper.selectCount(lqw2);
 
         Map<String, Long> map = new HashMap<>();
@@ -407,14 +411,11 @@ public class CodeServiceImpl implements ICodeService {
         }
         // 核销人员处理
         if (verifier.getVerifierType().equals("admin")) {
-            List<Long> longs = verifierMapper.selectIdBySuperior(verifier.getId());
-            if (ObjectUtil.isNotEmpty(longs)) {
-                longs.add(verifier.getId());
-            } else {
-                longs = new ArrayList<>();
-                longs.add(verifier.getId());
-            }
-            lqw.in(Code::getVerifierId, longs);
+            LambdaQueryWrapper<VerifierShop> queryWrapper = Wrappers.lambdaQuery();
+            queryWrapper.eq(VerifierShop::getVerifierId, verifier.getId());
+            List<VerifierShopVo> verifierShopVos = verifierShopMapper.selectVoList(queryWrapper);
+            List<Long> collect = verifierShopVos.stream().map(VerifierShopVo::getShopId).collect(Collectors.toList());
+            lqw.in(Code::getShopId, collect);
         } else {
             lqw.eq(Code::getVerifierId, verifier.getId());
         }
@@ -423,11 +424,12 @@ public class CodeServiceImpl implements ICodeService {
     }
 
     public List<CodeVo> statistics(CodeBo bo) {
-        if (StringUtils.isEmpty(bo.getProductName())) return null;
         if (ObjectUtil.isEmpty(bo.getShopId())) return null;
+        if (ObjectUtil.isEmpty(bo.getUsedTimes()) || ObjectUtil.isEmpty(bo.getUsedEndTime())) return null;
+        // 处理核销人员信息
         Verifier verifier = verifierMapper.selectById(bo.getVerifierId());
         List<Long> longs = getVerifierList(verifier);
-        List<CodeVo> codeVos = baseMapper.selectProductList(bo.getProductName(), bo.getShopId(), longs);
+        // 查询满足信息的数据
         // 核销日期处理
         Date startTime;
         Date endTime;
@@ -441,13 +443,15 @@ public class CodeServiceImpl implements ICodeService {
         } else {
             endTime = DateUtil.endOfDay(DateUtils.getNowDate());
         }
-
-        codeVos.forEach(o -> {
-            Long usedCount = buildQueryWrapper(bo.getShopId(), o.getProductId(), longs, startTime, endTime, "1");
-            Long appointmentCount = buildQueryWrapper(bo.getShopId(), o.getProductId(), longs, startTime, endTime, "2");
-            o.setUsedCount(usedCount);
-            o.setAppointmentCount(appointmentCount);
-        });
+        List<CodeVo> codeVos = baseMapper.selectProductList(bo.getProductName(), bo.getShopId(), longs, startTime, endTime);
+        if (ObjectUtil.isNotEmpty(codeVos)) {
+            codeVos.forEach(o -> {
+                Long usedCount = buildQueryWrapper(bo.getShopId(), o.getProductId(), longs, startTime, endTime, "1");
+                Long appointmentCount = buildQueryWrapper(bo.getShopId(), o.getProductId(), longs, startTime, endTime, "2");
+                o.setUsedCount(usedCount);
+                o.setAppointmentCount(appointmentCount);
+            });
+        }
         return codeVos;
     }
 
@@ -471,12 +475,18 @@ public class CodeServiceImpl implements ICodeService {
     private List<Long> getVerifierList(Verifier verifier) {
         List<Long> longs;
         if (verifier.getVerifierType().equals("admin")) {
-            longs = verifierMapper.selectIdBySuperior(verifier.getId());
-            if (ObjectUtil.isNotEmpty(longs)) {
-                longs.add(verifier.getId());
-            } else {
-                longs = new ArrayList<>();
-                longs.add(verifier.getId());
+            longs = new ArrayList<>();
+            longs.add(verifier.getId());
+            LambdaQueryWrapper<VerifierShop> queryWrapper = Wrappers.lambdaQuery();
+            queryWrapper.eq(VerifierShop::getVerifierId, verifier.getId());
+            List<VerifierShopVo> verifierShopVos = verifierShopMapper.selectVoList(queryWrapper);
+            List<Long> collect = verifierShopVos.stream().map(VerifierShopVo::getShopId).collect(Collectors.toList());
+            LambdaQueryWrapper<VerifierShop> queryWrapper2 = Wrappers.lambdaQuery();
+            queryWrapper2.in(VerifierShop::getShopId, collect);
+            List<VerifierShop> verifierShops = verifierShopMapper.selectList(queryWrapper2);
+            List<Long> collect1 = verifierShops.stream().map(VerifierShop::getVerifierId).collect(Collectors.toList());
+            if (ObjectUtil.isNotEmpty(collect1)) {
+                longs.addAll(collect1);
             }
         } else {
             longs = new ArrayList<>();

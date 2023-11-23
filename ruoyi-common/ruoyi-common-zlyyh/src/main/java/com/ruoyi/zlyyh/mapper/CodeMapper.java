@@ -7,6 +7,7 @@ import com.ruoyi.zlyyh.domain.Code;
 import com.ruoyi.zlyyh.domain.vo.CodeVo;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -20,6 +21,6 @@ import java.util.List;
     @DataColumn(key = "userName", value = "sys_user_id")
 })
 public interface CodeMapper extends BaseMapperPlus<CodeMapper, Code, CodeVo> {
-    List<CodeVo> selectProductList(@Param("productName") String productName, @Param("shopId") Long shopId,
-                                   @Param("verifierId") List<Long> verifierId);
+    List<CodeVo> selectProductList(@Param("productName") String productName, @Param("shopId") Long shopId, @Param("verifierId") List<Long> verifierId,
+                                   @Param("startTime") Date startTime, @Param("endTime") Date endTime);
 }

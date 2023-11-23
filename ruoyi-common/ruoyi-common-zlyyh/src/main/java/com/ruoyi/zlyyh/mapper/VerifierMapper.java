@@ -45,8 +45,4 @@ public interface VerifierMapper extends BaseMapperPlus<VerifierMapper, Verifier,
      * @return 结果
      */
     List<Verifier> selectListIncludeMobile(@Param(Constants.WRAPPER) Wrapper<Verifier> wrapper, @Param("user") Verifier user);
-    /**
-     * 根据上级查询
-     */
-    List<Long> selectIdBySuperior(Long superiorId);
 }

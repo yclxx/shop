@@ -3,6 +3,7 @@ package com.ruoyi.zlyyhadmin.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -119,14 +120,14 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
         Verifier verifier = verifierMapper.selectOne(new LambdaQueryWrapper<Verifier>().eq(Verifier::getMobile, vo.getShopMobile()).eq(Verifier::getPlatformKey, vo.getPlatformKey()));
         if (ObjectUtil.isNotEmpty(verifier)) {
             verifier.setPlatformKey(vo.getPlatformKey());
-            verifier.setMobile(vo.getShopMobile());
+            verifier.setMobile(vo.getBrandMobile());
             verifier.setVerifierType("admin");
             verifierMapper.updateById(verifier);
         } else {
             verifier = new Verifier();
             verifier.setId(IdUtil.getSnowflakeNextId());
             verifier.setPlatformKey(vo.getPlatformKey());
-            verifier.setMobile(vo.getShopMobile());
+            verifier.setMobile(vo.getBrandMobile());
             verifier.setStatus("0");
             verifier.setVerifierType("admin");
             verifierMapper.insert(verifier);
@@ -137,16 +138,17 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
     private void handleShop(MerchantApprovalVo vo, Verifier verifier) {
         Shop shop = new Shop();
         shop.setShopId(IdUtil.getSnowflakeNextId());
-        shop.setPlatformKey(vo.getPlatformKey());
+        shop.setPlatformKey(vo.getMerchantPlatformKey());
         shop.setShopName(vo.getShopName());
         shop.setShopTel(vo.getShopMobile());
         shop.setShopImgs(vo.getShopImage());
         shop.setShopLogo(vo.getBrandLogo());
-        shop.setAddress(vo.getShopAddress());
+        shop.setAddress(vo.getShopAddressInfo());
         shop.setStatus("0");
-        shop.setExtensionServiceProviderId(Long.valueOf(vo.getExtend()));
-        shop.setProductType(vo.getProductType());
-        if (ObjectUtil.isEmpty(vo.getShopAddressInfo())) {
+        if (StringUtils.isNotEmpty(vo.getExtend())) {
+            shop.setExtensionServiceProviderId(Long.valueOf(vo.getExtend()));
+        }
+        if (ObjectUtil.isNotEmpty(vo.getShopAddressInfo())) {
             String key = "importShop:" + vo.getShopAddressInfo();
             // 查询地址信息
             JSONObject addressInfo = AddressUtils.getAddressInfo(vo.getShopAddressInfo());
@@ -177,46 +179,37 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
         shop.setInvoice(vo.getInvoiceType());
         shop.setActivity(vo.getActivity());
         if (StringUtils.isNotEmpty(vo.getBusinessWeek())) {
+            shop.setAssignDate("1");
             shop.setWeekDate(vo.getBusinessWeek());
+        }
+        if (StringUtils.isNotEmpty(vo.getBusinessBegin()) && StringUtils.isNotEmpty(vo.getBusinessBegin())) {
             shop.setBusinessHours(vo.getBusinessBegin() + "-" + vo.getBusinessEnd());
         }
         List<ShopMerchant> shopMerchants = new ArrayList<>();
-        // 云闪付商户号
-        if (StringUtils.isNotEmpty(vo.getYsfMerchant())) {
-            ShopMerchant shopMerchant = new ShopMerchant();
-            shopMerchant.setShopId(shop.getShopId());
-            shopMerchant.setMerchantNo(vo.getYsfMerchant());
-            shopMerchant.setMerchantType("1");
-            shopMerchant.setStatus("0");
-            shopMerchants.add(shopMerchant);
-        }
-        // 微信商户号
-        if (StringUtils.isNotEmpty(vo.getWxMerchant())) {
-            ShopMerchant shopMerchant = new ShopMerchant();
-            shopMerchant.setShopId(shop.getShopId());
-            shopMerchant.setMerchantNo(vo.getWxMerchant());
-            shopMerchant.setMerchantType("0");
-            shopMerchant.setStatus("0");
-            shopMerchants.add(shopMerchant);
-        }
-        // 支付宝商户号
-        if (StringUtils.isNotEmpty(vo.getPayMerchant())) {
-            ShopMerchant shopMerchant = new ShopMerchant();
-            shopMerchant.setShopId(shop.getShopId());
-            shopMerchant.setMerchantNo(vo.getPayMerchant());
-            shopMerchant.setMerchantType("2");
-            shopMerchant.setStatus("0");
-            shopMerchants.add(shopMerchant);
+
+        // 商户号
+        if (StringUtils.isNotEmpty(vo.getMerchant())) {
+            JSONArray jsonArray = JSONObject.parseArray(vo.getMerchant());
+            for (int i = 0; i < jsonArray.size(); i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                ShopMerchant shopMerchant = new ShopMerchant();
+                shopMerchant.setShopId(shop.getShopId());
+                shopMerchant.setMerchantNo(jsonObject.getString("merchantNo"));
+                shopMerchant.setMerchantType(jsonObject.getString("merchantType"));
+                shopMerchant.setAcquirer(jsonObject.getString("acquirer"));
+                shopMerchant.setPaymentMethod(jsonObject.getString("paymentMethod"));
+                shopMerchant.setStatus("0");
+                shopMerchants.add(shopMerchant);
+            }
         }
         int insert = shopMapper.insert(shop);
-
         // 核销人员，门店表关联
         if (insert > 0) {
             VerifierShop verifierShop = new VerifierShop();
             verifierShop.setId(IdUtil.getSnowflakeNextId());
             verifierShop.setShopId(shop.getShopId());
             verifierShop.setVerifierId(verifier.getId());
-            verifierShop.setShopId(99L);
+            verifierShop.setSort(99L);
             verifierShopMapper.insert(verifierShop);
         }
         if (ObjectUtil.isNotEmpty(shopMerchants) && insert > 0) {
@@ -229,9 +222,6 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
-        if (isValid) {
-            //TODO 做一些业务上的校验,判断是否需要校验
-        }
         return baseMapper.deleteBatchIds(ids) > 0;
     }
 }

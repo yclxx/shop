@@ -26,9 +26,17 @@ public class MerchantApproval extends BaseEntity {
      */
     private Long platformKey;
     /**
+     * 活动任务id
+     */
+    private Long taskId;
+    /**
+     * 类型（1商户申请，2商户录入）
+     */
+    private String type;
+    /**
      * 管理员手机号
      */
-    private String mobile;
+    private String brandMobile;
     /**
      * 品牌名称
      */
@@ -38,17 +46,25 @@ public class MerchantApproval extends BaseEntity {
      */
     private String brandLogo;
     /**
+     * 品牌商户简称
+     */
+    private String brandReferred;
+    /**
+     * 邮储商户
+     */
+    private String activityNature;
+    /**
+     * 进件者（拓展服务商）
+     */
+    private String extend;
+    /**
+     * 性质
+     */
+    private String nature;
+    /**
      * 门店名称
      */
     private String shopName;
-    /**
-     * 门店电话
-     */
-    private String shopMobile;
-    /**
-     * 门店类型
-     */
-    private String shopType;
     /**
      * 门店地址
      */
@@ -58,9 +74,21 @@ public class MerchantApproval extends BaseEntity {
      */
     private String shopAddressInfo;
     /**
+     * 门店电话
+     */
+    private String shopMobile;
+    /**
      * 门店图片
      */
     private String shopImage;
+    /**
+     * 门店类型
+     */
+    private String shopType;
+    /**
+     * 营业执照
+     */
+    private String businessLicense;
     /**
      * 营业周
      */
@@ -74,15 +102,11 @@ public class MerchantApproval extends BaseEntity {
      */
     private String businessEnd;
     /**
-     * 性质
+     * 节假日是否营业
      */
-    private String nature;
+    private Boolean businessHoliday;
     /**
-     * 扩展服务商
-     */
-    private String extend;
-    /**
-     * 参与活动
+     * 参与营销活动类型
      */
     private String activity;
     /**
@@ -90,25 +114,25 @@ public class MerchantApproval extends BaseEntity {
      */
     private String invoiceType;
     /**
+     * 收款人
+     */
+    private String accountPayee;
+    /**
+     * 开户行
+     */
+    private String accountBank;
+    /**
      * 收款账户
      */
     private String account;
     /**
-     * 云闪付商户号
+     * 商户所在平台
      */
-    private String ysfMerchant;
+    private Long merchantPlatformKey;
     /**
-     * 微信商户号
+     * 商户号信息
      */
-    private String wxMerchant;
-    /**
-     * 支付宝商户号
-     */
-    private String payMerchant;
-    /**
-     * 商品类型
-     */
-    private String productType;
+    private String merchant;
     /**
      * 审批状态
      */
@@ -117,5 +141,4 @@ public class MerchantApproval extends BaseEntity {
      * 拒绝原因
      */
     private String rejectReason;
-
 }

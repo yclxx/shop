@@ -10,6 +10,4 @@ import com.ruoyi.zlyyh.domain.vo.ShopMerchantVo;
  * @author yzgnet
  * @date 2023-03-21
  */
-public interface ShopMerchantMapper extends BaseMapperPlus<ShopMerchantMapper, ShopMerchant, ShopMerchantVo> {
-
-}
+public interface ShopMerchantMapper extends BaseMapperPlus<ShopMerchantMapper, ShopMerchant, ShopMerchantVo> {}

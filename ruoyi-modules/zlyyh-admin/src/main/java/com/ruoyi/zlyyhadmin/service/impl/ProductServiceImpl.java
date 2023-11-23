@@ -507,6 +507,7 @@ public class ProductServiceImpl implements IProductService {
                 } else {
                     product.setProductName(lianProduct.getOnlyName() + " " + item.getSubTitle());//产品名称
                 }
+                product.setExternalProductId(lianProduct.getProductId() + ":" + item.getItemId());
                 product.setProductImg(lianProduct.getFaceImg());//产品图片
                 product.setProductSubhead(lianProduct.getTitle());//产品副标题
                 product.setOriginalAmount(item.getOriginPrice());//产品原价
@@ -516,7 +517,8 @@ public class ProductServiceImpl implements IProductService {
                 } else if (lianProduct.getItemStock().equals(1)) {
                     product.setTotalCount(item.getStock());//库存
                 }
-
+                productInfoVo.setItemPrice(item.getChannelPrice());
+                productInfoVo.setItemId(item.getItemId().toString());
 
                 String channelId = ysfConfigService.queryValueByKey(product.getPlatformKey(), "LianLian.channelId");
                 String basePath = ysfConfigService.queryValueByKey(product.getPlatformKey(), "LianLian.basePath");

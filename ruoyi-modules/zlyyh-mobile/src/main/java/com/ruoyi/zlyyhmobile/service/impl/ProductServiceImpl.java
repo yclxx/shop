@@ -421,11 +421,11 @@ public class ProductServiceImpl implements IProductService {
         Product product = BeanCopyUtils.copy(bo, Product.class);
         boolean b = baseMapper.updateById(product) > 0;
         if (b) {
-            if (ObjectUtil.isNotEmpty(bo.getItemPrice())) {
+            if (ObjectUtil.isNotEmpty(bo.getProductInfo().getItemPrice())) {
                 ProductInfoVo productInfoVo = productInfoService.queryById(bo.getProductId());
                 ProductInfoBo productInfoBo = new ProductInfoBo();
                 productInfoBo.setProductId(bo.getProductId());
-                productInfoBo.setItemPrice(bo.getItemPrice());
+                productInfoBo.setItemPrice(bo.getProductInfo().getItemPrice());
                 if (ObjectUtil.isNotEmpty(productInfoVo)) {
                     productInfoService.updateByBo(productInfoBo);
                 }

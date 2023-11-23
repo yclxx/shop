@@ -104,6 +104,7 @@
             #{item}
         </foreach>
         )
+        ORDER by p.create_time DESC
     </select>
 
 

@@ -59,6 +59,7 @@ public class VerifierTokenService {
         if (null == userInfo || "0".equals(userInfo.getReloadUser())) {
             return "isNullUser:" + openId;
         }
+        userInfo.setOpenid(openId);
         userInfo.setCityName(cityName);
         userInfo.setCityCode(cityCode);
         // 生成token
@@ -115,7 +116,8 @@ public class VerifierTokenService {
             // 新增用户
             userInfo = remoteVerifierUserService.register(wxEntity, wxLoginBody.getCityName(), wxLoginBody.getCityCode(), channel);
             if (null == userInfo) {
-                userInfo = remoteVerifierUserService.getUserInfoByMobile(wxEntity.getOpenid(), mobile, platformKey, channel);
+                throw new ServiceException("你非商户管理员");
+                //userInfo = remoteVerifierUserService.getUserInfoByMobile(wxEntity.getOpenid(), mobile, platformKey, channel);
             }
         }
         if (null == userInfo || "0".equals(userInfo.getReloadUser())) {

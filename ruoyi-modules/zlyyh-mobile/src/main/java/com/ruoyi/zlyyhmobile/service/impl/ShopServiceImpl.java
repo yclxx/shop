@@ -161,19 +161,22 @@ public class ShopServiceImpl implements IShopService {
     public List<ShopMerchantVo> getShopMerchantVo(ShopMerchantBo bo) {
         LambdaQueryWrapper<ShopMerchant> lqw = Wrappers.lambdaQuery();
         lqw.eq(ShopMerchant::getShopId, bo.getShopId());
-        lqw.eq(ShopMerchant::getMerchantType, bo.getMerchantType());
         return shopMerchantMapper.selectVoList(lqw);
     }
 
     public boolean addApproval(MerchantApprovalBo bo) {
+        if (StringUtils.isEmpty(bo.getBrandMobile())) throw new ServiceException("管理员手机号为空");
         LambdaQueryWrapper<MerchantApproval> lqw = Wrappers.lambdaQuery();
-        lqw.eq(MerchantApproval::getMobile, bo.getMobile());
-        if (merchantApprovalMapper.selectCount(lqw) > 0) {
-            throw new ServiceException("此管理员手机号已申请");
+        lqw.eq(MerchantApproval::getBrandMobile, bo.getBrandMobile());
+        Long l = merchantApprovalMapper.selectCount(lqw);
+        if ( l > 0) {
+            throw new ServiceException("此管理员手机号已申请商户");
         }
-        ExtensionServiceProvider extensionServiceProvider = extensionServiceProviderMapper.selectById(bo.getExtend());
-        if (ObjectUtil.isEmpty(extensionServiceProvider)) {
-            throw new ServiceException("扩展服务商号不存在");
+        if (StringUtils.isNotEmpty(bo.getExtend())) {
+            ExtensionServiceProvider extensionServiceProvider = extensionServiceProviderMapper.selectById(bo.getExtend());
+            if (ObjectUtil.isEmpty(extensionServiceProvider)) {
+                throw new ServiceException("扩展服务商号不存在");
+            }
         }
         bo.setApprovalStatus("0");
         MerchantApproval merchantApproval = BeanCopyUtils.copy(bo, MerchantApproval.class);
