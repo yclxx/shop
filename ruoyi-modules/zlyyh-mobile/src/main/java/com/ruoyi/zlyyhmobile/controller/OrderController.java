@@ -386,7 +386,7 @@ public class OrderController {
     /**
      * 银联票券状态变动通知
      */
-    @PostMapping("/ignore/couponStatusCallback")
+    @RequestMapping("/ignore/couponStatusCallback")
     public R<Void> couponStatusCallback(HttpServletRequest request) {
         String body = ServletUtils.getParamJson(request);
         String headers = JsonUtils.toJsonString(ServletUtils.getHeaderMap(request));

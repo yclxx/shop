@@ -11,6 +11,7 @@ import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.CategoryProductBo;
+import com.ruoyi.zlyyh.domain.bo.ShopProductBo;
 import com.ruoyi.zlyyh.domain.vo.CategoryProductVo;
 import com.ruoyi.zlyyhadmin.service.ICategoryProductService;
 import lombok.RequiredArgsConstructor;
@@ -99,5 +100,22 @@ public class CategoryProductController extends BaseController {
     @DeleteMapping("/{ids}")
     public R<Void> remove(@NotEmpty(message = "主键不能为空") @PathVariable Long[] ids) {
         return toAjax(iCategoryProductService.deleteWithValidByIds(Arrays.asList(ids), true));
+    }
+
+
+    /**
+     * 为栏目批量添加商品
+     */
+    @PostMapping("addProductByCategory")
+    public R<Void> addProductByCategory(@RequestBody CategoryProductBo bo) {
+        return toAjax(iCategoryProductService.addProductByCategory(bo));
+    }
+
+    /**
+     * 为栏目批量删除商品
+     */
+    @PostMapping("delProductByCategory")
+    public R<Void> delProductByCategory(@RequestBody CategoryProductBo bo) {
+        return toAjax(iCategoryProductService.delProductByCategory(bo));
     }
 }

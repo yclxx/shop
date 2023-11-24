@@ -49,6 +49,7 @@ public class CategoryServiceImpl implements ICategoryService {
     private LambdaQueryWrapper<Category> buildQueryWrapper(CategoryBo bo) {
         LambdaQueryWrapper<Category> lqw = Wrappers.lambdaQuery();
         lqw.eq(bo.getParentId() != null, Category::getParentId, bo.getParentId());
+        lqw.eq(bo.getCategoryListType() != null, Category::getCategoryListType, bo.getCategoryListType());
         lqw.eq(Category::getStatus, "0");
         lqw.eq(bo.getPlatformKey() != null, Category::getPlatformKey, bo.getPlatformKey());
         lqw.eq(StringUtils.isNotBlank(bo.getShowIndex()), Category::getShowIndex, bo.getShowIndex());

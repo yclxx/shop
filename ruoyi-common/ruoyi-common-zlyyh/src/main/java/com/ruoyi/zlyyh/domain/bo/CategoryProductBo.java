@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * 栏目商品关联业务对象
@@ -43,5 +44,5 @@ public class CategoryProductBo extends BaseEntity {
     @NotNull(message = "排序不能为空", groups = { AddGroup.class, EditGroup.class })
     private Long sort;
 
-
+    private List<Long> productIds;
 }

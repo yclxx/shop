@@ -13,12 +13,14 @@ import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.zlyyh.domain.CategoryProduct;
 import com.ruoyi.zlyyh.domain.CommercialTenant;
 import com.ruoyi.zlyyh.domain.CommercialTenantProduct;
+import com.ruoyi.zlyyh.domain.Product;
 import com.ruoyi.zlyyh.domain.bo.CategoryProductBo;
 import com.ruoyi.zlyyh.domain.bo.CommercialTenantBo;
 import com.ruoyi.zlyyh.domain.bo.CommercialTenantProductBo;
 import com.ruoyi.zlyyh.domain.vo.CategoryProductVo;
 import com.ruoyi.zlyyh.domain.vo.CommercialTenantProductVo;
 import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
+import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.ICategoryProductService;
@@ -202,5 +204,34 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
         categoryProductService.remove(new LambdaQueryWrapper<CategoryProduct>().in(CategoryProduct::getProductId, ids));
         commercialTenantProductService.remove(new LambdaQueryWrapper<CommercialTenantProduct>().in(CommercialTenantProduct::getCommercialTenantId, ids));
         return baseMapper.deleteBatchIds(ids) > 0;
+    }
+
+    @Override
+    public TableDataInfo<CommercialTenantVo> queryPageCategoryCommercialList(CommercialTenantBo bo, PageQuery pageQuery) {
+
+        Map<String, Object> params = bo.getParams();
+        LambdaQueryWrapper<CommercialTenant> lqw = Wrappers.lambdaQuery();
+        lqw.like(StringUtils.isNotBlank(bo.getCommercialTenantName()), CommercialTenant::getCommercialTenantName, bo.getCommercialTenantName());
+
+        lqw.eq(StringUtils.isNotBlank(bo.getIndexShow()), CommercialTenant::getIndexShow, bo.getIndexShow());
+        lqw.eq(StringUtils.isNotBlank(bo.getStatus()), CommercialTenant::getStatus, bo.getStatus());
+
+        lqw.eq(bo.getPlatformKey() != null, CommercialTenant::getPlatformKey, bo.getPlatformKey());
+        lqw.between(params.get("beginStartTime") != null && params.get("endStartTime") != null,
+            CommercialTenant::getStartTime, params.get("beginStartTime"), params.get("endStartTime"));
+        lqw.between(params.get("beginEndTime") != null && params.get("endEndTime") != null,
+            CommercialTenant::getEndTime, params.get("beginEndTime"), params.get("endEndTime"));
+
+        if (ObjectUtil.isNotEmpty(bo.getCategoryId()) && ObjectUtil.isNotEmpty(bo.getSort()) && bo.getSort().equals(0L)) {
+            lqw.apply("commercial_tenant_id IN (select product_id from t_category_product where category_id = " + bo.getCategoryId() + ")");
+        }
+        if (ObjectUtil.isNotEmpty(bo.getCategoryId()) && ObjectUtil.isNotEmpty(bo.getSort()) && bo.getSort().equals(1L)) {
+            lqw.apply("commercial_tenant_id NOT IN (select product_id from t_category_product where category_id = " + bo.getCategoryId() + ")");
+        }
+
+        Page<CommercialTenantVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+        return TableDataInfo.build(result);
+
+
     }
 }
