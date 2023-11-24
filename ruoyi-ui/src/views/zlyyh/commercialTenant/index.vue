@@ -108,17 +108,18 @@
       <el-form ref="form" :model="form" :rules="rules" label-width="90px">
         <el-row>
           <el-col :span="8">
-            <el-form-item label="商户名称" prop="commercialTenantName">
-              <el-input v-model="form.commercialTenantName" placeholder="请输入商户名称" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
             <el-form-item label="平台" prop="platformKey">
               <el-select v-model="form.platformKey" placeholder="请选择平台" clearable>
                 <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id" />
               </el-select>
             </el-form-item>
           </el-col>
+          <el-col :span="8">
+            <el-form-item label="商户名称" prop="commercialTenantName">
+              <el-input v-model="form.commercialTenantName" placeholder="请输入商户名称" />
+            </el-form-item>
+          </el-col>
+
           <el-col :span="8">
             <el-form-item label="状态" prop="status">
               <el-radio-group v-model="form.status">
@@ -339,11 +340,7 @@
             message: "商户名称不能为空",
             trigger: "blur"
           }],
-          platformKey: [{
-            required: true,
-            message: "平台标识不能为空",
-            trigger: "blur"
-          }]
+
         },
         pickerOptions: {
           shortcuts: [{
@@ -377,7 +374,7 @@
     created() {
       this.getList();
       this.getPlatformSelectList();
-      this.getProductSelectList();
+      //this.getProductSelectList();
       this.getCategorySelectList();
       this.getTagsList();
       this.selectSupplierList();
@@ -510,8 +507,10 @@
         this.$refs["form"].validate(valid => {
           if (valid) {
             this.buttonLoading = true;
-            if(this.form.tags != undefined && this.form.tags != null && this.form.tags != '') {
+            if (this.form.tags != undefined && this.form.tags != null && this.form.tags != '') {
               this.form.tags = this.form.tags.join(',')
+            } else {
+              this.form.tags = ''
             }
             if (this.form.commercialTenantId != null) {
               updateCommercialTenant(this.form).then(response => {

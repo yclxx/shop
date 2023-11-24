@@ -6,8 +6,10 @@ import com.ruoyi.common.core.utils.ServletUtils;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.bo.CategoryBo;
 import com.ruoyi.zlyyh.domain.vo.CategoryVo;
+import com.ruoyi.zlyyh.domain.vo.PlatformVo;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.service.ICategoryService;
+import com.ruoyi.zlyyhmobile.service.IPlatformService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.validation.annotation.Validated;
@@ -34,6 +36,7 @@ import java.util.List;
 public class CategoryController {
 
     private final ICategoryService categoryService;
+    private final IPlatformService platformService;
 
     /**
      * 获取子分类列表
@@ -78,6 +81,10 @@ public class CategoryController {
         bo.setShowIndex("1");
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
         bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
+        PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId(), ZlyyhUtils.getPlatformChannel());
+        if (ObjectUtils.isNotEmpty(platformVo.getIndexShowType())){
+            bo.setCategoryListType(platformVo.getIndexShowType());
+        }
         return R.ok(categoryService.queryList(bo));
     }
 }

@@ -51,4 +51,8 @@ public interface ICategoryProductService {
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
 
     Boolean remove(LambdaQueryWrapper<CategoryProduct> queryWrapper);
+
+    Boolean addProductByCategory(CategoryProductBo bo);
+
+    Integer delProductByCategory(CategoryProductBo bo);
 }

@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyhadmin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -9,6 +10,7 @@ import com.ruoyi.common.core.constant.CacheNames;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.CategoryProduct;
+import com.ruoyi.zlyyh.domain.ShopProduct;
 import com.ruoyi.zlyyh.domain.bo.CategoryProductBo;
 import com.ruoyi.zlyyh.domain.vo.CategoryProductVo;
 import com.ruoyi.zlyyh.mapper.CategoryProductMapper;
@@ -17,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -116,5 +119,31 @@ public class CategoryProductServiceImpl implements ICategoryProductService {
     @Override
     public Boolean remove(LambdaQueryWrapper<CategoryProduct> queryWrapper) {
         return SqlHelper.retBool(baseMapper.delete(queryWrapper));
+    }
+
+    @Override
+    public Boolean addProductByCategory(CategoryProductBo bo) {
+        List<CategoryProduct> add = new ArrayList<>();
+        if (ObjectUtil.isNotEmpty(bo.getCategoryId()) && ObjectUtil.isNotEmpty(bo.getProductIds())) {
+            bo.getProductIds().forEach(o -> {
+                CategoryProduct categoryProduct = new CategoryProduct();
+                categoryProduct.setProductId(o);
+                categoryProduct.setCategoryId(bo.getCategoryId());
+                add.add(categoryProduct);
+            });
+            return baseMapper.insertBatch(add);
+        }
+        return false;
+    }
+
+    @Override
+    public Integer delProductByCategory(CategoryProductBo bo) {
+        LambdaQueryWrapper<CategoryProduct> wrapper = Wrappers.lambdaQuery();
+        if (ObjectUtil.isNotEmpty(bo.getProductIds()) && ObjectUtil.isNotEmpty(bo.getCategoryId())) {
+            wrapper.eq(CategoryProduct::getCategoryId,bo.getCategoryId());
+            wrapper.in(CategoryProduct::getProductId,bo.getProductIds());
+            return baseMapper.delete(wrapper);
+        }
+        return 0;
     }
 }

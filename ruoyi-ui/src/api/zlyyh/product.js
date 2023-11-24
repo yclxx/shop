@@ -8,6 +8,15 @@ export function listProduct(query) {
     params: query
   })
 }
+
+// 查询商品列表
+export function categoryProductList(query) {
+  return request({
+    url: '/zlyyh-admin/product/categoryProductList',
+    method: 'get',
+    params: query
+  })
+}
 // 商品关联查询列表
 export function joinListProduct(query) {
   return request({

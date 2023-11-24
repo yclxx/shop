@@ -451,9 +451,7 @@ export default {
           {required: true, message: "纬度", trigger: "blur"}
         ],
 
-        platformKey: [
-          {required: true, message: "平台标识不能为空", trigger: "blur"}
-        ],
+
 
       }
     };

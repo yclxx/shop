@@ -4,6 +4,7 @@ import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.CommercialTenantBo;
 import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
+import com.ruoyi.zlyyh.domain.vo.ProductVo;
 
 import java.util.Collection;
 import java.util.List;
@@ -55,4 +56,6 @@ public interface ICommercialTenantService {
      * 校验并批量删除商户信息
      */
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
+
+    TableDataInfo<CommercialTenantVo> queryPageCategoryCommercialList(CommercialTenantBo bo, PageQuery pageQuery);
 }
