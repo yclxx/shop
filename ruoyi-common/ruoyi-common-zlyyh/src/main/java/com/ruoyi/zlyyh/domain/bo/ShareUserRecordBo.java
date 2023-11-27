@@ -83,4 +83,9 @@ public class ShareUserRecordBo extends BaseEntity {
      * 发放结果
      */
     private String pushRemake;
+
+    /**
+     * 商品名称
+     */
+    private String productName;
 }

@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyhadmin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -11,17 +12,22 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.ShareUserAccount;
 import com.ruoyi.zlyyh.domain.ShareUserRecord;
 import com.ruoyi.zlyyh.domain.bo.ShareUserRecordBo;
+import com.ruoyi.zlyyh.domain.bo.UserBo;
 import com.ruoyi.zlyyh.domain.vo.ShareUserRecordVo;
+import com.ruoyi.zlyyh.domain.vo.UserVo;
 import com.ruoyi.zlyyh.mapper.ShareUserAccountMapper;
 import com.ruoyi.zlyyh.mapper.ShareUserRecordMapper;
 import com.ruoyi.zlyyhadmin.service.IShareUserRecordService;
+import com.ruoyi.zlyyhadmin.service.IUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 分销记录Service业务层处理
@@ -35,6 +41,7 @@ public class ShareUserRecordServiceImpl implements IShareUserRecordService {
 
     private final ShareUserRecordMapper baseMapper;
     private final ShareUserAccountMapper shareUserAccountMapper;
+    private final IUserService userService;
 
     /**
      * 查询分销记录
@@ -50,7 +57,11 @@ public class ShareUserRecordServiceImpl implements IShareUserRecordService {
     @Override
     public TableDataInfo<ShareUserRecordVo> queryPageList(ShareUserRecordBo bo, PageQuery pageQuery) {
         LambdaQueryWrapper<ShareUserRecord> lqw = buildQueryWrapper(bo);
+        if (null == lqw) {
+            return TableDataInfo.build(new ArrayList<>());
+        }
         Page<ShareUserRecordVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+        this.setUserMobile(result.getRecords());
         return TableDataInfo.build(result);
     }
 
@@ -60,14 +71,60 @@ public class ShareUserRecordServiceImpl implements IShareUserRecordService {
     @Override
     public List<ShareUserRecordVo> queryList(ShareUserRecordBo bo) {
         LambdaQueryWrapper<ShareUserRecord> lqw = buildQueryWrapper(bo);
-        return baseMapper.selectVoList(lqw);
+        if (null == lqw) {
+            return new ArrayList<>();
+        }
+        List<ShareUserRecordVo> shareUserRecordVos = baseMapper.selectVoList(lqw);
+        this.setUserMobile(shareUserRecordVos);
+        return shareUserRecordVos;
+    }
+
+    private void setUserMobile(List<ShareUserRecordVo> shareUserRecordVos) {
+        for (ShareUserRecordVo shareUserRecordVo : shareUserRecordVos) {
+            if (null != shareUserRecordVo.getUserId()) {
+                UserVo userVo = userService.queryById(shareUserRecordVo.getUserId());
+                if (null != userVo) {
+                    shareUserRecordVo.setUserMobile(userVo.getMobile());
+                }
+            }
+            if (null != shareUserRecordVo.getInviteeUserId()) {
+                UserVo userVo = userService.queryById(shareUserRecordVo.getInviteeUserId());
+                if (null != userVo) {
+                    shareUserRecordVo.setInviteeUserMobile(userVo.getMobile());
+                }
+            }
+        }
     }
 
     private LambdaQueryWrapper<ShareUserRecord> buildQueryWrapper(ShareUserRecordBo bo) {
         Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<ShareUserRecord> lqw = Wrappers.lambdaQuery();
-        lqw.eq(bo.getUserId() != null, ShareUserRecord::getUserId, bo.getUserId());
-        lqw.eq(bo.getInviteeUserId() != null, ShareUserRecord::getInviteeUserId, bo.getInviteeUserId());
+        if (null != bo.getUserId()) {
+            if (bo.getUserId().toString().length() == 11) {
+                UserBo userBo = new UserBo();
+                userBo.setMobile(bo.getUserId().toString());
+                List<UserVo> userVos = userService.queryList(userBo);
+                if (ObjectUtil.isEmpty(userVos)) {
+                    return null;
+                }
+                lqw.in(ShareUserRecord::getUserId, userVos.stream().map(UserVo::getUserId).collect(Collectors.toSet()));
+            } else {
+                lqw.eq(ShareUserRecord::getUserId, bo.getUserId());
+            }
+        }
+        if (null != bo.getInviteeUserId()) {
+            if (bo.getInviteeUserId().toString().length() == 11) {
+                UserBo userBo = new UserBo();
+                userBo.setMobile(bo.getInviteeUserId().toString());
+                List<UserVo> userVos = userService.queryList(userBo);
+                if (ObjectUtil.isEmpty(userVos)) {
+                    return null;
+                }
+                lqw.in(ShareUserRecord::getInviteeUserId, userVos.stream().map(UserVo::getUserId).collect(Collectors.toSet()));
+            } else {
+                lqw.eq(ShareUserRecord::getInviteeUserId, bo.getInviteeUserId());
+            }
+        }
         lqw.eq(bo.getNumber() != null, ShareUserRecord::getNumber, bo.getNumber());
         lqw.eq(bo.getOrderUsedTime() != null, ShareUserRecord::getOrderUsedTime, bo.getOrderUsedTime());
         lqw.eq(bo.getAwardAmount() != null, ShareUserRecord::getAwardAmount, bo.getAwardAmount());

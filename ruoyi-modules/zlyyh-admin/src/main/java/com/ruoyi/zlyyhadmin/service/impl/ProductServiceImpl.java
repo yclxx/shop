@@ -3,6 +3,7 @@ package com.ruoyi.zlyyhadmin.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -10,23 +11,29 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.constant.CacheNames;
+import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.CacheUtils;
+import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.resource.api.RemoteFileService;
 import com.ruoyi.resource.api.domain.SysFile;
+import com.ruoyi.zlyyh.constant.YsfUpConstants;
 import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.*;
 import com.ruoyi.zlyyh.domain.vo.*;
+import com.ruoyi.zlyyh.enumd.DateType;
 import com.ruoyi.zlyyh.mapper.ProductMapper;
 import com.ruoyi.zlyyh.mapper.TagsProductMapper;
 import com.ruoyi.zlyyh.param.LianLianParam;
 import com.ruoyi.zlyyh.service.YsfConfigService;
 import com.ruoyi.zlyyh.utils.LianLianUtils;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
+import com.ruoyi.zlyyh.utils.YsfUtils;
+import com.ruoyi.zlyyh.utils.redis.ProductUtils;
 import com.ruoyi.zlyyhadmin.domain.bo.LianLianProductBo;
 import com.ruoyi.zlyyhadmin.domain.bo.ProductJoinParam;
 import com.ruoyi.zlyyhadmin.domain.vo.LianLianProductItem;
@@ -41,10 +48,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 商品Service业务层处理
@@ -614,7 +618,6 @@ public class ProductServiceImpl implements IProductService {
         }
     }
 
-
     /**
      * 联联订单状态通知(上架/下架/售空)
      *
@@ -651,5 +654,71 @@ public class ProductServiceImpl implements IProductService {
         }
     }
 
+    /**
+     * 查询银联开放平台票券剩余数量
+     */
+    public TableDataInfo<ProductVo> queryPageListByProductType(PageQuery pageQuery) {
+        LambdaQueryWrapper<Product> lqw = Wrappers.lambdaQuery();
+        lqw.eq(Product::getProductType, "18");
+        lqw.eq(Product::getStatus, "0");
+        lqw.gt(Product::getSellEndDate, new Date());
+        lqw.isNotNull(Product::getExternalProductId);
+        Page<ProductVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+        return TableDataInfo.build(result);
+    }
+
+    /**
+     * 查询产品剩余数量
+     *
+     * @param productVo 产品Id
+     */
+    public void queryProductCount(ProductVo productVo) {
+        if (productVo == null) {
+            return;
+        }
+        if (!"18".equals(productVo.getProductType())) {
+            return;
+        }
+        if (StringUtils.isBlank(productVo.getExternalProductId())) {
+            return;
+        }
+        if (productVo.getTotalCount() < 1) {
+            return;
+        }
+        String chnlId = ysfConfigService.queryValueByKey(productVo.getPlatformKey(), YsfUpConstants.up_chnlId);
+        String appId = ysfConfigService.queryValueByKey(productVo.getPlatformKey(), YsfUpConstants.up_appId);
+        String rsaPrivateKey = ysfConfigService.queryValueByKey(productVo.getPlatformKey(), YsfUpConstants.up_rsaPrivateKey);
+        R<JSONObject> result = YsfUtils.aggQueryCpnRemain(productVo.getExternalProductId(), chnlId, appId, rsaPrivateKey);
+        if (R.isSuccess(result)) {
+            JSONObject data = result.getData();
+            if (null == data) {
+                return;
+            }
+            JSONObject activityInfo = data.getJSONObject("activityInfo");
+            if (null == activityInfo) {
+                return;
+            }
+            String allRemainCount = activityInfo.getString("allRemainCount");
+            if (NumberUtil.isInteger(allRemainCount)) {
+                // 剩余数量
+                long i = Long.parseLong(allRemainCount);
+                long count = RedisUtils.getAtomicValue(ProductUtils.countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
+                if (count > 0) {
+                    i = i + count;
+                }
+                if (i > 0) {
+                    Product product = new Product();
+                    product.setProductId(productVo.getProductId());
+                    product.setTotalCount(i);
+
+                    baseMapper.updateById(product);
+
+                    CacheUtils.evict(CacheNames.PRODUCT, productVo.getProductId());
+                    CacheUtils.clear(CacheNames.COMMERCIAL_PRODUCT);
+                    CacheUtils.clear(CacheNames.COMMERCIAL_PRODUCT_IDS);
+                }
+            }
+        }
+    }
 
 }

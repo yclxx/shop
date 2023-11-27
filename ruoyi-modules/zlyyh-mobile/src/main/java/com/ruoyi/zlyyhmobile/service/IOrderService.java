@@ -117,7 +117,6 @@ public interface IOrderService {
     /**
      * 微信支付回调
      *
-     * @param appWxPayCallbackParams 回调参数
      */
     boolean wxCallBack(Long merchantId, HttpServletRequest request);
 

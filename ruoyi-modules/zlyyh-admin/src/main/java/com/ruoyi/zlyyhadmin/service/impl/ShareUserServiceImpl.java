@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyhadmin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.ruoyi.common.core.exception.ServiceException;
@@ -8,18 +9,23 @@ import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.zlyyh.domain.ShareUser;
 import com.ruoyi.zlyyh.domain.ShareUserAccount;
 import com.ruoyi.zlyyh.domain.bo.ShareUserBo;
+import com.ruoyi.zlyyh.domain.bo.UserBo;
 import com.ruoyi.zlyyh.domain.vo.ShareUserVo;
+import com.ruoyi.zlyyh.domain.vo.UserVo;
 import com.ruoyi.zlyyh.mapper.ShareUserAccountMapper;
 import com.ruoyi.zlyyh.mapper.ShareUserMapper;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.IShareUserService;
+import com.ruoyi.zlyyhadmin.service.IUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 分销员Service业务层处理
@@ -33,6 +39,7 @@ public class ShareUserServiceImpl implements IShareUserService {
 
     private final ShareUserMapper baseMapper;
     private final ShareUserAccountMapper shareUserAccountMapper;
+    private final IUserService userService;
 
     /**
      * 查询分销员
@@ -48,13 +55,35 @@ public class ShareUserServiceImpl implements IShareUserService {
     @Override
     public List<ShareUserVo> queryList(ShareUserBo bo) {
         LambdaQueryWrapper<ShareUser> lqw = buildQueryWrapper(bo);
-        return baseMapper.selectVoList(lqw);
+        if (null == lqw) {
+            return new ArrayList<>();
+        }
+        List<ShareUserVo> shareUserVos = baseMapper.selectVoList(lqw);
+        for (ShareUserVo shareUserVo : shareUserVos) {
+            UserVo userVo = userService.queryById(shareUserVo.getUserId());
+            if (null != userVo) {
+                shareUserVo.setUpMobile(userVo.getMobile());
+            }
+        }
+        return shareUserVos;
     }
 
     private LambdaQueryWrapper<ShareUser> buildQueryWrapper(ShareUserBo bo) {
         Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<ShareUser> lqw = Wrappers.lambdaQuery();
-        lqw.eq(bo.getUserId() != null, ShareUser::getUserId, bo.getUserId());
+        if(null != bo.getUserId()){
+            if (bo.getUserId().toString().length() == 11) {
+                UserBo userBo = new UserBo();
+                userBo.setMobile(bo.getUserId().toString());
+                List<UserVo> userVos = userService.queryList(userBo);
+                if (ObjectUtil.isEmpty(userVos)) {
+                    return null;
+                }
+                lqw.in(ShareUser::getUserId, userVos.stream().map(UserVo::getUserId).collect(Collectors.toSet()));
+            } else {
+                lqw.eq(ShareUser::getUserId, bo.getUserId());
+            }
+        }
         lqw.like(StringUtils.isNotBlank(bo.getBusinessDistrictName()), ShareUser::getBusinessDistrictName, bo.getBusinessDistrictName());
         lqw.like(StringUtils.isNotBlank(bo.getCommercialTenantName()), ShareUser::getCommercialTenantName, bo.getCommercialTenantName());
         lqw.like(StringUtils.isNotBlank(bo.getShopName()), ShareUser::getShopName, bo.getShopName());

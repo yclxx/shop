@@ -36,6 +36,12 @@ public class ShareUserRecordVo {
     private Long userId;
 
     /**
+     * 分销员用户手机号
+     */
+    @ExcelProperty(value = "分销员用户手机号")
+    private String userMobile;
+
+    /**
      * 被分销用户ID
      */
     @ExcelProperty(value = "被分销用户ID")
@@ -113,4 +119,8 @@ public class ShareUserRecordVo {
     @ExcelProperty(value = "更新时间")
     private Date updateTime;
 
+    /**
+     * 商品名称
+     */
+    private String productName;
 }

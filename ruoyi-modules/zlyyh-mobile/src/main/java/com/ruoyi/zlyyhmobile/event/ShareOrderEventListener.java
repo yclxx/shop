@@ -55,6 +55,10 @@ public class ShareOrderEventListener {
             log.error("分销订单事件，订单不存在，event={}", event);
             return;
         }
+        if (null != event.getShareUserId() && orderVo.getUserId().equals(event.getShareUserId())) {
+            log.error("分销订单事件，不能分销给自己，event={}，orderUserId={}", event, orderVo.getUserId());
+            return;
+        }
         PlatformVo platformVo = platformService.queryById(orderVo.getPlatformKey(), orderVo.getSupportChannel());
         if (null == platformVo) {
             log.error("分销订单事件，平台不存在，event={}", event);
@@ -121,7 +125,8 @@ public class ShareOrderEventListener {
                     if ("1".equals(productVo.getShareAmountType())) {
                         awardAmount = productVo.getSellAmount().multiply(shareOneAmount);
                     }
-                    addShareUserRecord(shareUserVo.getParentId(), event.getNumber(), awardAmount, orderVo.getUserId(), inviteeStatus);
+                    awardAmount = awardAmount.multiply(new BigDecimal(orderVo.getCount()));
+                    addShareUserRecord(shareUserVo.getParentId(), event.getNumber(), awardAmount, orderVo.getUserId(), inviteeStatus, orderVo.getProductName());
                 }
                 BigDecimal shareTwoAmount = productVo.getShareTwoAmount();
                 if (shareTwoAmount.compareTo(BigDecimal.ZERO) > 0) {
@@ -129,7 +134,8 @@ public class ShareOrderEventListener {
                     if ("1".equals(productVo.getShareAmountType())) {
                         awardAmount = productVo.getSellAmount().multiply(shareTwoAmount);
                     }
-                    addShareUserRecord(shareUserVo.getUserId(), event.getNumber(), awardAmount, orderVo.getUserId(), inviteeStatus);
+                    awardAmount = awardAmount.multiply(new BigDecimal(orderVo.getCount()));
+                    addShareUserRecord(shareUserVo.getUserId(), event.getNumber(), awardAmount, orderVo.getUserId(), inviteeStatus, orderVo.getProductName());
                 }
             } else {
                 for (ShareUserRecordVo shareUserRecordVo : shareUserRecordVos) {
@@ -163,7 +169,14 @@ public class ShareOrderEventListener {
                             }
                         }
                     } else {
-                        log.info("分销记录已是最终状态：{}", shareUserRecordVo);
+                        if ("2".equals(shareUserRecordVo.getInviteeStatus()) && "4".equals(inviteeStatus)) {
+                            ShareUserRecordBo sb = new ShareUserRecordBo();
+                            sb.setRecordId(shareUserRecordVo.getRecordId());
+                            sb.setInviteeStatus("4");
+                            shareUserRecordService.updateByBo(sb);
+                        } else {
+                            log.info("分销记录已是最终状态：{}", shareUserRecordVo);
+                        }
                     }
                 }
             }
@@ -173,7 +186,7 @@ public class ShareOrderEventListener {
         }
     }
 
-    private void addShareUserRecord(Long shareUserId, Long number, BigDecimal awardAmount, Long inviteeUserId, String inviteeStatus) {
+    private void addShareUserRecord(Long shareUserId, Long number, BigDecimal awardAmount, Long inviteeUserId, String inviteeStatus, String productName) {
         if (null == shareUserId) {
             return;
         }
@@ -181,6 +194,7 @@ public class ShareOrderEventListener {
         shareUserRecordBo.setUserId(shareUserId);
         shareUserRecordBo.setInviteeUserId(inviteeUserId);
         shareUserRecordBo.setNumber(number);
+        shareUserRecordBo.setProductName(productName);
         shareUserRecordBo.setAwardAmount(awardAmount);
         shareUserRecordBo.setInviteeStatus(inviteeStatus);
         shareUserRecordService.insertByBo(shareUserRecordBo);

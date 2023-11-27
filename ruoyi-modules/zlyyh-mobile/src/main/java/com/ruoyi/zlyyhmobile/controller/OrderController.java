@@ -151,6 +151,7 @@ public class OrderController {
         String encoding = request.getParameter(SDKConstants.param_encoding);
         // 获取银联通知服务器发送的后台通知参数
         Map<String, String> valideData = PayUtils.getAllRequestParam(request, encoding);
+        log.info("银联支付回调接收参数：{}", valideData);
         //重要！验证签名前不要修改reqParam中的键值对的内容，否则会验签不过
         if (!AcpService.validate(valideData, encoding, false)) {
             log.info("验证签名结果[失败].");

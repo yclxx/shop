@@ -10,7 +10,7 @@ import com.ruoyi.zlyyh.domain.bo.ProductBo;
 import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.service.IProductService;
-import com.ruoyi.zlyyhmobile.utils.ProductUtils;
+import com.ruoyi.zlyyh.utils.redis.ProductUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;

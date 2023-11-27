@@ -244,21 +244,26 @@ public class ShareUserRecordServiceImpl implements IShareUserRecordService {
         try {
             ShareUserRecordVo shareUserRecordVo = baseMapper.selectVoById(recordId);
             if (shareUserRecordVo == null) {
-                log.error("分销奖励记录不存在");
+                log.error("分销奖励记录不存在,{}", recordId);
+                return;
+            }
+            if (!"2".equals(shareUserRecordVo.getInviteeStatus())) {
+                log.error("分销奖励记录非核销状态,{}", shareUserRecordVo);
                 return;
             }
             if (!"0".equals(shareUserRecordVo.getAwardStatus()) && !"3".equals(shareUserRecordVo.getAwardStatus())) {
-                log.error("已奖励或奖励中");
+                log.error("已奖励或奖励中,{}", recordId);
                 return;
             }
             ShareUserVo shareUserVo = shareUserMapper.selectVoById(shareUserRecordVo.getUserId());
             if (shareUserVo == null) {
-                log.error("分销用户不存在");
+                log.error("分销用户不存在,{}", recordId);
                 return;
             }
             ShareUserAccount shareUserAccount = shareUserAccountMapper.selectById(shareUserRecordVo.getUserId());
             if (null == shareUserAccount) {
-                throw new ServiceException("分销用户账户不存在");
+                log.error("分销用户账户不存在,{}", recordId);
+                return;
             }
             if (shareUserAccount.getStatus().equals("1")) {
                 log.info("分销账户已禁止奖励：{}", shareUserAccount);
@@ -272,7 +277,7 @@ public class ShareUserRecordServiceImpl implements IShareUserRecordService {
             if (platformVo.getShareUsedDate() > 0) {
                 // 校验时间是否符合
                 if (shareUserRecordVo.getOrderUsedTime() == null ||
-                    shareUserRecordVo.getOrderUsedTime().getTime() < System.currentTimeMillis() - platformVo.getShareUsedDate() * 24 * 60 * 60 * 1000) {
+                    shareUserRecordVo.getOrderUsedTime().getTime() + platformVo.getShareUsedDate() * 24 * 60 * 60 * 1000 > System.currentTimeMillis()) {
                     log.error("未到奖励时间，核销：{}天之后才能奖励,{}", platformVo.getShareUsedDate(), shareUserRecordVo);
                     return;
                 }

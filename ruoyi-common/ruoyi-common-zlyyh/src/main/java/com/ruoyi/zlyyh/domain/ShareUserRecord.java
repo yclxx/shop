@@ -20,7 +20,7 @@ import java.util.Date;
 @TableName("t_share_user_record")
 public class ShareUserRecord extends BaseEntity {
 
-    private static final long serialVersionUID=1L;
+    private static final long serialVersionUID = 1L;
 
     /**
      * ID
@@ -72,4 +72,8 @@ public class ShareUserRecord extends BaseEntity {
      * 发放结果
      */
     private String pushRemake;
+    /**
+     * 商品名称
+     */
+    private String productName;
 }

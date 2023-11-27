@@ -60,8 +60,8 @@ import com.ruoyi.zlyyhmobile.event.SendCouponEvent;
 import com.ruoyi.zlyyhmobile.event.ShareOrderEvent;
 import com.ruoyi.zlyyhmobile.service.*;
 import com.ruoyi.zlyyhmobile.utils.AliasMethod;
-import com.ruoyi.zlyyhmobile.utils.ProductUtils;
-import com.ruoyi.zlyyhmobile.utils.redis.OrderCacheUtils;
+import com.ruoyi.zlyyh.utils.redis.ProductUtils;
+import com.ruoyi.zlyyh.utils.redis.OrderCacheUtils;
 import com.wechat.pay.contrib.apache.httpclient.auth.AutoUpdateCertificatesVerifier;
 import com.wechat.pay.contrib.apache.httpclient.auth.PrivateKeySigner;
 import com.wechat.pay.contrib.apache.httpclient.auth.WechatPay2Credentials;
@@ -741,7 +741,7 @@ public class OrderServiceImpl implements IOrderService {
         addFoodOrder(productVo, order, userVo, platformVo);
 
         // 设置领取缓存
-        this.setOrderCountCache(platformVo.getPlatformKey(), bo.getUserId(), productVo.getProductId(), productVo.getSellEndDate());
+        this.setOrderCountCache(platformVo.getPlatformKey(), bo.getUserId(), productVo.getProductId(), productVo.getSellEndDate(), order.getCount());
         try {
             if ("0".equals(productVo.getPickupMethod())) {
                 order.setStatus("2");
@@ -896,7 +896,7 @@ public class OrderServiceImpl implements IOrderService {
             return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), order.getNumber(), "1");
         } catch (Exception e) {
             // 如果发生异常 回退名额
-            callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), null);
+            callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), null, order.getCount());
             throw e;
         }
     }
@@ -1181,7 +1181,7 @@ public class OrderServiceImpl implements IOrderService {
                 orderInfoMapper.insert(orderInfo);
             } catch (Exception e) {
                 // 如果发生异常 回退名额
-                callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), null);
+                callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), null, order.getCount());
                 log.error("保存订单异常：", e);
                 throw new ServiceException("系统繁忙，请稍后重试");
             }
@@ -1731,7 +1731,10 @@ public class OrderServiceImpl implements IOrderService {
      * @param userId      用户ID
      * @param productId   产品ID
      */
-    private void setOrderCountCache(Long platformKey, Long userId, Long productId, Date cacheTime) {
+    private void setOrderCountCache(Long platformKey, Long userId, Long productId, Date cacheTime, Long count) {
+        if (null == count || count < 1) {
+            count = 1L;
+        }
         Duration duration = null;
         if (null != cacheTime) {
             long datePoorHour = DateUtils.getDatePoorDay(cacheTime, new Date());
@@ -1742,9 +1745,12 @@ public class OrderServiceImpl implements IOrderService {
         DateType[] values = DateType.values();
         for (DateType value : values) {
             String productCacheKey = ProductUtils.countByProductIdRedisKey(platformKey, productId, value);
-            RedisUtils.incrAtomicValue(productCacheKey);
             String userCacheKey = ProductUtils.countByUserIdAndProductIdRedisKey(platformKey, userId, productId, value);
-            RedisUtils.incrAtomicValue(userCacheKey);
+            for (int i = 0; i < count; i++) {
+                // 循环递增
+                RedisUtils.incrAtomicValue(productCacheKey);
+                RedisUtils.incrAtomicValue(userCacheKey);
+            }
             if (null != duration) {
                 // 设置失效时间
                 RedisUtils.expire(productCacheKey, duration);
@@ -1760,7 +1766,10 @@ public class OrderServiceImpl implements IOrderService {
      * @param userId      用户ID
      * @param productId   产品ID
      */
-    private void callbackOrderCountCache(Long platformKey, Long userId, Long productId, Date createTime) {
+    private void callbackOrderCountCache(Long platformKey, Long userId, Long productId, Date createTime, Long count) {
+        if (null == count || count < 1) {
+            count = 1L;
+        }
         TimeInterval timer = DateUtil.timer();
         DateType[] values = DateType.values();
         for (DateType value : values) {
@@ -1798,9 +1807,11 @@ public class OrderServiceImpl implements IOrderService {
                     }
                 }
             }
-            RedisUtils.decrAtomicValue(productCacheKey);
             String userCacheKey = ProductUtils.countByUserIdAndProductIdRedisKey(platformKey, userId, productId, value);
-            RedisUtils.decrAtomicValue(userCacheKey);
+            for (int i = 0; i < count; i++) {
+                RedisUtils.decrAtomicValue(productCacheKey);
+                RedisUtils.decrAtomicValue(userCacheKey);
+            }
         }
         log.info("用户：{}，回退名额耗时：{}毫秒", userId, timer.interval());
     }
@@ -2327,7 +2338,7 @@ public class OrderServiceImpl implements IOrderService {
             // 删除用户未支付订单
             delCacheOrder(order.getNumber());
             // 回退名额
-            callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), order.getCreateTime());
+            callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), order.getCreateTime(), order.getCount());
             try {
                 if ("13".equals(order.getOrderType())) {
                     // 处理演出订单
@@ -3245,7 +3256,7 @@ public class OrderServiceImpl implements IOrderService {
                 // 发起退款
                 remoteOrderService.refundOrder(order.getNumber(), order.getOutAmount(), "未使用特定付款方式");
                 // 回退名额
-                callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), order.getCreateTime());
+                callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), order.getCreateTime(), order.getCount());
                 return false;
             }
         }

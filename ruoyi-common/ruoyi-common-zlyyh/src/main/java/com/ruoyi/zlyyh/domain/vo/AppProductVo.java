@@ -1,4 +1,4 @@
-package com.ruoyi.zlyyhmobile.domain.vo;
+package com.ruoyi.zlyyh.domain.vo;
 
 import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import lombok.Data;

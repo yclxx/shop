@@ -4,7 +4,7 @@ import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.web.controller.BaseController;
 import com.ruoyi.zlyyh.domain.vo.GrabPeriodVo;
 import com.ruoyi.zlyyhmobile.domain.bo.GrabPeriodProductQueryBo;
-import com.ruoyi.zlyyhmobile.domain.vo.AppProductVo;
+import com.ruoyi.zlyyh.domain.vo.AppProductVo;
 import com.ruoyi.zlyyhmobile.service.IGrabPeriodService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;

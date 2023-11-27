@@ -6,6 +6,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.utils.BeanCopyUtils;
 import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.mybatis.core.page.PageQuery;
+import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.system.api.RemoteProductService;
 import com.ruoyi.zlyyh.domain.ProductUnionPay;
 import com.ruoyi.zlyyh.domain.bo.ProductBo;
@@ -224,6 +226,7 @@ public class RemoteProductServiceImpl implements RemoteProductService {
 
     /**
      * 判断商品状态
+     *
      * @param prodSt
      * @return
      */
@@ -232,6 +235,35 @@ public class RemoteProductServiceImpl implements RemoteProductService {
             return "0";
         } else {
             return "1";
+        }
+    }
+
+    /**
+     * 查询票券剩余数量
+     */
+    @Async
+    @Override
+    public void queryProductCount() {
+        PageQuery pageQuery = new PageQuery();
+        pageQuery.setPageSize(100);
+        pageQuery.setOrderByColumn("productId");
+        pageQuery.setIsAsc("asc");
+
+        Integer pageNum = 1;
+        while (true) {
+            pageQuery.setPageNum(pageNum);
+            TableDataInfo<ProductVo> productVoTableDataInfo = productService.queryPageListByProductType(pageQuery);
+            for (ProductVo productVo : productVoTableDataInfo.getRows()) {
+                try {
+                    productService.queryProductCount(productVo);
+                } catch (Exception e) {
+                    log.error("查询产品剩余数量处理异常：", e);
+                }
+            }
+            if ((long) pageNum * pageQuery.getPageSize() >= productVoTableDataInfo.getTotal()) {
+                break;
+            }
+            pageNum++;
         }
     }
 }

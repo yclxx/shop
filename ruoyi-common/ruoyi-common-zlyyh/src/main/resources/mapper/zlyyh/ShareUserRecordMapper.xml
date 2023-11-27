@@ -17,6 +17,7 @@
         <result property="awardAccount" column="award_account"/>
         <result property="awardPushNumber" column="award_push_number"/>
         <result property="pushRemake" column="push_remake"/>
+        <result property="productName" column="product_name"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
         <result property="updateBy" column="update_by"/>
