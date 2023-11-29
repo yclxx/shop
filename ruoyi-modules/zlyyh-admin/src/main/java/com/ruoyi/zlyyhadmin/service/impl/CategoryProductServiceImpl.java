@@ -121,6 +121,7 @@ public class CategoryProductServiceImpl implements ICategoryProductService {
         return SqlHelper.retBool(baseMapper.delete(queryWrapper));
     }
 
+    @CacheEvict(cacheNames = CacheNames.CATEGORY_PRODUCT, key = "#bo.getCategoryId()")
     @Override
     public Boolean addProductByCategory(CategoryProductBo bo) {
         List<CategoryProduct> add = new ArrayList<>();
@@ -135,7 +136,7 @@ public class CategoryProductServiceImpl implements ICategoryProductService {
         }
         return false;
     }
-
+    @CacheEvict(cacheNames = CacheNames.CATEGORY_PRODUCT, allEntries = true)
     @Override
     public Integer delProductByCategory(CategoryProductBo bo) {
         LambdaQueryWrapper<CategoryProduct> wrapper = Wrappers.lambdaQuery();
