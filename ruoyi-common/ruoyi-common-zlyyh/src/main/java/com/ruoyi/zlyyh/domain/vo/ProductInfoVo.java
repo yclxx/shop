@@ -181,5 +181,10 @@ public class ProductInfoVo {
     @ExcelProperty(value = "品牌")
     private String brandName;
 
+    private Boolean shopAll;
+    private Boolean overdue;
+    private Boolean anyTime;
+    private BigDecimal leastPrice;
+    private BigDecimal reducePrice;
 
 }

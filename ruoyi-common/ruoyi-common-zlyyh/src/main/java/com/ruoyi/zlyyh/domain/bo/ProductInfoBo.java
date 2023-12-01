@@ -174,5 +174,9 @@ public class ProductInfoBo extends BaseEntity {
     @NotBlank(message = "品牌不能为空", groups = { AddGroup.class, EditGroup.class })
     private String brandName;
 
-
+    private Boolean shopAll;
+    private Boolean overdue;
+    private Boolean anyTime;
+    private BigDecimal leastPrice;
+    private BigDecimal reducePrice;
 }

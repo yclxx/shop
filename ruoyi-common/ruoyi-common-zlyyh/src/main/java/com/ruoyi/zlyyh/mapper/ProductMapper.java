@@ -21,5 +21,5 @@ import java.util.List;
     @DataColumn(key = "userName", value = "sys_user_id")
 })
 public interface ProductMapper extends BaseMapperPlus<ProductMapper, Product, ProductVo> {
-    Page<Product> selectPageByShopId(@Param("page") Page<Product> page, @Param("shopIds")List<Long> shopIds);
+    Page<ProductVo> selectPageByShopId(@Param("page") Page<Product> page, @Param("shopIds")List<Long> shopIds);
 }

@@ -1,17 +1,24 @@
 package com.ruoyi.zlyyhmobile.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.ruoyi.common.core.constant.CacheNames;
 import com.ruoyi.common.core.utils.BeanCopyUtils;
 import com.ruoyi.common.core.utils.DateUtils;
+import com.ruoyi.common.mybatis.core.page.PageQuery;
+import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.MerchantApproval;
+import com.ruoyi.zlyyh.domain.PromotionLog;
 import com.ruoyi.zlyyh.domain.PromotionTask;
 import com.ruoyi.zlyyh.domain.bo.MerchantApprovalBo;
+import com.ruoyi.zlyyh.domain.bo.PromotionLogBo;
 import com.ruoyi.zlyyh.domain.bo.PromotionTaskBo;
+import com.ruoyi.zlyyh.domain.vo.PromotionLogVo;
 import com.ruoyi.zlyyh.domain.vo.PromotionTaskVo;
 import com.ruoyi.zlyyh.mapper.MerchantApprovalMapper;
+import com.ruoyi.zlyyh.mapper.PromotionLogMapper;
 import com.ruoyi.zlyyh.mapper.PromotionTaskMapper;
 import com.ruoyi.zlyyhmobile.service.IPromotionTaskService;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +32,7 @@ import java.util.List;
 @Service
 public class PromotionTaskServiceImpl implements IPromotionTaskService {
     private final PromotionTaskMapper baseMapper;
+    private final PromotionLogMapper promotionLogMapper;
     private final MerchantApprovalMapper merchantApprovalMapper;
 
     @Cacheable(cacheNames = CacheNames.M_PROMOTIONTASK, key = "#bo.getPlatformKey()+'-'+#bo.getShowCity()")
@@ -51,5 +59,12 @@ public class PromotionTaskServiceImpl implements IPromotionTaskService {
         bo.setType("1");
         MerchantApproval merchantApproval = BeanCopyUtils.copy(bo, MerchantApproval.class);
         return merchantApprovalMapper.insert(merchantApproval) > 0;
+    }
+
+    public TableDataInfo<PromotionLogVo> promotionPage(PromotionLogBo bo, PageQuery pageQuery) {
+        LambdaQueryWrapper<PromotionLog> lwq = Wrappers.lambdaQuery();
+        IPage<PromotionLogVo> result = promotionLogMapper.selectVoPage(pageQuery.build(), lwq);
+        TableDataInfo<PromotionLogVo> build = TableDataInfo.build(result);
+        return build;
     }
 }

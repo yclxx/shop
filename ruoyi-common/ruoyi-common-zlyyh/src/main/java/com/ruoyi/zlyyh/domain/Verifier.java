@@ -60,7 +60,7 @@ public class Verifier extends BaseEntity {
     private Date lastLoginDate;
 
     /**
-     * 信息授权
+     * 信息授权 (0未授权，1已授权)用于静默登录
      */
     private String reloadUser;
     /**
@@ -95,6 +95,10 @@ public class Verifier extends BaseEntity {
      * 归属公司
      */
     private String org;
+    /**
+     * 是否同意合同 （0不同意，1同意）
+     */
+    private String contract;
 
     public Verifier() {
     }

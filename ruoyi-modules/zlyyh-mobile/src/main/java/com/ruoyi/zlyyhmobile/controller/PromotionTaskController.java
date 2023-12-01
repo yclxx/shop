@@ -2,8 +2,12 @@ package com.ruoyi.zlyyhmobile.controller;
 
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.web.controller.BaseController;
+import com.ruoyi.common.mybatis.core.page.PageQuery;
+import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.MerchantApprovalBo;
+import com.ruoyi.zlyyh.domain.bo.PromotionLogBo;
 import com.ruoyi.zlyyh.domain.bo.PromotionTaskBo;
+import com.ruoyi.zlyyh.domain.vo.PromotionLogVo;
 import com.ruoyi.zlyyh.domain.vo.PromotionTaskVo;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.service.IPromotionTaskService;
@@ -42,6 +46,14 @@ public class PromotionTaskController extends BaseController {
     @GetMapping("/getPromotionTask/{taskId}")
     public R<PromotionTaskVo> getPromotionTask(@PathVariable("taskId") Long taskId) {
         return R.ok(promotionTaskService.getPromotionTask(taskId));
+    }
+
+    /**
+     * 查询任务详情
+     */
+    @GetMapping("/promotionPage")
+    public TableDataInfo<PromotionLogVo> promotionPage(PromotionLogBo bo, PageQuery pageQuery) {
+        return promotionTaskService.promotionPage(bo,pageQuery);
     }
 
     /**
