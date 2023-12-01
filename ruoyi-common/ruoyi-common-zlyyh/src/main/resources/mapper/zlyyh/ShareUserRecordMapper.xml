@@ -11,6 +11,7 @@
         <result property="number" column="number"/>
         <result property="orderUsedTime" column="order_used_time"/>
         <result property="awardAmount" column="award_amount"/>
+        <result property="awardType" column="award_type"/>
         <result property="inviteeStatus" column="invitee_status"/>
         <result property="awardStatus" column="award_status"/>
         <result property="awardTime" column="award_time"/>
@@ -18,6 +19,8 @@
         <result property="awardPushNumber" column="award_push_number"/>
         <result property="pushRemake" column="push_remake"/>
         <result property="productName" column="product_name"/>
+        <result property="actualReleasAmount" column="actual_releas_amount"/>
+        <result property="remake" column="remake"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
         <result property="updateBy" column="update_by"/>

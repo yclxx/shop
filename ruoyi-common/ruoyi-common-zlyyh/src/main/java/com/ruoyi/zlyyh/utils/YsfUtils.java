@@ -6,10 +6,7 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Dict;
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.HexUtil;
-import cn.hutool.core.util.IdUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.*;
 import cn.hutool.crypto.SecureUtil;
 import cn.hutool.crypto.symmetric.DESede;
 import cn.hutool.http.HttpRequest;
@@ -27,10 +24,12 @@ import com.ruoyi.common.core.utils.JsonUtils;
 import com.ruoyi.common.core.utils.SpringUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.redis.utils.RedisUtils;
+import com.ruoyi.zlyyh.constant.YsfUpConstants;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.vo.BackendTokenEntity;
 import com.ruoyi.zlyyh.domain.vo.MemberVipBalanceVo;
 import com.ruoyi.zlyyh.properties.utils.YsfPropertiesUtils;
+import com.ruoyi.zlyyh.service.YsfConfigService;
 import com.ruoyi.zlyyh.utils.sdk.YinLianUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Base64Utils;
@@ -731,6 +730,29 @@ public class YsfUtils {
     /**
      * 验签
      *
+     * @param data      签名字符串
+     * @param publicKey 公钥
+     * @param sign      签名
+     * @return true 验签通过，false验签不通过
+     */
+    public static boolean verify(String data, String publicKey, String sign)
+        throws Exception {
+        byte[] keyBytes = Base64Utils.decodeFromString(publicKey);
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA",
+            "BC");
+        PublicKey publicK = keyFactory.generatePublic(keySpec);
+        Signature signature = Signature.getInstance("SHA256WithRSA",
+            "BC");
+        signature.initVerify(publicK);
+        signature.update(data.getBytes(StandardCharsets.UTF_8));
+        return signature.verify(Base64.decode(sign));
+
+    }
+
+    /**
+     * 验签
+     *
      * @param sign      原签名
      * @param value     需要验签的内容
      * @param publicKey 公钥
@@ -771,6 +793,37 @@ public class YsfUtils {
     }
 
     /**
+     * 查询剩余数量
+     *
+     * @param activityNo  活动编号
+     * @param platformKey 平台标识
+     * @return 剩余数量
+     */
+    public static Long aggQueryCpnRemain(String activityNo, Long platformKey) {
+        YsfConfigService ysfConfigService = SpringUtils.getBean(YsfConfigService.class);
+        String chnlId = ysfConfigService.queryValueByKey(platformKey, YsfUpConstants.up_chnlId);
+        String appId = ysfConfigService.queryValueByKey(platformKey, YsfUpConstants.up_appId);
+        String rsaPrivateKey = ysfConfigService.queryValueByKey(platformKey, YsfUpConstants.up_rsaPrivateKey);
+        R<JSONObject> result = YsfUtils.aggQueryCpnRemain(activityNo, chnlId, appId, rsaPrivateKey);
+        if (R.isSuccess(result)) {
+            JSONObject data = result.getData();
+            if (null == data) {
+                return null;
+            }
+            JSONObject activityInfo = data.getJSONObject("activityInfo");
+            if (null == activityInfo) {
+                return null;
+            }
+            String allRemainCount = activityInfo.getString("allRemainCount");
+            if (NumberUtil.isInteger(allRemainCount)) {
+                // 剩余数量
+                return Long.parseLong(allRemainCount);
+            }
+        }
+        return null;
+    }
+
+    /**
      * 赠送优惠券
      *
      * @param number     商户订单号
@@ -784,7 +837,8 @@ public class YsfUtils {
      * @param sm4Key     sm4密钥
      * @return {"discountId":"3102023022257962","qid":"1725459638736150528","couponCd":"INNER_23111718233203369865239260001621","couponBeginTs":"20231117182332","couponEndTs":"20231124182332","code":"0000000000","msg":"交易成功"}
      */
-    public static R<JSONObject> couponAcquire(String number, String activityNo, String mobile, String count, String entityTp, String chnlId, String appId, String privateKey, String sm4Key) {
+    public static R<JSONObject> couponAcquire(String number, String activityNo, String mobile, String
+        count, String entityTp, String chnlId, String appId, String privateKey, String sm4Key) {
         // 赠送优惠券
         String url = "https://openapi.unionpay.com/upapi/mkt/cpn/couponAcquire/v1";
         String bizMethod = "mkt.cpn.couponAcquire.v1";
@@ -819,7 +873,8 @@ public class YsfUtils {
      * @return {"origQid":"1725459638736150528","operaSt":"00","couponCd":"INNER_23111718233203369865239260001621","couponBeginTs":"20231117182332","couponEndTs":"20231124182332","code":"0000000000","msg":"交易成功"}
      * 订单不存在返回：{"origQid":"1726791806355816448","operaSt":"10","code":"0000000000","msg":"交易成功"}
      */
-    public static R<JSONObject> couponAcqQuery(String number, String origDate, String chnlId, String appId, String privateKey) {
+    public static R<JSONObject> couponAcqQuery(String number, String origDate, String chnlId, String
+        appId, String privateKey) {
         // 优惠券赠送结果查询
         String url = "https://openapi.unionpay.com/upapi/mkt/cpn/couponAcqQuery/v1";
         String bizMethod = "mkt.cpn.couponAcqQuery.v1";
@@ -854,7 +909,8 @@ public class YsfUtils {
      * @param sm4Key       sm4密钥
      * @return {"params":{"activityInfoList":[{"acctSt":"1","activityId":"3102023022257962","activityName":"0.1元购誉达白茶20元优惠券（满200元可用）","avlBalance":"1","couponCd":"INNER_23111718233203369865239260001621","couponThumbnailIm":"https://mpool.unionpay.com/file/00010000/20230222/11c349b0-0cae-4b37-9f55-feba206cbc1b.jpg","validBeginTm":"20231117182332","validEndTm":"20231124182332"}],"totalPageNum":"1"},"code":"0000000000","msg":"交易成功"}
      */
-    public static R<JSONObject> userCoupon(String mobile, List<String> couponIdList, String entityTp, String chnlId, String appId, String privateKey, String sm4Key) {
+    public static R<JSONObject> userCoupon(String mobile, List<String> couponIdList, String entityTp, String
+        chnlId, String appId, String privateKey, String sm4Key) {
         String url = "https://openapi.unionpay.com/upapi/mkt/kol/userCoupon/v1";
         String bizMethod = "mkt.kol.userCoupon.v1";
         String transSeq = IdUtil.getSnowflakeNextIdStr();
@@ -875,6 +931,72 @@ public class YsfUtils {
     }
 
     /**
+     * 赠送专享红包 银联开放平台
+     *
+     * @param number      订单号
+     * @param mobile      手机号
+     * @param pointAt     赠送红包的金额 单位分 需整数
+     * @param transDigest 交易摘要
+     * @param insAcctId   红包机构账户 P打头的接入方账户代码
+     * @param pointId     积分类别代码，41开头的16位数字
+     * @return {"transSeq":"1730066824137322496","code":"0000000000","msg":""}
+     */
+    public static R<JSONObject> pntAcquire(String number, String mobile, String pointAt, String transDigest, String insAcctId, String pointId, Long platformKey) {
+        YsfConfigService ysfConfigService = SpringUtils.getBean(YsfConfigService.class);
+        String chnlId = ysfConfigService.queryValueByKey(platformKey, YsfUpConstants.up_chnlId);
+        String appId = ysfConfigService.queryValueByKey(platformKey, YsfUpConstants.up_appId);
+        String rsaPrivateKey = ysfConfigService.queryValueByKey(platformKey, YsfUpConstants.up_rsaPrivateKey);
+        String sm4Key = ysfConfigService.queryValueByKey(platformKey, YsfUpConstants.up_sm4Key);
+        return pntAcquire(number, mobile, pointAt, transDigest, insAcctId, pointId, chnlId, appId, rsaPrivateKey, sm4Key);
+    }
+
+    /**
+     * 赠送专享红包 银联开放平台
+     *
+     * @param number      订单号
+     * @param mobile      手机号
+     * @param pointAt     赠送红包的金额 单位分 需整数
+     * @param transDigest 交易摘要
+     * @param insAcctId   红包机构账户 P打头的接入方账户代码
+     * @param pointId     积分类别代码，41开头的16位数字
+     * @param chnlId      渠道ID
+     * @param appId       AppID
+     * @param privateKey  私钥
+     * @param sm4Key      sm4密钥
+     * @return {"transSeq":"1730066824137322496","code":"0000000000","msg":""}
+     */
+    public static R<JSONObject> pntAcquire(String number, String mobile, String pointAt, String transDigest, String insAcctId, String pointId, String chnlId, String appId, String privateKey, String sm4Key) {
+        String url = "https://openapi.unionpay.com/upapi/mkt/pnt/pntAcquire/v1";
+        String bizMethod = "mkt.pnt.pntAcquire.v1";
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("chnlId", chnlId);
+        requestBody.put("accessId", "UP");
+        requestBody.put("transSeq", number);
+        requestBody.put("transDtTm", DateUtils.dateTimeNow());
+        requestBody.put("insAcctTp", "UP23");
+        requestBody.put("insAcctId", insAcctId);
+        requestBody.put("acctEntityTp", "UP01");
+        try {
+            requestBody.put("mobile", YsfSm4Utils.encryptSM4(mobile, sm4Key));
+        } catch (Exception e) {
+            log.error("银联开放平台接口调用手机号加密失败", e);
+        }
+        requestBody.put("pointTp", "41");
+        requestBody.put("pointId", pointId);
+        requestBody.put("pointAt", pointAt);
+        // 红包生效时间
+//        requestBody.put("validBeginDtTm", DateUtils.parseDateToStr(DateUtils.YYYYMMDDHHMMSS, DateUtil.beginOfDay(new Date()).toJdkDate()));
+        // 红包失效时间
+//        requestBody.put("validEndDtTm", DateUtils.parseDateToStr(DateUtils.YYYYMMDDHHMMSS, DateUtil.endOfDay(new Date()).toJdkDate()));
+        requestBody.put("delayIn", "0");
+        requestBody.put("tempIn", "0");
+        requestBody.put("inOutTransFlag", "0");
+        requestBody.put("transDigest", transDigest);
+
+        return postUpApi(url, appId, bizMethod, number, requestBody, privateKey);
+    }
+
+    /**
      * 发送请求至银联开放平台
      *
      * @param url         请求url
@@ -885,7 +1007,8 @@ public class YsfUtils {
      * @param privateKey  签名私钥
      * @return 响应结果
      */
-    private static R<JSONObject> postUpApi(String url, String appId, String bizMethod, String transSeq, Map<String, Object> requestBody, String privateKey) {
+    private static R<JSONObject> postUpApi(String url, String appId, String bizMethod, String
+        transSeq, Map<String, Object> requestBody, String privateKey) {
         Map<String, String> headers = new HashMap<>();
         headers.put("version", "1.0.0");
         headers.put("appType", "02");
@@ -930,21 +1053,67 @@ public class YsfUtils {
         String appId = "up_49pfnfkryxb4v_s28";
         String activityTp = "02";
         String activityNo = "3102023112040116";
-//        String mobile = "15542432188";
-        String mobile = "17767132971";
+        String mobile = "15542432188";
+//        String mobile = "17767132971";
 //        String mobile = "18340897551";
         String sm4Key = "d33fc2573c5ed170009a7525b7244786";
+        String insAcctId = "P231123180518593";
+        String pointId = "4123112328781322";
         String transSeq = IdUtil.getSnowflakeNextIdStr();
+
+//        String smvalue = "CTzJGO6XINR2sJ/huvju6Q==";
+//        try {
+//            String s = YsfSm4Utils.decryptSM4(smvalue, sm4Key);
+//            System.out.println(s);
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+
+        // 验证签名
+//        String publicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkL8jl0DczWwUemsX1P97t4RBBAgqLpZYICjOkM/GWvR43h3m4wxfud0qye5Xrf/oiuE3XKtIfkcQLhYBaPdGMIUfSLLwGae3eJDPN4Iqv+bwN30C55Lu49YIFAR1LxR0LQ+n5XgGuPMnjF9LVoGnwMzKNbDA2txmoQEACw3D5UmVrIEzT6dMTPfyKzjSYNek3UmkymTEveZpZXcXkNjB++n2YQCueU7gdi8Y2LC1J0//xWTUjL0vjdLh7+B3TK7aQyUE0JxlZhgnWquFLuxi2FSEvBkgtK7Ki0QnfxAlp1ECVpXwLjbmz0Nzt22Bun85ZGhEdiOfs3hhRJzYgGe+MQIDAQAB";
+//        String bizMethod = "mkt.CpnStateUpdtNotify";
+//        String body = "{\"couponNum\":1,\"traceId\":\"1729305774814834688\",\"transTp\":\"\",\"chnlId\":\"9001\",\"transChnl\":\"\",\"couponNm\":\"分销测试券\",\"operTp\":\"06\",\"couponCd\":\"INNER_23112809064203369865486781333111\",\"couponId\":\"3102023112040116\",\"orderAt\":0,\"transSeq\":\"expire_23112809064203369865486781333111\",\"posTmn\":\"\",\"discountAt\":0,\"couponCdInfos\":[{\"subAcctOperAt\":1,\"couponCd\":\"INNER_23112809064203369865486781333111\"}],\"mchntCd\":\"\",\"transDtTm\":\"20231129091428\"}";
+//        String str = "version=1.0.0&appId=" + appId + "&bizMethod=" + bizMethod + "&reqId=1110_expire_23112809064203369865486781333111&body=" + body;
+//        str = SecureUtil.sha256(str);
+//        try {
+//            boolean verify = verify(str, publicKey, "DpFoVTBy2Ie/opgcm3QdPpob8IBrD6++fJ+up8qN7AC1sZVMz3RpGOS7A+IFmHc9NA1CPBbTSxsstMKQSEYPuhwF1nMha0Nm+M6BXTNSS53+VSVPDqKqjxf9r+7FbL0uJ3xbcIlOLd3o4GKjdYr0rDm+zgNTuzyYollMPglI31OyUAR5CrFJsyH0Wn3O6Kg5J4OhXZNTg4EJIagF1+MLLZqhLeyYMNF8/hhneS6ZN12EbkWzSs1+Vu69gFbAOvYKt0qIFb0CHeMavD0JYfbX1nQEwaM1igVnUWG4Lvyy2VlbSTBGLjM1L/lVqo0L2mjuonv0JZsD8k6dQRV7vGWUFg==");
+//            System.out.println(verify);
+//        } catch (Exception e) {
+//            log.error("银联开放平台接口调用签名异常", e);
+//        }
+
         // 查询活动剩余名额查询
-        aggQueryCpnRemain(activityNo, chnlId, appId, privateKey);
+//        aggQueryCpnRemain(activityNo, chnlId, appId, privateKey);
         // 赠送优惠券
-//        couponAcquire(transSeq,activityNo,mobile,"2","03",chnlId,appId,privateKey,sm4Key);
+//        couponAcquire(transSeq, activityNo, mobile, "1", "03", chnlId, appId, privateKey, sm4Key);
         // 用户优惠券状态查询
-//        List<String> activityNoList = new ArrayList<>();
-//        activityNoList.add(activityNo);
-//        userCoupon(mobile, activityNoList, "03", chnlId, appId, privateKey, sm4Key);
+        List<String> activityNoList = new ArrayList<>();
+        activityNoList.add(activityNo);
+        userCoupon(mobile, activityNoList, "03", chnlId, appId, privateKey, sm4Key);
         // 查询优惠券赠送结果
 //        couponAcqQuery(transSeq, "20231121", chnlId, appId, privateKey);
+        // 赠送红包
+//        pntAcquire(transSeq, mobile, "1", "测试", insAcctId, pointId, chnlId, appId, privateKey, sm4Key);
+
+        // 查询红包账户余额
+//        String url = "https://openapi.unionpay.com/upapi/mkt/agg/aggQueryHotAccBal/v1";
+//        String bizMethod = "mkt.agg.aggQueryHotAccBal.v1";
+//        Map<String, Object> requestBody = new HashMap<>();
+//        requestBody.put("chnlId", chnlId);
+//        requestBody.put("insAcctTp", "UP23");
+//        requestBody.put("insAcctId", "P231123180518593");
+//        requestBody.put("transSeq", transSeq);
+//        R<JSONObject> result = postUpApi(url, appId, bizMethod, transSeq, requestBody, privateKey);
+//        JSONObject data = result.getData();
+//        String acctBalance = data.getString("acctBalance");
+//        String acctSt = data.getString("acctSt");
+//        try {
+//            acctBalance = YsfSm4Utils.decryptSM4(acctBalance, sm4Key);
+//            acctSt = YsfSm4Utils.decryptSM4(acctSt, sm4Key);
+//        } catch (Exception e) {
+//            log.error("银联开放平台接口解密失败", e);
+//        }
+//        log.info("acctBalance={},acctSt={}", acctBalance, acctSt);
 
 //        // 获取活动剩余名额查询
 //        String url = "https://openapi.unionpay.com/upapi/mkt/agg/aggQueryCpnRemain/v1";

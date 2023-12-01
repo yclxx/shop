@@ -2,6 +2,7 @@ package com.ruoyi.zlyyhmobile.controller;
 
 import cn.dev33.satoken.annotation.SaIgnore;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.crypto.SecureUtil;
 import cn.hutool.http.HttpStatus;
 import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.domain.R;
@@ -15,9 +16,12 @@ import com.ruoyi.common.log.enums.OperatorType;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.satoken.utils.LoginHelper;
+import com.ruoyi.zlyyh.constant.YsfUpConstants;
 import com.ruoyi.zlyyh.domain.bo.OrderBo;
 import com.ruoyi.zlyyh.domain.vo.OrderVo;
+import com.ruoyi.zlyyh.service.YsfConfigService;
 import com.ruoyi.zlyyh.utils.CloudRechargeEntity;
+import com.ruoyi.zlyyh.utils.YsfUtils;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyh.utils.sdk.AcpService;
 import com.ruoyi.zlyyh.utils.sdk.PayUtils;
@@ -58,6 +62,7 @@ public class OrderController {
     private final IOrderService orderService;
     private final IOrderBackTransService orderBackTransService;
     private final IHistoryOrderService historyOrderService;
+    private final YsfConfigService ysfConfigService;
 
     /**
      * 创建订单
@@ -392,6 +397,40 @@ public class OrderController {
         String body = ServletUtils.getParamJson(request);
         String headers = JsonUtils.toJsonString(ServletUtils.getHeaderMap(request));
         log.info("银联票券状态变动通知，请求头：{}，接收参数：{}", headers, body);
+        String appId = ServletUtils.getHeader("appId");
+        String bizMethod = ServletUtils.getHeader("bizMethod");
+        String reqId = ServletUtils.getHeader("reqId");
+        String sign = ServletUtils.getHeader("sign");
+        String str = "version=1.0.0&appId=" + appId + "&bizMethod=" + bizMethod + "&reqId=" + reqId + "&body=" + body;
+        str = SecureUtil.sha256(str);
+        // 获取公钥
+        String publicKey = ysfConfigService.queryValueByKeys(YsfUpConstants.up_publicKey);
+        boolean verify;
+        try {
+            verify = YsfUtils.verify(str, publicKey, sign);
+        } catch (Exception e) {
+            log.error("银联开放平台票券状态变更通知验证签名异常", e);
+            return R.fail("验证签名异常");
+        }
+        if (!verify) {
+            return R.fail("签名验证不通过");
+        }
+        // 字段明细 https://open.unionpay.com/tjweb/api/interface?apiSvcId=3161&id=19761#nav01
+        JSONObject data = JSONObject.parseObject(body);
+        // 券Id
+        String couponCd = data.getString("couponCd");
+        // 01：优惠券承兑；02：优惠券返还；03：优惠券无操作；04：优惠券获取；05：优惠券删除；06：优惠券过期
+        String operTp = data.getString("operTp");
+        // 仅在operTp为01、02、03时出现，取值为01消费，31撤销，04退货
+        String transTp = data.getString("transTp");
+        // 变动数量
+        String couponNum = data.getString("couponNum");
+        try {
+            orderService.upCouponStatusChange(operTp, transTp, couponCd, couponNum);
+        } catch (Exception e) {
+            log.error("银联票券状态变动通知,处理失败，couponCd={},e={}", couponCd, e.getMessage());
+            return R.fail(e.getMessage());
+        }
         return R.ok();
     }
 }

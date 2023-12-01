@@ -1,15 +1,13 @@
 package com.ruoyi.zlyyh.domain;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.Version;
+import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import java.io.Serializable;
-import java.util.Date;
-import java.math.BigDecimal;
 
 import java.math.BigDecimal;
-import com.ruoyi.common.core.web.domain.BaseEntity;
 
 /**
  * 分销用户账户对象 t_share_user_account
@@ -22,7 +20,7 @@ import com.ruoyi.common.core.web.domain.BaseEntity;
 @TableName("t_share_user_account")
 public class ShareUserAccount extends BaseEntity {
 
-    private static final long serialVersionUID=1L;
+    private static final long serialVersionUID = 1L;
 
     /**
      * 用户ID
@@ -49,6 +47,10 @@ public class ShareUserAccount extends BaseEntity {
      * 已退金额
      */
     private BigDecimal refundBalance;
+    /**
+     * 已冲正金额
+     */
+    private BigDecimal reversalBalance;
     /**
      * 乐观锁版本号
      */

@@ -11,16 +11,17 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.system.api.RemoteProductService;
 import com.ruoyi.zlyyh.domain.ProductUnionPay;
 import com.ruoyi.zlyyh.domain.bo.ProductBo;
+import com.ruoyi.zlyyh.domain.vo.DrawVo;
 import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayParams;
 import com.ruoyi.zlyyh.mapper.ProductUnionPayMapper;
 import com.ruoyi.zlyyh.properties.utils.YsfDistributionPropertiesUtils;
 import com.ruoyi.zlyyh.utils.sdk.UnionPayDistributionUtil;
+import com.ruoyi.zlyyhadmin.service.IDrawService;
 import com.ruoyi.zlyyhadmin.service.IProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -38,8 +39,8 @@ import java.util.Date;
 @Service
 @DubboService
 public class RemoteProductServiceImpl implements RemoteProductService {
-    @Autowired
-    private IProductService productService;
+    private final IProductService productService;
+    private final IDrawService drawService;
     private final ProductUnionPayMapper productUnionPayMapper;
 
     @Async
@@ -244,6 +245,19 @@ public class RemoteProductServiceImpl implements RemoteProductService {
     @Async
     @Override
     public void queryProductCount() {
+        try {
+            productUpCouponCount();
+        } catch (Exception e) {
+            log.error("查询产品剩余数量处理异常：", e);
+        }
+        try {
+            drawUpCouponCount();
+        } catch (Exception e) {
+            log.error("查询奖品剩余数量处理异常：", e);
+        }
+    }
+
+    public void productUpCouponCount() {
         PageQuery pageQuery = new PageQuery();
         pageQuery.setPageSize(100);
         pageQuery.setOrderByColumn("productId");
@@ -256,6 +270,30 @@ public class RemoteProductServiceImpl implements RemoteProductService {
             for (ProductVo productVo : productVoTableDataInfo.getRows()) {
                 try {
                     productService.queryProductCount(productVo);
+                } catch (Exception e) {
+                    log.error("查询产品剩余数量处理异常：", e);
+                }
+            }
+            if ((long) pageNum * pageQuery.getPageSize() >= productVoTableDataInfo.getTotal()) {
+                break;
+            }
+            pageNum++;
+        }
+    }
+
+    public void drawUpCouponCount() {
+        PageQuery pageQuery = new PageQuery();
+        pageQuery.setPageSize(100);
+        pageQuery.setOrderByColumn("drawId");
+        pageQuery.setIsAsc("asc");
+
+        Integer pageNum = 1;
+        while (true) {
+            pageQuery.setPageNum(pageNum);
+            TableDataInfo<DrawVo> productVoTableDataInfo = drawService.queryPageListByType(pageQuery);
+            for (DrawVo drawVo : productVoTableDataInfo.getRows()) {
+                try {
+                    drawService.queryProductCount(drawVo);
                 } catch (Exception e) {
                     log.error("查询产品剩余数量处理异常：", e);
                 }

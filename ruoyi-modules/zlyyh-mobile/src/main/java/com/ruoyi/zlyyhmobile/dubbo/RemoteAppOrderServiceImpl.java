@@ -31,10 +31,10 @@ import com.ruoyi.zlyyh.properties.YsfFoodProperties;
 import com.ruoyi.zlyyh.properties.utils.YsfDistributionPropertiesUtils;
 import com.ruoyi.zlyyh.utils.CtripUtils;
 import com.ruoyi.zlyyh.utils.YsfFoodUtils;
+import com.ruoyi.zlyyh.utils.redis.OrderCacheUtils;
 import com.ruoyi.zlyyh.utils.sdk.UnionPayDistributionUtil;
 import com.ruoyi.zlyyhmobile.event.ShareOrderEvent;
 import com.ruoyi.zlyyhmobile.service.*;
-import com.ruoyi.zlyyh.utils.redis.OrderCacheUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboService;
@@ -230,12 +230,13 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
         }
         // 获取锁成功，处理业务
         try {
-            String time = RedisUtils.getCacheObject("draw" + key);
+            String cacheKey = "draw" + key;
+            String time = RedisUtils.getCacheObject(cacheKey);
             if (StringUtils.isNotBlank(time)) {
                 return;
             }
             time = DateUtil.now();
-            RedisUtils.setCacheObject(key, time, Duration.ofMinutes(2));
+            RedisUtils.setCacheObject(cacheKey, time, Duration.ofMinutes(2));
             missionUserRecordService.sendDraw(missionUserRecordId);
         } finally {
             //释放锁
@@ -344,18 +345,42 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
     @Async
     @Override
     public void queryShareStatus() {
+        try {
+            ShareUserRecordBo shareUserRecordBo = new ShareUserRecordBo();
+            shareUserRecordBo.setInviteeStatus("0,1");
+            Map<String, Object> params = new HashMap<>();
+            params.put("beginCreateTime", DateUtil.offsetDay(new Date(), -90));
+            params.put("endCreateTime", new Date());
+            shareUserRecordBo.setParams(params);
+            // 开始查询
+            queryUsedStatus(shareUserRecordBo);
+        } catch (Exception e) {
+            log.info("查询分销订单核销状态异常：", e);
+        }
+        try {
+            ShareUserRecordBo shareUserRecordBo = new ShareUserRecordBo();
+            shareUserRecordBo.setInviteeStatus("2");
+            Map<String, Object> params = new HashMap<>();
+            params.put("beginOrderUsedTime", DateUtil.offsetDay(new Date(), -7));
+            params.put("endOrderUsedTime", new Date());
+            shareUserRecordBo.setParams(params);
+            // 开始查询
+            queryUsedStatus(shareUserRecordBo);
+        } catch (Exception e) {
+            log.info("查询分销已核销订单状态异常：", e);
+        }
+    }
+
+    /**
+     * 查询分销订单已核销 二次确认，7天内的
+     */
+    private void queryUsedStatus(ShareUserRecordBo shareUserRecordBo) {
         PageQuery pageQuery = new PageQuery();
         pageQuery.setPageSize(100);
         pageQuery.setOrderByColumn("number");
         pageQuery.setIsAsc("asc");
 
         Integer pageNum = 1;
-        ShareUserRecordBo shareUserRecordBo = new ShareUserRecordBo();
-        shareUserRecordBo.setInviteeStatus("0,1");
-        Map<String, Object> params = new HashMap<>();
-        params.put("beginCreateTime", DateUtil.offsetDay(new Date(), -90));
-        params.put("endCreateTime", new Date());
-        shareUserRecordBo.setParams(params);
         while (true) {
             pageQuery.setPageNum(pageNum);
             TableDataInfo<ShareUserRecordVo> shareUserRecordVoTableDataInfo = userRecordService.queryPageList(shareUserRecordBo, pageQuery);

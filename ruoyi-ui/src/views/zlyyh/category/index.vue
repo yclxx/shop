@@ -79,10 +79,10 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <el-button v-if="scope.row.categoryListType == '0'" size="mini" type="text" icon="el-icon-edit" @click="handleProductByCategory(scope.row)"
-          v-hasPermi="['zlyyh:category:add']">商品维护</el-button>
-          <el-button v-if="scope.row.categoryListType == '1'" size="mini" type="text" icon="el-icon-edit" @click="handleCommercialByCategory(scope.row)"
-                     v-hasPermi="['zlyyh:category:add']">门店维护</el-button>
+          <el-button v-if="scope.row.categoryListType == '0'" size="mini" type="text" icon="el-icon-edit"
+            @click="handleProductByCategory(scope.row)" v-hasPermi="['zlyyh:category:add']">商品维护</el-button>
+          <el-button v-if="scope.row.categoryListType == '1'" size="mini" type="text" icon="el-icon-edit"
+            @click="handleCommercialByCategory(scope.row)" v-hasPermi="['zlyyh:category:add']">门店维护</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['zlyyh:category:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-plus" @click="handleAdd(scope.row)"
@@ -120,26 +120,25 @@
           <el-col :span="8">
             <el-form-item label="支持端" prop="supportChannel">
               <el-checkbox-group v-model="form.supportChannel">
-                <el-checkbox
-                  v-for="item in dict.type.channel_type" :key="item.value" :label="item.value">
+                <el-checkbox v-for="item in dict.type.channel_type" :key="item.value" :label="item.value">
                   {{ item.label }}
                 </el-checkbox>
               </el-checkbox-group>
             </el-form-item>
           </el-col>
           <el-col :span="24">
-<!--            <el-form-item label="商户" prop="commercialTenantIds" v-if="form.categoryListType == '1'">-->
-<!--              <el-select style="width: 100%;" v-model="form.commercialTenantIds" placeholder="请选择商户" multiple clearable>-->
-<!--                <el-option v-for="item in commercialTenantList" :key="item.id" :label="item.label" :value="item.id" />-->
-<!--              </el-select>-->
-<!--            </el-form-item>-->
-<!--            <el-form-item label="商品" prop="productIds" v-if="form.categoryListType == '0'">-->
-<!--              <el-select style="width: 100%;" v-model="form.productIds" placeholder="请选择商品" multiple clearable>-->
-<!--                <el-option v-for="item in productList" :key="item.id" :label="item.label" :value="item.id">-->
-<!--                  <span style="float: left">{{ item.label }}</span>-->
-<!--                </el-option>-->
-<!--              </el-select>-->
-<!--            </el-form-item>-->
+            <!--            <el-form-item label="商户" prop="commercialTenantIds" v-if="form.categoryListType == '1'">-->
+            <!--              <el-select style="width: 100%;" v-model="form.commercialTenantIds" placeholder="请选择商户" multiple clearable>-->
+            <!--                <el-option v-for="item in commercialTenantList" :key="item.id" :label="item.label" :value="item.id" />-->
+            <!--              </el-select>-->
+            <!--            </el-form-item>-->
+            <!--            <el-form-item label="商品" prop="productIds" v-if="form.categoryListType == '0'">-->
+            <!--              <el-select style="width: 100%;" v-model="form.productIds" placeholder="请选择商品" multiple clearable>-->
+            <!--                <el-option v-for="item in productList" :key="item.id" :label="item.label" :value="item.id">-->
+            <!--                  <span style="float: left">{{ item.label }}</span>-->
+            <!--                </el-option>-->
+            <!--              </el-select>-->
+            <!--            </el-form-item>-->
           </el-col>
           <el-col :span="8">
             <el-form-item label="顶部图片" prop="topImg">
@@ -236,7 +235,7 @@
   export default {
     name: "Category",
     dicts: ['t_category_list_type', 't_category_status', 't_product_assign_date', 't_grad_period_date_list',
-      't_show_index','channel_type'
+      't_show_index', 'channel_type'
     ],
     components: {
       Treeselect,
@@ -337,18 +336,18 @@
     created() {
       this.getList();
       this.getPlatformSelectList();
-      this.getMerSelectList();
+      // this.getMerSelectList();
       //this.getProductSelectList();
       this.getCityTreeselect()
     },
     methods: {
       // 商品维护
       handleProductByCategory(row) {
-        this.categoryId =  row.categoryId;
+        this.categoryId = row.categoryId;
         this.isProduct = true;
       },
-      handleCommercialByCategory(row){
-        this.categoryId =  row.categoryId;
+      handleCommercialByCategory(row) {
+        this.categoryId = row.categoryId;
         this.isCommercial = true;
 
       },
@@ -572,7 +571,7 @@
             } else {
               this.form.showCity = this.getCityAllCheckedKeys().toString();
             }
-            if (this.form && this.form.supportChannel.length >0) {
+            if (this.form && this.form.supportChannel.length > 0) {
               this.form.supportChannel = this.form.supportChannel.join(',');
             }
             if (this.form.categoryId != null) {

@@ -25,8 +25,7 @@ import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.mapper.ShareUserAccountMapper;
 import com.ruoyi.zlyyh.mapper.ShareUserMapper;
 import com.ruoyi.zlyyh.mapper.ShareUserRecordMapper;
-import com.ruoyi.zlyyh.utils.CloudRechargeEntity;
-import com.ruoyi.zlyyh.utils.CloudRechargeUtils;
+import com.ruoyi.zlyyh.utils.*;
 import com.ruoyi.zlyyhmobile.service.IPlatformService;
 import com.ruoyi.zlyyhmobile.service.IShareUserRecordService;
 import com.ruoyi.zlyyhmobile.service.IUserService;
@@ -120,8 +119,8 @@ public class ShareUserRecordServiceImpl implements IShareUserRecordService {
         }
         lqw.eq(bo.getAwardTime() != null, ShareUserRecord::getAwardTime, bo.getAwardTime());
         lqw.eq(StringUtils.isNotBlank(bo.getAwardAccount()), ShareUserRecord::getAwardAccount, bo.getAwardAccount());
-        lqw.between(params.get("beginCreateTime") != null && params.get("endCreateTime") != null,
-            ShareUserRecord::getCreateTime, params.get("beginCreateTime"), params.get("endCreateTime"));
+        lqw.between(params.get("beginCreateTime") != null && params.get("endCreateTime") != null, ShareUserRecord::getCreateTime, params.get("beginCreateTime"), params.get("endCreateTime"));
+        lqw.between(params.get("beginOrderUsedTime") != null && params.get("endOrderUsedTime") != null, ShareUserRecord::getOrderUsedTime, params.get("beginOrderUsedTime"), params.get("endOrderUsedTime"));
         return lqw;
     }
 
@@ -129,8 +128,9 @@ public class ShareUserRecordServiceImpl implements IShareUserRecordService {
      * 新增分销记录
      */
     @Override
-    public Boolean insertByBo(ShareUserRecordBo bo) {
+    public Boolean insertByBo(ShareUserRecordBo bo, Long platformKey) {
         ShareUserRecord add = BeanUtil.toBean(bo, ShareUserRecord.class);
+        PermissionUtils.setPlatformDeptIdAndUserId(add, platformKey, true, false);
         validEntityBeforeSave(add);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
@@ -196,12 +196,44 @@ public class ShareUserRecordServiceImpl implements IShareUserRecordService {
             if (shareUserRecordVo.getInviteeStatus().equals(entity.getInviteeStatus())) {
                 return;
             }
-            if (entity.getInviteeStatus().equals("0") || entity.getInviteeStatus().equals("1")) {
+            if (entity.getInviteeStatus().equals("0")) {
                 return;
             }
-            if ("2".equals(entity.getInviteeStatus())) {
-                shareUserAccount.setFreezeBalance(shareUserAccount.getFreezeBalance().subtract(shareUserRecordVo.getAwardAmount()));
-                shareUserAccount.setWithdrawDeposit(shareUserAccount.getWithdrawDeposit().add(shareUserRecordVo.getAwardAmount()));
+            if ("1".equals(entity.getInviteeStatus()) && "2".equals(shareUserRecordVo.getInviteeStatus())) {
+                if ("2".equals(shareUserRecordVo.getAwardStatus())) {
+                    // 发放成功了，将记录账户退单金额
+                    shareUserAccount.setRefundBalance(shareUserAccount.getRefundBalance().add(shareUserRecordVo.getAwardAmount()));
+                } else {
+                    // 未发放成功，直接标记未核销
+                    shareUserAccount.setWithdrawDeposit(shareUserAccount.getWithdrawDeposit().subtract(shareUserRecordVo.getAwardAmount()));
+                    shareUserAccount.setFreezeBalance(shareUserAccount.getFreezeBalance().add(shareUserRecordVo.getAwardAmount()));
+                }
+            } else if ("2".equals(entity.getInviteeStatus())) {
+                if (!"2".equals(shareUserRecordVo.getAwardStatus())) {
+                    shareUserAccount.setFreezeBalance(shareUserAccount.getFreezeBalance().subtract(shareUserRecordVo.getAwardAmount()));
+                    shareUserAccount.setWithdrawDeposit(shareUserAccount.getWithdrawDeposit().add(shareUserRecordVo.getAwardAmount()));
+                } else {
+                    // 需奖励金额
+                    BigDecimal awardAmount = shareUserRecordVo.getAwardAmount();
+                    String remake = "";
+                    // 校验是否有需要冲正的金额
+                    if (shareUserAccount.getRefundBalance().compareTo(shareUserAccount.getReversalBalance()) > 0) {
+                        BigDecimal subtract = shareUserAccount.getRefundBalance().subtract(shareUserAccount.getReversalBalance());
+                        if (subtract.compareTo(awardAmount) >= 0) {
+                            remake = "由于已获得的奖励中存在退款订单，需扣减该笔奖励金额" + shareUserRecordVo.getAwardAmount() + "元。";
+                            // 更改冲正金额
+                            shareUserAccount.setReversalBalance(shareUserAccount.getReversalBalance().add(shareUserRecordVo.getAwardAmount()));
+                        } else {
+                            awardAmount = awardAmount.subtract(subtract);
+                            remake = "由于已获得的奖励中存在退款订单，需扣减该笔奖励金额中的" + subtract + "元。";
+                            // 更改冲正金额
+                            shareUserAccount.setReversalBalance(shareUserAccount.getReversalBalance().add(subtract));
+                        }
+                        entity.setActualReleasAmount(awardAmount);
+                        entity.setRemake(remake);
+                        entity.setAwardStatus("2");
+                    }
+                }
             } else if ("3".equals(entity.getInviteeStatus()) || "4".equals(entity.getInviteeStatus()) || "5".equals(entity.getInviteeStatus())) {
                 shareUserAccount.setFreezeBalance(shareUserAccount.getFreezeBalance().subtract(shareUserRecordVo.getAwardAmount()));
             }
@@ -276,36 +308,77 @@ public class ShareUserRecordServiceImpl implements IShareUserRecordService {
             }
             if (platformVo.getShareUsedDate() > 0) {
                 // 校验时间是否符合
-                if (shareUserRecordVo.getOrderUsedTime() == null ||
-                    shareUserRecordVo.getOrderUsedTime().getTime() + platformVo.getShareUsedDate() * 24 * 60 * 60 * 1000 > System.currentTimeMillis()) {
+                if (shareUserRecordVo.getOrderUsedTime() == null || shareUserRecordVo.getOrderUsedTime().getTime() + platformVo.getShareUsedDate() * 24 * 60 * 60 * 1000 > System.currentTimeMillis()) {
                     log.error("未到奖励时间，核销：{}天之后才能奖励,{}", platformVo.getShareUsedDate(), shareUserRecordVo);
                     return;
                 }
             }
+            // 是否需要请求接口发放奖励
+            boolean sendPost = true;
+            // 奖励信息
+            ShareUserRecordBo shareUserRecordBo = new ShareUserRecordBo();
+            shareUserRecordBo.setRecordId(recordId);
+            shareUserRecordBo.setAwardTime(new Date());
+            // 发放账户
+            shareUserRecordBo.setAwardAccount(shareUserVo.getUpMobile());
+            // 需奖励金额
+            BigDecimal awardAmount = shareUserRecordVo.getAwardAmount();
+            String remake = "";
+            // 校验是否有需要冲正的金额
+            if (shareUserAccount.getRefundBalance().compareTo(shareUserAccount.getReversalBalance()) > 0) {
+                BigDecimal subtract = shareUserAccount.getRefundBalance().subtract(shareUserAccount.getReversalBalance());
+                if (subtract.compareTo(awardAmount) >= 0) {
+                    sendPost = false;
+                    shareUserRecordBo.setAwardStatus("2");
+                    remake = "由于已获得的奖励中存在退款订单，需扣减该笔奖励金额" + shareUserRecordVo.getAwardAmount() + "元。";
+                    // 更改冲正金额
+                    shareUserAccount.setReversalBalance(shareUserAccount.getReversalBalance().add(shareUserRecordVo.getAwardAmount()));
+                } else {
+                    awardAmount = awardAmount.subtract(subtract);
+                    remake = "由于已获得的奖励中存在退款订单，需扣减该笔奖励金额中的" + subtract + "元。";
+                    // 更改冲正金额
+                    shareUserAccount.setReversalBalance(shareUserAccount.getReversalBalance().add(subtract));
+                }
+                shareUserAccountMapper.updateById(shareUserAccount);
+            }
+
             String channel = PlatformEnumd.MP_YSF.getChannel();
             // 查询用户信息 后续需更具奖励类型去查询不同端的用户信息
             UserVo userVo = userService.queryById(shareUserRecordVo.getUserId(), channel);
             if (userVo == null) {
-                ShareUserRecordBo shareUserRecordBo = new ShareUserRecordBo();
-                shareUserRecordBo.setRecordId(recordId);
                 shareUserRecordBo.setAwardStatus("2");
-                shareUserRecordBo.setAwardTime(new Date());
-                shareUserRecordBo.setPushRemake("一级分销员系统不发放");
-                updateByBo(shareUserRecordBo);
-                return;
+                remake = "一级分销员系统不发放";
+                sendPost = false;
+            } else {
+                shareUserRecordBo.setAwardStatus("1");
+                if (StringUtils.isBlank(shareUserRecordBo.getAwardAccount())) {
+                    shareUserRecordBo.setAwardAccount(userVo.getMobile());
+                }
             }
-            ShareUserRecordBo shareUserRecordBo = new ShareUserRecordBo();
-            shareUserRecordBo.setRecordId(recordId);
-            shareUserRecordBo.setAwardStatus("1");
-            shareUserRecordBo.setAwardTime(new Date());
-            shareUserRecordBo.setAwardAccount(userVo.getMobile());
             shareUserRecordBo.setAwardPushNumber(IdUtil.getSnowflakeNextIdStr());
+            shareUserRecordBo.setActualReleasAmount(awardAmount);
+            shareUserRecordBo.setRemake(remake);
+            shareUserRecordBo.setAwardType(platformVo.getShareAwardType());
 
             updateByBo(shareUserRecordBo);
-            // 请求接口发奖
-            R<Void> result = CloudRechargeUtils.doPostCreateOrder(shareUserRecordBo.getRecordId(), platformVo.getShareAwardProductId(), shareUserRecordBo.getAwardAccount(), 1, shareUserRecordVo.getAwardAmount(), "订单分佣奖励", shareUserRecordBo.getAwardPushNumber(), "/zlyyh-mobile/shareUser/ignore/orderCallback");
-            if (R.FAIL == result.getCode()) {
-                fail(shareUserRecordBo.getRecordId(), result.getMsg());
+            if (sendPost) {
+                if ("0".equals(platformVo.getShareAwardType())) {
+                    Integer minute = BigDecimalUtils.toMinute(shareUserRecordBo.getActualReleasAmount());
+                    R<JSONObject> result = YsfUtils.pntAcquire(shareUserRecordBo.getAwardPushNumber(), shareUserRecordBo.getAwardAccount(), minute.toString(), "订单分佣奖励", platformVo.getShareAwardInsAcctId(), platformVo.getShareAwardProductId(), platformVo.getPlatformKey());
+                    if (R.isSuccess(result)) {
+                        resultChange(shareUserRecordBo.getRecordId(), "2", result.getMsg());
+                    } else {
+                        if (R.FAIL == result.getCode()) {
+                            resultChange(shareUserRecordBo.getRecordId(), "3", result.getMsg());
+                        }
+                    }
+                } else if ("1".equals(platformVo.getShareAwardType())) {
+                    // 请求接口发奖
+                    R<Void> result = CloudRechargeUtils.doPostCreateOrder(shareUserRecordBo.getRecordId(), platformVo.getShareAwardProductId(), shareUserRecordBo.getAwardAccount(), 1, shareUserRecordBo.getActualReleasAmount(), "订单分佣奖励", shareUserRecordBo.getAwardPushNumber(), "/zlyyh-mobile/shareUser/ignore/orderCallback");
+                    if (R.FAIL == result.getCode()) {
+                        resultChange(shareUserRecordBo.getRecordId(), "3", result.getMsg());
+                    }
+                }
             }
         } finally {
             //释放锁
@@ -328,22 +401,24 @@ public class ShareUserRecordServiceImpl implements IShareUserRecordService {
         if (!"1".equals(shareUserRecord.getAwardStatus())) {
             return;
         }
-        // 请求接口发奖
-        R<JSONObject> result = CloudRechargeUtils.doPostQueryOrder(shareUserRecord.getRecordId(), shareUserRecord.getAwardPushNumber());
-        if (R.isSuccess(result)) {
-            rechargeResult(result.getData(), shareUserRecord);
-        } else {
-            if (R.FAIL == result.getCode()) {
-                fail(recordId, result.getMsg());
+        if ("1".equals(shareUserRecord.getAwardType())) {
+            // 请求接口发奖
+            R<JSONObject> result = CloudRechargeUtils.doPostQueryOrder(shareUserRecord.getRecordId(), shareUserRecord.getAwardPushNumber());
+            if (R.isSuccess(result)) {
+                rechargeResult(result.getData(), shareUserRecord);
+            } else {
+                if (R.FAIL == result.getCode()) {
+                    resultChange(recordId, "3", result.getMsg());
+                }
             }
         }
     }
 
-    private void fail(Long recordId, String msg) {
+    private void resultChange(Long recordId, String status, String msg) {
         // 发放失败
         ShareUserRecordBo shareUserRecordBo = new ShareUserRecordBo();
         shareUserRecordBo.setRecordId(recordId);
-        shareUserRecordBo.setAwardStatus("3");
+        shareUserRecordBo.setAwardStatus(status);
         shareUserRecordBo.setPushRemake(msg);
         updateByBo(shareUserRecordBo);
     }

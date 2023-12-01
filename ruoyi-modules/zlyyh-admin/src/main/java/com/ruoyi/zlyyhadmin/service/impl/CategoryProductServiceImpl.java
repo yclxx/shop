@@ -10,7 +10,6 @@ import com.ruoyi.common.core.constant.CacheNames;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.CategoryProduct;
-import com.ruoyi.zlyyh.domain.ShopProduct;
 import com.ruoyi.zlyyh.domain.bo.CategoryProductBo;
 import com.ruoyi.zlyyh.domain.vo.CategoryProductVo;
 import com.ruoyi.zlyyh.mapper.CategoryProductMapper;
@@ -40,7 +39,7 @@ public class CategoryProductServiceImpl implements ICategoryProductService {
      * 查询栏目商品关联
      */
     @Override
-    public CategoryProductVo queryById(Long id){
+    public CategoryProductVo queryById(Long id) {
         return baseMapper.selectVoById(id);
     }
 
@@ -51,7 +50,6 @@ public class CategoryProductServiceImpl implements ICategoryProductService {
         queryWrapper.eq(CategoryProduct::getProductId, productId);
         return baseMapper.selectCount(queryWrapper);
     }
-
 
     /**
      * 查询栏目商品关联列表
@@ -84,7 +82,7 @@ public class CategoryProductServiceImpl implements ICategoryProductService {
     /**
      * 新增栏目商品关联
      */
-    @CacheEvict(cacheNames = CacheNames.CATEGORY_PRODUCT, key = "#bo.getCategoryId()")
+    @CacheEvict(cacheNames = {CacheNames.CATEGORY_PRODUCT, CacheNames.productList}, allEntries = true)
     @Override
     public Boolean insertByBo(CategoryProductBo bo) {
         CategoryProduct add = BeanUtil.toBean(bo, CategoryProduct.class);
@@ -98,7 +96,7 @@ public class CategoryProductServiceImpl implements ICategoryProductService {
     /**
      * 修改栏目商品关联
      */
-    @CacheEvict(cacheNames = CacheNames.CATEGORY_PRODUCT, key = "#bo.getCategoryId()")
+    @CacheEvict(cacheNames = {CacheNames.CATEGORY_PRODUCT, CacheNames.productList}, allEntries = true)
     @Override
     public Boolean updateByBo(CategoryProductBo bo) {
         CategoryProduct update = BeanUtil.toBean(bo, CategoryProduct.class);
@@ -108,20 +106,20 @@ public class CategoryProductServiceImpl implements ICategoryProductService {
     /**
      * 批量删除栏目商品关联
      */
-    @CacheEvict(cacheNames = CacheNames.CATEGORY_PRODUCT, allEntries = true)
+    @CacheEvict(cacheNames = {CacheNames.CATEGORY_PRODUCT, CacheNames.productList}, allEntries = true)
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
 
         return baseMapper.deleteBatchIds(ids) > 0;
     }
 
-    @CacheEvict(cacheNames = CacheNames.CATEGORY_PRODUCT, allEntries = true)
+    @CacheEvict(cacheNames = {CacheNames.CATEGORY_PRODUCT, CacheNames.productList}, allEntries = true)
     @Override
     public Boolean remove(LambdaQueryWrapper<CategoryProduct> queryWrapper) {
         return SqlHelper.retBool(baseMapper.delete(queryWrapper));
     }
 
-    @CacheEvict(cacheNames = CacheNames.CATEGORY_PRODUCT, key = "#bo.getCategoryId()")
+    @CacheEvict(cacheNames = {CacheNames.CATEGORY_PRODUCT, CacheNames.productList}, allEntries = true)
     @Override
     public Boolean addProductByCategory(CategoryProductBo bo) {
         List<CategoryProduct> add = new ArrayList<>();
@@ -136,13 +134,14 @@ public class CategoryProductServiceImpl implements ICategoryProductService {
         }
         return false;
     }
-    @CacheEvict(cacheNames = CacheNames.CATEGORY_PRODUCT, allEntries = true)
+
+    @CacheEvict(cacheNames = {CacheNames.CATEGORY_PRODUCT, CacheNames.productList}, allEntries = true)
     @Override
     public Integer delProductByCategory(CategoryProductBo bo) {
         LambdaQueryWrapper<CategoryProduct> wrapper = Wrappers.lambdaQuery();
         if (ObjectUtil.isNotEmpty(bo.getProductIds()) && ObjectUtil.isNotEmpty(bo.getCategoryId())) {
-            wrapper.eq(CategoryProduct::getCategoryId,bo.getCategoryId());
-            wrapper.in(CategoryProduct::getProductId,bo.getProductIds());
+            wrapper.eq(CategoryProduct::getCategoryId, bo.getCategoryId());
+            wrapper.in(CategoryProduct::getProductId, bo.getProductIds());
             return baseMapper.delete(wrapper);
         }
         return 0;

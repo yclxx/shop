@@ -2,6 +2,10 @@ package com.ruoyi.zlyyh.utils;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.NumberUtil;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpUtil;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.constant.Constants;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.DateUtils;
@@ -176,7 +180,20 @@ public class ZlyyhUtils {
     }
 
     public static void main(String[] args) {
-        System.out.println(DateUtil.parse("20231124182332"));
+        String url = "https://discounts.yzgnet.com/gateway/zlyyh-admin/missionUserRecord/list?pageNum=1&pageSize=500&orderByColumn=mission_user_record_id&isAsc=desc&sendStatus=3";
+        HttpRequest request = HttpUtil.createGet(url).header("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpblR5cGUiOiJsb2dpbiIsImxvZ2luSWQiOiJzeXNfdXNlcjoxIiwicm5TdHIiOiJuQnJrS3B3SzlIb2p1ZmpYMHBlVzZmelhheWFMMm5TUiIsInVzZXJJZCI6MX0.4vP51HeqBUEFJACOcqjlLmiEmZ1DsdinjdVaNP3vRbs");
+        String body = request.execute().body();
+        if (StringUtils.isNotBlank(body)) {
+            JSONObject jsonObject = JSONObject.parseObject(body);
+            JSONArray data = jsonObject.getJSONArray("rows");
+            for (int i = 0; i < data.size(); i++) {
+                JSONObject item = data.getJSONObject(i);
+                System.out.println(item.getString("missionUserRecordId"));
+                String pfUrl = "https://discounts.yzgnet.com/gateway/zlyyh-admin/missionUserRecord/reissue/" + item.getString("missionUserRecordId");
+                String body1 = HttpUtil.createGet(pfUrl).header("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpblR5cGUiOiJsb2dpbiIsImxvZ2luSWQiOiJzeXNfdXNlcjoxIiwicm5TdHIiOiJuQnJrS3B3SzlIb2p1ZmpYMHBlVzZmelhheWFMMm5TUiIsInVzZXJJZCI6MX0.4vP51HeqBUEFJACOcqjlLmiEmZ1DsdinjdVaNP3vRbs").execute().body();
+                System.out.println(body1);
+            }
+        }
 
 //        String appId = "5d6630e7212a456e82f8d6a495faaec7";
 //        String appId = "d27c0217490d4e35a901abb2e874f383";

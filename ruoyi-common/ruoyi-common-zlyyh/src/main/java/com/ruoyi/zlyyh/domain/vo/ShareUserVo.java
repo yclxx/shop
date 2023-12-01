@@ -7,9 +7,8 @@ import com.ruoyi.common.core.enums.SensitiveStrategy;
 import com.ruoyi.common.excel.annotation.ExcelDictFormat;
 import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
+
 import java.util.Date;
-
-
 
 /**
  * 分销员视图对象
@@ -46,6 +45,13 @@ public class ShareUserVo {
      */
     @ExcelProperty(value = "门店名称")
     private String shopName;
+
+    /**
+     * 用户手机号
+     */
+    @Sensitive(strategy = SensitiveStrategy.PHONE)
+    @ExcelProperty(value = "用户手机号")
+    private String userMobile;
 
     /**
      * 云闪付手机号
@@ -97,6 +103,5 @@ public class ShareUserVo {
      */
     @ExcelProperty(value = "更新时间")
     private Date updateTime;
-
 
 }

@@ -1,15 +1,12 @@
 package com.ruoyi.zlyyh.domain.bo;
 
-import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
+import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import javax.validation.constraints.*;
 
-import java.util.Date;
-
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import com.ruoyi.common.core.web.domain.BaseEntity;
 
 /**
  * 分销用户账户业务对象
@@ -25,7 +22,7 @@ public class ShareUserAccountBo extends BaseEntity {
     /**
      * 用户ID
      */
-    @NotNull(message = "用户ID不能为空", groups = { EditGroup.class })
+    @NotNull(message = "用户ID不能为空", groups = {EditGroup.class})
     private Long userId;
 
     /**
@@ -52,6 +49,8 @@ public class ShareUserAccountBo extends BaseEntity {
      * 已退金额
      */
     private BigDecimal refundBalance;
-
-
+    /**
+     * 已冲正金额
+     */
+    private BigDecimal reversalBalance;
 }

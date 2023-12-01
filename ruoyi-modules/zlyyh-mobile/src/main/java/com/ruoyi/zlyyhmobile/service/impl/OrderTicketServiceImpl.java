@@ -102,6 +102,9 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         if ("1".equals(productVo.getProductAffiliation())) {
             throw new ServiceException("商品不可购买");
         }
+        if (bo.getPayCount() < 1) {
+            throw new ServiceException("请求错误");
+        }
 
         // 票种查询
         ProductTicketLineVo ticketLineVo = ticketLineMapper.selectVoById(bo.getLineId());

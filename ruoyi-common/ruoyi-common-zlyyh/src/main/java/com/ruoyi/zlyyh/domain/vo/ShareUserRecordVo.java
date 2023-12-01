@@ -38,6 +38,7 @@ public class ShareUserRecordVo {
     /**
      * 分销员用户手机号
      */
+    @Sensitive(strategy = SensitiveStrategy.PHONE)
     @ExcelProperty(value = "分销员用户手机号")
     private String userMobile;
 
@@ -71,6 +72,11 @@ public class ShareUserRecordVo {
      */
     @ExcelProperty(value = "奖励金额")
     private BigDecimal awardAmount;
+
+    /**
+     * 奖励类型
+     */
+    private String awardType;
 
     /**
      * 分销状态
@@ -123,4 +129,12 @@ public class ShareUserRecordVo {
      * 商品名称
      */
     private String productName;
+    /**
+     * 实际发放金额
+     */
+    private BigDecimal actualReleasAmount;
+    /**
+     * 备注
+     */
+    private String remake;
 }

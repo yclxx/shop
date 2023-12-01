@@ -3614,6 +3614,12 @@ public class OrderServiceImpl implements IOrderService {
                                     // 已失效
                                     order.setVerificationStatus("2");
                                     updateFlag = true;
+                                } else if ("1".equals(upUserCouponInfo.getAcctSt())) {
+                                    if (!"0".equals(orderVo.getVerificationStatus())) {
+                                        // 已失效
+                                        order.setVerificationStatus("0");
+                                        updateFlag = true;
+                                    }
                                 }
                                 if (updateFlag) {
                                     updateOrder(order);
@@ -3624,5 +3630,55 @@ public class OrderServiceImpl implements IOrderService {
                 }
             }
         }
+    }
+
+    /**
+     * 优惠券状态变更
+     *
+     * @param operTp    操作类型 01：优惠券承兑；02：优惠券返还；03：优惠券无操作；04：优惠券获取；05：优惠券删除；06：优惠券过期
+     * @param transTp   交易类型 仅在operTp为01、02、03时出现，取值为01消费，31撤销，04退货
+     * @param couponCd  优惠券编码
+     * @param couponNum 优惠券变动数量
+     */
+    @Override
+    public void upCouponStatusChange(String operTp, String transTp, String couponCd, String couponNum) {
+        if ("04".equals(operTp)) {
+            return;
+        }
+        // 查询订单是否存在
+        OrderVo orderVo = queryByExternalOrderNumber(couponCd);
+        if (null == orderVo) {
+            throw new ServiceException("订单不存在");
+        }
+
+        String verificationStatus = null;
+        if ("01".equals(operTp)) {
+            // 核销
+            verificationStatus = "1";
+        } else if ("02".equals(operTp)) {
+            // 优惠券返还
+            verificationStatus = "0";
+        } else if ("03".equals(operTp)) {
+            // 优惠券无操作
+            if ("04".equals(transTp)) {
+                verificationStatus = "2";
+            }
+        } else if ("05".equals(operTp)) {
+            // 优惠券删除
+            verificationStatus = "2";
+        } else if ("06".equals(operTp)) {
+            // 优惠券过期
+            verificationStatus = "2";
+        } else {
+            log.error("银联票券通知，类型无处理方式，couponCd={}，operTp={}", couponCd, operTp);
+            return;
+        }
+        if (StringUtils.isBlank(verificationStatus)) {
+            return;
+        }
+        Order order = new Order();
+        order.setNumber(orderVo.getNumber());
+        order.setVerificationStatus(verificationStatus);
+        updateOrder(order);
     }
 }

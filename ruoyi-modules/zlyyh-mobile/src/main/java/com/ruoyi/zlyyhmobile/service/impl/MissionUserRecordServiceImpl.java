@@ -1,5 +1,6 @@
 package com.ruoyi.zlyyhmobile.service.impl;
 
+import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.TimeInterval;
 import cn.hutool.core.util.DesensitizedUtil;
@@ -25,6 +26,7 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.common.satoken.utils.LoginHelper;
+import com.ruoyi.zlyyh.constant.YsfUpConstants;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.MissionGroupProduct;
 import com.ruoyi.zlyyh.domain.MissionUserRecord;
@@ -38,6 +40,7 @@ import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.mapper.MissionGroupProductMapper;
 import com.ruoyi.zlyyh.mapper.MissionUserRecordLogMapper;
 import com.ruoyi.zlyyh.mapper.MissionUserRecordMapper;
+import com.ruoyi.zlyyh.service.YsfConfigService;
 import com.ruoyi.zlyyh.utils.*;
 import com.ruoyi.zlyyhmobile.domain.bo.CreateOrderBo;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
@@ -50,6 +53,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -79,6 +83,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
     private final IOrderService orderService;
     private final IPlatformService platformService;
     private final AsyncSecondService asyncSecondService;
+    private final YsfConfigService ysfConfigService;
     @Autowired
     private LockTemplate lockTemplate;
 
@@ -203,6 +208,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
      * @param platformKey    平台标识
      * @return 剩余抽奖次数
      */
+    @Transactional
     @Override
     public MissionUserRecord getDraw(Long missionGroupId, Long userId, Long platformKey, String channel) {
         TimeInterval timer = DateUtil.timer();
@@ -367,6 +373,16 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
             } else if ("3".equals(missionUserRecord.getDrawType())) {
                 R<Void> result = CloudRechargeUtils.doPostCreateOrder(missionUserRecord.getMissionUserRecordId(), missionUserRecordLog.getExternalProductId(), missionUserRecord.getSendAccount(), 1, missionUserRecordLog.getPushNumber(), "/zlyyh-mobile/missionUserRecord/ignore/orderCallback");
                 sendResult(result, missionUserRecord, missionUserRecordLog, false);
+            } else if ("4".equals(missionUserRecord.getDrawType())) {
+                String chnlId = ysfConfigService.queryValueByKey(missionGroupVo.getPlatformKey(), YsfUpConstants.up_chnlId);
+                String appId = ysfConfigService.queryValueByKey(missionGroupVo.getPlatformKey(), YsfUpConstants.up_appId);
+                String sm4Key = ysfConfigService.queryValueByKey(missionGroupVo.getPlatformKey(), YsfUpConstants.up_sm4Key);
+                String rsaPrivateKey = ysfConfigService.queryValueByKey(missionGroupVo.getPlatformKey(), YsfUpConstants.up_rsaPrivateKey);
+                String entityTp = ysfConfigService.queryValueByKey(missionGroupVo.getPlatformKey(), YsfUpConstants.up_entityTp);
+                // 银联开放平台发券
+                R<JSONObject> result = YsfUtils.couponAcquire(missionUserRecordLog.getPushNumber(), missionUserRecordLog.getExternalProductId(), missionUserRecord.getSendAccount(), "1", entityTp, chnlId, appId, rsaPrivateKey, sm4Key);
+                // 处理结果
+                sendResult(result, missionUserRecord, missionUserRecordLog, true);
             }
         } finally {
             //释放锁
@@ -379,12 +395,12 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
      */
     @Override
     public void sendStatusOrder() {
-        List<MissionUserRecordVo> missionUserRecordVos = baseMapper.selectVoList(new LambdaQueryWrapper<MissionUserRecord>().eq(MissionUserRecord::getStatus, "1").in(MissionUserRecord::getSendStatus, "0", "1", "3").gt(MissionUserRecord::getCreateTime, DateUtil.offsetDay(new Date(), -3).toJdkDate()).last("limit 1000"));
+        List<MissionUserRecordVo> missionUserRecordVos = baseMapper.selectVoList(new LambdaQueryWrapper<MissionUserRecord>().eq(MissionUserRecord::getStatus, "1").in(MissionUserRecord::getSendStatus, "0", "1", "3").gt(MissionUserRecord::getDrawTime, DateUtil.offsetDay(new Date(), -3).toJdkDate()).last("limit 1000"));
         if (ObjectUtil.isNotEmpty(missionUserRecordVos)) {
             for (MissionUserRecordVo missionUserRecordVo : missionUserRecordVos) {
                 if ("0".equals(missionUserRecordVo.getSendStatus()) || "3".equals(missionUserRecordVo.getSendStatus())) {
                     String value = CacheUtils.get(CacheNames.reloadOrderNumbers, missionUserRecordVo.getMissionUserRecordId());
-                    if (StringUtils.isNotBlank(value)) {
+                    if (StringUtils.isBlank(value)) {
                         CacheUtils.put(CacheNames.reloadOrderNumbers, missionUserRecordVo.getMissionUserRecordId(), DateUtil.now());
                         //开始发券
                         sendDraw(missionUserRecordVo.getMissionUserRecordId());
@@ -394,7 +410,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
                     MissionUserRecordVo recordVo = baseMapper.selectVoById(missionUserRecordVo.getMissionUserRecordId());
                     if (null != recordVo && "3".equals(recordVo.getSendStatus())) {
                         String value = CacheUtils.get(CacheNames.reloadOrderNumbers, missionUserRecordVo.getMissionUserRecordId());
-                        if (StringUtils.isNotBlank(value)) {
+                        if (StringUtils.isBlank(value)) {
                             CacheUtils.put(CacheNames.reloadOrderNumbers, missionUserRecordVo.getMissionUserRecordId(), DateUtil.now());
                             //开始发券
                             sendDraw(missionUserRecordVo.getMissionUserRecordId());
@@ -415,6 +431,13 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
                 missionUserRecordLog.setStatus("1");
                 missionUserRecord.setSendStatus("2");
                 if (null != result.getData()) {
+                    if ("4".equals(missionUserRecord.getDrawType())) {
+                        try {
+                            JSONObject data = (JSONObject) result.getData();
+                            missionUserRecordLog.setExternalOrderNumber(data.getString("couponCd"));
+                        } catch (Exception ignored) {
+                        }
+                    }
                     missionUserRecordLog.setRemark(JSONObject.toJSONString(result.getData()));
                 } else {
                     missionUserRecordLog.setRemark(result.getMsg());
@@ -476,8 +499,14 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
             R<JSONObject> result = YsfUtils.queryCoupon(missionUserRecordLog.getMissionUserRecordId(), missionUserRecordLog.getPushNumber(), missionUserRecordLog.getCreateTime(), missionVo.getPlatformKey());
             // 处理结果
             sendResult(result, missionUserRecord, missionUserRecordLog, false);
+        } else if ("4".equals(missionUserRecord.getDrawType())) {
+            String chnlId = ysfConfigService.queryValueByKey(null, YsfUpConstants.up_chnlId);
+            String appId = ysfConfigService.queryValueByKey(null, YsfUpConstants.up_appId);
+            String rsaPrivateKey = ysfConfigService.queryValueByKey(null, YsfUpConstants.up_rsaPrivateKey);
+            R<JSONObject> result = YsfUtils.couponAcqQuery(missionUserRecordLog.getPushNumber(), DateUtil.format(missionUserRecordLog.getCreateTime(), DatePattern.PURE_DATE_PATTERN), chnlId, appId, rsaPrivateKey);
+            // 处理结果
+            sendResult(result, missionUserRecord, missionUserRecordLog, false);
         }
-
     }
 
     /**
@@ -662,7 +691,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
      * 购买商品
      */
     @Override
-    public CreateOrderResult payMissionGroupProduct(Long missionId, Long userId,Long platformId,String channel,String cityName,String adCode) {
+    public CreateOrderResult payMissionGroupProduct(Long missionId, Long userId, Long platformId, String channel, String cityName, String adCode) {
         MissionVo missionVo = missionService.queryById(missionId);
         if (null == missionVo) {
             log.error("任务不存在：{}", missionId);
@@ -698,7 +727,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
                 }
             }
         }
-        asyncSecondService.sendInviteDraw(userId, platformId, missionVo.getMissionGroupId(),channel,cityName,adCode);
+        asyncSecondService.sendInviteDraw(userId, platformId, missionVo.getMissionGroupId(), channel, cityName, adCode);
         CreateOrderBo createOrderBo = new CreateOrderBo();
         createOrderBo.setProductId(userProductPayCount.getProductId());
         createOrderBo.setUserId(userId);

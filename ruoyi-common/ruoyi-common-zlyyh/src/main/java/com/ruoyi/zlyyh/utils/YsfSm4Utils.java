@@ -1,6 +1,5 @@
 package com.ruoyi.zlyyh.utils;
 
-import cn.hutool.core.util.ByteUtil;
 import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
@@ -47,10 +46,40 @@ public class YsfSm4Utils {
         return Base64.encodeBase64String(result);
     }
 
+    /**
+     * SM4解密算法
+     * @param value 待解密数据
+     * @param key 密钥
+     * @return
+     * @throws Exception
+     */
+    public static String decryptSM4(String value, String key) throws Exception {
+        if (null == value || "".equals(value)) {
+            return "";
+        }
+        byte[] valueByte = Base64.decodeBase64(value);
+        byte[] result =
+            sm4DecryptCBC(ByteUtils.hexToBytes(key),valueByte,ivStr.getBytes(),
+                SM4_CBC_PKCS7PADDING);
+        return new String(result);
+    }
+
+    public static byte[] sm4DecryptCBC(byte[] keyBytes, byte[] cipher, byte[] iv, String algo){
+        try {
+            Key key = new SecretKeySpec(keyBytes, "SM4");
+            Cipher in = Cipher.getInstance(algo, "BC");
+            if(iv == null) iv = zeroIv(algo);
+            in.init(Cipher.DECRYPT_MODE, key, getIV(iv));
+            return in.doFinal(cipher);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public static byte[] sm4EncryptCBC(byte[] keyBytes, byte[] data, byte[] iv, String algo) {
         try {
             Key key = new SecretKeySpec(keyBytes, "SM4");
-            Cipher in = Cipher.getInstance(algo, "BC"); //
+            Cipher in = Cipher.getInstance(algo, "BC");
             if (iv == null) iv = zeroIv(algo);
             in.init(Cipher.ENCRYPT_MODE, key, getIV(iv));
             return in.doFinal(data);

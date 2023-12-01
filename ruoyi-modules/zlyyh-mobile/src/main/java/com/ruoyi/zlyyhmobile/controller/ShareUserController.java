@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyhmobile.controller;
 
 import cn.hutool.core.codec.Base64;
+import cn.hutool.core.util.ObjectUtil;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.core.web.controller.BaseController;
@@ -16,6 +17,7 @@ import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.properties.WxProperties;
 import com.ruoyi.zlyyh.utils.CloudRechargeEntity;
+import com.ruoyi.zlyyh.utils.PhoneNumberValidator;
 import com.ruoyi.zlyyh.utils.WxUtils;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.bo.GenWxQrCodeBo;
@@ -73,6 +75,19 @@ public class ShareUserController extends BaseController {
     public R<Void> add(@RequestBody ShareUserBo bo) {
         bo.setUserId(LoginHelper.getUserId());
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        if (ObjectUtil.isNull(bo.getParentId())) {
+            return R.fail("请选择商圈");
+        }
+        UserVo userVo = userService.queryById(bo.getUserId(), ZlyyhUtils.getPlatformChannel());
+        if (null == userVo) {
+            return R.fail("登录超时，请退出重试！");
+        }
+        if (StringUtils.isBlank(bo.getUpMobile()) || bo.getUpMobile().contains("*")) {
+            bo.setUpMobile(userVo.getMobile());
+        }
+        if (!PhoneNumberValidator.isValid(bo.getUpMobile())) {
+            return R.fail("手机号错误");
+        }
         return toAjax(iShareUserService.insertByBo(bo));
     }
 

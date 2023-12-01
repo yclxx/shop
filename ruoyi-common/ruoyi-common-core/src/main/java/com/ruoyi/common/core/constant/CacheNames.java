@@ -155,7 +155,7 @@ public interface CacheNames {
     /**
      * 订单补发缓存
      */
-    String reloadOrderNumbers = "reloadOrderNumbers#1d";
+    String reloadOrderNumbers = "reloadOrderNumbers#300m";
     /**
      * 订单补发缓存
      */

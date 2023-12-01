@@ -1,12 +1,10 @@
 package com.ruoyi.zlyyh.domain.vo;
 
-import java.math.BigDecimal;
 import com.alibaba.excel.annotation.ExcelIgnoreUnannotated;
 import com.alibaba.excel.annotation.ExcelProperty;
-import com.ruoyi.common.excel.annotation.ExcelDictFormat;
-import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
-import java.util.Date;
+
+import java.math.BigDecimal;
 
 
 
@@ -57,6 +55,10 @@ public class ShareUserAccountVo {
      */
     @ExcelProperty(value = "已退金额")
     private BigDecimal refundBalance;
-
+    /**
+     * 已冲正金额
+     */
+    @ExcelProperty(value = "已冲正金额")
+    private BigDecimal reversalBalance;
 
 }

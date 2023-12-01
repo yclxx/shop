@@ -44,7 +44,7 @@ public interface IShareUserRecordService {
     /**
      * 修改分销记录
      */
-    Boolean insertByBo(ShareUserRecordBo bo);
+    Boolean insertByBo(ShareUserRecordBo bo, Long platformKey);
 
     /**
      * 修改分销记录

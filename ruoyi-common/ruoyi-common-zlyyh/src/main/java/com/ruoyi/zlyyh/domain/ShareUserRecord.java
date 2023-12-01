@@ -48,6 +48,10 @@ public class ShareUserRecord extends BaseEntity {
      */
     private BigDecimal awardAmount;
     /**
+     * 奖励类型
+     */
+    private String awardType;
+    /**
      * 分销状态
      */
     private String inviteeStatus;
@@ -76,4 +80,22 @@ public class ShareUserRecord extends BaseEntity {
      * 商品名称
      */
     private String productName;
+    /**
+     * 实际发放金额
+     */
+    private BigDecimal actualReleasAmount;
+    /**
+     * 备注
+     */
+    private String remake;
+
+    /**
+     * 部门id
+     */
+    private Long sysDeptId;
+
+    /**
+     * 用户id
+     */
+    private Long sysUserId;
 }

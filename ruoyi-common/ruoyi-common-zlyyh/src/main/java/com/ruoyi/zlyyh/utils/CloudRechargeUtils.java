@@ -26,7 +26,14 @@ import java.util.Map;
  */
 @Slf4j
 public class CloudRechargeUtils {
-    private static CloudRechargeConfig cloudrechargeConfig = SpringUtils.getBean(CloudRechargeConfig.class);
+    private static CloudRechargeConfig cloudrechargeConfig;
+
+    static {
+        try {
+            cloudrechargeConfig = SpringUtils.getBean(CloudRechargeConfig.class);
+        } catch (Exception ignored) {
+        }
+    }
 
     /**
      * 签名
@@ -195,7 +202,6 @@ public class CloudRechargeUtils {
             String decrypt = AESUtils.decrypt(cloudrechargeConfig.getAesKey(), cloudRechargeEntity.getEncryptedData(), Constants.UTF8);
             cloudRechargeEntity.setEncryptedData(decrypt);
         } catch (Exception e) {
-            e.printStackTrace();
             log.error("云充值中心通知解密异常：", e);
             throw new ServiceException("解密异常");
         }

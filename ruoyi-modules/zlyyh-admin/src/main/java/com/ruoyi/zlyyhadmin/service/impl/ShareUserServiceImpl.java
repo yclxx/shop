@@ -62,7 +62,7 @@ public class ShareUserServiceImpl implements IShareUserService {
         for (ShareUserVo shareUserVo : shareUserVos) {
             UserVo userVo = userService.queryById(shareUserVo.getUserId());
             if (null != userVo) {
-                shareUserVo.setUpMobile(userVo.getMobile());
+                shareUserVo.setUserMobile(userVo.getMobile());
             }
         }
         return shareUserVos;
@@ -71,7 +71,7 @@ public class ShareUserServiceImpl implements IShareUserService {
     private LambdaQueryWrapper<ShareUser> buildQueryWrapper(ShareUserBo bo) {
         Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<ShareUser> lqw = Wrappers.lambdaQuery();
-        if(null != bo.getUserId()){
+        if (null != bo.getUserId()) {
             if (bo.getUserId().toString().length() == 11) {
                 UserBo userBo = new UserBo();
                 userBo.setMobile(bo.getUserId().toString());

@@ -55,10 +55,16 @@
 
     <el-table v-if="refreshTable" v-loading="loading" :data="shareUserList" row-key="userId"
       :default-expand-all="isExpandAll" :tree-props="{children: 'children', hasChildren: 'hasChildren'}">
-      <el-table-column label="商圈名称" prop="businessDistrictName" />
-      <el-table-column label="品牌名称" align="center" prop="commercialTenantName" />
-      <el-table-column label="门店名称" align="center" prop="shopName" />
-      <el-table-column label="用户" align="center" prop="upMobile" width="110" />
+      <el-table-column label="商圈名称" prop="businessDistrictName" width="150" />
+      <el-table-column label="品牌名称" align="center" prop="commercialTenantName" width="150" />
+      <el-table-column label="门店名称" align="center" prop="shopName" width="150" />
+      <el-table-column label="用户信息" align="center" prop="userId" width="230">
+        <template slot-scope="scope">
+          <span>ID：{{ scope.row.userId }}</span><br>
+          <span v-if="scope.row.userMobile">手机号：{{ scope.row.userMobile }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="云闪付手机号" align="center" prop="upMobile" width="120" />
       <el-table-column label="状态" width="68" align="center" prop="status">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status" />
@@ -81,21 +87,28 @@
         </template>
       </el-table-column> -->
       <el-table-column label="备注" width="100" :show-overflow-tooltip="true" align="center" prop="remark" />
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" fixed="right" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['zlyyh:shareUser:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-plus" @click="handleAdd(scope.row)"
             v-hasPermi="['zlyyh:shareUser:add']">新增</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
-            v-hasPermi="['zlyyh:shareUser:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
     <!-- 添加或修改分销员对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+      <el-form ref="form" :model="form" :rules="rules" label-width="100px">
+        <el-form-item label="平台" prop="platformKey">
+          <el-select v-model="form.platformKey" placeholder="请选择平台" style="width: 100%;">
+            <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="所属商圈" prop="parentId">
+          <treeselect v-model="form.parentId" :options="shareUserOptions" :normalizer="normalizer"
+            placeholder="请选择所属商圈" />
+        </el-form-item>
         <el-form-item label="商圈名称" prop="businessDistrictName">
           <el-input v-model="form.businessDistrictName" placeholder="请输入商圈名称" />
         </el-form-item>
@@ -122,13 +135,6 @@
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" placeholder="请输入备注" />
-        </el-form-item>
-        <el-form-item label="上级ID" prop="parentId">
-          <treeselect v-model="form.parentId" :options="shareUserOptions" :normalizer="normalizer"
-            placeholder="请选择上级ID" />
-        </el-form-item>
-        <el-form-item label="平台标识" prop="platformKey">
-          <el-input v-model="form.platformKey" placeholder="请输入平台标识" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -277,7 +283,7 @@
           commercialTenantName: null,
           shopName: null,
           upMobile: null,
-          status: null,
+          status: '0',
           auditStatus: null,
           remark: null,
           parentId: null,
