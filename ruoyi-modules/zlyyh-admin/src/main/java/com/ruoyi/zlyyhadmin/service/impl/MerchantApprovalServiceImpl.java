@@ -102,6 +102,7 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
      */
     @Override
     public Boolean updateByBo(MerchantApprovalBo bo) {
+        // 审批通过处理
         if (bo.getApprovalStatus().equals("1")) {
             // 查询申请信息
             MerchantApprovalVo vo = baseMapper.selectVoById(bo.getApprovalId());
@@ -124,7 +125,7 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
         if (ObjectUtil.isNotEmpty(verifier)) {
             verifier.setPlatformKey(vo.getPlatformKey());
             verifier.setMobile(vo.getBrandMobile());
-            verifier.setVerifierType("admin");
+            //verifier.setVerifierType("admin");
             verifier.setIsVerifier(true);
             verifier.setIsAdmin(true);
             verifier.setIsBd(false);
@@ -138,7 +139,7 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
             verifier.setIsVerifier(true);
             verifier.setIsAdmin(true);
             verifier.setIsBd(false);
-            verifier.setVerifierType("admin");
+            //verifier.setVerifierType("admin");
             verifierMapper.insert(verifier);
         }
         return verifier;

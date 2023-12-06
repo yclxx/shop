@@ -39,10 +39,6 @@ public class Verifier extends BaseEntity {
      */
     private String status;
     /**
-     * 人员类型，admin 管理员 verifier 核销人员
-     */
-    private String verifierType;
-    /**
      * 第三方平台联登唯一标识
      */
     private String openId;

@@ -18,16 +18,6 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="人员类型" prop="verifierType">
-        <el-select v-model="queryParams.verifierType" placeholder="请选择人员类型" clearable>
-          <el-option
-            v-for="dict in dict.type.verifier_type"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
-        </el-select>
-      </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
           <el-option
@@ -106,11 +96,6 @@
       <el-table-column label="ID" align="center" prop="id" v-if="true"/>
       <el-table-column label="平台标识" align="center" prop="platformKey" :formatter="platformFormatter"/>
       <el-table-column label="手机号" align="center" prop="mobile"/>
-      <el-table-column label="人员类型" align="center" prop="verifierType">
-        <template slot-scope="scope">
-          <dict-tag :options="dict.type.verifier_type" :value="scope.row.verifierType"/>
-        </template>
-      </el-table-column>
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
@@ -169,18 +154,6 @@
           </el-col>
         </el-row>
         <el-row>
-          <el-col :span="8">
-            <el-form-item label="人员类型" prop="verifierType">
-              <el-select v-model="form.verifierType" placeholder="请选择人员类型">
-                <el-option
-                  v-for="dict in dict.type.verifier_type"
-                  :key="dict.value"
-                  :label="dict.label"
-                  :value="dict.value"
-                ></el-option>
-              </el-select>
-            </el-form-item>
-          </el-col>
           <el-col :span="8">
             <el-form-item label="openId" prop="openId">
               <el-input v-model="form.openId" placeholder="请输入openId"/>
@@ -252,7 +225,7 @@ import {selectListPlatform} from "@/api/zlyyh/platform";
 
 export default {
   name: "Verifier",
-  dicts: ['sys_normal_disable', 'verifier_type'],
+  dicts: ['sys_normal_disable'],
   data() {
     return {
       // 按钮loading
@@ -284,7 +257,6 @@ export default {
         platformKey: undefined,
         username: undefined,
         mobile: undefined,
-        verifierType: undefined,
         status: undefined,
         openId: undefined,
         extensionServiceProviderId: undefined,
@@ -306,9 +278,6 @@ export default {
         ],
         mobile: [
           {required: true, message: "手机号不能为空", trigger: "blur"}
-        ],
-        verifierType: [
-          {required: true, message: "人员类型不能为空", trigger: "change"}
         ],
         status: [
           {required: true, message: "状态不能为空", trigger: "change"}
@@ -368,7 +337,6 @@ export default {
         id: undefined,
         platformKey: undefined,
         mobile: undefined,
-        verifierType: undefined,
         status: undefined,
         openId: undefined,
         createBy: undefined,

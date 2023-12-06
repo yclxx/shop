@@ -359,7 +359,9 @@ public class IVerifierServiceImpl implements IVerifierService {
             verifier.setId(IdUtil.getSnowflakeNextId());
             verifier.setPlatformKey(ZlyyhUtils.getPlatformId());
             verifier.setMobile(bo.getVerifierMobile());
-            verifier.setVerifierType("verifier");
+            verifier.setIsVerifier(true);
+            verifier.setIsAdmin(false);
+            verifier.setIsBd(false);
             verifier.setStatus("0");
             if (baseMapper.insert(verifier) <= 0) return false;
             // 核销人员绑定门店

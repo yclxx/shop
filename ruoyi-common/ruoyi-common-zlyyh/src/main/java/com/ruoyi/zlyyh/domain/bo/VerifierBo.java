@@ -51,8 +51,8 @@ public class VerifierBo extends BaseEntity {
     /**
      * 人员类型，admin管理员 verifier 核销人员
      */
-    @NotBlank(message = "人员类型，admin管理员 verifier 核销人员不能为空", groups = {AddGroup.class, EditGroup.class})
-    private String verifierType;
+    //@NotBlank(message = "人员类型，admin管理员 verifier 核销人员不能为空", groups = {AddGroup.class, EditGroup.class})
+    //private String verifierType;
 
     /**
      * 第三方平台联登唯一标识
