@@ -236,11 +236,8 @@ public class LianLianUtils {
         String secret = "MGc8SsdBt5t/SslKtQgwdA==";
         // 地址
         String basePath = "https://channel-api.lianlianlvyou.com";
-
         String api = "/ll/channel/product/getProductList";
-
-        getProductList(channelId, secret, basePath + api, "140100", 1, 10);
-        //JSONObject returnLog = getProductList(channelId, secret, basePath + api, "140100",1);
-        //log.info("订单详情展示：{}", returnLog);
+        JSONObject productList = getProductList(channelId, secret, basePath + api, "330100", 1, 30);
+        log.info("产品列表：{}", productList);
     }
 }
