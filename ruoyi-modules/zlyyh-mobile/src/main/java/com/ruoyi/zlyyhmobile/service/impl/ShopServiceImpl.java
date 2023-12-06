@@ -173,6 +173,7 @@ public class ShopServiceImpl implements IShopService {
         if (StringUtils.isEmpty(bo.getBrandMobile())) throw new ServiceException("管理员手机号为空");
         LambdaQueryWrapper<MerchantApproval> lqw = Wrappers.lambdaQuery();
         lqw.eq(MerchantApproval::getBrandMobile, bo.getBrandMobile());
+        lqw.in(MerchantApproval::getApprovalStatus, "0","1");
         Long l = merchantApprovalMapper.selectCount(lqw);
         if (l > 0) {
             throw new ServiceException("此管理员手机号已申请商户");

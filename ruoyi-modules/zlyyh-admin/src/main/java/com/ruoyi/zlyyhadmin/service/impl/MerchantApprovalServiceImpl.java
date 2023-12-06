@@ -102,6 +102,7 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
      */
     @Override
     public Boolean updateByBo(MerchantApprovalBo bo) {
+        // 审批通过处理
         if (bo.getApprovalStatus().equals("1")) {
             // 查询申请信息
             MerchantApprovalVo vo = baseMapper.selectVoById(bo.getApprovalId());
