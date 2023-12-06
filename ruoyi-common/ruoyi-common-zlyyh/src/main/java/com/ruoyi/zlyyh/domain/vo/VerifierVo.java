@@ -112,4 +112,8 @@ public class VerifierVo {
      * 归属公司
      */
     private String org;
+    /**
+     * 是否同意合同 （0不同意，1同意）
+     */
+    private String contract;
 }

@@ -41,4 +41,11 @@
             and mobile = #{user.mobile}
         </if>
     </select>
+    <select id="selectByMobile" resultMap="VerifierResult">
+        SELECT *
+        FROM t_verifier
+        WHERE
+        mobile = #{mobile}
+        limit 1
+    </select>
 </mapper>

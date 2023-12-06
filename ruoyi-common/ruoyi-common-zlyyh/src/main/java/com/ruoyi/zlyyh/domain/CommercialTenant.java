@@ -35,6 +35,30 @@ public class CommercialTenant extends BaseEntity {
      */
     private String commercialTenantImg;
     /**
+     * 商户简称
+     */
+    private String commercialTenantTitle;
+    /**
+     * 核销员id
+     */
+    private Long verifierId;
+    /**
+     * 管理员手机号
+     */
+    private String adminMobile;
+    /**
+     * 0 暂存 1正式
+     */
+    private String isCache;
+    /**
+     * 省 市 区 中间用逗号隔开
+     */
+    private String city;
+    /**
+     * 区城市编码
+     */
+    private String citycode;
+    /**
      * 标签,英文逗号隔开
      */
     private String tags;
@@ -82,6 +106,10 @@ public class CommercialTenant extends BaseEntity {
      * 活动类型
      */
     private String activity;
+    /**
+     * 活动商户
+     */
+    private String activityNature;
     /**
      * 第三方品牌ID
      */

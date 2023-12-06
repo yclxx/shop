@@ -18,7 +18,7 @@ import lombok.EqualsAndHashCode;
 @TableName("t_shop_merchant")
 public class ShopMerchant extends BaseEntity {
 
-    private static final long serialVersionUID=1L;
+    private static final long serialVersionUID = 1L;
 
     /**
      * ID
@@ -41,6 +41,14 @@ public class ShopMerchant extends BaseEntity {
      * 收款方式
      */
     private String paymentMethod;
+    /**
+     * 结算方式
+     */
+    private String settlementWay;
+    /**
+     * 结算比例
+     */
+    private String settlement;
     /**
      * 收单机构
      */

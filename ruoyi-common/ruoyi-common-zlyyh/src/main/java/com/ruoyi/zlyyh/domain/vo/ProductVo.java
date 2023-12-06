@@ -406,6 +406,11 @@ public class ProductVo implements Serializable {
      */
     private Long lineUpperLimit;
 
+    /**
+     * 支持过期退（t_product_info）参数
+     */
+    private Boolean overdue;
+
     private ProductTicketVo ticket;
 
     private List<ProductTicketSessionVo> ticketSession;

@@ -89,6 +89,8 @@ public class VerifierBo extends BaseEntity {
      * 服务商表id
      */
     private Long extensionServiceProviderId;
+
+    private Long commercialTenantId;
     /**
      * 是否BD
      */
@@ -109,4 +111,12 @@ public class VerifierBo extends BaseEntity {
      * 归属公司
      */
     private String org;
+    /**
+     * 是否同意合同 （0不同意，1同意）
+     */
+    private String contract;
+    /**
+     * 门店id
+     */
+    private Long shopId;
 }

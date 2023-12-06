@@ -58,6 +58,7 @@ public class CodeServiceImpl implements ICodeService {
         // 查询门店与商品是否绑定
         LambdaQueryWrapper<ShopProduct> lqw1 = Wrappers.lambdaQuery();
         lqw1.eq(ShopProduct::getProductId, codeVo.getProductId());
+        lqw1.eq(ShopProduct::getShopId, bo.getShopId());
         List<ShopProductVo> shopProductVos = shopProductMapper.selectVoList(lqw1);
         if (ObjectUtil.isEmpty(shopProductVos)) return null;
         // 查询核销人员是否所属门店

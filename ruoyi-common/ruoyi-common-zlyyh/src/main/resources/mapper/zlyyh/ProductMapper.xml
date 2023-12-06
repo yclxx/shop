@@ -85,15 +85,18 @@
         <result property="couponTip" column="coupon_tip"/>
     </resultMap>
 
-    <select id="selectPageByShopId" resultMap="ProductResult">
+    <select id="selectPageByShopId" resultType="com.ruoyi.zlyyh.domain.vo.ProductVo">
         SELECT
         p.product_id, p.external_product_id, p.external_product_send_value, p.product_name, p.product_abbreviation,
-        p.product_subhead, p.product_img, p.product_small_img, p.product_affiliation, p.product_type, p.pickup_method,
-        p.show_original_amount, p.original_amount, p.sell_amount, p.vip_up_amount, p.vip_amount, p.status
+        p.product_subhead, p.product_img, p.product_small_img, p.product_affiliation, p.product_type,
+        p.pickup_method,p.total_count, p.show_original_amount, p.original_amount, p.sell_amount, p.vip_up_amount,
+        p.vip_amount, p.status,info.overdue
         FROM
-        t_product p
+        t_product p,
+        t_product_info info
         WHERE
-        p.del_flag = '0'
+        info.product_id = p.product_id
+        AND p.del_flag = '0'
         AND p.product_id IN (
         SELECT
         s.product_id

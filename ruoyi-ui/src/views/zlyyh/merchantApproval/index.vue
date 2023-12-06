@@ -115,15 +115,6 @@
             {{ invoice.label }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="商品类型" align="center" prop="productType">
-        <template slot-scope="scope">
-          <span v-for="product in productTypeList" :key="product.value">
-            <span v-for="type in scope.row.productType.split(',')" v-if="type === product.value">
-              {{ product.label }},
-            </span>
-          </span>
-        </template>
-      </el-table-column>
       <el-table-column fixed="right" label="状态" align="center" prop="approvalStatus" width="150px">
         <template slot-scope="scope">
           <div>
@@ -196,24 +187,20 @@
           </span>
         </el-descriptions-item>
         <el-descriptions-item label="管理员手机号">
-          {{ details.mobile }}
+          {{ details.brandMobile }}
         </el-descriptions-item>
         <el-descriptions-item label="品牌名称">
           {{ details.brandName }}
         </el-descriptions-item>
         <el-descriptions-item label="品牌Logo">
-          <image-preview :src="details.brandLogo" :width="50" :height="50"/>
+          <div v-if="details.brandLogo">
+            <image-preview :src="details.brandLogo" :width="50" :height="50"/>
+          </div>
         </el-descriptions-item>
         <el-descriptions-item label="商户归属">
           <span v-for="invoice in dict.type.activity_nature" v-if="invoice.value === details.activityNature">
             {{ invoice.label }}
           </span>
-        </el-descriptions-item>
-        <el-descriptions-item label="店长">
-          {{ details.shopKeeper }}
-        </el-descriptions-item>
-        <el-descriptions-item label="店长电话">
-          {{ details.shopKeeperMobile }}
         </el-descriptions-item>
         <el-descriptions-item label="门店名称">
           {{ details.shopName }}
@@ -233,9 +220,11 @@
           {{ details.shopAddressInfo }}
         </el-descriptions-item>
         <el-descriptions-item label="门店图片">
-          <span v-for="(item,key) in details.shopImage.split(',')" :key="key">
-          <image-preview :src="item" :width="50" :height="50"/>
-          </span>
+          <div v-if="details.shopImage">
+            <span v-for="(item,key) in details.shopImage.split(',')" :key="key">
+            <image-preview :src="item" :width="50" :height="50"/>
+            </span>
+          </div>
         </el-descriptions-item>
         <el-descriptions-item label="营业时间">
           <span v-for="week in dict.type.t_grad_period_date_list" :key="week.value">
@@ -271,18 +260,13 @@
         <el-descriptions-item label="收款账户">
           {{ details.account }}
         </el-descriptions-item>
-        <el-descriptions-item label="商品类型">
-          <span v-for="product in productTypeList" :key="product.value">
-            <span v-for="type in details.productType.split(',')" v-if="type === product.value">
-              {{ product.label }},
-            </span>
-          </span>
-        </el-descriptions-item>
         <!--<el-descriptions-item label="商户所在平台">-->
         <!--  {{ details.merchantPlatformKey }}-->
         <!--</el-descriptions-item>-->
         <el-descriptions-item label="营业执照">
-          <image-preview :src="details.license" :width="50" :height="50"/>
+          <div v-if="details.license">
+            <image-preview :src="details.license" :width="50" :height="50"/>
+          </div>
         </el-descriptions-item>
       </el-descriptions>
     </el-dialog>
@@ -316,12 +300,6 @@ export default {
         {label: '待审批', value: '0'},
         {label: '已通过', value: '1'},
         {label: '已拒绝', value: '2'}
-      ],
-      productTypeList: [
-        {label: '包邮产品', value: '0'},
-        {label: '一般团购', value: '1'},
-        {label: '演出票', value: '2'},
-        {label: '酒店门票', value: '3'}
       ],
       // 查询参数
       queryParams: {
