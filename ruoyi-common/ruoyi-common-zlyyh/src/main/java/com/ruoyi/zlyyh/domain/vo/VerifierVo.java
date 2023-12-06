@@ -45,8 +45,8 @@ public class VerifierVo {
     /**
      * 人员类型，admin管理员 verifier 核销人员
      */
-    @ExcelProperty(value = "人员类型，admin管理员 verifier 核销人员")
-    private String verifierType;
+    //@ExcelProperty(value = "人员类型，admin管理员 verifier 核销人员")
+    //private String verifierType;
 
     /**
      * 第三方平台联登唯一标识

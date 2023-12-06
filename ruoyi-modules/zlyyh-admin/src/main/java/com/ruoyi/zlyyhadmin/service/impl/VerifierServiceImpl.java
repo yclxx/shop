@@ -64,7 +64,7 @@ public class VerifierServiceImpl implements IVerifierService {
         LambdaQueryWrapper<Verifier> lqw = Wrappers.lambdaQuery();
         lqw.eq(bo.getPlatformKey() != null, Verifier::getPlatformKey, bo.getPlatformKey());
         lqw.eq(StringUtils.isNotBlank(bo.getMobile()), Verifier::getMobile, bo.getMobile());
-        lqw.eq(StringUtils.isNotBlank(bo.getVerifierType()), Verifier::getVerifierType, bo.getVerifierType());
+        //lqw.eq(StringUtils.isNotBlank(bo.getVerifierType()), Verifier::getVerifierType, bo.getVerifierType());
         lqw.eq(StringUtils.isNotBlank(bo.getStatus()), Verifier::getStatus, bo.getStatus());
         lqw.eq(StringUtils.isNotBlank(bo.getOpenId()), Verifier::getOpenId, bo.getOpenId());
         return lqw;
