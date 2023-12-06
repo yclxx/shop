@@ -411,7 +411,7 @@ public class CodeServiceImpl implements ICodeService {
             lqw.ge(Code::getUsedTime, DateUtil.beginOfDay(DateUtil.date()));
         }
         // 核销人员处理
-        if (verifier.getVerifierType().equals("admin")) {
+        if (verifier.getIsAdmin() || verifier.getIsBd()) {
             LambdaQueryWrapper<VerifierShop> queryWrapper = Wrappers.lambdaQuery();
             queryWrapper.eq(VerifierShop::getVerifierId, verifier.getId());
             List<VerifierShopVo> verifierShopVos = verifierShopMapper.selectVoList(queryWrapper);
@@ -475,7 +475,7 @@ public class CodeServiceImpl implements ICodeService {
 
     private List<Long> getVerifierList(Verifier verifier) {
         List<Long> longs;
-        if (verifier.getVerifierType().equals("admin")) {
+        if (verifier.getIsAdmin() || verifier.getIsBd()) {
             longs = new ArrayList<>();
             longs.add(verifier.getId());
             LambdaQueryWrapper<VerifierShop> queryWrapper = Wrappers.lambdaQuery();

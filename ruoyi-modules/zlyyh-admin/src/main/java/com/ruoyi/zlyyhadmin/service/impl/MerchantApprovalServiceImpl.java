@@ -124,7 +124,7 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
         if (ObjectUtil.isNotEmpty(verifier)) {
             verifier.setPlatformKey(vo.getPlatformKey());
             verifier.setMobile(vo.getBrandMobile());
-            verifier.setVerifierType("admin");
+            //verifier.setVerifierType("admin");
             verifier.setIsVerifier(true);
             verifier.setIsAdmin(true);
             verifier.setIsBd(false);
@@ -138,7 +138,7 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
             verifier.setIsVerifier(true);
             verifier.setIsAdmin(true);
             verifier.setIsBd(false);
-            verifier.setVerifierType("admin");
+            //verifier.setVerifierType("admin");
             verifierMapper.insert(verifier);
         }
         return verifier;
