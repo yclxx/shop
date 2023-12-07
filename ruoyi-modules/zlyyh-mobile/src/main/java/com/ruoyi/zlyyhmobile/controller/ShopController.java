@@ -1,7 +1,9 @@
 package com.ruoyi.zlyyhmobile.controller;
 
+import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.utils.ServletUtils;
+import com.ruoyi.common.core.utils.ip.AddressUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
@@ -83,6 +85,15 @@ public class ShopController {
     @PostMapping("/addApproval")
     public R addApproval(@RequestBody MerchantApprovalBo bo) {
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
-        return R.ok( shopService.addApproval(bo));
+        return R.ok(shopService.addApproval(bo));
+    }
+
+    /**
+     * 请求高德地图，获取完整地址信息
+     */
+    @GetMapping("/address/{info}")
+    public R address(@PathVariable String info) {
+        JSONObject addressInfo = AddressUtils.getAddressInfo(info);
+        return R.ok(addressInfo);
     }
 }

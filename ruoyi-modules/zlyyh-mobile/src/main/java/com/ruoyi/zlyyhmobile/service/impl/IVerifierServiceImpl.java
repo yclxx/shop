@@ -90,10 +90,10 @@ public class IVerifierServiceImpl implements IVerifierService {
         lqw.eq(ShopMerchant::getShopId, shopId);
         lqw.eq(ShopMerchant::getMerchantType, "0");
         List<ShopMerchantVo> wxMerchant = shopMerchantMapper.selectVoList(lqw);
+        lqw.clear();
         lqw.eq(ShopMerchant::getShopId, shopId);
         lqw.eq(ShopMerchant::getMerchantType, "2");
         List<ShopMerchantVo> payMerchant = shopMerchantMapper.selectVoList(lqw);
-
         Map<String, Object> map = new HashMap<>();
         map.put("shop", shop);
         map.put("commercialTenant", commercialTenantVo);

@@ -236,9 +236,6 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
                 shop.setLongitude(new BigDecimal(longitude));
                 shop.setLatitude(new BigDecimal(latitude));
             }
-            //if (StringUtils.isNotBlank(key)) {
-            //    RedisUtils.setCacheObject(key, addressInfo, Duration.ofDays(5));
-            //}
         }
         // 营业执照
         if (StringUtils.isNotEmpty(vo.getBusinessLicense())) {
