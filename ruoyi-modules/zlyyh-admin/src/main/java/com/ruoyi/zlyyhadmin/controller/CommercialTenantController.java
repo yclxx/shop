@@ -14,7 +14,9 @@ import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.CommercialTenantBo;
+import com.ruoyi.zlyyh.domain.bo.ProductBo;
 import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
+import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyhadmin.service.ICommercialTenantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -48,6 +50,17 @@ public class CommercialTenantController extends BaseController {
     @GetMapping("/list")
     public TableDataInfo<CommercialTenantVo> list(CommercialTenantBo bo, PageQuery pageQuery) {
         return iCommercialTenantService.queryPageList(bo, pageQuery);
+    }
+
+
+
+    /**
+     * 查询商品列表
+     */
+    @SaCheckPermission("zlyyh:commercialTenant:list")
+    @GetMapping("/categoryCommercialList")
+    public TableDataInfo<CommercialTenantVo> categoryCommercialList(CommercialTenantBo bo, PageQuery pageQuery) {
+        return iCommercialTenantService.queryPageCategoryCommercialList(bo, pageQuery);
     }
 
     /**

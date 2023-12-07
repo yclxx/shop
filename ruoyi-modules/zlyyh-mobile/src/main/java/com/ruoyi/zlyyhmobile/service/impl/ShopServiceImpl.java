@@ -20,8 +20,6 @@ import com.ruoyi.zlyyh.domain.Shop;
 import com.ruoyi.zlyyh.domain.ShopMerchant;
 import com.ruoyi.zlyyh.domain.bo.MerchantApprovalBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
-import com.ruoyi.zlyyh.domain.bo.ShopMerchantBo;
-import com.ruoyi.zlyyh.domain.vo.ShopMerchantVo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
 import com.ruoyi.zlyyh.mapper.ExtensionServiceProviderMapper;
 import com.ruoyi.zlyyh.mapper.MerchantApprovalMapper;
@@ -79,19 +77,28 @@ public class ShopServiceImpl implements IShopService {
         }
     }
 
-    public Boolean updateShopMerchantById(List<ShopMerchantBo> bos) {
+    public Boolean updateShopMerchantById(Long shopId, List<ShopMerchant> bos) {
+        Shop shop = baseMapper.selectById(shopId);
         if (ObjectUtil.isNotEmpty(bos)) {
             List<ShopMerchant> insert = new ArrayList<>();
             List<ShopMerchant> update = new ArrayList<>();
             bos.forEach(o -> {
                 if (ObjectUtil.isNotEmpty(o.getId())) {
-                    ShopMerchant shopMerchant = BeanCopyUtils.copy(o, ShopMerchant.class);
-                    update.add(shopMerchant);
+                    if (ObjectUtil.isNotEmpty(shop)) {
+                        o.setShopId(shop.getShopId());
+                    } else {
+                        o.setShopId(shopId);
+                    }
+                    update.add(o);
                 } else {
-                    ShopMerchant shopMerchant = BeanCopyUtils.copy(o, ShopMerchant.class);
-                    shopMerchant.setId(IdUtil.getSnowflakeNextId());
-                    shopMerchant.setStatus("0");
-                    insert.add(shopMerchant);
+                    o.setId(IdUtil.getSnowflakeNextId());
+                    o.setStatus("0");
+                    if (ObjectUtil.isNotEmpty(shop)) {
+                        o.setShopId(shop.getShopId());
+                    } else {
+                        o.setShopId(shopId);
+                    }
+                    insert.add(o);
                 }
             });
             if (ObjectUtil.isNotEmpty(update)) {
@@ -102,7 +109,7 @@ public class ShopServiceImpl implements IShopService {
             if (ObjectUtil.isNotEmpty(insert)) shopMerchantMapper.insertBatch(insert);
             return true;
         } else {
-            throw new ServiceException("编辑失败。");
+            throw new ServiceException("门店商编异常");
         }
     }
 
@@ -158,18 +165,17 @@ public class ShopServiceImpl implements IShopService {
     }
 
     @Override
-    public List<ShopMerchantVo> getShopMerchantVo(ShopMerchantBo bo) {
-        LambdaQueryWrapper<ShopMerchant> lqw = Wrappers.lambdaQuery();
-        lqw.eq(ShopMerchant::getShopId, bo.getShopId());
-        return shopMerchantMapper.selectVoList(lqw);
+    public List<Shop> queryListByCommercialId(Long commercialId) {
+        return baseMapper.selectList(new LambdaQueryWrapper<Shop>().eq(Shop::getCommercialTenantId, commercialId));
     }
 
     public boolean addApproval(MerchantApprovalBo bo) {
-        if (StringUtils.isEmpty(bo.getMobile())) throw new ServiceException("管理员手机号为空");
+        if (StringUtils.isEmpty(bo.getBrandMobile())) throw new ServiceException("管理员手机号为空");
         LambdaQueryWrapper<MerchantApproval> lqw = Wrappers.lambdaQuery();
-        lqw.eq(MerchantApproval::getMobile, bo.getMobile());
+        lqw.eq(MerchantApproval::getBrandMobile, bo.getBrandMobile());
+        lqw.in(MerchantApproval::getApprovalStatus, "0","1");
         Long l = merchantApprovalMapper.selectCount(lqw);
-        if ( l > 0) {
+        if (l > 0) {
             throw new ServiceException("此管理员手机号已申请商户");
         }
         if (StringUtils.isNotEmpty(bo.getExtend())) {

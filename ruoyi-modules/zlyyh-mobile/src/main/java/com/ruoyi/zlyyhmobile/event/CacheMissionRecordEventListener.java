@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyhmobile.event;
 
 import com.ruoyi.common.core.constant.CacheNames;
+import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.zlyyh.domain.vo.MissionUserRecordVo;
 import com.ruoyi.zlyyh.mapper.MissionUserRecordMapper;
@@ -28,7 +29,7 @@ public class CacheMissionRecordEventListener {
     @EventListener
     public void cacheMissionRecord(CacheMissionRecordEvent event) {
         MissionUserRecordVo missionUserRecordVo = missionUserRecordMapper.selectVoById(event.getMissionUserRecordId());
-        if (null == missionUserRecordVo || "9".equals(missionUserRecordVo.getDrawType())) {
+        if (null == missionUserRecordVo || "9".equals(missionUserRecordVo.getDrawType()) || !"1".equals(missionUserRecordVo.getStatus()) || StringUtils.isBlank(missionUserRecordVo.getSendAccount()) || StringUtils.isBlank(missionUserRecordVo.getDrawName())) {
             return;
         }
         String key = CacheNames.recordList + ":" + missionUserRecordVo.getMissionGroupId();

@@ -12,12 +12,14 @@ import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.BeanCopyUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.common.redis.utils.CacheUtils;
+import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.*;
-import com.ruoyi.zlyyh.domain.vo.ShopVo;
-import com.ruoyi.zlyyh.domain.vo.VerifierVo;
+import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.*;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
+import com.ruoyi.zlyyhmobile.domain.bo.ShopAndMerchantBo;
 import com.ruoyi.zlyyhmobile.service.IProductService;
 import com.ruoyi.zlyyhmobile.service.IShopService;
 import com.ruoyi.zlyyhmobile.service.IVerifierService;
@@ -25,7 +27,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -36,7 +41,9 @@ public class IVerifierServiceImpl implements IVerifierService {
     private final ShopMapper shopMapper;
     private final ProductMapper productMapper;
     private final ProductInfoMapper productInfoMapper;
+    private final ShopMerchantMapper shopMerchantMapper;
     private final ShopProductMapper shopProductMapper;
+    private final CommercialTenantMapper commercialTenantMapper;
     private final IProductService productService;
     private final IShopService shopService;
 
@@ -52,19 +59,213 @@ public class IVerifierServiceImpl implements IVerifierService {
     }
 
     @Override
+    public Boolean updateVerifier(VerifierBo bo) {
+        Verifier verifier = BeanCopyUtils.copy(bo, Verifier.class);
+        boolean b = baseMapper.updateById(verifier) > 0;
+        if (b) {
+            CacheUtils.evict(CacheNames.M_VERIFIER, verifier.getId());
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
     public List<ShopVo> queryShopList(VerifierBo bo) {
         LambdaQueryWrapper<Shop> lqw = Wrappers.lambdaQuery();
-        lqw.eq(Shop::getStatus, "0");
-        lqw.last("AND shop_id IN(SELECT shop_id FROM t_verifier_shop WHERE verifier_id = " + bo.getId() + ")");
+        lqw.inSql(Shop::getShopId, "SELECT shop_id FROM t_verifier_shop WHERE verifier_id = " + bo.getId());
         List<ShopVo> result = shopMapper.selectVoList(lqw);
         return result;
+    }
+
+    @Override
+    public Map<String, Object> getShopId(Long shopId) {
+        Shop shop = shopMapper.selectById(shopId);
+        CommercialTenantVo commercialTenantVo = commercialTenantMapper.selectVoById(shop.getCommercialTenantId());
+        LambdaQueryWrapper<ShopMerchant> lqw = Wrappers.lambdaQuery();
+        lqw.eq(ShopMerchant::getShopId, shopId);
+        lqw.eq(ShopMerchant::getMerchantType, "1");
+        List<ShopMerchantVo> ysfMerchant = shopMerchantMapper.selectVoList(lqw);
+        lqw.clear();
+        lqw.eq(ShopMerchant::getShopId, shopId);
+        lqw.eq(ShopMerchant::getMerchantType, "0");
+        List<ShopMerchantVo> wxMerchant = shopMerchantMapper.selectVoList(lqw);
+        lqw.eq(ShopMerchant::getShopId, shopId);
+        lqw.eq(ShopMerchant::getMerchantType, "2");
+        List<ShopMerchantVo> payMerchant = shopMerchantMapper.selectVoList(lqw);
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("shop", shop);
+        map.put("commercialTenant", commercialTenantVo);
+        map.put("ysfMerchant", ysfMerchant);
+        map.put("wxMerchant", wxMerchant);
+        map.put("payMerchant", payMerchant);
+        return map;
+    }
+
+    @Override
+    public Boolean updateShopId(ShopAndMerchantBo bo) {
+        int i = 0;
+        if (ObjectUtil.isNotEmpty(bo.getCommercialTenant())) {
+            CommercialTenant commercialTenant = commercialTenantMapper.selectById(bo.getCommercialTenant().getCommercialTenantId());
+            // 修改商户的管理员手机号与原手机号不一样处理
+            if (commercialTenant.getIsCache().equals("0") || (!bo.getCommercialTenant().getAdminMobile().equals(commercialTenant.getAdminMobile()))) {
+                Verifier oldVerifier = baseMapper.selectByMobile(commercialTenant.getAdminMobile());
+                Verifier newVerifier = baseMapper.selectByMobile(bo.getCommercialTenant().getAdminMobile());
+                if (ObjectUtil.isNotEmpty(newVerifier)) {
+                    if (ObjectUtil.isNotEmpty(oldVerifier)) {
+                        VerifierShop verifierShop = verifierShopMapper.selectByShopIdAndVerifierId(bo.getShop().getShopId(), oldVerifier.getId());
+                        if (ObjectUtil.isNotEmpty(verifierShop)) {
+                            verifierShop.setVerifierId(newVerifier.getId());
+                            verifierShopMapper.updateById(verifierShop);
+                        } else {
+                            verifierShop = new VerifierShop();
+                            verifierShop.setId(IdUtil.getSnowflakeNextId());
+                            verifierShop.setSort(99L);
+                            verifierShop.setShopId(bo.getShop().getShopId());
+                            verifierShop.setVerifierId(newVerifier.getId());
+                            verifierShopMapper.insert(verifierShop);
+                        }
+                        newVerifier.setIsAdmin(true);
+                        baseMapper.updateById(newVerifier);
+                    } else {
+                        VerifierShop verifierShop = new VerifierShop();
+                        verifierShop.setId(IdUtil.getSnowflakeNextId());
+                        verifierShop.setSort(99L);
+                        verifierShop.setShopId(bo.getShop().getShopId());
+                        verifierShop.setVerifierId(newVerifier.getId());
+                        verifierShopMapper.insert(verifierShop);
+                    }
+                } else {
+                    newVerifier = new Verifier();
+                    newVerifier.setId(IdUtil.getSnowflakeNextId());
+                    newVerifier.setUsername(bo.getCommercialTenant().getAdminMobile());
+                    newVerifier.setMobile(bo.getCommercialTenant().getAdminMobile());
+                    newVerifier.setStatus("0");
+                    newVerifier.setReloadUser("0");
+                    newVerifier.setIsVerifier(true);
+                    newVerifier.setIsAdmin(true);
+                    if (ObjectUtil.isNotEmpty(oldVerifier)) {
+                        VerifierShop verifierShop = verifierShopMapper.selectByShopIdAndVerifierId(bo.getShop().getShopId(), oldVerifier.getId());
+                        verifierShop.setVerifierId(newVerifier.getId());
+                        verifierShopMapper.updateById(verifierShop);
+                        baseMapper.insert(newVerifier);
+                    } else {
+                        VerifierShop verifierShop = new VerifierShop();
+                        verifierShop.setId(IdUtil.getSnowflakeNextId());
+                        verifierShop.setSort(99L);
+                        verifierShop.setShopId(bo.getShop().getShopId());
+                        verifierShop.setVerifierId(newVerifier.getId());
+                        verifierShopMapper.insert(verifierShop);
+                    }
+                }
+            }
+            commercialTenant.setCommercialTenantName(bo.getCommercialTenant().getCommercialTenantName());
+            commercialTenant.setCommercialTenantTitle(bo.getCommercialTenant().getCommercialTenantTitle());
+            commercialTenant.setCommercialTenantImg(bo.getCommercialTenant().getCommercialTenantImg());
+            commercialTenant.setActivityNature(bo.getCommercialTenant().getActivityNature());
+            commercialTenant.setAdminMobile(bo.getCommercialTenant().getAdminMobile());
+            commercialTenant.setIsCache("1");
+            commercialTenantMapper.updateById(commercialTenant);
+            i++;
+        }
+        if (ObjectUtil.isNotEmpty(bo.getShop())) {
+            Shop shop = BeanCopyUtils.copy(bo.getShop(), Shop.class);
+            shopMapper.updateById(shop);
+            i++;
+        }
+        if (ObjectUtil.isNotEmpty(bo.getYsfMerchant())) {
+            shopService.updateShopMerchantById(bo.getShop().getShopId(), bo.getYsfMerchant());
+            i++;
+        }
+        if (ObjectUtil.isNotEmpty(bo.getWxMerchant())) {
+            shopService.updateShopMerchantById(bo.getShop().getShopId(), bo.getWxMerchant());
+            i++;
+        }
+        if (ObjectUtil.isNotEmpty(bo.getPayMerchant())) {
+            shopService.updateShopMerchantById(bo.getShop().getShopId(), bo.getPayMerchant());
+            i++;
+        }
+        return i > 0;
+    }
+
+    @Override
+    public Boolean updateShop(ShopBo bo) {
+        Shop shop = BeanCopyUtils.copy(bo, Shop.class);
+        return shopMapper.updateById(shop) > 0;
+    }
+
+    @Override
+    public Boolean insertShop(ShopAndMerchantBo bo) {
+        int i = 0;
+        Long shopId = IdUtil.getSnowflakeNextId();
+        if (ObjectUtil.isNotEmpty(bo.getCommercialTenant())) {
+            Verifier newVerifier = baseMapper.selectByMobile(bo.getCommercialTenant().getAdminMobile());
+            if (ObjectUtil.isNotEmpty(newVerifier)) {
+                newVerifier.setIsVerifier(true);
+                newVerifier.setIsAdmin(true);
+                baseMapper.updateById(newVerifier);
+            } else {
+                newVerifier.setId(IdUtil.getSnowflakeNextId());
+                newVerifier.setUsername(bo.getCommercialTenant().getAdminMobile());
+                newVerifier.setMobile(bo.getCommercialTenant().getAdminMobile());
+                newVerifier.setStatus("0");
+                newVerifier.setReloadUser("0");
+                newVerifier.setIsVerifier(true);
+                newVerifier.setIsAdmin(true);
+                baseMapper.insert(newVerifier);
+            }
+            VerifierShop verifierShop = new VerifierShop();
+            verifierShop.setId(IdUtil.getSnowflakeNextId());
+            verifierShop.setSort(99L);
+            verifierShop.setShopId(shopId);
+            verifierShop.setVerifierId(newVerifier.getId());
+            verifierShopMapper.insert(verifierShop);
+            CommercialTenant commercialTenant = commercialTenantMapper.selectById(bo.getCommercialTenant().getCommercialTenantId());
+            commercialTenant.setCommercialTenantName(bo.getCommercialTenant().getCommercialTenantName());
+            commercialTenant.setCommercialTenantTitle(bo.getCommercialTenant().getCommercialTenantTitle());
+            commercialTenant.setCommercialTenantImg(bo.getCommercialTenant().getCommercialTenantImg());
+            commercialTenant.setActivityNature(bo.getCommercialTenant().getActivityNature());
+            commercialTenant.setIsCache("1");
+            commercialTenantMapper.updateById(commercialTenant);
+            i++;
+        }
+        if (ObjectUtil.isNotEmpty(bo.getShop())) {
+            Shop shop = BeanCopyUtils.copy(bo.getShop(), Shop.class);
+            shop.setShopId(shopId);
+            shop.setCommercialTenantId(bo.getCommercialTenant().getCommercialTenantId());
+            shopMapper.insert(shop);
+            i++;
+        }
+        if (ObjectUtil.isNotEmpty(bo.getYsfMerchant())) {
+            bo.getYsfMerchant().forEach(o -> {
+                o.setShopId(shopId);
+            });
+            shopMerchantMapper.insertBatch(bo.getYsfMerchant());
+            i++;
+        }
+        if (ObjectUtil.isNotEmpty(bo.getWxMerchant())) {
+            bo.getWxMerchant().forEach(o -> {
+                o.setShopId(shopId);
+            });
+            shopMerchantMapper.insertBatch(bo.getWxMerchant());
+            i++;
+        }
+        if (ObjectUtil.isNotEmpty(bo.getPayMerchant())) {
+            bo.getPayMerchant().forEach(o -> {
+                o.setShopId(shopId);
+            });
+            shopMerchantMapper.insertBatch(bo.getPayMerchant());
+            i++;
+        }
+        return i > 0;
     }
 
     @Override
     public List<VerifierVo> verifierList(Long shopId) {
         LambdaQueryWrapper<Verifier> lqw = Wrappers.lambdaQuery();
         //lqw.eq(Verifier::getPlatformKey, bo.getPlatformKey());
-        lqw.last("AND id IN(SELECT shop_id FROM t_verifier_shop WHERE shop_id = " + shopId + ")");
+        lqw.inSql(Verifier::getId, "SELECT shop_id FROM t_verifier_shop WHERE shop_id = " + shopId);
         List<VerifierVo> result = baseMapper.selectVoList(lqw);
         return result;
     }
@@ -72,8 +273,12 @@ public class IVerifierServiceImpl implements IVerifierService {
     @Override
     public TableDataInfo<ShopVo> queryShopPageList(VerifierBo bo, PageQuery pageQuery) {
         LambdaQueryWrapper<Shop> lqw = Wrappers.lambdaQuery();
-        lqw.eq(Shop::getStatus, "0");
-        lqw.last("AND shop_id IN(SELECT shop_id FROM t_verifier_shop WHERE verifier_id = " + bo.getId() + ") ORDER BY create_time DESC");
+        lqw.orderByDesc(Shop::getCreateTime);
+        if (ObjectUtil.isNotEmpty(bo.getCommercialTenantId())) {
+            lqw.eq(Shop::getCommercialTenantId, bo.getCommercialTenantId());
+        } else {
+            lqw.inSql(Shop::getShopId, "SELECT shop_id FROM t_verifier_shop WHERE verifier_id = " + bo.getId());
+        }
         Page<ShopVo> result = shopMapper.selectVoPage(pageQuery.build(), lqw);
         return TableDataInfo.build(result);
     }
@@ -84,21 +289,12 @@ public class IVerifierServiceImpl implements IVerifierService {
     }
 
     @Override
-    public Boolean updateShopMerchantById(List<ShopMerchantBo> bos) {
-        return shopService.updateShopMerchantById(bos);
-    }
-
-    @Override
-    public TableDataInfo<Product> queryProductPageList(VerifierBo bo, PageQuery pageQuery) {
+    public TableDataInfo<ProductVo> queryProductPageList(VerifierBo bo, PageQuery pageQuery) {
         // 查询核销人员门店信息
-        List<ShopVo> shopVos = queryShopList(bo);
-        if (ObjectUtil.isNotEmpty(shopVos)) {
-            List<Long> shopIds = shopVos.stream().map(ShopVo::getShopId).collect(Collectors.toList());
-            //LambdaQueryWrapper<Product> lqw = Wrappers.lambdaQuery();
-            Page<Product> result = productMapper.selectPageByShopId(pageQuery.build(), shopIds);
-            return TableDataInfo.build(result);
-        }
-        return TableDataInfo.build();
+        List<Long> shopIds = new ArrayList<>();
+        shopIds.add(bo.getShopId());
+        Page<ProductVo> result = productMapper.selectPageByShopId(pageQuery.build(), shopIds);
+        return TableDataInfo.build(result);
     }
 
     /**
@@ -125,6 +321,9 @@ public class IVerifierServiceImpl implements IVerifierService {
         return TableDataInfo.build(result);
     }
 
+    /**
+     * 解除核销人员与门店关系
+     */
     @Override
     public Boolean cancelVerifier(CodeBo bo) {
         LambdaQueryWrapper<VerifierShop> lqw = Wrappers.lambdaQuery();
@@ -133,6 +332,9 @@ public class IVerifierServiceImpl implements IVerifierService {
         return verifierShopMapper.delete(lqw) > 0;
     }
 
+    /**
+     * 添加核销人员与门店关系
+     */
     @Override
     public Boolean addVerifier(CodeBo bo) {
         if (StringUtils.isEmpty(bo.getVerifierMobile())) return false;
@@ -142,10 +344,6 @@ public class IVerifierServiceImpl implements IVerifierService {
         VerifierVo verifierVo = baseMapper.selectVoOne(lqw);
         // 判断核销人员是否存在
         if (ObjectUtil.isNotEmpty(verifierVo)) {
-            //// 判断核销人员是否与添加人为上下级关系
-            //if (!verifierVo.getSuperiorId().equals(LoginHelper.getUserId())) {
-            //    return false;
-            //}
             // 绑定核销人员与门店
             LambdaQueryWrapper<VerifierShop> lqw2 = Wrappers.lambdaQuery();
             lqw2.eq(VerifierShop::getVerifierId, verifierVo.getId());
@@ -161,9 +359,10 @@ public class IVerifierServiceImpl implements IVerifierService {
             verifier.setId(IdUtil.getSnowflakeNextId());
             verifier.setPlatformKey(ZlyyhUtils.getPlatformId());
             verifier.setMobile(bo.getVerifierMobile());
-            verifier.setVerifierType("verifier");
+            verifier.setIsVerifier(true);
+            verifier.setIsAdmin(false);
+            verifier.setIsBd(false);
             verifier.setStatus("0");
-            //verifier.setSuperiorId(LoginHelper.getUserId());
             if (baseMapper.insert(verifier) <= 0) return false;
             // 核销人员绑定门店
             return handleVerifierShop(verifier.getId(), bo.getShopId());
@@ -184,41 +383,162 @@ public class IVerifierServiceImpl implements IVerifierService {
         }
     }
 
+    /**
+     * 修改商品信息
+     */
     @Override
     public Boolean updateProductById(ProductBo bo) {
         return productService.updateProductById(bo);
     }
 
+    /**
+     * 添加产品
+     */
     @Override
     public Boolean insertProduct(ProductBo bo) {
-        Shop shop = shopMapper.selectById(bo.getShopId());
-        if (shop != null) {
-            Product product = BeanCopyUtils.copy(bo, Product.class);
-            if (product != null) {
-                product.setStatus("0");
-                product.setProductAffiliation("0");
-                product.setPickupMethod("1");
-                product.setPlatformKey(shop.getPlatformKey());
-                product.setProductId(IdUtil.getSnowflakeNextId());
-                ProductInfo productInfo = new ProductInfo();
-                productInfo.setProductId(product.getProductId());
-                productInfo.setItemId("0");
-                productInfo.setDiscount("0.00");
+        Product product = BeanCopyUtils.copy(bo, Product.class);
+        if (product != null) {
+            product.setStatus("0");
+            product.setProductAffiliation("0");
+            product.setPickupMethod("1");
+            product.setProductId(IdUtil.getSnowflakeNextId());
+            ProductInfo productInfo = new ProductInfo();
+            productInfo.setProductId(product.getProductId());
+            productInfo.setItemId(product.getProductId().toString());
+            if (ObjectUtil.isNotEmpty(bo.getTotalCount())) {
                 productInfo.setStock(bo.getTotalCount());
-                productInfo.setItemPrice(bo.getItemPrice());
-                productInfoMapper.insert(productInfo);
-                int insert = productMapper.insert(product);
-                if (insert > 0) {
-                    ShopProduct shopProduct = new ShopProduct();
-                    shopProduct.setId(IdUtil.getSnowflakeNextId());
-                    shopProduct.setProductId(product.getProductId());
-                    shopProduct.setShopId(shop.getShopId());
-                    shopProduct.setSort(99L);
-                    shopProductMapper.insert(shopProduct);
-                    return true;
-                }
+            } else {
+                productInfo.setStock(-1L);
             }
+            productInfo.setDiscount("0.00");
+            productInfo.setCommissionRate(bo.getProductInfo().getCommissionRate());
+            productInfo.setShopAll(bo.getProductInfo().getShopAll());
+            productInfo.setOverdue(bo.getProductInfo().getOverdue());
+            productInfo.setAnyTime(bo.getProductInfo().getAnyTime());
+            productInfo.setLeastPrice(bo.getProductInfo().getLeastPrice());
+            productInfo.setReducePrice(bo.getProductInfo().getReducePrice());
+            if (bo.getProductInfo().getShopAll()) {
+                // 查询用户全部商店数据
+                LambdaQueryWrapper<VerifierShop> lqw = Wrappers.lambdaQuery();
+                lqw.eq(VerifierShop::getVerifierId, LoginHelper.getUserId());
+                List<VerifierShopVo> verifierShopVos = verifierShopMapper.selectVoList(lqw);
+                List<Long> collect = verifierShopVos.stream().map(VerifierShopVo::getShopId).collect(Collectors.toList());
+                if (ObjectUtil.isNotEmpty(collect)) {
+                    List<ShopProduct> shopProducts = new ArrayList<>();
+                    for (Long shopId : collect) {
+                        ShopProduct shopProduct = new ShopProduct();
+                        shopProduct.setId(IdUtil.getSnowflakeNextId());
+                        shopProduct.setProductId(product.getProductId());
+                        shopProduct.setShopId(shopId);
+                        shopProduct.setSort(99L);
+                        shopProducts.add(shopProduct);
+                    }
+                    shopProductMapper.insertBatch(shopProducts);
+                    Shop shop = shopMapper.selectById(collect.get(0));
+                    product.setPlatformKey(shop.getPlatformKey());
+                }
+            } else {
+                Shop shop = shopMapper.selectById(bo.getShopId());
+                ShopProduct shopProduct = new ShopProduct();
+                shopProduct.setId(IdUtil.getSnowflakeNextId());
+                shopProduct.setProductId(product.getProductId());
+                shopProduct.setShopId(shop.getShopId());
+                shopProduct.setSort(99L);
+                shopProductMapper.insert(shopProduct);
+                product.setPlatformKey(shop.getPlatformKey());
+            }
+            productMapper.insert(product);
+            productInfoMapper.insert(productInfo);
+            return true;
         }
         return false;
+    }
+
+    /**
+     * 查询门店商编
+     */
+    @Override
+    public List<ShopMerchantVo> getShopMerchant(ShopMerchantBo bo) {
+        LambdaQueryWrapper<ShopMerchant> lqw = Wrappers.lambdaQuery();
+        lqw.eq(ShopMerchant::getShopId, bo.getShopId());
+        if (StringUtils.isNotEmpty(bo.getMerchantType())) {
+            lqw.eq(ShopMerchant::getMerchantType, bo.getMerchantType());
+        }
+        lqw.orderByDesc(ShopMerchant::getSettlement);
+        return shopMerchantMapper.selectVoList(lqw);
+    }
+
+    /**
+     * 修改门店上百年
+     */
+    @Override
+    public Boolean insertShopMerchant(ShopAndMerchantBo bo) {
+        List<ShopMerchant> bos = new ArrayList<>();
+        bos.addAll(bo.getWxMerchant());
+        bos.addAll(bo.getPayMerchant());
+        bos.addAll(bo.getYsfMerchant());
+        return shopService.updateShopMerchantById(bo.getShop().getShopId(), bos);
+    }
+
+    /**
+     * 增加门店商编
+     */
+    @Override
+    public Boolean insertTenantShopMerchant(ShopAndMerchantBo bo) {
+        Boolean isUpdate = false;
+        CommercialTenant commercialTenant = BeanCopyUtils.copy(bo.getCommercialTenant(), CommercialTenant.class);
+        if (ObjectUtil.isEmpty(commercialTenant.getCommercialTenantId())) {
+            commercialTenant.setCommercialTenantId(IdUtil.getSnowflakeNextId());
+        }
+        if (commercialTenant.getIsCache().equals("0")) {
+            commercialTenant.getAdminMobile();
+        }
+        Shop shop = BeanCopyUtils.copy(bo.getShop(), Shop.class);
+        if (ObjectUtil.isNotEmpty(shop.getShopId())) {
+            isUpdate = true;
+        } else {
+            shop.setShopId(IdUtil.getSnowflakeNextId());
+        }
+        shop.setCommercialTenantId(commercialTenant.getCommercialTenantId());
+        if (ObjectUtil.isNotEmpty(bo.getYsfMerchant())) {
+            shopService.updateShopMerchantById(shop.getShopId(), bo.getYsfMerchant());
+        }
+        if (ObjectUtil.isNotEmpty(bo.getWxMerchant())) {
+            shopService.updateShopMerchantById(shop.getShopId(), bo.getYsfMerchant());
+        }
+        if (ObjectUtil.isNotEmpty(bo.getPayMerchant())) {
+            shopService.updateShopMerchantById(shop.getShopId(), bo.getYsfMerchant());
+        }
+        if (bo.getCommercialTenant().getIsCache().equals("1")) {
+            Verifier newVerifier = baseMapper.selectByMobile(bo.getCommercialTenant().getAdminMobile());
+            if (ObjectUtil.isNotEmpty(newVerifier)) {
+                newVerifier.setIsVerifier(true);
+                newVerifier.setIsAdmin(true);
+                baseMapper.updateById(newVerifier);
+            } else {
+                newVerifier.setId(IdUtil.getSnowflakeNextId());
+                newVerifier.setUsername(bo.getCommercialTenant().getAdminMobile());
+                newVerifier.setMobile(bo.getCommercialTenant().getAdminMobile());
+                newVerifier.setStatus("0");
+                newVerifier.setReloadUser("0");
+                newVerifier.setIsVerifier(true);
+                newVerifier.setIsAdmin(true);
+                baseMapper.insert(newVerifier);
+            }
+            VerifierShop verifierShop = new VerifierShop();
+            verifierShop.setId(IdUtil.getSnowflakeNextId());
+            verifierShop.setSort(99L);
+            verifierShop.setShopId(shop.getShopId());
+            verifierShop.setVerifierId(newVerifier.getId());
+            verifierShopMapper.insert(verifierShop);
+        }
+        if (isUpdate) {
+            shopMapper.updateById(shop);
+            commercialTenantMapper.updateById(commercialTenant);
+        } else {
+            shopMapper.insert(shop);
+            commercialTenantMapper.insert(commercialTenant);
+        }
+        return true;
     }
 }

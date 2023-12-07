@@ -35,6 +35,8 @@ public interface IProductService {
 
     TableDataInfo<ProductVo> queryPageList(ProductJoinParam bo, PageQuery pageQuery);
 
+    TableDataInfo<ProductVo> queryPagecategoryProductList(ProductBo bo, PageQuery pageQuery);
+
     /**
      * 查询商品列表
      */
@@ -79,4 +81,16 @@ public interface IProductService {
     void lianProductCall(JSONObject param);
 
     void lianProductStatusCall(JSONObject param);
+
+    /**
+     * 查询银联开放平台票券剩余数量
+     */
+    TableDataInfo<ProductVo> queryPageListByProductType(PageQuery pageQuery);
+
+    /**
+     * 查询产品剩余数量
+     *
+     * @param productVo 产品
+     */
+    void queryProductCount(ProductVo productVo);
 }

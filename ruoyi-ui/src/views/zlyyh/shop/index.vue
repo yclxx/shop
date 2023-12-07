@@ -115,6 +115,13 @@
       <el-form ref="form" :model="form" :rules="rules" label-width="110px">
         <el-row>
           <el-col :span="12">
+            <el-form-item label="平台" prop="platformKey">
+              <el-select v-model="form.platformKey" placeholder="请选择平台标识" clearable style="width: 90%;">
+                <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
             <el-form-item label="商户" prop="commercialTenantId">
               <el-select v-model="form.commercialTenantId" placeholder="请选择商户" clearable>
                 <el-option v-for="item in commercialTenantList" :key="item.id" :label="item.label" :value="item.id" />
@@ -141,13 +148,7 @@
               <el-input v-model="form.shopTel" placeholder="请输入门店电话" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
-            <el-form-item label="平台" prop="platformKey">
-              <el-select v-model="form.platformKey" placeholder="请选择平台标识" clearable style="width: 90%;">
-                <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id" />
-              </el-select>
-            </el-form-item>
-          </el-col>
+
           <el-col :span="12">
             <el-form-item label="营业时间" prop="businessHours" style="width: 92%;">
               <el-input v-model="form.businessHours" placeholder="请输入营业时间" />
@@ -631,11 +632,6 @@
           shopName: [{
             required: true,
             message: "门店名称不能为空",
-            trigger: "blur"
-          }],
-          platformKey: [{
-            required: true,
-            message: "平台不能为空",
             trigger: "blur"
           }]
         },

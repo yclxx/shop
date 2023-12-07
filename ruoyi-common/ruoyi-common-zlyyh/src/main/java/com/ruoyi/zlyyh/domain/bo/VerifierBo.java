@@ -31,6 +31,12 @@ public class VerifierBo extends BaseEntity {
     private Long platformKey;
 
     /**
+     * 名称
+     */
+    //@NotBlank(message = "名称不能为空", groups = {AddGroup.class, EditGroup.class})
+    private String username;
+
+    /**
      * 手机号
      */
     @NotBlank(message = "手机号不能为空", groups = {AddGroup.class, EditGroup.class})
@@ -39,19 +45,18 @@ public class VerifierBo extends BaseEntity {
     /**
      * 状态 0 正常 1停用
      */
-    @NotBlank(message = "手机号不能为空", groups = {AddGroup.class, EditGroup.class})
+    @NotBlank(message = "状态不能为空", groups = {AddGroup.class, EditGroup.class})
     private String status;
 
     /**
      * 人员类型，admin管理员 verifier 核销人员
      */
-    @NotBlank(message = "人员类型，admin管理员 verifier 核销人员不能为空", groups = {AddGroup.class, EditGroup.class})
-    private String verifierType;
+    //@NotBlank(message = "人员类型，admin管理员 verifier 核销人员不能为空", groups = {AddGroup.class, EditGroup.class})
+    //private String verifierType;
 
     /**
      * 第三方平台联登唯一标识
      */
-    @NotBlank(message = "第三方平台联登唯一标识不能为空", groups = {AddGroup.class, EditGroup.class})
     private String openId;
 
     /**
@@ -80,4 +85,38 @@ public class VerifierBo extends BaseEntity {
      * 用户id
      */
     private Long sysUserId;
+    /**
+     * 服务商表id
+     */
+    private Long extensionServiceProviderId;
+
+    private Long commercialTenantId;
+    /**
+     * 是否BD
+     */
+    private Boolean isBd;
+    /**
+     * 是否管理员
+     */
+    private Boolean isAdmin;
+    /**
+     * 是否核销人员
+     */
+    private Boolean isVerifier;
+    /**
+     * 所处地处
+     */
+    private String cityCode;
+    /**
+     * 归属公司
+     */
+    private String org;
+    /**
+     * 是否同意合同 （0不同意，1同意）
+     */
+    private String contract;
+    /**
+     * 门店id
+     */
+    private Long shopId;
 }

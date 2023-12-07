@@ -2,7 +2,7 @@ package com.ruoyi.zlyyhmobile.service;
 
 import com.ruoyi.zlyyh.domain.vo.GrabPeriodVo;
 import com.ruoyi.zlyyhmobile.domain.bo.GrabPeriodProductQueryBo;
-import com.ruoyi.zlyyhmobile.domain.vo.AppProductVo;
+import com.ruoyi.zlyyh.domain.vo.AppProductVo;
 
 import java.util.List;
 

@@ -89,11 +89,6 @@ public class ProductBo extends BaseEntity {
     private BigDecimal sellAmount;
 
     /**
-     * 第三方产品结算价格（t_product_info）表中字段
-     */
-    private BigDecimal itemPrice;
-
-    /**
      * 62会员价格
      */
     private BigDecimal vipUpAmount;
@@ -241,6 +236,10 @@ public class ProductBo extends BaseEntity {
      * 门店ID
      */
     private String shopId;
+    /**
+     * 门店全选
+     */
+    private Boolean shopAll;
 
     /**
      * 按钮名称
@@ -265,7 +264,7 @@ public class ProductBo extends BaseEntity {
     /**
      * 平台标识
      */
-    @NotNull(message = "平台不能为空", groups = {AddGroup.class, EditGroup.class})
+//    @NotNull(message = "平台不能为空", groups = {AddGroup.class, EditGroup.class})
     private Long platformKey;
 
     /**
@@ -355,19 +354,32 @@ public class ProductBo extends BaseEntity {
      */
     private Long lineUpperLimit;
     /**
+     * 商品详情信息
+     */
+    private ProductInfoBo productInfo;
+    /**
      * 演出票商品信息
      */
     private ProductTicketBo ticket;
 
-    /** 场次与票种 */
+    /**
+     * 场次与票种
+     */
     private List<ProductTicketSessionBo> ticketSession;
 
     private String payBankType;
 
     private String productSmallImg;
+    private String productTypeImg;
 
     private String isPoup;
 
     private String poupText;
 
+    private String couponTip;
+
+    private String sharePermission;
+    private String shareAmountType;
+    private BigDecimal shareOneAmount;
+    private BigDecimal shareTwoAmount;
 }

@@ -1,18 +1,31 @@
 package com.ruoyi.zlyyhmobile.service.impl;
 
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.crypto.digest.MD5;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.constant.CacheNames;
+import com.ruoyi.common.core.utils.BeanCopyUtils;
 import com.ruoyi.common.core.utils.JsonUtils;
 import com.ruoyi.common.core.utils.ServletUtils;
+import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.CacheUtils;
+import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
+import com.ruoyi.zlyyh.domain.CommercialTenant;
+import com.ruoyi.zlyyh.domain.Shop;
+import com.ruoyi.zlyyh.domain.Verifier;
+import com.ruoyi.zlyyh.domain.VerifierShop;
 import com.ruoyi.zlyyh.domain.bo.CommercialTenantBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
+import com.ruoyi.zlyyh.mapper.VerifierMapper;
+import com.ruoyi.zlyyh.mapper.VerifierShopMapper;
 import com.ruoyi.zlyyh.utils.MapUtils;
 import com.ruoyi.zlyyhmobile.service.*;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +53,8 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
     private final CommercialTenantMapper baseMapper;
     private final ICategoryService categoryService;
     private final ICategoryProductService categoryProductService;
+    private final VerifierMapper verifierMapper;
+    private final VerifierShopMapper verifierShopMapper;
     private final IProductService productService;
     private final IShopService shopService;
 
@@ -57,13 +72,78 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
         return getCommercialGeoPage(geoKey, cityCode, bo, pageQuery);
     }
 
-//    private void delGeoCache(String geoKey, Long commercialTenantId, Long shopId, double lng, double lat, double radius, GeoUnit geoUnit, GeoOrder geoOrder) {
-//        // 剔除对应缓存内容
-//        String merber = commercialTenantId + "_" + shopId;
-//        RedisUtils.geoDel(geoKey, merber);
-//        String geoZSetKey = RedisUtils.getGeoZSetKey(geoKey, lng, lat, radius, geoUnit, geoOrder);
-//        RedisUtils.geoDel(geoZSetKey, merber);
-//    }
+    @Override
+    public TableDataInfo<CommercialTenantVo> getPage(CommercialTenantBo bo, PageQuery pageQuery) {
+        LambdaQueryWrapper<CommercialTenant> lqw = Wrappers.lambdaQuery();
+        lqw.orderByDesc(CommercialTenant::getCreateTime);
+        lqw.eq(CommercialTenant::getVerifierId, bo.getVerifierId());
+        if (StringUtils.isNotEmpty(bo.getCity())) {
+            lqw.likeRight(CommercialTenant::getCity, bo.getCity());
+        }
+        if (StringUtils.isNotEmpty(bo.getCommercialTenantName())) {
+            lqw.likeRight(CommercialTenant::getCommercialTenantName, bo.getCommercialTenantName());
+        }
+        Page<CommercialTenantVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+        return TableDataInfo.build(result);
+    }
+
+    @Override
+    public CommercialTenantVo getDetails(Long commercialTenantId) {
+        return baseMapper.selectVoById(commercialTenantId);
+    }
+
+    @Override
+    public CommercialTenantVo getCommercialTenant() {
+        Verifier verifier = verifierMapper.selectById(LoginHelper.getUserId());
+        LambdaQueryWrapper<CommercialTenant> lqw = Wrappers.lambdaQuery();
+        lqw.orderByDesc(CommercialTenant::getCreateTime);
+        if (verifier.getIsBd()) {
+            lqw.eq(CommercialTenant::getVerifierId, verifier.getId());
+        } else {
+            lqw.eq(CommercialTenant::getAdminMobile, verifier.getMobile());
+        }
+        List<CommercialTenantVo> commercialTenantVos = baseMapper.selectVoList(lqw);
+        return commercialTenantVos.get(0);
+    }
+
+    @Override
+    public Boolean updateCommercialTenant(CommercialTenantBo bo) {
+        CommercialTenant commercialTenant = baseMapper.selectById(bo.getCommercialTenantId());
+        // 修改手机号与原手机号不同时处理
+        if (!commercialTenant.getAdminMobile().equals(bo.getAdminMobile())) {
+            Verifier oldVerifier = verifierMapper.selectByMobile(commercialTenant.getAdminMobile());
+            if (ObjectUtil.isNotEmpty(oldVerifier)) {
+                List<Shop> shops = shopService.queryListByCommercialId(commercialTenant.getCommercialTenantId());
+                if (ObjectUtil.isNotEmpty(shops)) {
+                    Long verifierId;
+                    Verifier newVerifier = verifierMapper.selectByMobile(bo.getAdminMobile());
+                    if (ObjectUtil.isEmpty(newVerifier)) {
+                        newVerifier = new Verifier();
+                        newVerifier.setId(IdUtil.getSnowflakeNextId());
+                        newVerifier.setMobile(bo.getAdminMobile());
+                        newVerifier.setReloadUser("0");
+                        newVerifier.setStatus("0");
+                        newVerifier.setIsVerifier(true);
+                        newVerifier.setIsAdmin(true);
+                        verifierMapper.insert(newVerifier);
+                        verifierId = newVerifier.getId();
+                    } else {
+                        verifierId = newVerifier.getId();
+                    }
+                    shops.forEach(o -> {
+                        VerifierShop verifierShop = verifierShopMapper.selectByShopIdAndVerifierId(o.getShopId(), oldVerifier.getId());
+                        if (ObjectUtil.isNotEmpty(verifierShop)) {
+                            verifierShop.setVerifierId(verifierId);
+                            verifierShopMapper.updateById(verifierShop);
+                        }
+                    });
+                }
+            }
+        }
+        CommercialTenant commercialTenant1 = BeanCopyUtils.copy(bo, CommercialTenant.class);
+        commercialTenant1.setIsCache("0");
+        return baseMapper.updateById(commercialTenant1) > 0;
+    }
 
     /**
      * 查询商户

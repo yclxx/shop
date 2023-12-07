@@ -55,6 +55,33 @@ import java.util.Map;
 @Slf4j
 public class WxUtils {
 
+    public static byte[] genQrCode(String accessToken, String scene, String page, String env_version) {
+        String url = "https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=" + accessToken;
+        Map<String, Object> body = new HashMap<>();
+        if (StringUtils.isNotBlank(scene)) {
+            body.put("scene", scene);
+        } else {
+            body.put("scene", "1");
+        }
+        if (StringUtils.isNotBlank(page)) {
+            body.put("page", page);
+        }
+        if (StringUtils.isNotBlank(env_version)) {
+            body.put("env_version", env_version);
+            if (!"release".equals(env_version)) {
+                body.put("check_path", false);
+            }
+        }
+        // 透明图
+//        body.put("is_hyaline", true);
+        cn.hutool.http.HttpResponse execute = HttpUtil.createPost(url).body(JsonUtils.toJsonString(body)).execute();
+        if (execute.header("Content-Type").contains("application/json;")) {
+            log.error("生成小程序码失败，请求参数：{}，返回结果：{}", body, execute.body());
+            throw new ServiceException("生成小程序码失败，请稍后重试");
+        }
+        return execute.bodyBytes();
+    }
+
     /**
      * 获取微信接口基础访问令牌
      *

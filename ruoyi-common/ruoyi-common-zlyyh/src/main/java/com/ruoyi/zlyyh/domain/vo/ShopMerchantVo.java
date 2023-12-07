@@ -7,7 +7,6 @@ import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
 
 
-
 /**
  * 门店商户号视图对象
  *
@@ -48,13 +47,23 @@ public class ShopMerchantVo {
     /**
      * 收款方式
      */
-    @ExcelProperty(value = "收款方式", converter = ExcelDictConvert.class)
+    @ExcelProperty(value = "收款方式")
     private String paymentMethod;
     /**
      * 收单机构
      */
-    @ExcelProperty(value = "收单机构", converter = ExcelDictConvert.class)
+    @ExcelProperty(value = "收单机构")
     private String acquirer;
+    /**
+     * 结算方式
+     */
+    @ExcelProperty(value = "结算方式")
+    private String settlementWay;
+    /**
+     * 结算比例
+     */
+    @ExcelProperty(value = "结算比例")
+    private String settlement;
 
     /**
      * 状态（0正常 1停用）

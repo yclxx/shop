@@ -3,10 +3,9 @@ package com.ruoyi.zlyyhmobile.service;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.Shop;
+import com.ruoyi.zlyyh.domain.ShopMerchant;
 import com.ruoyi.zlyyh.domain.bo.MerchantApprovalBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
-import com.ruoyi.zlyyh.domain.bo.ShopMerchantBo;
-import com.ruoyi.zlyyh.domain.vo.ShopMerchantVo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
 
 import java.util.List;
@@ -51,9 +50,12 @@ public interface IShopService {
      */
     List<ShopVo> queryListByCommercialIds(List<Long> commercialIds, String cityCode);
 
-    List<ShopMerchantVo> getShopMerchantVo(ShopMerchantBo bo);
+    /**
+     * 查询商户门店
+     */
+    List<Shop> queryListByCommercialId(Long commercialId);
 
-    Boolean updateShopMerchantById(List<ShopMerchantBo> bos);
+    Boolean updateShopMerchantById(Long shopId, List<ShopMerchant> bos);
 
     boolean addApproval(MerchantApprovalBo bo);
 }

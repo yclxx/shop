@@ -88,7 +88,7 @@ public class CategoryServiceImpl implements ICategoryService {
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setCategoryId(add.getCategoryId());
-            cateGoryProduct(bo, false);
+//            cateGoryProduct(bo, false);
         }
         return flag;
     }
@@ -101,7 +101,7 @@ public class CategoryServiceImpl implements ICategoryService {
     public Boolean updateByBo(CategoryBo bo) {
         Category update = BeanUtil.toBean(bo, Category.class);
         validEntityBeforeSave(update);
-        cateGoryProduct(bo, true);
+//        cateGoryProduct(bo, true);
         return baseMapper.updateById(update) > 0;
     }
 
@@ -129,25 +129,25 @@ public class CategoryServiceImpl implements ICategoryService {
     /**
      * 新增 修改 更新栏目商品关联信息
      */
-    private void cateGoryProduct(CategoryBo bo, boolean update) {
-        if (update) {
-            categoryProductService.remove(new LambdaQueryWrapper<CategoryProduct>().eq(CategoryProduct::getCategoryId, bo.getCategoryId()));
-        }
-        Long[] productIds = null;
-        if ("0".equals(bo.getCategoryListType()) && ObjectUtil.isNotEmpty(bo.getProductIds())) {
-            productIds = bo.getProductIds();
-        }
-        if ("1".equals(bo.getCategoryListType()) && ObjectUtil.isNotEmpty(bo.getCommercialTenantIds())) {
-            productIds = bo.getCommercialTenantIds();
-        }
-        if (null == productIds) {
-            return;
-        }
-        for (Long productId : productIds) {
-            CategoryProductBo categoryProductBo = new CategoryProductBo();
-            categoryProductBo.setCategoryId(bo.getCategoryId());
-            categoryProductBo.setProductId(productId);
-            categoryProductService.insertByBo(categoryProductBo);
-        }
-    }
+//    private void cateGoryProduct(CategoryBo bo, boolean update) {
+//        if (update) {
+//            categoryProductService.remove(new LambdaQueryWrapper<CategoryProduct>().eq(CategoryProduct::getCategoryId, bo.getCategoryId()));
+//        }
+//        Long[] productIds = null;
+//        if ("0".equals(bo.getCategoryListType()) && ObjectUtil.isNotEmpty(bo.getProductIds())) {
+//            productIds = bo.getProductIds();
+//        }
+//        if ("1".equals(bo.getCategoryListType()) && ObjectUtil.isNotEmpty(bo.getCommercialTenantIds())) {
+//            productIds = bo.getCommercialTenantIds();
+//        }
+//        if (null == productIds) {
+//            return;
+//        }
+//        for (Long productId : productIds) {
+//            CategoryProductBo categoryProductBo = new CategoryProductBo();
+//            categoryProductBo.setCategoryId(bo.getCategoryId());
+//            categoryProductBo.setProductId(productId);
+//            categoryProductService.insertByBo(categoryProductBo);
+//        }
+//    }
 }

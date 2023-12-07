@@ -28,8 +28,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <result property="sysUserId" column="sys_user_id"/>
     <result property="manangerDeptId" column="mananger_dept_id"/>
     <result property="unionPayVip" column="union_pay_vip"/>
-    <result property="unionPayVip" column="union_pay_vip"/>
+    <result property="supportChannel" column="support_channel"/>
+    <result property="supportSupplier" column="support_supplier"/>
     <result property="indexShowType" column="index_show_type"/>
+    <result property="sharePermission" column="share_permission"/>
+    <result property="shareUsedDate" column="share_used_date"/>
+    <result property="shareAwardType" column="share_award_type"/>
+    <result property="shareAwardProductId" column="share_award_product_id"/>
+    <result property="shareAwardInsAcctId" column="share_award_ins_acct_id"/>
+    <result property="shareAwardMonthAmount" column="share_award_month_amount"/>
     </resultMap>
 
 

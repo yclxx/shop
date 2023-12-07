@@ -42,6 +42,7 @@ public class OrderTicketController {
         bo.setAdcode(ZlyyhUtils.getAdCode());
         bo.setCityName(ZlyyhUtils.getCityName());
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        bo.setShareUserId(ZlyyhUtils.getShareUserId());
         return R.ok(orderTicketService.createTicketOrder(bo));
     }
 

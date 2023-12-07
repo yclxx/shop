@@ -64,7 +64,7 @@ public class VerifierServiceImpl implements IVerifierService {
         LambdaQueryWrapper<Verifier> lqw = Wrappers.lambdaQuery();
         lqw.eq(bo.getPlatformKey() != null, Verifier::getPlatformKey, bo.getPlatformKey());
         lqw.eq(StringUtils.isNotBlank(bo.getMobile()), Verifier::getMobile, bo.getMobile());
-        lqw.eq(StringUtils.isNotBlank(bo.getVerifierType()), Verifier::getVerifierType, bo.getVerifierType());
+        //lqw.eq(StringUtils.isNotBlank(bo.getVerifierType()), Verifier::getVerifierType, bo.getVerifierType());
         lqw.eq(StringUtils.isNotBlank(bo.getStatus()), Verifier::getStatus, bo.getStatus());
         lqw.eq(StringUtils.isNotBlank(bo.getOpenId()), Verifier::getOpenId, bo.getOpenId());
         return lqw;
@@ -99,7 +99,6 @@ public class VerifierServiceImpl implements IVerifierService {
      * 保存前的数据校验
      */
     private void validEntityBeforeSave(Verifier entity) {
-        //TODO 做一些数据校验,如唯一约束
     }
 
     /**

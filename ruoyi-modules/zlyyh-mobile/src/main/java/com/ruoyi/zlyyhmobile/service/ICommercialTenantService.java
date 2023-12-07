@@ -31,4 +31,15 @@ public interface ICommercialTenantService {
      * @return 结果
      */
     TableDataInfo<CommercialTenantVo> getShopCommercialTenantList(CommercialTenantBo bo, PageQuery pageQuery);
+
+    /**
+     * 查询门店商户分页（商户端）
+     */
+    TableDataInfo<CommercialTenantVo> getPage(CommercialTenantBo bo, PageQuery pageQuery);
+
+    CommercialTenantVo getDetails(Long commercialTenantId);
+
+    CommercialTenantVo getCommercialTenant();
+
+    Boolean updateCommercialTenant(CommercialTenantBo bo);
 }

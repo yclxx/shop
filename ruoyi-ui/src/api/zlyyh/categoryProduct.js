@@ -42,3 +42,19 @@ export function delCategoryProduct(id) {
     method: 'delete'
   })
 }
+
+export function addProductByCategory(data) {
+  return request({
+    url: '/zlyyh-admin/categoryProduct/addProductByCategory',
+    method: 'post',
+    data: data
+  })
+}
+
+export function delProductByCategory(data) {
+  return request({
+    url: '/zlyyh-admin/categoryProduct/delProductByCategory',
+    method: 'post',
+    data: data
+  })
+}

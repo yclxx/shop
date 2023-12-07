@@ -51,6 +51,14 @@ public class ShopMerchantBo extends BaseEntity {
      * 收单机构
      */
     private String acquirer;
+    /**
+     * 结算方式
+     */
+    private String settlementWay;
+    /**
+     * 结算比例
+     */
+    private String settlement;
 
     /**
      * 状态（0正常 1停用）

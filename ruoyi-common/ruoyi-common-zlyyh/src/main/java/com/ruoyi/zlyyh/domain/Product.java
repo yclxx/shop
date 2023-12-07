@@ -305,8 +305,15 @@ public class Product extends BaseEntity {
     private String payBankType;
 
     private String productSmallImg;
+    private String productTypeImg;
 
     private String isPoup;
 
     private String poupText;
+    private String sharePermission;
+    private String shareAmountType;
+    private BigDecimal shareOneAmount;
+    private BigDecimal shareTwoAmount;
+
+    private String couponTip;
 }

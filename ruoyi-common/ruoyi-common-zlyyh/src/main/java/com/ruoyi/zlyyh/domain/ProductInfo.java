@@ -127,4 +127,11 @@ public class ProductInfo extends BaseEntity {
      */
     private String brandName;
 
+    private Boolean shopAll;
+    private Boolean overdue;
+    private Boolean anyTime;
+    private BigDecimal leastPrice;
+    private BigDecimal reducePrice;
+
+
 }

@@ -2,7 +2,9 @@ package com.ruoyi.zlyyh.utils;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.NumberUtil;
+import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpUtil;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.constant.Constants;
 import com.ruoyi.common.core.exception.ServiceException;
@@ -18,8 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import javax.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author 25487
@@ -45,6 +45,9 @@ public class ZlyyhUtils {
      * @param showCity 活动城市
      */
     public static void checkCity(String showCity, PlatformVo platformVo) {
+        if (StringUtils.isBlank(showCity) || "ALL".equalsIgnoreCase(showCity)) {
+            return;
+        }
         String cityCode = ZlyyhUtils.getCityCode();
         if (StringUtils.isBlank(cityCode)) {
             throw new ServiceException("未获取到您的位置信息,请确认是否开启定位服务");
@@ -113,6 +116,17 @@ public class ZlyyhUtils {
     }
 
     /**
+     * 分享用户ID
+     */
+    public static Long getShareUserId() {
+        String header = ServletUtils.getHeader(Constants.SHARE_USER_ID);
+        if (NumberUtil.isLong(header)) {
+            return Long.valueOf(header);
+        }
+        return null;
+    }
+
+    /**
      * 平台渠道
      */
     public static PlatformEnumd getPlatformType() {
@@ -169,26 +183,41 @@ public class ZlyyhUtils {
     }
 
     public static void main(String[] args) {
+        String url = "https://discounts.yzgnet.com/gateway/zlyyh-admin/missionUserRecord/list?pageNum=1&pageSize=500&orderByColumn=mission_user_record_id&isAsc=desc&sendStatus=3";
+        HttpRequest request = HttpUtil.createGet(url).header("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpblR5cGUiOiJsb2dpbiIsImxvZ2luSWQiOiJzeXNfdXNlcjoxIiwicm5TdHIiOiJuQnJrS3B3SzlIb2p1ZmpYMHBlVzZmelhheWFMMm5TUiIsInVzZXJJZCI6MX0.4vP51HeqBUEFJACOcqjlLmiEmZ1DsdinjdVaNP3vRbs");
+        String body = request.execute().body();
+        if (StringUtils.isNotBlank(body)) {
+            JSONObject jsonObject = JSONObject.parseObject(body);
+            JSONArray data = jsonObject.getJSONArray("rows");
+            for (int i = 0; i < data.size(); i++) {
+                JSONObject item = data.getJSONObject(i);
+                System.out.println(item.getString("missionUserRecordId"));
+                String pfUrl = "https://discounts.yzgnet.com/gateway/zlyyh-admin/missionUserRecord/reissue/" + item.getString("missionUserRecordId");
+                String body1 = HttpUtil.createGet(pfUrl).header("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpblR5cGUiOiJsb2dpbiIsImxvZ2luSWQiOiJzeXNfdXNlcjoxIiwicm5TdHIiOiJuQnJrS3B3SzlIb2p1ZmpYMHBlVzZmelhheWFMMm5TUiIsInVzZXJJZCI6MX0.4vP51HeqBUEFJACOcqjlLmiEmZ1DsdinjdVaNP3vRbs").execute().body();
+                System.out.println(body1);
+            }
+        }
+
 //        String appId = "5d6630e7212a456e82f8d6a495faaec7";
-        String appId = "d27c0217490d4e35a901abb2e874f383";
-        String url = "https://open.95516.com/open/access/1.0/mission.progress.query";
-//        String url = "https://open.95516.com/open/access/1.0/membership.message.push";
-        Map<String, String> params = new HashMap<>();
-        params.put("appId", appId);
-        params.put("backendToken", "08d9e1f82006003d1YRkYuPW");
-//        params.put("backendToken", "071f9e8e2004003a1P0p3ZyL");
-        params.put("openId", "Yt476r36uzge3OFTr/yxUNLUnPa4Fjc5u1ZOO9WQbWLCsU7bvF5PX8elM0Dzid+8");
-//        params.put("bizTp","9998");
-//        params.put("subBizTp","33");
-//        params.put("vid","2023051602");
-//        params.put("mobile","13675827473");
-//        DESede desede = SecureUtil.desede(HexUtil.decodeHex("2fcb048abc239831bac47fe3b32a2c012fcb048abc239831"));
-//        params.put("mobile", desede.encryptBase64(params.get("mobile")));
-        params.put("missionId", "JYRW2023101800509");
-        //原交易时间
-//        params.put("missionGroupId", "1023051601");
-        String s = HttpUtil.post(url, JSONObject.toJSONString(params));
-        log.info("请求url：{}，请求参数：{}，返回结果：{}", url, params, s);
+//        String appId = "d27c0217490d4e35a901abb2e874f383";
+//        String url = "https://open.95516.com/open/access/1.0/mission.progress.query";
+////        String url = "https://open.95516.com/open/access/1.0/membership.message.push";
+//        Map<String, String> params = new HashMap<>();
+//        params.put("appId", appId);
+//        params.put("backendToken", "08d9e1f82006003d1YRkYuPW");
+////        params.put("backendToken", "071f9e8e2004003a1P0p3ZyL");
+//        params.put("openId", "Yt476r36uzge3OFTr/yxUNLUnPa4Fjc5u1ZOO9WQbWLCsU7bvF5PX8elM0Dzid+8");
+////        params.put("bizTp","9998");
+////        params.put("subBizTp","33");
+////        params.put("vid","2023051602");
+////        params.put("mobile","13675827473");
+////        DESede desede = SecureUtil.desede(HexUtil.decodeHex("2fcb048abc239831bac47fe3b32a2c012fcb048abc239831"));
+////        params.put("mobile", desede.encryptBase64(params.get("mobile")));
+//        params.put("missionId", "JYRW2023101800509");
+//        //原交易时间
+////        params.put("missionGroupId", "1023051601");
+//        String s = HttpUtil.post(url, JSONObject.toJSONString(params));
+//        log.info("请求url：{}，请求参数：{}，返回结果：{}", url, params, s);
 
 //        String appId = "fa83ef42f3874697a05f5670c62999c5";
 //        String url = "https://open.95516.com/open/access/1.0/mission.progress.query";

@@ -135,7 +135,10 @@ public class ShopBo extends BaseEntity {
      * 几点开始展示,几点结束,格式：HH:mm:ss-HH:mm:ss
      */
     private String sellTime;
-
+    /**
+     * 节假日是否营业
+     */
+    private Boolean holiday;
     /**
      * 门店图片
      */
@@ -198,6 +201,14 @@ public class ShopBo extends BaseEntity {
      * 收款账户
      */
     private String account;
+    /**
+     * 开户行
+     */
+    private String accountBank;
+    /**
+     * 收款人
+     */
+    private String accountPayee;
     /**
      * 活动类型
      */

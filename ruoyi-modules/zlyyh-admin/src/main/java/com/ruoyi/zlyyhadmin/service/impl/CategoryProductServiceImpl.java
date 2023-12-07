@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyhadmin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +39,7 @@ public class CategoryProductServiceImpl implements ICategoryProductService {
      * 查询栏目商品关联
      */
     @Override
-    public CategoryProductVo queryById(Long id){
+    public CategoryProductVo queryById(Long id) {
         return baseMapper.selectVoById(id);
     }
 
@@ -48,7 +50,6 @@ public class CategoryProductServiceImpl implements ICategoryProductService {
         queryWrapper.eq(CategoryProduct::getProductId, productId);
         return baseMapper.selectCount(queryWrapper);
     }
-
 
     /**
      * 查询栏目商品关联列表
@@ -81,7 +82,7 @@ public class CategoryProductServiceImpl implements ICategoryProductService {
     /**
      * 新增栏目商品关联
      */
-    @CacheEvict(cacheNames = CacheNames.CATEGORY_PRODUCT, key = "#bo.getCategoryId()")
+    @CacheEvict(cacheNames = {CacheNames.CATEGORY_PRODUCT, CacheNames.productList}, allEntries = true)
     @Override
     public Boolean insertByBo(CategoryProductBo bo) {
         CategoryProduct add = BeanUtil.toBean(bo, CategoryProduct.class);
@@ -95,7 +96,7 @@ public class CategoryProductServiceImpl implements ICategoryProductService {
     /**
      * 修改栏目商品关联
      */
-    @CacheEvict(cacheNames = CacheNames.CATEGORY_PRODUCT, key = "#bo.getCategoryId()")
+    @CacheEvict(cacheNames = {CacheNames.CATEGORY_PRODUCT, CacheNames.productList}, allEntries = true)
     @Override
     public Boolean updateByBo(CategoryProductBo bo) {
         CategoryProduct update = BeanUtil.toBean(bo, CategoryProduct.class);
@@ -105,16 +106,44 @@ public class CategoryProductServiceImpl implements ICategoryProductService {
     /**
      * 批量删除栏目商品关联
      */
-    @CacheEvict(cacheNames = CacheNames.CATEGORY_PRODUCT, allEntries = true)
+    @CacheEvict(cacheNames = {CacheNames.CATEGORY_PRODUCT, CacheNames.productList}, allEntries = true)
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
 
         return baseMapper.deleteBatchIds(ids) > 0;
     }
 
-    @CacheEvict(cacheNames = CacheNames.CATEGORY_PRODUCT, allEntries = true)
+    @CacheEvict(cacheNames = {CacheNames.CATEGORY_PRODUCT, CacheNames.productList}, allEntries = true)
     @Override
     public Boolean remove(LambdaQueryWrapper<CategoryProduct> queryWrapper) {
         return SqlHelper.retBool(baseMapper.delete(queryWrapper));
+    }
+
+    @CacheEvict(cacheNames = {CacheNames.CATEGORY_PRODUCT, CacheNames.productList}, allEntries = true)
+    @Override
+    public Boolean addProductByCategory(CategoryProductBo bo) {
+        List<CategoryProduct> add = new ArrayList<>();
+        if (ObjectUtil.isNotEmpty(bo.getCategoryId()) && ObjectUtil.isNotEmpty(bo.getProductIds())) {
+            bo.getProductIds().forEach(o -> {
+                CategoryProduct categoryProduct = new CategoryProduct();
+                categoryProduct.setProductId(o);
+                categoryProduct.setCategoryId(bo.getCategoryId());
+                add.add(categoryProduct);
+            });
+            return baseMapper.insertBatch(add);
+        }
+        return false;
+    }
+
+    @CacheEvict(cacheNames = {CacheNames.CATEGORY_PRODUCT, CacheNames.productList}, allEntries = true)
+    @Override
+    public Integer delProductByCategory(CategoryProductBo bo) {
+        LambdaQueryWrapper<CategoryProduct> wrapper = Wrappers.lambdaQuery();
+        if (ObjectUtil.isNotEmpty(bo.getProductIds()) && ObjectUtil.isNotEmpty(bo.getCategoryId())) {
+            wrapper.eq(CategoryProduct::getCategoryId, bo.getCategoryId());
+            wrapper.in(CategoryProduct::getProductId, bo.getProductIds());
+            return baseMapper.delete(wrapper);
+        }
+        return 0;
     }
 }

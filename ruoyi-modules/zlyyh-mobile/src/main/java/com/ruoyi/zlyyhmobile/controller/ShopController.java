@@ -8,8 +8,6 @@ import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.Shop;
 import com.ruoyi.zlyyh.domain.bo.MerchantApprovalBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
-import com.ruoyi.zlyyh.domain.bo.ShopMerchantBo;
-import com.ruoyi.zlyyh.domain.vo.ShopMerchantVo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.service.IShopService;
@@ -19,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 商户门店控制器
@@ -81,21 +78,11 @@ public class ShopController {
     }
 
     /**
-     * 门店商品关联表
-     */
-    @GetMapping("getShopMerchant")
-    public R<List<ShopMerchantVo>> getShopMerchantVo(ShopMerchantBo bo) {
-        List<ShopMerchantVo> shopMerchantVo = shopService.getShopMerchantVo(bo);
-        return R.ok(shopMerchantVo);
-    }
-
-    /**
-     * 商户门店申请
+     * 商户申请
      */
     @PostMapping("/addApproval")
     public R addApproval(@RequestBody MerchantApprovalBo bo) {
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
-        shopService.addApproval(bo);
-        return R.ok();
+        return R.ok( shopService.addApproval(bo));
     }
 }

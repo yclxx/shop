@@ -22,7 +22,6 @@ import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
 import com.ruoyi.zlyyhmobile.domain.vo.UserProductCount;
 import com.ruoyi.zlyyhmobile.service.AsyncService;
-import com.ruoyi.zlyyhmobile.service.IInviteUserLogService;
 import com.ruoyi.zlyyhmobile.service.IMissionService;
 import com.ruoyi.zlyyhmobile.service.IMissionUserRecordService;
 import lombok.RequiredArgsConstructor;

@@ -16,17 +16,21 @@ import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.CacheUtils;
+import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.resource.api.RemoteFileService;
 import com.ruoyi.resource.api.domain.SysFile;
 import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.*;
 import com.ruoyi.zlyyh.domain.vo.*;
+import com.ruoyi.zlyyh.enumd.DateType;
 import com.ruoyi.zlyyh.mapper.ProductMapper;
 import com.ruoyi.zlyyh.mapper.TagsProductMapper;
 import com.ruoyi.zlyyh.param.LianLianParam;
 import com.ruoyi.zlyyh.service.YsfConfigService;
 import com.ruoyi.zlyyh.utils.LianLianUtils;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
+import com.ruoyi.zlyyh.utils.YsfUtils;
+import com.ruoyi.zlyyh.utils.redis.ProductUtils;
 import com.ruoyi.zlyyhadmin.domain.bo.LianLianProductBo;
 import com.ruoyi.zlyyhadmin.domain.bo.ProductJoinParam;
 import com.ruoyi.zlyyhadmin.domain.vo.LianLianProductItem;
@@ -41,10 +45,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 商品Service业务层处理
@@ -171,6 +172,32 @@ public class ProductServiceImpl implements IProductService {
         //if (ObjectUtil.isNotEmpty(bo.getCouponId())) {
         //    lqw.apply("product_id IN (SELECT product_id FROM t_product_coupon WHERE action_id = " + bo.getCouponId() + ")");
         //}
+        Page<ProductVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+        return TableDataInfo.build(result);
+    }
+
+    @Override
+    public TableDataInfo<ProductVo> queryPagecategoryProductList(ProductBo bo, PageQuery pageQuery) {
+        Map<String, Object> params = bo.getParams();
+        LambdaQueryWrapper<Product> lqw = Wrappers.lambdaQuery();
+        lqw.eq(null != bo.getProductId(), Product::getProductId, bo.getProductId());
+        lqw.eq(StringUtils.isNotBlank(bo.getExternalProductId()), Product::getExternalProductId, bo.getExternalProductId());
+        lqw.like(StringUtils.isNotBlank(bo.getProductName()), Product::getProductName, bo.getProductName());
+        lqw.eq(StringUtils.isNotBlank(bo.getProductAffiliation()), Product::getProductAffiliation, bo.getProductAffiliation());
+        lqw.eq(StringUtils.isNotBlank(bo.getProductType()), Product::getProductType, bo.getProductType());
+        lqw.eq(StringUtils.isNotBlank(bo.getPickupMethod()), Product::getPickupMethod, bo.getPickupMethod());
+        lqw.eq(StringUtils.isNotBlank(bo.getStatus()), Product::getStatus, bo.getStatus());
+        lqw.between(params.get("beginStartDate") != null && params.get("endStartDate") != null, Product::getShowStartDate, params.get("beginStartDate"), params.get("endStartDate"));
+        lqw.between(params.get("beginEndDate") != null && params.get("endEndDate") != null, Product::getShowEndDate, params.get("beginEndDate"), params.get("endEndDate"));
+        lqw.eq(StringUtils.isNotBlank(bo.getShowIndex()), Product::getShowIndex, bo.getShowIndex());
+        lqw.eq(bo.getPlatformKey() != null, Product::getPlatformKey, bo.getPlatformKey());
+        if (ObjectUtil.isNotEmpty(bo.getCategoryId()) && ObjectUtil.isNotEmpty(bo.getSort()) && bo.getSort().equals(0L)) {
+            lqw.apply("product_id IN (select product_id from t_category_product where category_id = " + bo.getCategoryId() + ")");
+        }
+        if (ObjectUtil.isNotEmpty(bo.getCategoryId()) && ObjectUtil.isNotEmpty(bo.getSort()) && bo.getSort().equals(1L)) {
+            lqw.apply("product_id NOT IN (select product_id from t_category_product where category_id = " + bo.getCategoryId() + ")");
+        }
+
         Page<ProductVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
         return TableDataInfo.build(result);
     }
@@ -507,6 +534,7 @@ public class ProductServiceImpl implements IProductService {
                 } else {
                     product.setProductName(lianProduct.getOnlyName() + " " + item.getSubTitle());//产品名称
                 }
+                product.setExternalProductId(lianProduct.getProductId() + ":" + item.getItemId());
                 product.setProductImg(lianProduct.getFaceImg());//产品图片
                 product.setProductSubhead(lianProduct.getTitle());//产品副标题
                 product.setOriginalAmount(item.getOriginPrice());//产品原价
@@ -516,7 +544,8 @@ public class ProductServiceImpl implements IProductService {
                 } else if (lianProduct.getItemStock().equals(1)) {
                     product.setTotalCount(item.getStock());//库存
                 }
-
+                productInfoVo.setItemPrice(item.getChannelPrice());
+                productInfoVo.setItemId(item.getItemId().toString());
 
                 String channelId = ysfConfigService.queryValueByKey(product.getPlatformKey(), "LianLian.channelId");
                 String basePath = ysfConfigService.queryValueByKey(product.getPlatformKey(), "LianLian.basePath");
@@ -585,7 +614,6 @@ public class ProductServiceImpl implements IProductService {
         }
     }
 
-
     /**
      * 联联订单状态通知(上架/下架/售空)
      *
@@ -622,5 +650,56 @@ public class ProductServiceImpl implements IProductService {
         }
     }
 
+    /**
+     * 查询银联开放平台票券剩余数量
+     */
+    public TableDataInfo<ProductVo> queryPageListByProductType(PageQuery pageQuery) {
+        LambdaQueryWrapper<Product> lqw = Wrappers.lambdaQuery();
+        lqw.eq(Product::getProductType, "18");
+        lqw.eq(Product::getStatus, "0");
+        lqw.gt(Product::getSellEndDate, new Date());
+        lqw.isNotNull(Product::getExternalProductId);
+        Page<ProductVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+        return TableDataInfo.build(result);
+    }
+
+    /**
+     * 查询产品剩余数量
+     *
+     * @param productVo 产品Id
+     */
+    public void queryProductCount(ProductVo productVo) {
+        if (productVo == null) {
+            return;
+        }
+        if (!"18".equals(productVo.getProductType())) {
+            return;
+        }
+        if (StringUtils.isBlank(productVo.getExternalProductId())) {
+            return;
+        }
+        if (productVo.getTotalCount() < 1) {
+            return;
+        }
+        Long allRemainCount = YsfUtils.aggQueryCpnRemain(productVo.getExternalProductId(), productVo.getPlatformKey());
+        if (null != allRemainCount) {
+            // 剩余数量
+            long count = RedisUtils.getAtomicValue(ProductUtils.countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
+            if (count > 0) {
+                allRemainCount = allRemainCount + count;
+            }
+            if (allRemainCount > 0) {
+                Product product = new Product();
+                product.setProductId(productVo.getProductId());
+                product.setTotalCount(allRemainCount);
+
+                baseMapper.updateById(product);
+
+                CacheUtils.evict(CacheNames.PRODUCT, productVo.getProductId());
+                CacheUtils.clear(CacheNames.COMMERCIAL_PRODUCT);
+                CacheUtils.clear(CacheNames.COMMERCIAL_PRODUCT_IDS);
+            }
+        }
+    }
 
 }

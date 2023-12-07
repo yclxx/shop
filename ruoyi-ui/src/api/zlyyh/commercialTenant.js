@@ -9,6 +9,15 @@ export function listCommercialTenant(query) {
   })
 }
 
+export function categoryCommercialList(query) {
+  return request({
+    url: '/zlyyh-admin/commercialTenant/categoryCommercialList',
+    method: 'get',
+    params: query
+  })
+}
+
+
 // 查询商户详细
 export function getCommercialTenant(commercialTenantId) {
   return request({

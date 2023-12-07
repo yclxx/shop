@@ -25,6 +25,12 @@ public class VerifierVo {
     private Long platformKey;
 
     /**
+     * 名称
+     */
+    @ExcelProperty(value = "名称")
+    private String username;
+
+    /**
      * 手机号
      */
     @ExcelProperty(value = "手机号")
@@ -39,8 +45,8 @@ public class VerifierVo {
     /**
      * 人员类型，admin管理员 verifier 核销人员
      */
-    @ExcelProperty(value = "人员类型，admin管理员 verifier 核销人员")
-    private String verifierType;
+    //@ExcelProperty(value = "人员类型，admin管理员 verifier 核销人员")
+    //private String verifierType;
 
     /**
      * 第三方平台联登唯一标识
@@ -81,4 +87,33 @@ public class VerifierVo {
      */
     @ExcelProperty(value = "用户id")
     private Long sysUserId;
+
+    /**
+     * 服务商表id
+     */
+    private Long extensionServiceProviderId;
+    /**
+     * 是否BD
+     */
+    private Boolean isBd;
+    /**
+     * 是否管理员
+     */
+    private Boolean isAdmin;
+    /**
+     * 是否核销人员
+     */
+    private Boolean isVerifier;
+    /**
+     * 所处区域
+     */
+    private String cityCode;
+    /**
+     * 归属公司
+     */
+    private String org;
+    /**
+     * 是否同意合同 （0不同意，1同意）
+     */
+    private String contract;
 }

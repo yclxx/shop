@@ -3,7 +3,6 @@ package com.ruoyi.zlyyhmobile.domain.bo;
 import com.ruoyi.common.core.utils.StringUtils;
 import lombok.Data;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -53,7 +52,7 @@ public class CreateOrderBo {
     private Long couponId;
 
     /**
-     *商品信息
+     * 商品信息
      */
     private List<OrderProductBo> orderProductBos;
 
@@ -61,6 +60,10 @@ public class CreateOrderBo {
      * 平台端
      */
     private String channel;
+    /**
+     * 分享用户ID
+     */
+    private Long shareUserId;
 
     /**
      * 获取城市编码

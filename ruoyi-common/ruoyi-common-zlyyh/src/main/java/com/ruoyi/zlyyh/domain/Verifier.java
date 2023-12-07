@@ -27,6 +27,10 @@ public class Verifier extends BaseEntity {
      */
     private Long platformKey;
     /**
+     * 名称
+     */
+    private String username;
+    /**
      * 手机号
      */
     private String mobile;
@@ -34,10 +38,6 @@ public class Verifier extends BaseEntity {
      * 状态 0 正常 1停用
      */
     private String status;
-    /**
-     * 人员类型，admin 管理员 verifier 核销人员
-     */
-    private String verifierType;
     /**
      * 第三方平台联登唯一标识
      */
@@ -56,7 +56,7 @@ public class Verifier extends BaseEntity {
     private Date lastLoginDate;
 
     /**
-     * 信息授权
+     * 信息授权 (0未授权，1已授权)用于静默登录
      */
     private String reloadUser;
     /**
@@ -67,6 +67,34 @@ public class Verifier extends BaseEntity {
      * 用户id
      */
     private Long sysUserId;
+    /**
+     * 服务商表id
+     */
+    private Long extensionServiceProviderId;
+    /**
+     * 是否BD
+     */
+    private Boolean isBd;
+    /**
+     * 是否管理员
+     */
+    private Boolean isAdmin;
+    /**
+     * 是否核销人员
+     */
+    private Boolean isVerifier;
+    /**
+     * 所处地处
+     */
+    private String cityCode;
+    /**
+     * 归属公司
+     */
+    private String org;
+    /**
+     * 是否同意合同 （0不同意，1同意）
+     */
+    private String contract;
 
     public Verifier() {
     }

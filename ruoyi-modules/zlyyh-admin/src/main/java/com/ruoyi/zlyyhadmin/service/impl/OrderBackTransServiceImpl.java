@@ -8,10 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
-import com.ruoyi.common.core.utils.DateUtils;
-import com.ruoyi.common.core.utils.IdUtils;
-import com.ruoyi.common.core.utils.JsonUtils;
-import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.core.utils.*;
 import com.ruoyi.common.core.utils.reflect.ReflectUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
@@ -19,7 +16,10 @@ import com.ruoyi.zlyyh.domain.HistoryOrder;
 import com.ruoyi.zlyyh.domain.Order;
 import com.ruoyi.zlyyh.domain.OrderBackTrans;
 import com.ruoyi.zlyyh.domain.bo.OrderBackTransBo;
-import com.ruoyi.zlyyh.domain.vo.*;
+import com.ruoyi.zlyyh.domain.vo.MerchantVo;
+import com.ruoyi.zlyyh.domain.vo.OrderBackTransVo;
+import com.ruoyi.zlyyh.domain.vo.OrderInfoVo;
+import com.ruoyi.zlyyh.domain.vo.UserVo;
 import com.ruoyi.zlyyh.mapper.HistoryOrderMapper;
 import com.ruoyi.zlyyh.mapper.OrderBackTransMapper;
 import com.ruoyi.zlyyh.mapper.OrderMapper;
@@ -30,6 +30,7 @@ import com.ruoyi.zlyyh.utils.WxUtils;
 import com.ruoyi.zlyyh.utils.YsfUtils;
 import com.ruoyi.zlyyh.utils.sdk.LogUtil;
 import com.ruoyi.zlyyh.utils.sdk.PayUtils;
+import com.ruoyi.zlyyhadmin.event.ShareOrderEvent;
 import com.ruoyi.zlyyhadmin.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -117,7 +118,7 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
         Order order = orderMapper.selectById(bo.getNumber());
         if (null == order.getOutAmount() || order.getOutAmount().signum() < 1) {
             // 有可能订单还没更新，休眠1秒
-            ThreadUtil.sleep(1000);
+            ThreadUtil.sleep(2000);
             order = orderMapper.selectById(bo.getNumber());
         }
         // 退款检查
@@ -299,6 +300,12 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
             }
         } else if ("2".equals(pickupMethod)) {
             merberPointRefund(bo, obj);
+        }
+        if (null != order) {
+            SpringUtils.context().publishEvent(new ShareOrderEvent(null, order.getNumber()));
+        }
+        if (null != historyOrder) {
+            SpringUtils.context().publishEvent(new ShareOrderEvent(null, historyOrder.getNumber()));
         }
     }
 

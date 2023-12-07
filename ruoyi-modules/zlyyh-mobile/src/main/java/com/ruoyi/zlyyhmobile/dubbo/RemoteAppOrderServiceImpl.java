@@ -11,15 +11,19 @@ import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.SpringUtils;
 import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.mybatis.core.page.PageQuery;
+import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.system.api.RemoteAppOrderService;
 import com.ruoyi.zlyyh.domain.HistoryOrder;
 import com.ruoyi.zlyyh.domain.Order;
 import com.ruoyi.zlyyh.domain.OrderUnionSend;
+import com.ruoyi.zlyyh.domain.bo.ShareUserRecordBo;
 import com.ruoyi.zlyyh.domain.vo.HistoryOrderVo;
 import com.ruoyi.zlyyh.domain.vo.OrderUnionPayVo;
 import com.ruoyi.zlyyh.domain.vo.OrderVo;
+import com.ruoyi.zlyyh.domain.vo.ShareUserRecordVo;
 import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayParams;
 import com.ruoyi.zlyyh.mapper.OrderUnionSendMapper;
 import com.ruoyi.zlyyh.properties.CtripConfig;
@@ -27,18 +31,18 @@ import com.ruoyi.zlyyh.properties.YsfFoodProperties;
 import com.ruoyi.zlyyh.properties.utils.YsfDistributionPropertiesUtils;
 import com.ruoyi.zlyyh.utils.CtripUtils;
 import com.ruoyi.zlyyh.utils.YsfFoodUtils;
+import com.ruoyi.zlyyh.utils.redis.OrderCacheUtils;
 import com.ruoyi.zlyyh.utils.sdk.UnionPayDistributionUtil;
+import com.ruoyi.zlyyhmobile.event.ShareOrderEvent;
 import com.ruoyi.zlyyhmobile.service.*;
-import com.ruoyi.zlyyhmobile.utils.redis.OrderCacheUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.List;
+import java.util.*;
 
 /**
  * 订单服务
@@ -52,19 +56,14 @@ import java.util.List;
 public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
     private static final YsfFoodProperties YSF_FOOD_PROPERTIES = SpringUtils.getBean(YsfFoodProperties.class);
     private static final CtripConfig ctripConfig = SpringUtils.getBean(CtripConfig.class);
-    @Autowired
-    private LockTemplate lockTemplate;
-    @Autowired
-    private IOrderService orderService;
-    @Autowired
-    private IHistoryOrderService historyOrderService;
-    @Autowired
-    private IMissionUserRecordService missionUserRecordService;
-    @Autowired
-    private IOrderUnionPayService orderUnionPayService;
-    @Autowired
-    private ICollectiveOrderService collectiveOrderService;
+    private final LockTemplate lockTemplate;
+    private final IOrderService orderService;
+    private final IHistoryOrderService historyOrderService;
+    private final IMissionUserRecordService missionUserRecordService;
+    private final IOrderUnionPayService orderUnionPayService;
+    private final ICollectiveOrderService collectiveOrderService;
     private final OrderUnionSendMapper orderUnionSendMapper;
+    private final IShareUserRecordService userRecordService;
 
     @Async
     @Override
@@ -231,12 +230,13 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
         }
         // 获取锁成功，处理业务
         try {
-            String time = RedisUtils.getCacheObject("draw" + key);
+            String cacheKey = "draw" + key;
+            String time = RedisUtils.getCacheObject(cacheKey);
             if (StringUtils.isNotBlank(time)) {
                 return;
             }
             time = DateUtil.now();
-            RedisUtils.setCacheObject(key, time, Duration.ofMinutes(2));
+            RedisUtils.setCacheObject(cacheKey, time, Duration.ofMinutes(2));
             missionUserRecordService.sendDraw(missionUserRecordId);
         } finally {
             //释放锁
@@ -305,5 +305,144 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
     @Override
     public void addCollectiveOrder() {
         collectiveOrderService.addCollectiveOrder();
+    }
+
+    /**
+     * 查询订单核销状态
+     */
+    @Async
+    @Override
+    public void queryOrderUsedStatus() {
+        List<String> orderTypeList = new ArrayList<>();
+        // 银联开放平台票券
+        orderTypeList.add("18");
+        PageQuery pageQuery = new PageQuery();
+        pageQuery.setPageSize(100);
+        pageQuery.setOrderByColumn("number");
+        pageQuery.setIsAsc("asc");
+
+        Integer pageNum = 1;
+        while (true) {
+            pageQuery.setPageNum(pageNum);
+            TableDataInfo<OrderVo> orderVoTableDataInfo = orderService.queryOrderByOrderTypeList(orderTypeList, null, pageQuery);
+            for (OrderVo orderVo : orderVoTableDataInfo.getRows()) {
+                try {
+                    orderService.queryOrderUsedStatus(orderVo);
+                } catch (Exception e) {
+                    log.error("查询订单核销状态异常：", e);
+                }
+            }
+            if ((long) pageNum * pageQuery.getPageSize() >= orderVoTableDataInfo.getTotal()) {
+                break;
+            }
+            pageNum++;
+        }
+    }
+
+    /**
+     * 查询订单分享状态
+     */
+    @Async
+    @Override
+    public void queryShareStatus() {
+        try {
+            ShareUserRecordBo shareUserRecordBo = new ShareUserRecordBo();
+            shareUserRecordBo.setInviteeStatus("0,1");
+            Map<String, Object> params = new HashMap<>();
+            params.put("beginCreateTime", DateUtil.offsetDay(new Date(), -90));
+            params.put("endCreateTime", new Date());
+            shareUserRecordBo.setParams(params);
+            // 开始查询
+            queryUsedStatus(shareUserRecordBo);
+        } catch (Exception e) {
+            log.info("查询分销订单核销状态异常：", e);
+        }
+        try {
+            ShareUserRecordBo shareUserRecordBo = new ShareUserRecordBo();
+            shareUserRecordBo.setInviteeStatus("2");
+            Map<String, Object> params = new HashMap<>();
+            params.put("beginOrderUsedTime", DateUtil.offsetDay(new Date(), -7));
+            params.put("endOrderUsedTime", new Date());
+            shareUserRecordBo.setParams(params);
+            // 开始查询
+            queryUsedStatus(shareUserRecordBo);
+        } catch (Exception e) {
+            log.info("查询分销已核销订单状态异常：", e);
+        }
+    }
+
+    /**
+     * 查询分销订单已核销 二次确认，7天内的
+     */
+    private void queryUsedStatus(ShareUserRecordBo shareUserRecordBo) {
+        PageQuery pageQuery = new PageQuery();
+        pageQuery.setPageSize(100);
+        pageQuery.setOrderByColumn("number");
+        pageQuery.setIsAsc("asc");
+
+        Integer pageNum = 1;
+        while (true) {
+            pageQuery.setPageNum(pageNum);
+            TableDataInfo<ShareUserRecordVo> shareUserRecordVoTableDataInfo = userRecordService.queryPageList(shareUserRecordBo, pageQuery);
+            for (ShareUserRecordVo shareUserRecordVo : shareUserRecordVoTableDataInfo.getRows()) {
+                try {
+                    OrderVo orderVo = orderService.queryById(shareUserRecordVo.getNumber());
+                    if (null == orderVo) {
+                        log.error("分销订单不存在，分销信息：{}", shareUserRecordVo);
+                        continue;
+                    }
+                    SpringUtils.context().publishEvent(new ShareOrderEvent(null, orderVo.getNumber()));
+                } catch (Exception e) {
+                    log.error("分销订单处理异常：", e);
+                }
+            }
+            if ((long) pageNum * pageQuery.getPageSize() >= shareUserRecordVoTableDataInfo.getTotal()) {
+                break;
+            }
+            pageNum++;
+        }
+    }
+
+    /**
+     * 查询订单分享奖励状态
+     */
+    @Async
+    @Override
+    public void queryShareAwardStatus() {
+        PageQuery pageQuery = new PageQuery();
+        pageQuery.setPageSize(100);
+        pageQuery.setOrderByColumn("number");
+        pageQuery.setIsAsc("asc");
+
+        Integer pageNum = 1;
+        ShareUserRecordBo shareUserRecordBo = new ShareUserRecordBo();
+        shareUserRecordBo.setInviteeStatus("2");
+        shareUserRecordBo.setAwardStatus("0,1,3");
+        Map<String, Object> params = new HashMap<>();
+        params.put("beginCreateTime", DateUtil.offsetDay(new Date(), -90));
+        params.put("endCreateTime", new Date());
+        shareUserRecordBo.setParams(params);
+        while (true) {
+            pageQuery.setPageNum(pageNum);
+            TableDataInfo<ShareUserRecordVo> shareUserRecordVoTableDataInfo = userRecordService.queryPageList(shareUserRecordBo, pageQuery);
+            for (ShareUserRecordVo shareUserRecordVo : shareUserRecordVoTableDataInfo.getRows()) {
+                try {
+
+                    if ("0".equals(shareUserRecordVo.getAwardStatus()) || "3".equals(shareUserRecordVo.getAwardStatus())) {
+                        // 重新发放
+                        userRecordService.sendAward(shareUserRecordVo.getRecordId());
+                    } else if ("1".equals(shareUserRecordVo.getAwardStatus())) {
+                        // 查询发放状态
+                        userRecordService.querySendAwardStatus(shareUserRecordVo.getRecordId());
+                    }
+                } catch (Exception e) {
+                    log.error("分销订单处理异常：", e);
+                }
+            }
+            if ((long) pageNum * pageQuery.getPageSize() >= shareUserRecordVoTableDataInfo.getTotal()) {
+                break;
+            }
+            pageNum++;
+        }
     }
 }
