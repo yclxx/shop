@@ -162,6 +162,10 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
         if (StringUtils.isNotEmpty(vo.getBrandLogo())) {
             commercialTenant.setCommercialTenantImg(vo.getBrandLogo());
         }
+        // 负责人手机号
+        if (StringUtils.isNotEmpty(vo.getBrandMobile())) {
+            commercialTenant.setAdminMobile(vo.getBrandMobile());
+        }
         // 商户简称
         if (StringUtils.isNotEmpty(vo.getBrandReferred())) {
             commercialTenant.setCommercialTenantTitle(vo.getBrandReferred());

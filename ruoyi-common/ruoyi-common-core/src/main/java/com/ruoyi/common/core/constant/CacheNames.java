@@ -216,6 +216,4 @@ public interface CacheNames {
      * 核销人员信息缓存
      */
     String M_VERIFIER = "m_verifier#1d";
-
-    String M_PROMOTIONTASK = "m_promotionTask#1d";
 }

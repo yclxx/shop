@@ -225,6 +225,7 @@ public class IVerifierServiceImpl implements IVerifierService {
             commercialTenant.setCommercialTenantName(bo.getCommercialTenant().getCommercialTenantName());
             commercialTenant.setCommercialTenantTitle(bo.getCommercialTenant().getCommercialTenantTitle());
             commercialTenant.setCommercialTenantImg(bo.getCommercialTenant().getCommercialTenantImg());
+            commercialTenant.setAdminMobile(bo.getCommercialTenant().getAdminMobile());
             commercialTenant.setActivityNature(bo.getCommercialTenant().getActivityNature());
             commercialTenant.setIsCache("1");
             commercialTenantMapper.updateById(commercialTenant);

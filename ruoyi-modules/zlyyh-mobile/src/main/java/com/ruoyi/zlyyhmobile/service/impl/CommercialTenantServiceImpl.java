@@ -125,6 +125,7 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
                         newVerifier.setStatus("0");
                         newVerifier.setIsVerifier(true);
                         newVerifier.setIsAdmin(true);
+
                         verifierMapper.insert(newVerifier);
                         verifierId = newVerifier.getId();
                     } else {
@@ -141,7 +142,7 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
             }
         }
         CommercialTenant commercialTenant1 = BeanCopyUtils.copy(bo, CommercialTenant.class);
-        commercialTenant1.setIsCache("0");
+        commercialTenant1.setIsCache("1");
         return baseMapper.updateById(commercialTenant1) > 0;
     }
 
