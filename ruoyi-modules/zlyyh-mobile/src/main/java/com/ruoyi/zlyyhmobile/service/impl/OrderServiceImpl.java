@@ -12,6 +12,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.http.HttpStatus;
 import cn.hutool.http.HttpUtil;
+import cn.hutool.json.XML;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.lock.LockInfo;
@@ -43,12 +44,14 @@ import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayParams;
 import com.ruoyi.zlyyh.mapper.*;
 import com.ruoyi.zlyyh.param.LianLianParam;
 import com.ruoyi.zlyyh.properties.CtripConfig;
+import com.ruoyi.zlyyh.properties.MsConfig;
 import com.ruoyi.zlyyh.properties.WxProperties;
 import com.ruoyi.zlyyh.properties.YsfFoodProperties;
 import com.ruoyi.zlyyh.properties.utils.YsfDistributionPropertiesUtils;
 import com.ruoyi.zlyyh.service.YsfConfigService;
 import com.ruoyi.zlyyh.utils.*;
 import com.ruoyi.zlyyh.utils.sdk.LogUtil;
+import com.ruoyi.zlyyh.utils.sdk.MsyhUtils;
 import com.ruoyi.zlyyh.utils.sdk.PayUtils;
 import com.ruoyi.zlyyh.utils.sdk.UnionPayDistributionUtil;
 import com.ruoyi.zlyyhmobile.domain.bo.CreateOrderBo;
@@ -97,6 +100,7 @@ import java.util.stream.Collectors;
 public class OrderServiceImpl implements IOrderService {
     private static final YsfFoodProperties YSF_FOOD_PROPERTIES = SpringUtils.getBean(YsfFoodProperties.class);
     private static final CtripConfig CtripConfig = SpringUtils.getBean(CtripConfig.class);
+    private static final MsConfig MsConfig = SpringUtils.getBean(MsConfig.class);
     private final YsfConfigService ysfConfigService;
     private final OrderMapper baseMapper;
     private final IPlatformService platformService;
@@ -2232,6 +2236,15 @@ public class OrderServiceImpl implements IOrderService {
                     log.error("微信支付异常，", e);
                     throw new ServiceException("支付异常，请稍后重试");
                 }
+            } else if ("2".equals(merchantVo.getMerchantType())){
+
+                //民生银行支付 这里只需完成拼接加密
+                String tn = MsyhUtils.pay(collectiveOrder.getCollectiveNumber().toString(),orders ,collectiveOrder.getWantAmount().toString(), merchantVo.getPayCallbackUrl(), merchantVo.getMerchantNo(), merchantVo.getMerchantKey(), merchantVo.getCertPath(), merchantVo.getMerchantName(),MsConfig.getPublicCertPath(),collectiveOrder.getCreateTime(),MsConfig.getRedirectUrl(),MsConfig.getPlatformId(),MsConfig.getContractId());
+                if (StringUtils.isEmpty(tn)) {
+                    throw new ServiceException("支付异常，请稍后重试");
+                }
+                payResultVo.setPayData(tn);
+                return payResultVo;
             } else {
                 throw new ServiceException("支付系统异常");
             }
@@ -2364,10 +2377,68 @@ public class OrderServiceImpl implements IOrderService {
                 return queryYsfPayStatus(collectiveOrder, merchantVo);
             } else if ("1".equals(merchantVo.getMerchantType())) {
                 return queryWxPayStatus(collectiveOrder, merchantVo);
+            } else if ("2".equals(merchantVo.getMerchantType())) {
+                //查询民生银行订单
+                return queryMsPayStatus(collectiveOrder,merchantVo);
             }
         }
         return "订单支付成功";
 
+    }
+
+    /**
+     * 民生银行支付回调
+     */
+    @SneakyThrows
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean msCallBack(JSONObject params) {
+        String context = params.getString("context");
+        if (ObjectUtil.isEmpty(context)){
+            return false;
+        }
+        String certPath = MsConfig.getCertPath();
+        String certPwd = MsConfig.getCertPwd();
+        //内容为加密字符串此处进行解密
+        String signBody = MsyhUtils.dncrypt(context,certPath,certPwd);
+        if (ObjectUtil.isNotEmpty(signBody)){
+            JSONObject jsonObject = JSONObject.parseObject(signBody);
+            String bodyXml = jsonObject.getString("body");
+            if (ObjectUtil.isEmpty(bodyXml)){
+                return false;
+            }
+            cn.hutool.json.JSONObject body = XML.toJSONObject(bodyXml);
+            cn.hutool.json.JSONObject bodylist = body.getJSONObject("bodylist");
+            // 商户订单号
+            String orderNo = bodylist.getStr("orderNo");
+            //此处获取的orderNo为50位的拼接字符串 取后面面19位为真正的订单号
+            String substringOrderNo = StringUtils.substring(orderNo, 31, 50);
+            // 交易状态
+            String tradeStatus = bodylist.getStr("tradeStatus");
+            // 民生支付订单号???(这个现在还不知道是啥)
+            String queryId = bodylist.getStr("bankOrderNo");
+            String bankTradeNo = bodylist.getStr("bankTradeNo");
+            // 订单总金额
+            BigDecimal tranAmount =  bodylist.getBigDecimal("tranAmount");
+
+            // 交易状态，枚举值：
+            //S成功
+            //E失败
+            //R超时
+            if ("S".equals(tradeStatus)) {
+                // 查询大订单
+                CollectiveOrder collectiveOrder = getCollectiveOrder(Long.parseLong(substringOrderNo));
+
+                if (null == collectiveOrder) {
+                    log.error("民生支付回调订单【{}】不存在,通知内容：{}", orderNo, body);
+                    return false;
+                }
+                handleOrder(collectiveOrder, tranAmount , bankTradeNo, "", queryId, "", "", "");
+                return true;
+            }
+
+        }
+        return false;
     }
 
     /**
@@ -2530,6 +2601,46 @@ public class OrderServiceImpl implements IOrderService {
             return "订单支付失败。";
         } else {
             return "订单未支付。";
+        }
+    }
+
+    /**
+     * 查询云闪付订单支付状态
+     *
+     * @param collectiveOrder 大订单信息
+     * @return 支付结果
+     */
+    @Transactional
+    public String queryMsPayStatus(CollectiveOrder collectiveOrder, MerchantVo merchantVo) {
+        String result;
+        try {
+            result = MsyhUtils.queryMsPay(collectiveOrder.getCollectiveNumber().toString(), merchantVo.getMerchantNo(),merchantVo.getMerchantKey(), merchantVo.getCertPath(), MsConfig.getPlatformId(),MsConfig.getPublicCertPath(),MsConfig.getQueryUrl());
+        } catch (Exception e) {
+            log.error("民生订单支付结果查询异常：", e);
+            return "系统繁忙";
+        }
+        log.info("订单号：{},查询民生订单返回结果：{}", collectiveOrder.getCollectiveNumber(), result);
+        if (StringUtils.isBlank(result)) {
+            return "支付结果查询失败，请稍后重试";
+        }
+        JSONObject resultData = JSONObject.parseObject(result);
+        String tradeStatus = resultData.getString("tradeStatus");
+        BigDecimal amount = resultData.getBigDecimal("amount");
+        //这里传过来的是分 转换为元
+        BigDecimal multiply = amount.multiply(new BigDecimal("0.01"));
+        String bankTradeNo = resultData.getString("bankTradeNo");
+        String bankOrderNo = resultData.getString("bankOrderNo");
+
+        if (("S").equals(tradeStatus)) {
+            //交易成功，
+            handleOrder(collectiveOrder, multiply, bankTradeNo, "", bankOrderNo, "", "", "");
+            return "订单支付成功";
+        } else if ("R".equals(tradeStatus)) {
+            return "订单超时";
+        } else {
+            //其他应答码为交易失败
+            log.info("交易失败：" + resultData.get("centerInfo"));
+            return "订单未支付";
         }
     }
 

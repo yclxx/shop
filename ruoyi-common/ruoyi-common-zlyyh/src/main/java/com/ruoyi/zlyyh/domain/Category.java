@@ -90,4 +90,8 @@ public class Category extends TreeEntity<Category> {
      * 用户id
      */
     private Long sysUserId;
+
+    private String logoImg;
+
+    private String unLogoImg;
 }

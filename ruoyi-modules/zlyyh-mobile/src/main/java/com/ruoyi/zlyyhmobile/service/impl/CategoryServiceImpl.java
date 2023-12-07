@@ -1,5 +1,6 @@
 package com.ruoyi.zlyyhmobile.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -49,7 +50,10 @@ public class CategoryServiceImpl implements ICategoryService {
     private LambdaQueryWrapper<Category> buildQueryWrapper(CategoryBo bo) {
         LambdaQueryWrapper<Category> lqw = Wrappers.lambdaQuery();
         lqw.eq(bo.getParentId() != null, Category::getParentId, bo.getParentId());
-        lqw.eq(bo.getCategoryListType() != null, Category::getCategoryListType, bo.getCategoryListType());
+        if (ObjectUtil.isNotEmpty(bo.getCategoryListType())){
+            lqw.eq(bo.getCategoryListType() != null, Category::getCategoryListType, bo.getCategoryListType());
+        }
+
         lqw.eq(Category::getStatus, "0");
         lqw.eq(bo.getPlatformKey() != null, Category::getPlatformKey, bo.getPlatformKey());
         lqw.eq(StringUtils.isNotBlank(bo.getShowIndex()), Category::getShowIndex, bo.getShowIndex());

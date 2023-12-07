@@ -210,6 +210,7 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
         System.out.println(yesterday);
         System.out.println(getDatePoorMinutes(yesterday, nowDate));
 //        System.out.println(DateUtils.compare(nowDate,yesterday));
+        System.out.println(DateFormatUtils.format(nowDate, "yyyyMMddHHmmssSSS"));
     }
 
     /**

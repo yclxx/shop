@@ -147,6 +147,16 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
+            <el-form-item label="类别logo" prop="logoImg">
+              <image-upload :isShowTip="false" v-model="form.logoImg" :limit="1" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="logo未选" prop="unLogoImg">
+              <image-upload :isShowTip="false" v-model="form.unLogoImg" :limit="1" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
             <el-form-item label="归属" prop="parentId">
               <treeselect v-model="form.parentId" :options="categoryOptions" :normalizer="normalizer"
                 placeholder="请选择归属" />

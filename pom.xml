@@ -40,6 +40,9 @@
         <commons.fileupload.version>1.5</commons.fileupload.version>
         <dynamic.version>2.5.4</dynamic.version>
         <wechatpay.version>0.2.2</wechatpay.version>
+        <cmbc-decrytp.version>1.0.0</cmbc-decrytp.version>
+        <sadk-cmbc.version>1.0.8</sadk-cmbc.version>
+        <gson.version>2.10.1</gson.version>
 
         <!-- 临时修复 snakeyaml 漏洞 -->
         <snakeyaml.version>1.33</snakeyaml.version>
@@ -332,6 +335,24 @@
                 <groupId>com.github.wechatpay-apiv3</groupId>
                 <artifactId>wechatpay-apache-httpclient</artifactId>
                 <version>${wechatpay.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.cmbc-decrytp</groupId>
+                <artifactId>cmbc-decrytp</artifactId>
+                <version>${cmbc-decrytp.version}</version>
+            </dependency>
+
+
+            <dependency>
+                <groupId>com.sadk-cmbc</groupId>
+                <artifactId>sadk-cmbc</artifactId>
+                <version>${sadk-cmbc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>${gson.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

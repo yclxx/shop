@@ -1,10 +1,13 @@
 package com.ruoyi.auth.service;
 
+import Union.DecryptAndCheck;
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.ruoyi.auth.form.AppLoginBody;
+import com.ruoyi.auth.form.MsLoginBody;
 import com.ruoyi.auth.form.WxMobileLoginBody;
 import com.ruoyi.common.core.constant.CacheNames;
 import com.ruoyi.common.core.constant.Constants;
@@ -19,6 +22,7 @@ import com.ruoyi.system.api.model.LoginUser;
 import com.ruoyi.system.api.model.WxEntity;
 import com.ruoyi.system.api.model.XcxLoginUser;
 import com.ruoyi.system.api.model.YsfEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +34,7 @@ import java.util.Map;
  *
  * @author ruoyi
  */
+@Slf4j
 @Service
 public class AppLoginService {
 
@@ -54,6 +59,40 @@ public class AppLoginService {
         userInfo.setCityCode("330100");
         // 生成token
         return getToken(userInfo);
+    }
+
+    public String msLogin(MsLoginBody msLoginBody, HttpServletRequest request) {
+        Long platformKey = getPlatformKey(request);
+        String channel = getPlatformChannel(request);
+
+        log.info("民生银行用户登录方法接口接收参数密文：{}", msLoginBody.getParams());
+        if (ObjectUtil.isEmpty(msLoginBody.getParams())){
+            throw new ServiceException("登录超时，请退出应用重试!");
+        }
+        String msInfo = remoteAppUserService.getMsInfo(msLoginBody.getParams());
+        //msLoginParam中获取手机号和openId
+        String[] split = msInfo.split("\\|");
+        YsfEntity ysfEntity = new YsfEntity();
+        ysfEntity.setMobile(split[0]);
+        ysfEntity.setOpenId(split[1]);
+        XcxLoginUser userInfo = remoteAppUserService.getUserInfoByMobile(ysfEntity.getOpenId(), ysfEntity.getMobile(), platformKey, channel);
+        if (null == userInfo || "0".equals(userInfo.getReloadUser())) {
+            // 新增用户
+            userInfo = remoteAppUserService.register(ysfEntity, msLoginBody.getCityName(), msLoginBody.getCityCode(), channel);
+            if (null == userInfo) {
+                // 新增之后有可能马上查询不到，休眠一下
+                ThreadUtil.sleep(50);
+                userInfo = remoteAppUserService.getUserInfoByMobile(ysfEntity.getOpenId(), ysfEntity.getMobile(), platformKey, channel);
+            }
+        }
+        if (null == userInfo || "0".equals(userInfo.getReloadUser())) {
+            throw new ServiceException("授权失败，请稍后重试");
+        }
+        userInfo.setCityName(msLoginBody.getCityName());
+        userInfo.setCityCode(msLoginBody.getCityCode());
+        // 生成token
+        return getToken(userInfo);
+
     }
 
     /**
@@ -295,4 +334,5 @@ public class AppLoginService {
     private String getPlatformChannel(HttpServletRequest request) {
         return ServletUtils.getHeader(request, Constants.PLATFORM_TYPE);
     }
+
 }

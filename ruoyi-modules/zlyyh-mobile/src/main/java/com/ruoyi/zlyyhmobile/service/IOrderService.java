@@ -121,6 +121,14 @@ public interface IOrderService {
      */
     boolean wxCallBack(Long merchantId, HttpServletRequest request);
 
+
+    /**
+     * 民生支付回调
+     *
+     */
+    Boolean msCallBack(JSONObject params);
+
+
     /**
      * 查询用户未支付订单数量
      *

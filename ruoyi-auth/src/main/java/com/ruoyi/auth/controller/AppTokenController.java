@@ -1,6 +1,8 @@
 package com.ruoyi.auth.controller;
 
+import Union.DecryptAndCheck;
 import com.ruoyi.auth.form.AppLoginBody;
+import com.ruoyi.auth.form.MsLoginBody;
 import com.ruoyi.auth.form.WxMobileLoginBody;
 import com.ruoyi.auth.service.AppLoginService;
 import com.ruoyi.common.core.domain.R;
@@ -97,4 +99,17 @@ public class AppTokenController {
         appLoginService.logout(request);
         return R.ok();
     }
+
+    /**
+     * 民生银行H5 静默登录
+     *
+     * @param msLoginBody 民生app返回后缀参数
+     * @return 结果
+     */
+    @Log(title = "用户登录", businessType = BusinessType.GRANT, operatorType = OperatorType.MOBILE, isSaveSuccessLog = false)
+    @PostMapping("/msLogin")
+    public R<String> msLogin(MsLoginBody msLoginBody, HttpServletRequest request) {
+        return R.ok("操作成功", appLoginService.msLogin(msLoginBody,request));
+    }
+
 }

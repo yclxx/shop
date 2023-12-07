@@ -11,6 +11,8 @@ import com.ruoyi.system.api.model.XcxLoginUser;
  */
 public interface RemoteAppUserService {
 
+    String getMsInfo(String params);
+
     /**
      * 获取微信用户手机号
      */

@@ -3,15 +3,13 @@ package com.ruoyi.zlyyhadmin.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
-import com.ruoyi.common.core.utils.DateUtils;
-import com.ruoyi.common.core.utils.IdUtils;
-import com.ruoyi.common.core.utils.JsonUtils;
-import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.core.utils.*;
 import com.ruoyi.common.core.utils.reflect.ReflectUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
@@ -23,12 +21,14 @@ import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.HistoryOrderMapper;
 import com.ruoyi.zlyyh.mapper.OrderBackTransMapper;
 import com.ruoyi.zlyyh.mapper.OrderMapper;
+import com.ruoyi.zlyyh.properties.MsConfig;
 import com.ruoyi.zlyyh.properties.WxProperties;
 import com.ruoyi.zlyyh.utils.BigDecimalUtils;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyh.utils.WxUtils;
 import com.ruoyi.zlyyh.utils.YsfUtils;
 import com.ruoyi.zlyyh.utils.sdk.LogUtil;
+import com.ruoyi.zlyyh.utils.sdk.MsyhUtils;
 import com.ruoyi.zlyyh.utils.sdk.PayUtils;
 import com.ruoyi.zlyyhadmin.service.*;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +52,7 @@ import java.util.Map;
 @Service
 public class OrderBackTransServiceImpl implements IOrderBackTransService {
 
+    private static final MsConfig MsConfig = SpringUtils.getBean(MsConfig.class);
     private final OrderBackTransMapper baseMapper;
     private final IOrderInfoService orderInfoService;
     private final IMerchantService merchantService;
@@ -294,11 +295,73 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
             } else if ("1".equals(merchantVo.getMerchantType())) {
                 // 微信退款
                 wxRefund(bo, obj, merchantVo);
+            } else if ("2".equals(merchantVo.getMerchantType())){
+                msRefund(bo, obj, merchantVo);
             } else {
                 throw new ServiceException("商户号错误");
             }
         } else if ("2".equals(pickupMethod)) {
             merberPointRefund(bo, obj);
+        }
+    }
+
+
+    /**
+     * 民生订单退款
+     *
+     * @param bo         退款信息
+     * @param obj        订单信息
+     * @param merchantVo 商户号信息
+     */
+    private void msRefund(OrderBackTransBo bo, Object obj, MerchantVo merchantVo) {
+        String refundCallbackUrl = merchantVo.getRefundCallbackUrl();
+
+        BigDecimal outAmount = ReflectUtils.invokeGetter(obj, "outAmount");
+        Integer amountTotal = BigDecimalUtils.toMinute(outAmount);
+        if (amountTotal < 1) {
+            outAmount = ReflectUtils.invokeGetter(obj, "wantAmount");
+            amountTotal = BigDecimalUtils.toMinute(outAmount);
+        }
+        if (amountTotal < 1) {
+            throw new ServiceException("退款金额错误");
+        }
+        String s;
+        try {
+            Long oldNumber = ReflectUtils.invokeGetter(obj, "collectiveNumber");
+            if (null == oldNumber) {
+                oldNumber = bo.getNumber();
+            }
+            s = MsyhUtils.msRefund(MsConfig.getPlatformId(),merchantVo.getMerchantNo(),oldNumber.toString(),bo.getThNumber(),amountTotal.toString(),obj,merchantVo.getCertPath(),merchantVo.getMerchantKey(),MsConfig.getPublicCertPath(),MsConfig.getCancelUrl());
+        } catch (Exception e) {
+            log.error("民生退款异常：", e);
+            throw new ServiceException("退款异常");
+        }
+        if (StringUtils.isBlank(s)) {
+            throw new ServiceException("请求失败，请联系管理员处理");
+        }
+        log.info("订单：{}，民生退款返回数据：{}", bo.getNumber(), s);
+        JSONObject resultData = JSONObject.parseObject(s);
+        if (null == resultData) {
+            throw new ServiceException("请求失败，请联系管理员处理");
+        }
+        // 微信退款单号
+        String voucherNo = resultData.getString("voucherNo");
+//        S 退款成功
+//        E 退款失败
+//        R交易结果未知
+        String tradeStatus = resultData.getString("tradeStatus");
+
+        // 新增退款订单信息
+        bo.setRefundId(voucherNo);
+        if (("S").equals(tradeStatus)) {
+            // 退款成功
+            bo.setPickupMethod("1");
+            bo.setOrderBackTransState("2");
+            bo.setSuccessTime(DateUtils.getNowDate());
+            ReflectUtils.invokeSetter(obj, "status", "5");
+        } else if (!("R").equals(tradeStatus)) {
+            bo.setOrderBackTransState("1");
+            ReflectUtils.invokeSetter(obj, "status", "6");
         }
     }
 

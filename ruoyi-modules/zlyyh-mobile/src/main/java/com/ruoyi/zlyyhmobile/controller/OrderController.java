@@ -141,6 +141,24 @@ public class OrderController {
     }
 
     /**
+     * 民生支付回调
+     */
+    @RequestMapping("/ignore/msCallBack")
+    public String wxCallBack(@RequestBody JSONObject params) {
+        log.info("民生银行支付回调接收开始：{}", params);
+        if (ObjectUtil.isEmpty(params)){
+            log.info("民生银行支付回调结果[失败].");
+            return null;
+        }
+        boolean b = orderService.msCallBack(params);
+        if (!b) {
+            log.info("民生银行支付回调结果[失败].");
+            return null;
+        }
+        return "SUCCESS";
+    }
+
+    /**
      * 订单支付回调 云闪付
      */
     @RequestMapping("/ignore/payCallBack")

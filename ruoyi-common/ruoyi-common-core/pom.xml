@@ -131,6 +131,21 @@
             <version>2.1.44</version>
         </dependency>
         <!--   银联加密机 结束     -->
+
+
+        <dependency>
+            <groupId>com.cmbc-decrytp</groupId>
+            <artifactId>cmbc-decrytp</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.sadk-cmbc</groupId>
+            <artifactId>sadk-cmbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

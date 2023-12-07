@@ -25,6 +25,8 @@
         <result property="showIndex" column="show_index"/>
         <result property="sysDeptId" column="sys_dept_id"/>
         <result property="sysUserId" column="sys_user_id"/>
+        <result property="logoImg" column="logo_img"/>
+        <result property="unLogoImg" column="un_logo_img"/>
     </resultMap>
 
 

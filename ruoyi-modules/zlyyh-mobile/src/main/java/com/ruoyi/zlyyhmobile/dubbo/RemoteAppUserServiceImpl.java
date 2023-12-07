@@ -1,5 +1,6 @@
 package com.ruoyi.zlyyhmobile.dubbo;
 
+import Union.DecryptAndCheck;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.HexUtil;
@@ -18,10 +19,7 @@ import com.ruoyi.common.core.enums.UserStatus;
 import com.ruoyi.common.core.enums.UserType;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.exception.user.UserException;
-import com.ruoyi.common.core.utils.BeanCopyUtils;
-import com.ruoyi.common.core.utils.DateUtils;
-import com.ruoyi.common.core.utils.JsonUtils;
-import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.core.utils.*;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.system.api.RemoteAppUserService;
 import com.ruoyi.system.api.domain.User;
@@ -38,6 +36,7 @@ import com.ruoyi.zlyyh.domain.vo.UserVo;
 import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.mapper.RecordLogMapper;
 import com.ruoyi.zlyyh.mapper.UserMapper;
+import com.ruoyi.zlyyh.properties.MsConfig;
 import com.ruoyi.zlyyh.properties.WxProperties;
 import com.ruoyi.zlyyh.properties.utils.YsfPropertiesUtils;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
@@ -70,7 +69,7 @@ import java.util.stream.Collectors;
 @Service
 @DubboService
 public class RemoteAppUserServiceImpl implements RemoteAppUserService {
-
+    private static final MsConfig MsConfig = SpringUtils.getBean(MsConfig.class);
     private final UserMapper userMapper;
     private final IUserChannelService userChannelService;
     private final RecordLogMapper recordLogMapper;
@@ -79,6 +78,15 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
     private final WxProperties wxProperties;
     @Autowired
     private LockTemplate lockTemplate;
+
+    /**
+     * 获取民生openid和手机号
+     */
+    @Override
+    public String getMsInfo(String params) {
+        //民生工具进行解密
+        return DecryptAndCheck.decryptAndCheck(params, MsConfig.getAesKey());
+    }
 
     /**
      * 获取微信用户手机号

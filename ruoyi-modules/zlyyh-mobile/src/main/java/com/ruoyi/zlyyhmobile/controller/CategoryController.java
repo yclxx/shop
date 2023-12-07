@@ -82,9 +82,28 @@ public class CategoryController {
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
         bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         PlatformVo platformVo = platformService.queryById(ZlyyhUtils.getPlatformId(), ZlyyhUtils.getPlatformChannel());
-        if (ObjectUtils.isNotEmpty(platformVo.getIndexShowType())){
+        if (ObjectUtils.isNotEmpty(platformVo) && ObjectUtils.isNotEmpty(platformVo.getIndexShowType())){
             bo.setCategoryListType(platformVo.getIndexShowType());
+        }else {
+            bo.setCategoryListType("0");
         }
+        return R.ok(categoryService.queryList(bo));
+    }
+    /**
+     * 获取民生银行首页分类列表
+     *
+     * @return 类别列表
+     */
+    @GetMapping("/getMsIndexCategoryList")
+    public R<List<CategoryVo>> getMsIndexCategoryList() {
+        CategoryBo bo = new CategoryBo();
+        bo.setStatus("0");
+        bo.setShowCity(ServletUtils.getHeader(ZlyyhConstants.CITY_CODE));
+        bo.setWeekDate("" + DateUtil.dayOfWeek(new Date()));
+        bo.setShowIndex("1");
+        bo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        //bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
+
         return R.ok(categoryService.queryList(bo));
     }
 }

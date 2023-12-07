@@ -15,7 +15,11 @@ public enum PlatformEnumd {
     /**
      * 云闪付小程序
      */
-    MP_YSF("mp-union", "0");
+    MP_YSF("mp-union", "0"),
+    /**
+     * 民生银行app
+     */
+    MP_APP("mp-app","2");
 
     /**
      * 平台

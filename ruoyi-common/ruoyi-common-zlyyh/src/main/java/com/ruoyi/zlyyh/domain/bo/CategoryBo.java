@@ -86,4 +86,9 @@ public class CategoryBo extends TreeEntity<CategoryBo> {
      * 支持端
      */
     private String supportChannel;
+
+
+    private String logoImg;
+
+    private String unLogoImg;
 }

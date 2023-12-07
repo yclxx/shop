@@ -96,4 +96,9 @@ public class CategoryVo {
      * 支持端
      */
     private String supportChannel;
+
+
+    private String logoImg;
+
+    private String unLogoImg;
 }
