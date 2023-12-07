@@ -116,8 +116,6 @@ public interface IOrderService {
 
     /**
      * 微信支付回调
-     *
-     * @param appWxPayCallbackParams 回调参数
      */
     boolean wxCallBack(Long merchantId, HttpServletRequest request);
 
@@ -274,4 +272,29 @@ public interface IOrderService {
      * 联联通知回调统一分配方法
      */
     void lianOrderBack(JSONObject param, Integer number);
+
+    /**
+     * 查询订单列表 根据订单类型
+     *
+     * @param orderTypeList 订单类型
+     * @return 订单集合
+     */
+    TableDataInfo<OrderVo> queryOrderByOrderTypeList(List<String> orderTypeList, Long userId, PageQuery pageQuery);
+
+    /**
+     * 查询订单核销状态
+     *
+     * @param orderVo 订单信息
+     */
+    void queryOrderUsedStatus(OrderVo orderVo);
+
+    /**
+     * 优惠券状态变更
+     *
+     * @param operTp    操作类型 01：优惠券承兑；02：优惠券返还；03：优惠券无操作；04：优惠券获取；05：优惠券删除；06：优惠券过期
+     * @param transTp   交易类型 仅在operTp为01、02、03时出现，取值为01消费，31撤销，04退货
+     * @param couponCd  优惠券编码
+     * @param couponNum 优惠券数量
+     */
+    void upCouponStatusChange(String operTp, String transTp, String couponCd, String couponNum);
 }

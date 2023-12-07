@@ -1,4 +1,4 @@
-package com.ruoyi.zlyyhmobile.utils;
+package com.ruoyi.zlyyh.utils.redis;
 
 import cn.hutool.core.date.DateUtil;
 import com.ruoyi.common.core.domain.R;
@@ -11,8 +11,7 @@ import com.ruoyi.zlyyh.domain.Order;
 import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyh.enumd.DateType;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
-import com.ruoyi.zlyyhmobile.domain.vo.AppProductVo;
-import com.ruoyi.zlyyhmobile.utils.redis.OrderCacheUtils;
+import com.ruoyi.zlyyh.domain.vo.AppProductVo;
 
 import java.util.Date;
 

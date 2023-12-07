@@ -38,6 +38,24 @@ public class CommercialTenantBo extends BaseEntity {
      * 商户logo
      */
     private String commercialTenantImg;
+    /**
+     * 商户简称
+     */
+    private String commercialTenantTitle;
+    /**
+     * 核销员id
+     */
+    private Long verifierId;
+    /**
+     * 管理员手机号
+     */
+    private String adminMobile;
+
+    private String isCache;
+
+    private String city;
+
+    private String citycode;
 
     /**
      * 标签,英文逗号隔开
@@ -86,7 +104,10 @@ public class CommercialTenantBo extends BaseEntity {
      * 活动类型
      */
     private String activity;
-
+    /**
+     * 活动商户
+     */
+    private String activityNature;
     /**
      * 第三方品牌ID
      */

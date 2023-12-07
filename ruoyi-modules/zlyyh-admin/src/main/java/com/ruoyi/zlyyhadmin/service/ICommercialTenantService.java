@@ -26,6 +26,10 @@ public interface ICommercialTenantService {
      * 查询商户
      */
     CommercialTenantVo queryByYlBrandId(String ylBrandId);
+    /**
+     * 查询商户
+     */
+    CommercialTenantVo queryByCommercialTenantName(String tenantName);
 
     /**
      * 查询商户

@@ -45,4 +45,16 @@ public interface IDrawService {
      * 校验并批量删除奖品管理信息
      */
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
+
+    /**
+     * 查询奖品管理列表
+     */
+    TableDataInfo<DrawVo> queryPageListByType(PageQuery pageQuery);
+
+    /**
+     * 查询奖品剩余数量
+     *
+     * @param drawVo 奖励信息
+     */
+    void queryProductCount(DrawVo drawVo);
 }

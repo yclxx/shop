@@ -131,7 +131,7 @@ public class LianLianUtils {
         checkOrderParam.setPurchaseTime(DateUtils.getTime());
         checkOrderParam.setSettlePrice(settlePrice.multiply(BigDecimal.valueOf(100)).stripTrailingZeros().toPlainString());
         String encryptedData = JSONObject.toJSONString(checkOrderParam);
-        return sendLianLianHttp(channelId, secret, url, encryptedData, true);
+        return sendLianLianHttp(channelId, secret, url, encryptedData, false);
     }
 
     /**
@@ -156,7 +156,7 @@ public class LianLianUtils {
         createOrderParam.setQuantity(1);
         createOrderParam.setPayType(1);//余额
         String encryptedData = JSONObject.toJSONString(createOrderParam);
-        return sendLianLianHttp(channelId, secret, url, encryptedData, true);
+        return sendLianLianHttp(channelId, secret, url, encryptedData, false);
     }
 
     /**
@@ -168,7 +168,7 @@ public class LianLianUtils {
         queryParam.setChannelOrderId(channelOrderId);//渠道订单号
         queryParam.setChannelId(channelId);
         String encryptedData = JSONObject.toJSONString(queryParam);
-        return sendLianLianHttp(channelId, secret, url, encryptedData, true);
+        return sendLianLianHttp(channelId, secret, url, encryptedData, false);
     }
 
     /**
@@ -179,7 +179,7 @@ public class LianLianUtils {
         applyRefundParam.setChannelOrderNo(channelOrderId);//渠道订单号
         applyRefundParam.setOrderNoList(Collections.singletonList(orderId));//子订单号
         String encryptedData = JSONObject.toJSONString(applyRefundParam);
-        return sendLianLianHttp(channelId, secret, url, encryptedData, true);
+        return sendLianLianHttp(channelId, secret, url, encryptedData, false);
     }
 
     public static JSONObject sendLianLianHttp(String channelId, String secret, String url, String encryptedData, boolean showLog) {
@@ -236,11 +236,8 @@ public class LianLianUtils {
         String secret = "MGc8SsdBt5t/SslKtQgwdA==";
         // 地址
         String basePath = "https://channel-api.lianlianlvyou.com";
-
         String api = "/ll/channel/product/getProductList";
-
-        getProductList(channelId, secret, basePath + api, "140100", 1, 10);
-        //JSONObject returnLog = getProductList(channelId, secret, basePath + api, "140100",1);
-        //log.info("订单详情展示：{}", returnLog);
+        JSONObject productList = getProductList(channelId, secret, basePath + api, "330100", 1, 30);
+        log.info("产品列表：{}", productList);
     }
 }

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.constant.CacheNames;
+import com.ruoyi.common.core.utils.BeanCopyUtils;
 import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.JsonUtils;
 import com.ruoyi.common.core.utils.StringUtils;
@@ -15,6 +16,7 @@ import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.zlyyh.domain.Product;
 import com.ruoyi.zlyyh.domain.bo.ProductBo;
+import com.ruoyi.zlyyh.domain.bo.ProductInfoBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
@@ -338,6 +340,7 @@ public class ProductServiceImpl implements IProductService {
         return result;
     }
 
+
     private LambdaQueryWrapper<Product> buildQueryWrapper(ProductBo bo) {
         LambdaQueryWrapper<Product> lqw = Wrappers.lambdaQuery();
         lqw.eq(StringUtils.isNotBlank(bo.getProductType()), Product::getProductType, bo.getProductType());
@@ -411,6 +414,33 @@ public class ProductServiceImpl implements IProductService {
         }
         lqw.last("order by sort asc,update_time desc,product_id desc");
         return lqw;
+    }
+
+    @Override
+    public Boolean updateProductById(ProductBo bo) {
+        Product product = BeanCopyUtils.copy(bo, Product.class);
+        boolean b = baseMapper.updateById(product) > 0;
+        if (b) {
+            if (ObjectUtil.isNotEmpty(bo.getProductInfo())) {
+                ProductInfoVo productInfoVo = productInfoService.queryById(bo.getProductId());
+                ProductInfoBo productInfoBo = new ProductInfoBo();
+                productInfoBo.setProductId(bo.getProductId());
+                //productInfoBo.setItemId(product.getProductId().toString());
+                //productInfoBo.setDiscount("0.00");
+                productInfoBo.setCommissionRate(bo.getProductInfo().getCommissionRate());
+                productInfoBo.setShopAll(bo.getProductInfo().getShopAll());
+                productInfoBo.setOverdue(bo.getProductInfo().getOverdue());
+                productInfoBo.setAnyTime(bo.getProductInfo().getAnyTime());
+                productInfoBo.setLeastPrice(bo.getProductInfo().getLeastPrice());
+                productInfoBo.setReducePrice(bo.getProductInfo().getReducePrice());
+                if (ObjectUtil.isNotEmpty(productInfoVo)) {
+                    productInfoService.updateByBo(productInfoBo);
+                }
+            }
+            CacheUtils.evict(CacheNames.PRODUCT, bo.getProductId());
+            CacheUtils.evict(CacheNames.FOOD_PRODUCT, bo.getProductId());
+        }
+        return b;
     }
 
 }

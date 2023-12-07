@@ -1,4 +1,4 @@
-package com.ruoyi.zlyyhmobile.utils.redis;
+package com.ruoyi.zlyyh.utils.redis;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.ruoyi.common.core.utils.BeanCopyUtils;

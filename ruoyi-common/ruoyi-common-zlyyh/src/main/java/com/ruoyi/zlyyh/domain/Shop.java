@@ -160,9 +160,21 @@ public class Shop extends BaseEntity {
      */
     private String invoice;
     /**
+     * 节假日是否营业
+     */
+    private Boolean holiday;
+    /**
      * 收款账户
      */
     private String account;
+    /**
+     * 开户行
+     */
+    private String accountBank;
+    /**
+     * 收款人
+     */
+    private String accountPayee;
     /**
      * 活动类型
      */
@@ -184,5 +196,10 @@ public class Shop extends BaseEntity {
      * 用户id
      */
     private Long sysUserId;
+
+    /**
+     * 商品类型
+     */
+    private String productType;
 
 }

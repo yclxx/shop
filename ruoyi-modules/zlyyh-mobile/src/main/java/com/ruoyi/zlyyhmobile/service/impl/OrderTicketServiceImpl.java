@@ -19,8 +19,9 @@ import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.bo.CreateOrderTicketBo;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
 import com.ruoyi.zlyyhmobile.event.SendCouponEvent;
+import com.ruoyi.zlyyhmobile.event.ShareOrderEvent;
 import com.ruoyi.zlyyhmobile.service.*;
-import com.ruoyi.zlyyhmobile.utils.redis.OrderCacheUtils;
+import com.ruoyi.zlyyh.utils.redis.OrderCacheUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -100,6 +101,9 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         }
         if ("1".equals(productVo.getProductAffiliation())) {
             throw new ServiceException("商品不可购买");
+        }
+        if (bo.getPayCount() < 1) {
+            throw new ServiceException("请求错误");
         }
 
         // 票种查询
@@ -282,6 +286,8 @@ public class OrderTicketServiceImpl implements OrderTicketService {
             baseMapper.insert(orderTicket);
             collectiveOrder.setStatus("2");
             collectiveOrderMapper.insert(collectiveOrder);
+            // 分销处理
+            SpringUtils.context().publishEvent(new ShareOrderEvent(bo.getShareUserId(), order.getNumber()));
             return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), order.getNumber(), "1");
         }
 
@@ -302,6 +308,8 @@ public class OrderTicketServiceImpl implements OrderTicketService {
         collectiveOrder = collectiveOrderMapper.selectById(collectiveOrder.getCollectiveNumber());
         // 缓存订单数据
         cacheOrder(order);
+        // 分销处理
+        SpringUtils.context().publishEvent(new ShareOrderEvent(bo.getShareUserId(), order.getNumber()));
         return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), order.getNumber(), "1");
     }
 

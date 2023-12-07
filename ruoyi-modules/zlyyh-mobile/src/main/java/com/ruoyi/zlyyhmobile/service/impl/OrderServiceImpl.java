@@ -31,6 +31,7 @@ import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.system.api.RemoteOrderService;
+import com.ruoyi.zlyyh.constant.YsfUpConstants;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.AppWxPayCallbackParams;
@@ -59,10 +60,11 @@ import com.ruoyi.zlyyhmobile.domain.bo.OrderProductBo;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
 import com.ruoyi.zlyyhmobile.domain.vo.PayResultVo;
 import com.ruoyi.zlyyhmobile.event.SendCouponEvent;
+import com.ruoyi.zlyyhmobile.event.ShareOrderEvent;
 import com.ruoyi.zlyyhmobile.service.*;
 import com.ruoyi.zlyyhmobile.utils.AliasMethod;
-import com.ruoyi.zlyyhmobile.utils.ProductUtils;
-import com.ruoyi.zlyyhmobile.utils.redis.OrderCacheUtils;
+import com.ruoyi.zlyyh.utils.redis.ProductUtils;
+import com.ruoyi.zlyyh.utils.redis.OrderCacheUtils;
 import com.wechat.pay.contrib.apache.httpclient.auth.AutoUpdateCertificatesVerifier;
 import com.wechat.pay.contrib.apache.httpclient.auth.PrivateKeySigner;
 import com.wechat.pay.contrib.apache.httpclient.auth.WechatPay2Credentials;
@@ -166,6 +168,7 @@ public class OrderServiceImpl implements IOrderService {
         if (insert <= 0) {
             throw new ServiceException("更新订单失败");
         }
+        SpringUtils.context().publishEvent(new ShareOrderEvent(null, order.getNumber()));
         return baseMapper.selectById(order.getNumber());
     }
 
@@ -271,7 +274,12 @@ public class OrderServiceImpl implements IOrderService {
                 order = baseMapper.selectById(number);
             }
             if (null == order || !"2".equals(order.getStatus())) {
+                ThreadUtil.sleep(3000);
+                order = baseMapper.selectById(number);
+            }
+            if (null == order || !"2".equals(order.getStatus())) {
                 log.error("订单发券,订单不存在或未支付：{}", number);
+                RedisUtils.deleteObject(lockKey);
                 return;
             }
             if (!"0".equals(order.getSendStatus()) && !"3".equals(order.getSendStatus())) {
@@ -401,6 +409,7 @@ public class OrderServiceImpl implements IOrderService {
                 // 记录联联订单的发码数据
             } else if ("14".equals(order.getOrderType())) {
                 OrderFoodInfo lianFoodInfo = orderFoodInfoMapper.selectById(order.getNumber());
+                // 没有联联订单记录，创建订单
                 if (ObjectUtil.isEmpty(lianFoodInfo)) {
                     lianlianCreateOrder(order, productVo, userVo);
                 } else {
@@ -416,6 +425,16 @@ public class OrderServiceImpl implements IOrderService {
                 } catch (Exception e) {
                     sendResult(R.fail(e.getMessage()), orderPushInfo, order, cache, false);
                 }
+            } else if ("18".equals(order.getOrderType())) {
+                String chnlId = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.up_chnlId);
+                String appId = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.up_appId);
+                String sm4Key = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.up_sm4Key);
+                String rsaPrivateKey = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.up_rsaPrivateKey);
+                String entityTp = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.up_entityTp);
+                // 银联开放平台发券
+                R<JSONObject> result = YsfUtils.couponAcquire(orderPushInfo.getPushNumber(), order.getExternalProductId(), order.getAccount(), order.getCount().toString(), entityTp, chnlId, appId, rsaPrivateKey, sm4Key);
+                // 处理结果
+                sendResult(result, orderPushInfo, order, cache, true);
             } else {
                 sendResult(R.fail("订单类型无处理方式，请联系技术人员"), orderPushInfo, order, cache, false);
             }
@@ -473,6 +492,13 @@ public class OrderServiceImpl implements IOrderService {
                 orderPushInfoMapper.updateById(orderPushCache);
                 order = updateOrder(order);
             }
+        } else if ("18".equals(order.getOrderType())) {
+            String chnlId = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.up_chnlId);
+            String appId = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.up_appId);
+            String rsaPrivateKey = ysfConfigService.queryValueByKey(order.getPlatformKey(), YsfUpConstants.up_rsaPrivateKey);
+            R<JSONObject> result = YsfUtils.couponAcqQuery(orderPushCache.getPushNumber(), DateUtil.format(orderPushCache.getCreateTime(), DatePattern.PURE_DATE_PATTERN), chnlId, appId, rsaPrivateKey);
+            // 处理结果
+            sendResult(result, orderPushCache, order, cache, false);
         }
     }
 
@@ -498,6 +524,16 @@ public class OrderServiceImpl implements IOrderService {
                 orderPushCache.setStatus("1");
                 order.setSendStatus("2");
                 if (null != result.getData()) {
+                    if ("18".equals(order.getOrderType())) {
+                        try {
+                            JSONObject data = (JSONObject) result.getData();
+                            order.setExternalOrderNumber(data.getString("couponCd"));
+                            orderPushCache.setExternalOrderNumber(order.getExternalOrderNumber());
+                            order.setUsedStartTime(DateUtil.parse(data.getString("couponBeginTs")));
+                            order.setUsedEndTime(DateUtil.parse(data.getString("couponEndTs")));
+                        } catch (Exception ignored) {
+                        }
+                    }
                     orderPushCache.setRemark(JSONObject.toJSONString(result.getData()));
                 } else {
                     orderPushCache.setRemark(result.getMsg());
@@ -586,7 +622,6 @@ public class OrderServiceImpl implements IOrderService {
 //        if (StringUtils.isNotBlank(platformVo.getPlatformCity()) && !"ALL".equalsIgnoreCase(platformVo.getPlatformCity()) && !platformVo.getPlatformCity().contains(bo.getCityCode())) {
 //            throw new ServiceException("您当前所在位置不在活动参与范围!");
 //        }
-
         // 校验是否有订单，有订单直接返回
         String cacheObject = RedisUtils.getCacheObject(OrderCacheUtils.getUsreOrderOneCacheKey(platformVo.getPlatformKey(), bo.getUserId(), bo.getProductId()));
         if (StringUtils.isNotBlank(cacheObject)) {
@@ -715,7 +750,7 @@ public class OrderServiceImpl implements IOrderService {
         addFoodOrder(productVo, order, userVo, platformVo);
 
         // 设置领取缓存
-        this.setOrderCountCache(platformVo.getPlatformKey(), bo.getUserId(), productVo.getProductId(), productVo.getSellEndDate());
+        this.setOrderCountCache(platformVo.getPlatformKey(), bo.getUserId(), productVo.getProductId(), productVo.getSellEndDate(), order.getCount());
         try {
             if ("0".equals(productVo.getPickupMethod())) {
                 order.setStatus("2");
@@ -737,7 +772,8 @@ public class OrderServiceImpl implements IOrderService {
                 order = baseMapper.selectById(order.getNumber());
                 collectiveOrder = getCollectiveOrder(collectiveOrder.getCollectiveNumber());
                 SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
-                //orderStreamProducer.streamOrderMsg(order.getNumber().toString());
+                // 分销处理
+                SpringUtils.context().publishEvent(new ShareOrderEvent(bo.getShareUserId(), order.getNumber()));
                 return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), order.getNumber(), "0");
             }
             // 需支付
@@ -847,6 +883,8 @@ public class OrderServiceImpl implements IOrderService {
                 order = baseMapper.selectById(order.getNumber());
                 collectiveOrder = getCollectiveOrder(collectiveOrder.getCollectiveNumber());
                 SpringUtils.context().publishEvent(new SendCouponEvent(order.getNumber(), order.getPlatformKey()));
+                // 分销处理
+                SpringUtils.context().publishEvent(new ShareOrderEvent(bo.getShareUserId(), order.getNumber()));
                 return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), order.getNumber(), "0");
             }
             // 保存订单 后续如需改动成缓存订单，需注释
@@ -862,10 +900,12 @@ public class OrderServiceImpl implements IOrderService {
 //            OrderCacheUtils.setOrderInfoCache(orderInfo);
             //方法里加入小订单
             cacheOrder(order);
+            // 分销处理
+            SpringUtils.context().publishEvent(new ShareOrderEvent(bo.getShareUserId(), order.getNumber()));
             return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), order.getNumber(), "1");
         } catch (Exception e) {
             // 如果发生异常 回退名额
-            callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), null);
+            callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), null, order.getCount());
             throw e;
         }
     }
@@ -1150,10 +1190,12 @@ public class OrderServiceImpl implements IOrderService {
                 orderInfoMapper.insert(orderInfo);
             } catch (Exception e) {
                 // 如果发生异常 回退名额
-                callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), null);
+                callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), null, order.getCount());
                 log.error("保存订单异常：", e);
                 throw new ServiceException("系统繁忙，请稍后重试");
             }
+            // 分销处理
+            SpringUtils.context().publishEvent(new ShareOrderEvent(bo.getShareUserId(), order.getNumber()));
             orderCount++;
         }
 
@@ -1422,12 +1464,15 @@ public class OrderServiceImpl implements IOrderService {
         if (StringUtils.isNotEmpty(validToken)) {
             //先查商品详情
             ProductInfoVo productInfoVo = productInfoService.queryById(productVo.getProductId());
-            JSONObject lianLianOrder = LianLianUtils.createOrder(channelId, secret, basePath + createOrder, order.getNumber().toString(),
-                productInfoVo.getItemPrice(), validToken, productVo.getExternalProductId(), productInfoVo.getItemId(), userVo.getMobile());
+            // 创建联联订单
+            JSONObject lianLianOrder = LianLianUtils.createOrder(channelId, secret, basePath + createOrder, order.getNumber().toString(), productInfoVo.getItemPrice(), validToken, productVo.getExternalProductId(), productInfoVo.getItemId(), userVo.getMobile());
             if (ObjectUtil.isNotEmpty(lianLianOrder)) {
                 String channelOrderId = lianLianOrder.getString("channelOrderId");
                 order.setExternalOrderNumber(channelOrderId);
                 order.setSendStatus("2");
+                lianLianOrderCode(order);
+            } else {
+                order.setSendStatus("3");
                 lianLianOrderCode(order);
             }
         } else {
@@ -1444,13 +1489,16 @@ public class OrderServiceImpl implements IOrderService {
                 validToken = result.getString("validToken");
             }
             if (StringUtils.isNotEmpty(validToken)) {
-                //先查商品详情
+                // 创建联联订单
                 JSONObject lianLianOrder = LianLianUtils.createOrder(channelId, secret, basePath + createOrder, order.getNumber().toString(),
                     productInfoVo.getItemPrice(), validToken, productVo.getExternalProductId(), productInfoVo.getItemId(), userVo.getMobile());
                 if (ObjectUtil.isNotEmpty(lianLianOrder)) {
                     String channelOrderId = lianLianOrder.getString("channelOrderId");
                     order.setExternalOrderNumber(channelOrderId);
-                    order.setSendStatus("0");
+                    order.setSendStatus("2");
+                    lianLianOrderCode(order);
+                } else {
+                    order.setStatus("3");
                     lianLianOrderCode(order);
                 }
             }
@@ -1503,7 +1551,7 @@ public class OrderServiceImpl implements IOrderService {
                         }
                     }
                     orderFoodInfo.setTotalAmount(1);
-                    orderFoodInfo.setUsedAmount(1);
+                    orderFoodInfo.setUsedAmount(0);
                     String code = orderItem.getString("code");
                     String qrCodeImgUrl = orderItem.getString("qrCodeImgUrl");
                     if (StringUtils.isNotEmpty(code) || StringUtils.isNotEmpty(qrCodeImgUrl)) {
@@ -1520,6 +1568,15 @@ public class OrderServiceImpl implements IOrderService {
                     orderFoodInfo.setEffectTime(DateUtils.getTime());
                     orderFoodInfoList.add(orderFoodInfo);
                 }
+            }
+            OrderPushInfo orderPushInfo = orderPushInfoMapper.selectOne(new LambdaQueryWrapper<OrderPushInfo>().eq(OrderPushInfo::getNumber, order.getNumber()));
+            if (ObjectUtil.isNotEmpty(orderPushInfo)) {
+                if (order.getSendStatus().equals("2")) {
+                    orderPushInfo.setStatus("1");
+                } else if (order.getSendStatus().equals("3")) {
+                    orderPushInfo.setStatus("2");
+                }
+                orderPushInfoMapper.updateById(orderPushInfo);
             }
             orderFoodInfoMapper.insertOrUpdateBatch(orderFoodInfoList);
             baseMapper.updateById(order);
@@ -1596,9 +1653,10 @@ public class OrderServiceImpl implements IOrderService {
         orderFoodInfo.setVoucherStatus("USED");
         orderFoodInfo.setOrderStatus("310");
         //订单表核销状态更改为已失效
-        order.setVerificationStatus("2");
+        order.setVerificationStatus("1");
         baseMapper.updateById(order);
         orderFoodInfoMapper.updateById(orderFoodInfo);
+        SpringUtils.context().publishEvent(new ShareOrderEvent(null, order.getNumber()));
     }
 
     /**
@@ -1682,7 +1740,10 @@ public class OrderServiceImpl implements IOrderService {
      * @param userId      用户ID
      * @param productId   产品ID
      */
-    private void setOrderCountCache(Long platformKey, Long userId, Long productId, Date cacheTime) {
+    private void setOrderCountCache(Long platformKey, Long userId, Long productId, Date cacheTime, Long count) {
+        if (null == count || count < 1) {
+            count = 1L;
+        }
         Duration duration = null;
         if (null != cacheTime) {
             long datePoorHour = DateUtils.getDatePoorDay(cacheTime, new Date());
@@ -1693,9 +1754,12 @@ public class OrderServiceImpl implements IOrderService {
         DateType[] values = DateType.values();
         for (DateType value : values) {
             String productCacheKey = ProductUtils.countByProductIdRedisKey(platformKey, productId, value);
-            RedisUtils.incrAtomicValue(productCacheKey);
             String userCacheKey = ProductUtils.countByUserIdAndProductIdRedisKey(platformKey, userId, productId, value);
-            RedisUtils.incrAtomicValue(userCacheKey);
+            for (int i = 0; i < count; i++) {
+                // 循环递增
+                RedisUtils.incrAtomicValue(productCacheKey);
+                RedisUtils.incrAtomicValue(userCacheKey);
+            }
             if (null != duration) {
                 // 设置失效时间
                 RedisUtils.expire(productCacheKey, duration);
@@ -1711,7 +1775,10 @@ public class OrderServiceImpl implements IOrderService {
      * @param userId      用户ID
      * @param productId   产品ID
      */
-    private void callbackOrderCountCache(Long platformKey, Long userId, Long productId, Date createTime) {
+    private void callbackOrderCountCache(Long platformKey, Long userId, Long productId, Date createTime, Long count) {
+        if (null == count || count < 1) {
+            count = 1L;
+        }
         TimeInterval timer = DateUtil.timer();
         DateType[] values = DateType.values();
         for (DateType value : values) {
@@ -1749,9 +1816,11 @@ public class OrderServiceImpl implements IOrderService {
                     }
                 }
             }
-            RedisUtils.decrAtomicValue(productCacheKey);
             String userCacheKey = ProductUtils.countByUserIdAndProductIdRedisKey(platformKey, userId, productId, value);
-            RedisUtils.decrAtomicValue(userCacheKey);
+            for (int i = 0; i < count; i++) {
+                RedisUtils.decrAtomicValue(productCacheKey);
+                RedisUtils.decrAtomicValue(userCacheKey);
+            }
         }
         log.info("用户：{}，回退名额耗时：{}毫秒", userId, timer.interval());
     }
@@ -1957,6 +2026,7 @@ public class OrderServiceImpl implements IOrderService {
                     order.setStatus("4");
                     baseMapper.updateById(order);
                     refundMapper.insert(refund);
+                    SpringUtils.context().publishEvent(new ShareOrderEvent(null, order.getNumber()));
                 }
             }
             return;
@@ -1973,6 +2043,7 @@ public class OrderServiceImpl implements IOrderService {
             order.setCancelStatus("0");
             order.setStatus("4");
             baseMapper.updateById(order);
+            SpringUtils.context().publishEvent(new ShareOrderEvent(null, order.getNumber()));
             //如果电子券为未使用状态 在这里先走退款接口
             if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
                 String accessToken = CtripUtils.getAccessToken();
@@ -2285,7 +2356,7 @@ public class OrderServiceImpl implements IOrderService {
             // 删除用户未支付订单
             delCacheOrder(order.getNumber());
             // 回退名额
-            callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), order.getCreateTime());
+            callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), order.getCreateTime(), order.getCount());
             try {
                 if ("13".equals(order.getOrderType())) {
                     // 处理演出订单
@@ -3301,7 +3372,7 @@ public class OrderServiceImpl implements IOrderService {
                 // 发起退款
                 remoteOrderService.refundOrder(order.getNumber(), order.getOutAmount(), "未使用特定付款方式");
                 // 回退名额
-                callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), order.getCreateTime());
+                callbackOrderCountCache(order.getPlatformKey(), order.getUserId(), order.getProductId(), order.getCreateTime(), order.getCount());
                 return false;
             }
         }
@@ -3594,5 +3665,137 @@ public class OrderServiceImpl implements IOrderService {
             return null;
         }
         return collectiveOrderMapper.selectById(orderVo.getCollectiveNumber());
+    }
+
+    /**
+     * 查询未核销的订单列表 根据订单类型
+     *
+     * @param orderTypeList 订单类型
+     * @return 订单集合
+     */
+    public TableDataInfo<OrderVo> queryOrderByOrderTypeList(List<String> orderTypeList, Long userId, PageQuery pageQuery) {
+        LambdaQueryWrapper<Order> lqw = Wrappers.lambdaQuery();
+        lqw.in(Order::getOrderType, orderTypeList);
+        lqw.eq(Order::getStatus, "2");
+        lqw.eq(Order::getSendStatus, "2");
+        lqw.eq(Order::getVerificationStatus, "0");
+        lqw.eq(null != userId, Order::getUserId, userId);
+        lqw.gt(Order::getUsedEndTime, DateUtil.offsetDay(new Date(), -3));
+        Page<OrderVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+        return TableDataInfo.build(result);
+    }
+
+    /**
+     * 查询订单核销状态
+     *
+     * @param orderVo 订单信息
+     */
+    public void queryOrderUsedStatus(OrderVo orderVo) {
+        if (null == orderVo || !orderVo.getVerificationStatus().equals("0") || !"2".equals(orderVo.getStatus()) || !"2".equals(orderVo.getSendStatus())) {
+            return;
+        }
+        if ("18".equals(orderVo.getOrderType())) {
+            if (StringUtils.isBlank(orderVo.getExternalOrderNumber())) {
+                return;
+            }
+            List<String> activityNoList = new ArrayList<>();
+            activityNoList.add(orderVo.getExternalProductId());
+            String chnlId = ysfConfigService.queryValueByKey(orderVo.getPlatformKey(), YsfUpConstants.up_chnlId);
+            String appId = ysfConfigService.queryValueByKey(orderVo.getPlatformKey(), YsfUpConstants.up_appId);
+            String sm4Key = ysfConfigService.queryValueByKey(orderVo.getPlatformKey(), YsfUpConstants.up_sm4Key);
+            String rsaPrivateKey = ysfConfigService.queryValueByKey(orderVo.getPlatformKey(), YsfUpConstants.up_rsaPrivateKey);
+            String entityTp = ysfConfigService.queryValueByKey(orderVo.getPlatformKey(), YsfUpConstants.up_entityTp);
+            R<JSONObject> result = YsfUtils.userCoupon(orderVo.getAccount(), activityNoList, entityTp, chnlId, appId, rsaPrivateKey, sm4Key);
+            if (R.isSuccess(result)) {
+                JSONObject data = result.getData();
+                JSONObject params = data.getJSONObject("params");
+                if (null != params) {
+                    JSONArray activityInfoList = params.getJSONArray("activityInfoList");
+                    if (null != activityInfoList) {
+                        for (int i = 0; i < activityInfoList.size(); i++) {
+                            UpUserCouponInfo upUserCouponInfo = activityInfoList.getObject(i, UpUserCouponInfo.class);
+                            if (orderVo.getExternalOrderNumber().equals(upUserCouponInfo.getCouponCd())) {
+                                // 已使用
+                                boolean updateFlag = false;
+                                Order order = new Order();
+                                order.setNumber(orderVo.getNumber());
+                                if ("6".equals(upUserCouponInfo.getAcctSt())) {
+                                    order.setVerificationStatus("1");
+                                    updateFlag = true;
+                                } else if ("2".equals(upUserCouponInfo.getAcctSt())) {
+                                    // 已销户 已删除
+                                    order.setVerificationStatus("2");
+                                    updateFlag = true;
+                                } else if ("5".equals(upUserCouponInfo.getAcctSt())) {
+                                    // 已失效
+                                    order.setVerificationStatus("2");
+                                    updateFlag = true;
+                                } else if ("1".equals(upUserCouponInfo.getAcctSt())) {
+                                    if (!"0".equals(orderVo.getVerificationStatus())) {
+                                        // 已失效
+                                        order.setVerificationStatus("0");
+                                        updateFlag = true;
+                                    }
+                                }
+                                if (updateFlag) {
+                                    updateOrder(order);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 优惠券状态变更
+     *
+     * @param operTp    操作类型 01：优惠券承兑；02：优惠券返还；03：优惠券无操作；04：优惠券获取；05：优惠券删除；06：优惠券过期
+     * @param transTp   交易类型 仅在operTp为01、02、03时出现，取值为01消费，31撤销，04退货
+     * @param couponCd  优惠券编码
+     * @param couponNum 优惠券变动数量
+     */
+    @Override
+    public void upCouponStatusChange(String operTp, String transTp, String couponCd, String couponNum) {
+        if ("04".equals(operTp)) {
+            return;
+        }
+        // 查询订单是否存在
+        OrderVo orderVo = queryByExternalOrderNumber(couponCd);
+        if (null == orderVo) {
+            throw new ServiceException("订单不存在");
+        }
+
+        String verificationStatus = null;
+        if ("01".equals(operTp)) {
+            // 核销
+            verificationStatus = "1";
+        } else if ("02".equals(operTp)) {
+            // 优惠券返还
+            verificationStatus = "0";
+        } else if ("03".equals(operTp)) {
+            // 优惠券无操作
+            if ("04".equals(transTp)) {
+                verificationStatus = "2";
+            }
+        } else if ("05".equals(operTp)) {
+            // 优惠券删除
+            verificationStatus = "2";
+        } else if ("06".equals(operTp)) {
+            // 优惠券过期
+            verificationStatus = "2";
+        } else {
+            log.error("银联票券通知，类型无处理方式，couponCd={}，operTp={}", couponCd, operTp);
+            return;
+        }
+        if (StringUtils.isBlank(verificationStatus)) {
+            log.error("银联票券通知，状态为空，couponCd={}，operTp={}", couponCd, operTp);
+            return;
+        }
+        Order order = new Order();
+        order.setNumber(orderVo.getNumber());
+        order.setVerificationStatus(verificationStatus);
+        updateOrder(order);
     }
 }

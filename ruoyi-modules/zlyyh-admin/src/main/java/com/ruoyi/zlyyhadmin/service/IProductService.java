@@ -82,5 +82,15 @@ public interface IProductService {
 
     void lianProductStatusCall(JSONObject param);
 
+    /**
+     * 查询银联开放平台票券剩余数量
+     */
+    TableDataInfo<ProductVo> queryPageListByProductType(PageQuery pageQuery);
 
+    /**
+     * 查询产品剩余数量
+     *
+     * @param productVo 产品
+     */
+    void queryProductCount(ProductVo productVo);
 }

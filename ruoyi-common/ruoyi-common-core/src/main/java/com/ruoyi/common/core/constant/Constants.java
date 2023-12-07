@@ -101,4 +101,8 @@ public interface Constants {
      * 渠道
      */
     String PLATFORM_TYPE = "platformType";
+    /**
+     * 分销用户ID
+     */
+    String SHARE_USER_ID = "shareUserId";
 }

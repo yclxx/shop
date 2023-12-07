@@ -5,6 +5,7 @@ import com.ruoyi.common.core.utils.ServletUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
+import com.ruoyi.zlyyh.domain.Shop;
 import com.ruoyi.zlyyh.domain.bo.MerchantApprovalBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
@@ -66,10 +67,22 @@ public class ShopController {
         return R.ok(shopService.queryById(shopId));
     }
 
+    /**
+     * 获取商品门店信息(去除电话脱敏)
+     *
+     * @return 门店列表
+     */
+    @GetMapping("/details/{shopId}")
+    public R<Shop> getShopBytId(@NotNull(message = "主键不能为空") @PathVariable Long shopId) {
+        return R.ok(shopService.getShopBytId(shopId));
+    }
+
+    /**
+     * 商户申请
+     */
     @PostMapping("/addApproval")
     public R addApproval(@RequestBody MerchantApprovalBo bo) {
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
-        shopService.addApproval(bo);
-        return R.ok();
+        return R.ok( shopService.addApproval(bo));
     }
 }

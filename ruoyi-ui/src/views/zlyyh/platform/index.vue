@@ -98,7 +98,7 @@
             <el-form-item label="首页显示" prop="indexShowType">
               <el-select v-model="form.indexShowType" style="width: 100%;" placeholder="请选择显示内容">
                 <el-option v-for="dict in dict.type.t_show_index_type" :key="dict.value" :label="dict.label"
-                           :value="dict.value"></el-option>
+                  :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -143,6 +143,68 @@
           <el-col :span="12">
             <el-form-item label="客服时间" prop="serviceTime">
               <el-input v-model="form.serviceTime" placeholder="请输入客服服务时间" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="分销功能" prop="sharePermission">
+              <el-select v-model="form.sharePermission" style="width: 100%;" placeholder="请选择是否开通分销功能">
+                <el-option v-for="dict in dict.type.t_platform_share_permission" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="分销奖励" prop="shareAwardType">
+              <el-select v-model="form.shareAwardType" style="width: 100%;" placeholder="请选择是否开通分销功能">
+                <el-option v-for="dict in dict.type.share_award_type" :key="dict.value" :label="dict.label"
+                  :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="奖励时间" prop="shareUsedDate">
+              <span slot="label">
+                奖励时间
+                <el-tooltip content="分销订单核销之后多久给到分销员奖励,0代表实时奖励,大于0代表核销之后几天给到奖励" placement="top">
+                  <i class="el-icon-question"></i>
+                </el-tooltip>
+              </span>
+              <el-input v-model="form.shareUsedDate" placeholder="请输入奖励时间" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="活动编号" prop="shareAwardProductId">
+              <span slot="label">
+                活动编号
+                <el-tooltip content="第三方产品编号,云闪付红包则填写云闪付红包活动编号" placement="top">
+                  <i class="el-icon-question"></i>
+                </el-tooltip>
+              </span>
+              <el-input v-model="form.shareAwardProductId" placeholder="请输入第三方系统活动编号" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="机构账户代码" prop="shareAwardInsAcctId">
+              <span slot="label">
+                账户代码
+                <el-tooltip content="机构账户代码，最大32位，对应云闪付小程序开放平台配置：营销能力包-红包接入方账户" placement="top">
+                  <i class="el-icon-question"></i>
+                </el-tooltip>
+              </span>
+              <el-input v-model="form.shareAwardInsAcctId" placeholder="请输入机构账户代码" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="月奖励上限" prop="shareAwardMonthAmount">
+              <span slot="label">
+                月奖励上限
+                <el-tooltip content="分销用户每个自然月可获奖励上限,0代表无上限" placement="top">
+                  <i class="el-icon-question"></i>
+                </el-tooltip>
+              </span>
+              <el-input v-model="form.shareAwardMonthAmount" placeholder="请输入分销员可获月奖励上限" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -266,7 +328,9 @@
 
   export default {
     name: "Platform",
-    dicts: ['t_platform_status', 't_platform_union_pay_vip', 'channel_type','t_show_index_type'],
+    dicts: ['t_platform_status', 't_platform_union_pay_vip', 'channel_type', 't_show_index_type',
+      't_platform_share_permission', 'share_award_type'
+    ],
     components: {
       Treeselect
     },
@@ -408,20 +472,9 @@
           updateTime: undefined,
           delFlag: undefined,
           sysDeptId: undefined,
-          platformChannel: [{
-            channel: '0',
-            id: undefined,
-            platformTitle: undefined,
-            appId: undefined,
-            encryptAppId: undefined,
-            secret: undefined,
-            symmetricKey: undefined,
-            rsaPrivateKey: undefined,
-            rsaPublicKey: undefined,
-            merchantId: undefined
-          }],
+          platformChannel: [],
           manangerDeptId: undefined,
-          supportChannel: ['ALL'],
+          supportChannel: [],
           supportSupplier: [],
         };
         this.resetForm("form");
@@ -590,26 +643,51 @@
         }).finally(() => {});
       },
       changeChannel(check, item) {
-        if (check) {
-          //增加支持端
-          const platformChannel = {
-            channel: item.value,
-            id: undefined,
-            platformTitle: undefined,
-            appId: undefined,
-            encryptAppId: undefined,
-            secret: undefined,
-            symmetricKey: undefined,
-            rsaPrivateKey: undefined,
-            rsaPublicKey: undefined,
-            merchantId: undefined
+        if (item.value === 'ALL') {
+          if (check) {
+            for (let i = 0; i < this.dict.type.channel_type.length; i++) {
+              if (this.dict.type.channel_type[i].value !== 'ALL') {
+                //增加支持端
+                const platformChannel = {
+                  channel: this.dict.type.channel_type[i].value,
+                  id: undefined,
+                  platformTitle: undefined,
+                  appId: undefined,
+                  encryptAppId: undefined,
+                  secret: undefined,
+                  symmetricKey: undefined,
+                  rsaPrivateKey: undefined,
+                  rsaPublicKey: undefined,
+                  merchantId: undefined
+                }
+                this.form.platformChannel.push(platformChannel);
+              }
+            }
+          } else {
+            this.form.platformChannel = [];
           }
-          this.form.platformChannel.push(platformChannel);
         } else {
-          // 删除支持端
-          for (let i = 0; i < this.form.platformChannel.length; i++) {
-            if (item.value === this.form.platformChannel[i].channel) {
-              this.form.platformChannel.splice(i, 1)
+          if (check) {
+            //增加支持端
+            const platformChannel = {
+              channel: item.value,
+              id: undefined,
+              platformTitle: undefined,
+              appId: undefined,
+              encryptAppId: undefined,
+              secret: undefined,
+              symmetricKey: undefined,
+              rsaPrivateKey: undefined,
+              rsaPublicKey: undefined,
+              merchantId: undefined
+            }
+            this.form.platformChannel.push(platformChannel);
+          } else {
+            // 删除支持端
+            for (let i = 0; i < this.form.platformChannel.length; i++) {
+              if (item.value === this.form.platformChannel[i].channel) {
+                this.form.platformChannel.splice(i, 1)
+              }
             }
           }
         }

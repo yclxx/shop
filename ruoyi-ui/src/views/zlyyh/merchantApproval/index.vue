@@ -71,26 +71,18 @@
       <el-table-column label="平台标识" align="center" prop="platformKey" width="90px" :formatter="platformFormatter"/>
       <el-table-column label="品牌信息" align="center" prop="brandName" width="200px">
         <template slot-scope="scope">
-          <div>名称：{{ scope.row.brandName }}</div>
-          <div>图片：
-            <image-preview :src="scope.row.brandLogo" :width="25" :height="25"/>
+          <div>名称:{{ scope.row.brandName }}</div>
+          <div>Logo:
+            <image-preview :src="scope.row.brandLogo" :width="30" :height="30"/>
           </div>
         </template>
       </el-table-column>
       <el-table-column label="门店信息" align="center" prop="shopName" width="250px">
         <template slot-scope="scope">
-          <div>门店：{{ scope.row.shopName }}</div>
-          <div>电话：{{ scope.row.shopMobile }}</div>
-          <div>所在区域：{{ scope.row.shopAddress }}</div>
-          <div>详情地址：{{ scope.row.shopAddressInfo }}</div>
-        </template>
-      </el-table-column>
-      <el-table-column label="收单商户号" align="center" prop="account" width="250px">
-        <template slot-scope="scope">
-          <div>收款账户：{{ scope.row.account }}</div>
-          <div>云闪付商户号：{{ scope.row.ysfMerchant }}</div>
-          <div>微信商户号：{{ scope.row.wxMerchant }}</div>
-          <div>支付宝商户号：{{ scope.row.payMerchant }}</div>
+          <div>门店:{{ scope.row.shopName }}</div>
+          <div>电话:{{ scope.row.shopMobile }}</div>
+          <div>区域:{{ scope.row.shopAddress }}</div>
+          <div>地址:{{ scope.row.shopAddressInfo }}</div>
         </template>
       </el-table-column>
       <el-table-column label="营业信息" align="center" prop="businessWeek" width="170px">
@@ -123,19 +115,9 @@
             {{ invoice.label }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="商品类型" align="center" prop="productType">
+      <el-table-column fixed="right" label="状态" align="center" prop="approvalStatus" width="150px">
         <template slot-scope="scope">
-          <span v-for="product in productTypeList" :key="product.value">
-            <span v-for="type in scope.row.productType.split(',')" v-if="type === product.value">
-              {{ product.label }},
-            </span>
-          </span>
-        </template>
-      </el-table-column>
-      <el-table-column label="扩展服务商" align="center" prop="extend" width="200px"/>
-      <el-table-column fixed="right" label="审批" align="center" prop="approvalStatus" width="150px">
-        <template slot-scope="scope">
-          <div> 状态：
+          <div>
             <span v-for="approval in approvalStatusList" v-if="approval.value === scope.row.approvalStatus">
             {{ approval.label }}
           </span>
@@ -145,22 +127,22 @@
       </el-table-column>
       <el-table-column fixed="right" label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <el-button v-if="scope.row.approvalStatus === '0'"
-                     size="mini"
-                     type="text"
-                     icon="el-icon-check"
-                     @click="handleApproval(scope.row,'1')"
-                     v-hasPermi="['zlyyh:merchantApproval:edit']"
-          >通过
+          <el-button size="mini" type="text"
+                     @click="getMerchantApproval(scope.row)"
+          >详情
           </el-button>
-          <el-button v-if="scope.row.approvalStatus === '0'"
-                     size="mini"
-                     type="text"
-                     icon="el-icon-close"
-                     @click="handleOpen(scope.row,'2')"
-                     v-hasPermi="['zlyyh:merchantApproval:edit']"
-          >拒绝
-          </el-button>
+          <!--<div v-if="scope.row.approvalStatus === '0'">-->
+          <!--  <el-button size="mini" type="text" icon="el-icon-check"-->
+          <!--             @click="handleApproval(scope.row,'1')"-->
+          <!--             v-hasPermi="['zlyyh:merchantApproval:edit']"-->
+          <!--  >通过-->
+          <!--  </el-button>-->
+          <!--  <el-button size="mini" type="text" icon="el-icon-close"-->
+          <!--             @click="handleOpen(scope.row,'2')"-->
+          <!--             v-hasPermi="['zlyyh:merchantApproval:edit']"-->
+          <!--  >拒绝-->
+          <!--  </el-button>-->
+          <!--</div>-->
         </template>
       </el-table-column>
     </el-table>
@@ -181,19 +163,125 @@
         <el-button type="primary" @click="handlerReject()">确 定</el-button>
       </div>
     </el-dialog>
+    <el-dialog :visible.sync="detailsOpen" width="80%">
+      <el-descriptions v-if="details" class="margin-top" title="申请信息" border :column="3">
+        <template slot="extra" v-if="details.approvalStatus === '0'">
+          <el-button icon="el-icon-check" type="primary"
+                     @click="handleApproval(details,'1')"
+                     v-hasPermi="['zlyyh:merchantApproval:edit']"
+          >通过
+          </el-button>
+          <el-button icon="el-icon-close" type="warning"
+                     @click="handleOpen(details,'2')"
+                     v-hasPermi="['zlyyh:merchantApproval:edit']"
+          >拒绝
+          </el-button>
+        </template>
+        <el-descriptions-item label="类型">
+          <span v-show="details.type === '1'">商户申请</span>
+          <span v-show="details.type === '2'">bd商户录入</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="状态">
+          <span v-for="approval in approvalStatusList" v-if="approval.value === details.approvalStatus">
+            {{ approval.label }}
+          </span>
+        </el-descriptions-item>
+        <el-descriptions-item label="管理员手机号">
+          {{ details.brandMobile }}
+        </el-descriptions-item>
+        <el-descriptions-item label="品牌名称">
+          {{ details.brandName }}
+        </el-descriptions-item>
+        <el-descriptions-item label="品牌Logo">
+          <div v-if="details.brandLogo">
+            <image-preview :src="details.brandLogo" :width="50" :height="50"/>
+          </div>
+        </el-descriptions-item>
+        <el-descriptions-item label="商户归属">
+          <span v-for="invoice in dict.type.activity_nature" v-if="invoice.value === details.activityNature">
+            {{ invoice.label }}
+          </span>
+        </el-descriptions-item>
+        <el-descriptions-item label="门店名称">
+          {{ details.shopName }}
+        </el-descriptions-item>
+        <el-descriptions-item label="门店电话">
+          {{ details.shopMobile }}
+        </el-descriptions-item>
+        <el-descriptions-item label="门店类型">
+          <span v-for="invoice in dict.type.shop_type" v-if="invoice.value === details.shopType">
+            {{ invoice.label }}
+          </span>
+        </el-descriptions-item>
+        <el-descriptions-item label="门店区域">
+          {{ details.shopAddress }}
+        </el-descriptions-item>
+        <el-descriptions-item label="门店详情地址">
+          {{ details.shopAddressInfo }}
+        </el-descriptions-item>
+        <el-descriptions-item label="门店图片">
+          <div v-if="details.shopImage">
+            <span v-for="(item,key) in details.shopImage.split(',')" :key="key">
+            <image-preview :src="item" :width="50" :height="50"/>
+            </span>
+          </div>
+        </el-descriptions-item>
+        <el-descriptions-item label="营业时间">
+          <span v-for="week in dict.type.t_grad_period_date_list" :key="week.value">
+            <span v-for="business in details.businessWeek.split(',')" v-if="business === week.value">
+              {{ week.label }},
+            </span>
+          </span>
+        </el-descriptions-item>
+        <el-descriptions-item label="每天营业开始时间">
+          {{ details.businessBegin }}
+        </el-descriptions-item>
+        <el-descriptions-item label="每天营业结束时间">
+          {{ details.businessEnd }}
+        </el-descriptions-item>
+        <el-descriptions-item label="性质">
+          <span v-for="na in dict.type.nature_type" v-if="na.value === details.nature">{{ na.label }}</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="扩展服务商">
+          {{ details.extend }}
+        </el-descriptions-item>
+        <el-descriptions-item label="参与活动">
+          <span v-for="ac in dict.type.activity_type" :key="ac.value">
+            <span v-for="activity in details.activity.split(',')" v-if="activity === ac.value">
+              {{ ac.label }},
+            </span>
+          </span>
+        </el-descriptions-item>
+        <el-descriptions-item label="发票类型">
+          <span v-for="invoice in dict.type.invoice_type" v-if="invoice.value === details.invoiceType">
+            {{ invoice.label }}
+          </span>
+        </el-descriptions-item>
+        <el-descriptions-item label="收款账户">
+          {{ details.account }}
+        </el-descriptions-item>
+        <!--<el-descriptions-item label="商户所在平台">-->
+        <!--  {{ details.merchantPlatformKey }}-->
+        <!--</el-descriptions-item>-->
+        <el-descriptions-item label="营业执照">
+          <div v-if="details.license">
+            <image-preview :src="details.license" :width="50" :height="50"/>
+          </div>
+        </el-descriptions-item>
+      </el-descriptions>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import {
-  listMerchantApproval, updateMerchantApproval,
-} from "@/api/zlyyh/merchantApproval";
+import {listMerchantApproval, getMerchantApproval, updateMerchantApproval,} from "@/api/zlyyh/merchantApproval";
 import {selectListPlatform} from "@/api/zlyyh/platform";
 
 export default {
   name: "MerchantApproval",
   // 此页面大多数参数均未使用数据字典
-  dicts: ['nature_type', 'invoice_type', 'activity_type', 't_grad_period_date_list'],
+  dicts: ['nature_type', 'invoice_type', 'activity_type', 't_grad_period_date_list',
+    'shop_type', 'activity_nature'],
   data() {
     return {
       // 按钮loading
@@ -213,12 +301,6 @@ export default {
         {label: '已通过', value: '1'},
         {label: '已拒绝', value: '2'}
       ],
-      productTypeList: [
-        {label: '包邮产品', value: '0'},
-        {label: '一般团购', value: '1'},
-        {label: '演出票', value: '2'},
-        {label: '酒店门票', value: '3'}
-      ],
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -234,7 +316,9 @@ export default {
         approvalId: undefined,
         approvalStatus: undefined,
         rejectReason: undefined
-      }
+      },
+      detailsOpen: false,
+      details: undefined,
     };
   },
   created() {
@@ -254,6 +338,13 @@ export default {
         this.merchantApprovalList = response.rows;
         this.total = response.total;
         this.loading = false;
+      });
+    },
+    getMerchantApproval(row) {
+      getMerchantApproval(row.approvalId).then(response => {
+        this.loading = false;
+        this.details = response.data;
+        this.detailsOpen = true;
       });
     },
     /** 搜索按钮操作 */
@@ -278,6 +369,7 @@ export default {
         this.getList();
       });
       this.open = false;
+      this.detailsOpen = false;
     },
     /** 通过 */
     handleApproval(row, status) {
@@ -285,6 +377,7 @@ export default {
       this.form.approvalStatus = status;
       this.form.rejectReason = undefined;
       updateMerchantApproval(this.form).then(response => {
+        this.detailsOpen = false;
         this.getList();
       });
     },

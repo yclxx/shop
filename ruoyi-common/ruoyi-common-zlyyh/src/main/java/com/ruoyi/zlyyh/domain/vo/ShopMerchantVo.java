@@ -5,8 +5,6 @@ import com.alibaba.excel.annotation.ExcelProperty;
 import com.ruoyi.common.excel.annotation.ExcelDictFormat;
 import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
-import java.util.Date;
-
 
 
 /**
@@ -45,6 +43,27 @@ public class ShopMerchantVo {
     @ExcelProperty(value = "商户类型", converter = ExcelDictConvert.class)
     @ExcelDictFormat(dictType = "t_shop_merchant_type")
     private String merchantType;
+
+    /**
+     * 收款方式
+     */
+    @ExcelProperty(value = "收款方式")
+    private String paymentMethod;
+    /**
+     * 收单机构
+     */
+    @ExcelProperty(value = "收单机构")
+    private String acquirer;
+    /**
+     * 结算方式
+     */
+    @ExcelProperty(value = "结算方式")
+    private String settlementWay;
+    /**
+     * 结算比例
+     */
+    @ExcelProperty(value = "结算比例")
+    private String settlement;
 
     /**
      * 状态（0正常 1停用）

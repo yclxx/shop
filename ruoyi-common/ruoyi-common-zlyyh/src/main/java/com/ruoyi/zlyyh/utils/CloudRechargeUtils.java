@@ -14,6 +14,7 @@ import com.ruoyi.zlyyh.properties.CloudRechargeConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.DigestUtils;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,7 +26,14 @@ import java.util.Map;
  */
 @Slf4j
 public class CloudRechargeUtils {
-    private static CloudRechargeConfig cloudrechargeConfig = SpringUtils.getBean(CloudRechargeConfig.class);
+    private static CloudRechargeConfig cloudrechargeConfig;
+
+    static {
+        try {
+            cloudrechargeConfig = SpringUtils.getBean(CloudRechargeConfig.class);
+        } catch (Exception ignored) {
+        }
+    }
 
     /**
      * 签名
@@ -115,10 +123,19 @@ public class CloudRechargeUtils {
      * 下单
      */
     public static R<Void> doPostCreateOrder(Long number, String productId, String account, Integer count, String pushNumber, String replaceCallback) {
+        return doPostCreateOrder(number, productId, account, count, null, null, pushNumber, replaceCallback);
+    }
+
+    /**
+     * 下单
+     */
+    public static R<Void> doPostCreateOrder(Long number, String productId, String account, Integer count, BigDecimal price, String extendOne, String pushNumber, String replaceCallback) {
         Map<String, Object> data = new HashMap<>();
         data.put("productId", productId);
         data.put("count", count);
         data.put("account", account);
+        data.put("price", price);
+        data.put("extendOne", extendOne);
         data.put("externalOrderNumber", pushNumber);
         if (StringUtils.isBlank(replaceCallback)) {
             data.put("orderBack", cloudrechargeConfig.getCallbackUrl());
@@ -185,7 +202,6 @@ public class CloudRechargeUtils {
             String decrypt = AESUtils.decrypt(cloudrechargeConfig.getAesKey(), cloudRechargeEntity.getEncryptedData(), Constants.UTF8);
             cloudRechargeEntity.setEncryptedData(decrypt);
         } catch (Exception e) {
-            e.printStackTrace();
             log.error("云充值中心通知解密异常：", e);
             throw new ServiceException("解密异常");
         }

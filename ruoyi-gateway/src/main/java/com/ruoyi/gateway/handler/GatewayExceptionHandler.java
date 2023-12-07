@@ -37,7 +37,7 @@ public class GatewayExceptionHandler implements ErrorWebExceptionHandler {
             ResponseStatusException responseStatusException = (ResponseStatusException) ex;
             msg = responseStatusException.getMessage();
         } else {
-            msg = "内部服务器错误";
+            msg = "系统升级中，请稍后。";
         }
 
         log.error("[网关异常处理]请求路径:{},异常信息:{}", exchange.getRequest().getPath(), ex.getMessage());

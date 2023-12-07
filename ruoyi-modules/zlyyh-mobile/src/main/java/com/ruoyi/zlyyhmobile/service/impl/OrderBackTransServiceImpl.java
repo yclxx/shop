@@ -9,6 +9,7 @@ import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.IdUtils;
 import com.ruoyi.common.core.utils.JsonUtils;
+import com.ruoyi.common.core.utils.SpringUtils;
 import com.ruoyi.zlyyh.domain.Order;
 import com.ruoyi.zlyyh.domain.OrderBackTrans;
 import com.ruoyi.zlyyh.domain.bo.AppWxPayCallbackParams;
@@ -23,6 +24,7 @@ import com.ruoyi.zlyyh.utils.WxUtils;
 import com.ruoyi.zlyyh.utils.YsfUtils;
 import com.ruoyi.zlyyh.utils.sdk.LogUtil;
 import com.ruoyi.zlyyh.utils.sdk.PayUtils;
+import com.ruoyi.zlyyhmobile.event.ShareOrderEvent;
 import com.ruoyi.zlyyhmobile.service.IMerchantService;
 import com.ruoyi.zlyyhmobile.service.IOrderBackTransService;
 import com.ruoyi.zlyyhmobile.service.IProductService;
@@ -310,5 +312,6 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
             ob.setStatus(order.getStatus());
             orderMapper.update(ob, new LambdaQueryWrapper<Order>().eq(Order::getParentNumber, order.getNumber()));
         }
+        SpringUtils.context().publishEvent(new ShareOrderEvent(null, orderVo.getNumber()));
     }
 }

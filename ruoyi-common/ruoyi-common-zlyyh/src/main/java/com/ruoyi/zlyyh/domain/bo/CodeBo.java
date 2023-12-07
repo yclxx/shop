@@ -1,15 +1,12 @@
 package com.ruoyi.zlyyh.domain.bo;
 
-import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
+import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import javax.validation.constraints.*;
 
+import javax.validation.constraints.NotNull;
 import java.util.Date;
-
-import java.util.Date;
-import com.ruoyi.common.core.web.domain.BaseEntity;
 
 /**
  * 商品券码业务对象
@@ -87,6 +84,11 @@ public class CodeBo extends BaseEntity {
      * 核销或作废时间
      */
     private Date usedTime;
+    /**
+     * 核销或作废时间 (这两个参数只用作查询条件)
+     */
+    private String usedTimes;
+    private String usedEndTime;
 
     /**
      * 核销店铺ID

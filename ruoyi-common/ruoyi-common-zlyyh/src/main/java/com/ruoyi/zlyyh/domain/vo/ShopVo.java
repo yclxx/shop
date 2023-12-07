@@ -169,6 +169,12 @@ public class ShopVo implements Serializable {
     private String sellTime;
 
     /**
+     * 节假日是否营业
+     */
+    @ExcelProperty(value = "节假日是否营业")
+    private Boolean holiday;
+
+    /**
      * 门店图片
      */
     @ExcelProperty(value = "门店图片")
@@ -245,6 +251,14 @@ public class ShopVo implements Serializable {
      */
     private String account;
     /**
+     * 开户行
+     */
+    private String accountBank;
+    /**
+     * 收款人
+     */
+    private String accountPayee;
+    /**
      * 活动类型
      */
     private String activity;
@@ -267,6 +281,10 @@ public class ShopVo implements Serializable {
     @ExcelProperty(value = "用户id")
     private Long sysUserId;
 
+    /**
+     * 商品类型
+     */
+    private String productType;
 
     private String businessDistrictId;
 

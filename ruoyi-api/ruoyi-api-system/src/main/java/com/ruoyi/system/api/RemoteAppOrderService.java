@@ -18,9 +18,7 @@ public interface RemoteAppOrderService {
 
     void cancelFoodOrder(Long number);
 
-
     void cancelHistoryFoodOrder(Long number);
-
 
     /**
      * 定时任务 查询订单发放状态
@@ -52,7 +50,6 @@ public interface RemoteAppOrderService {
      */
     void queryMission();
 
-
     /**
      * 银联分销 退券
      */
@@ -67,4 +64,19 @@ public interface RemoteAppOrderService {
      * 添加没有大订单的订单
      */
     void addCollectiveOrder();
+
+    /**
+     * 查询订单核销状态
+     */
+    void queryOrderUsedStatus();
+
+    /**
+     * 查询订单分享状态
+     */
+    void queryShareStatus();
+
+    /**
+     * 查询订单分享奖励状态
+     */
+    void queryShareAwardStatus();
 }

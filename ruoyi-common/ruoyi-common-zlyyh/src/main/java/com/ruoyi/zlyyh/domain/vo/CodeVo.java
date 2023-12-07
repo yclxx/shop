@@ -1,13 +1,12 @@
 package com.ruoyi.zlyyh.domain.vo;
 
-import java.util.Date;
 import com.alibaba.excel.annotation.ExcelIgnoreUnannotated;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.ruoyi.common.excel.annotation.ExcelDictFormat;
 import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
-import java.util.Date;
 
+import java.util.Date;
 
 
 /**
@@ -176,5 +175,12 @@ public class CodeVo {
     @ExcelProperty(value = "用户id")
     private Long sysUserId;
 
-
+    /**
+     * 核销数量
+     */
+    private Long usedCount;
+    /**
+     * 预约数量
+     */
+    private Long appointmentCount;
 }

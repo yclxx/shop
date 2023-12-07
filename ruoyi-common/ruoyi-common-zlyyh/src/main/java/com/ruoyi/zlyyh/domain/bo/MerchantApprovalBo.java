@@ -14,120 +14,125 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class MerchantApprovalBo extends BaseEntity {
+    private static final long serialVersionUID = 1L;
 
-    /**
-     *
-     */
     private Long approvalId;
-
     /**
      * 平台标识
      */
     private Long platformKey;
-
+    /**
+     * 活动任务id
+     */
+    private Long taskId;
+    /**
+     * 类型（1商户申请，2商户录入）
+     */
+    private String type;
+    /**
+     * 管理员手机号
+     */
+    private String brandMobile;
     /**
      * 品牌名称
      */
     private String brandName;
-
     /**
      * 品牌logo
      */
     private String brandLogo;
-
     /**
-     * 门店名称
+     * 品牌商户简称
      */
-    private String shopName;
-
+    private String brandReferred;
     /**
-     * 门店电话
+     * 邮储商户
      */
-    private String shopMobile;
-
+    private String activityNature;
     /**
-     * 门店类型
+     * 进件者（拓展服务商）
      */
-    private String shopType;
-
-    /**
-     * 门店地址
-     */
-    private String shopAddress;
-
-    /**
-     * 门店地址详情
-     */
-    private String shopAddressInfo;
-
-    /**
-     * 门店图片
-     */
-    private String shopImage;
-
-    /**
-     * 营业周
-     */
-    private String businessWeek;
-
-    /**
-     * 每天营业开始时间
-     */
-    private String businessBegin;
-
-    /**
-     * 每天营业结束时间
-     */
-    private String businessEnd;
-
+    private String extend;
     /**
      * 性质
      */
     private String nature;
-
     /**
-     * 扩展服务商
+     * 门店名称
      */
-    private String extend;
-
+    private String shopName;
     /**
-     * 参与活动
+     * 门店地址
+     */
+    private String shopAddress;
+    /**
+     * 门店地址详情
+     */
+    private String shopAddressInfo;
+    /**
+     * 门店电话
+     */
+    private String shopMobile;
+    /**
+     * 门店图片
+     */
+    private String shopImage;
+    /**
+     * 门店类型
+     */
+    private String shopType;
+    /**
+     * 营业执照
+     */
+    private String businessLicense;
+    /**
+     * 营业周
+     */
+    private String businessWeek;
+    /**
+     * 每天营业开始时间
+     */
+    private String businessBegin;
+    /**
+     * 每天营业结束时间
+     */
+    private String businessEnd;
+    /**
+     * 节假日是否营业
+     */
+    private Boolean businessHoliday;
+    /**
+     * 参与营销活动类型
      */
     private String activity;
-
     /**
      * 发票类型
      */
     private String invoiceType;
-
+    /**
+     * 收款人
+     */
+    private String accountPayee;
+    /**
+     * 开户行
+     */
+    private String accountBank;
     /**
      * 收款账户
      */
     private String account;
-
     /**
-     * 云闪付商户号
+     * 商户所在平台
      */
-    private String ysfMerchant;
+    private Long merchantPlatformKey;
     /**
-     * 微信商户号
+     * 商户号信息
      */
-    private String wxMerchant;
-
-    /**
-     * 支付宝商户号
-     */
-    private String payMerchant;
-
-    /**
-     * 商品类型
-     */
-    private String productType;
+    private String merchant;
     /**
      * 审批状态
      */
     private String approvalStatus;
-
     /**
      * 拒绝原因
      */

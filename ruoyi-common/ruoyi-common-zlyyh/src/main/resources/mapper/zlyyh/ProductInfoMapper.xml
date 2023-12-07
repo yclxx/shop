@@ -32,6 +32,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <result property="period" column="period"/>
     <result property="buyLimit" column="buy_limit"/>
     <result property="brandName" column="brand_name"/>
+    <result property="shopAll" column="shop_all"/>
+    <result property="overdue" column="overdue"/>
+    <result property="anyTime" column="any_Time"/>
+    <result property="leastPrice" column="least_price"/>
+    <result property="reducePrice" column="reduce_price"/>
     </resultMap>
 
 

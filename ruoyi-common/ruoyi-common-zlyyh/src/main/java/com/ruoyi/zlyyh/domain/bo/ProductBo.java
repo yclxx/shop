@@ -236,6 +236,10 @@ public class ProductBo extends BaseEntity {
      * 门店ID
      */
     private String shopId;
+    /**
+     * 门店全选
+     */
+    private Boolean shopAll;
 
     /**
      * 按钮名称
@@ -350,16 +354,23 @@ public class ProductBo extends BaseEntity {
      */
     private Long lineUpperLimit;
     /**
+     * 商品详情信息
+     */
+    private ProductInfoBo productInfo;
+    /**
      * 演出票商品信息
      */
     private ProductTicketBo ticket;
 
-    /** 场次与票种 */
+    /**
+     * 场次与票种
+     */
     private List<ProductTicketSessionBo> ticketSession;
 
     private String payBankType;
 
     private String productSmallImg;
+    private String productTypeImg;
 
     private String isPoup;
 
@@ -367,4 +378,8 @@ public class ProductBo extends BaseEntity {
 
     private String couponTip;
 
+    private String sharePermission;
+    private String shareAmountType;
+    private BigDecimal shareOneAmount;
+    private BigDecimal shareTwoAmount;
 }

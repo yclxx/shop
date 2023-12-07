@@ -12,15 +12,19 @@ import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.zlyyh.domain.Draw;
 import com.ruoyi.zlyyh.domain.bo.DrawBo;
 import com.ruoyi.zlyyh.domain.vo.DrawVo;
+import com.ruoyi.zlyyh.enumd.DateType;
 import com.ruoyi.zlyyh.mapper.DrawMapper;
+import com.ruoyi.zlyyh.service.YsfConfigService;
 import com.ruoyi.zlyyh.utils.DrawRedisCacheUtils;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
+import com.ruoyi.zlyyh.utils.YsfUtils;
 import com.ruoyi.zlyyhadmin.service.IDrawService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +39,7 @@ import java.util.Map;
 public class DrawServiceImpl implements IDrawService {
 
     private final DrawMapper baseMapper;
+    private final YsfConfigService ysfConfigService;
 
     /**
      * 查询奖品管理
@@ -126,5 +131,53 @@ public class DrawServiceImpl implements IDrawService {
             }
         }
         return baseMapper.deleteBatchIds(ids) > 0;
+    }
+
+    /**
+     * 查询奖品管理列表
+     */
+    public TableDataInfo<DrawVo> queryPageListByType(PageQuery pageQuery) {
+        LambdaQueryWrapper<Draw> lqw = Wrappers.lambdaQuery();
+        lqw.eq(Draw::getDrawType, "4");
+        lqw.eq(Draw::getStatus, "0");
+        lqw.gt(Draw::getSellEndDate, new Date());
+        lqw.isNotNull(Draw::getDrawNo);
+        Page<DrawVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+        return TableDataInfo.build(result);
+    }
+
+    /**
+     * 查询剩余数量
+     */
+    public void queryProductCount(DrawVo drawVo) {
+        if (drawVo == null) {
+            return;
+        }
+        if (!"4".equals(drawVo.getDrawType())) {
+            return;
+        }
+        if (StringUtils.isBlank(drawVo.getDrawNo())) {
+            return;
+        }
+        if (drawVo.getTotalCount() < 1) {
+            return;
+        }
+        Long allRemainCount = YsfUtils.aggQueryCpnRemain(drawVo.getDrawNo(), drawVo.getPlatformKey());
+        if (null != allRemainCount) {
+            // 剩余数量
+            long count = DrawRedisCacheUtils.getDrawCount(drawVo.getDrawId(), DateType.TOTAL);
+            if (count > 0) {
+                allRemainCount = allRemainCount + count;
+            }
+            if (allRemainCount > 0) {
+                Draw draw = new Draw();
+                draw.setDrawId(drawVo.getDrawId());
+                draw.setTotalCount(allRemainCount);
+
+                baseMapper.updateById(draw);
+
+                CacheUtils.clear(CacheNames.MISSION_GROUP_DRAW);
+            }
+        }
     }
 }

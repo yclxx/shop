@@ -83,4 +83,28 @@ public class OrderService {
     public void addCollectiveOrder() {
         remoteAppOrderService.addCollectiveOrder();
     }
+
+    /**
+     * 查询订单核销状态
+     */
+    @XxlJob("queryOrderUsedStatus")
+    public void queryOrderUsedStatus() {
+        remoteAppOrderService.queryOrderUsedStatus();
+    }
+
+    /**
+     * 分销订单状态查询
+     */
+    @XxlJob("queryShareStatus")
+    public void queryShareStatus() {
+        remoteAppOrderService.queryShareStatus();
+    }
+
+    /**
+     * 分销订单发放状态查询
+     */
+    @XxlJob("queryShareAwardStatus")
+    public void queryShareAwardStatus() {
+        remoteAppOrderService.queryShareAwardStatus();
+    }
 }

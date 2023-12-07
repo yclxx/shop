@@ -38,6 +38,7 @@
         <result property="shopType" column="shop_type"/>
         <result property="extensionServiceProviderId" column="extension_service_provider_id"/>
         <result property="pushType" column="push_type"/>
+        <result property="productType" column="product_type"/>
         <result property="supplierShopId" column="supplier_shop_id"/>
         <result property="sysDeptId" column="sys_dept_id"/>
         <result property="sysUserId" column="sys_user_id"/>
