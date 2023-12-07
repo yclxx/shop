@@ -270,7 +270,12 @@ public class OrderServiceImpl implements IOrderService {
                 order = baseMapper.selectById(number);
             }
             if (null == order || !"2".equals(order.getStatus())) {
+                ThreadUtil.sleep(3000);
+                order = baseMapper.selectById(number);
+            }
+            if (null == order || !"2".equals(order.getStatus())) {
                 log.error("订单发券,订单不存在或未支付：{}", number);
+                RedisUtils.deleteObject(lockKey);
                 return;
             }
             if (!"0".equals(order.getSendStatus()) && !"3".equals(order.getSendStatus())) {
@@ -3674,6 +3679,7 @@ public class OrderServiceImpl implements IOrderService {
             return;
         }
         if (StringUtils.isBlank(verificationStatus)) {
+            log.error("银联票券通知，状态为空，couponCd={}，operTp={}", couponCd, operTp);
             return;
         }
         Order order = new Order();

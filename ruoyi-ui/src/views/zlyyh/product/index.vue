@@ -470,6 +470,9 @@
                 <el-form-item label="首页图片" prop="productSmallImg">
                   <image-upload v-model="form.productSmallImg" :limit="1" />
                 </el-form-item>
+                <el-form-item label="栏目页图片" prop="productTypeImg">
+                  <image-upload v-model="form.productTypeImg" :limit="1" />
+                </el-form-item>
                 <el-form-item label="校验城市" prop="checkPayCity">
                   <span slot="label">
                     校验城市
@@ -1295,6 +1298,7 @@
           productSubhead: undefined,
           productImg: undefined,
           productSmallImg: undefined,
+          productTypeImg: undefined,
           isPoup: undefined,
           poupText: undefined,
           couponTip: undefined,

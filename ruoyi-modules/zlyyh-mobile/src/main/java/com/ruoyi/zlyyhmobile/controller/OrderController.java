@@ -398,21 +398,24 @@ public class OrderController {
         String headers = JsonUtils.toJsonString(ServletUtils.getHeaderMap(request));
         log.info("银联票券状态变动通知，请求头：{}，接收参数：{}", headers, body);
         String appId = ServletUtils.getHeader("appId");
+        String version = ServletUtils.getHeader("version");
         String bizMethod = ServletUtils.getHeader("bizMethod");
         String reqId = ServletUtils.getHeader("reqId");
         String sign = ServletUtils.getHeader("sign");
-        String str = "version=1.0.0&appId=" + appId + "&bizMethod=" + bizMethod + "&reqId=" + reqId + "&body=" + body;
-        str = SecureUtil.sha256(str);
+        String str = "version=" + version + "&appId=" + appId + "&bizMethod=" + bizMethod + "&reqId=" + reqId + "&body=" + body;
+
+        String sha256Str = SecureUtil.sha256(str);
         // 获取公钥
         String publicKey = ysfConfigService.queryValueByKeys(YsfUpConstants.up_publicKey);
         boolean verify;
         try {
-            verify = YsfUtils.verify(str, publicKey, sign);
+            verify = YsfUtils.verify(sha256Str, publicKey, sign);
         } catch (Exception e) {
             log.error("银联开放平台票券状态变更通知验证签名异常", e);
             return R.fail("验证签名异常");
         }
         if (!verify) {
+            log.error("银联开放平台票券状态变更通知签名验证不通过,str={},sha256Str={},sign={},publicKey={}", str, sha256Str, sign, publicKey);
             return R.fail("签名验证不通过");
         }
         // 字段明细 https://open.unionpay.com/tjweb/api/interface?apiSvcId=3161&id=19761#nav01

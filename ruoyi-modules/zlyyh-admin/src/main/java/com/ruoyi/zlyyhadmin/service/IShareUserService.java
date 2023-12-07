@@ -1,5 +1,7 @@
 package com.ruoyi.zlyyhadmin.service;
 
+import com.ruoyi.common.mybatis.core.page.PageQuery;
+import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.ShareUserBo;
 import com.ruoyi.zlyyh.domain.vo.ShareUserVo;
 
@@ -18,6 +20,11 @@ public interface IShareUserService {
      * 查询分销员
      */
     ShareUserVo queryById(Long userId);
+
+    /**
+     * 查询分销员列表
+     */
+    TableDataInfo<ShareUserVo> queryPageList(ShareUserBo bo, PageQuery pageQuery);
 
 
     /**

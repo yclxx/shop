@@ -1,14 +1,12 @@
 package com.ruoyi.zlyyh.domain.bo;
 
-import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
+import com.ruoyi.common.core.web.domain.TreeEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import javax.validation.constraints.*;
 
+import javax.validation.constraints.NotNull;
 import java.util.Date;
-
-import com.ruoyi.common.core.web.domain.TreeEntity;
 
 /**
  * 分销员业务对象
@@ -56,6 +54,15 @@ public class ShareUserBo extends TreeEntity<ShareUserBo> {
      * 审核状态
      */
     private String auditStatus;
+
+    /**
+     * 开始时间
+     */
+    private Date startTime;
+    /**
+     * 结束时间
+     */
+    private Date endTime;
 
     /**
      * 备注

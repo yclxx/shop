@@ -420,6 +420,7 @@ public class ProductVo implements Serializable {
     private String payBankType;
 
     private String productSmallImg;
+    private String productTypeImg;
 
     private String isPoup;
 

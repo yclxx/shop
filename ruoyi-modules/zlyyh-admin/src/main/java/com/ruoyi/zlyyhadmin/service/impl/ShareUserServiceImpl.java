@@ -4,8 +4,11 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.mybatis.core.page.PageQuery;
+import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.ShareUser;
 import com.ruoyi.zlyyh.domain.ShareUserAccount;
 import com.ruoyi.zlyyh.domain.bo.ShareUserBo;
@@ -47,6 +50,25 @@ public class ShareUserServiceImpl implements IShareUserService {
     @Override
     public ShareUserVo queryById(Long userId) {
         return baseMapper.selectVoById(userId);
+    }
+
+    /**
+     * 查询分销员列表
+     */
+    public TableDataInfo<ShareUserVo> queryPageList(ShareUserBo bo, PageQuery pageQuery) {
+        LambdaQueryWrapper<ShareUser> lqw = buildQueryWrapper(bo);
+        if (null == lqw) {
+            return TableDataInfo.build(new ArrayList<>());
+        }
+        Page<ShareUserVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+        TableDataInfo<ShareUserVo> build = TableDataInfo.build(result);
+        for (ShareUserVo shareUserVo : build.getRows()) {
+            UserVo userVo = userService.queryById(shareUserVo.getUserId());
+            if (null != userVo) {
+                shareUserVo.setUserMobile(userVo.getMobile());
+            }
+        }
+        return build;
     }
 
     /**

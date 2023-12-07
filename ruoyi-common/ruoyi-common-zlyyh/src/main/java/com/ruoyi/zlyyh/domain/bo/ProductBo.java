@@ -370,6 +370,7 @@ public class ProductBo extends BaseEntity {
     private String payBankType;
 
     private String productSmallImg;
+    private String productTypeImg;
 
     private String isPoup;
 

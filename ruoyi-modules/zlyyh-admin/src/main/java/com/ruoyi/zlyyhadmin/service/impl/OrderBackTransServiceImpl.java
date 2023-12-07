@@ -118,7 +118,7 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
         Order order = orderMapper.selectById(bo.getNumber());
         if (null == order.getOutAmount() || order.getOutAmount().signum() < 1) {
             // 有可能订单还没更新，休眠1秒
-            ThreadUtil.sleep(1000);
+            ThreadUtil.sleep(2000);
             order = orderMapper.selectById(bo.getNumber());
         }
         // 退款检查

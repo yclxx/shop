@@ -45,6 +45,9 @@ public class ZlyyhUtils {
      * @param showCity 活动城市
      */
     public static void checkCity(String showCity, PlatformVo platformVo) {
+        if (StringUtils.isBlank(showCity) || "ALL".equalsIgnoreCase(showCity)) {
+            return;
+        }
         String cityCode = ZlyyhUtils.getCityCode();
         if (StringUtils.isBlank(cityCode)) {
             throw new ServiceException("未获取到您的位置信息,请确认是否开启定位服务");

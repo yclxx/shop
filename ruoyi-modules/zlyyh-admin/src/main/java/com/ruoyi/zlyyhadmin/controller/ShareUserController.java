@@ -8,6 +8,8 @@ import com.ruoyi.common.core.web.controller.BaseController;
 import com.ruoyi.common.excel.utils.ExcelUtil;
 import com.ruoyi.common.log.annotation.Log;
 import com.ruoyi.common.log.enums.BusinessType;
+import com.ruoyi.common.mybatis.core.page.PageQuery;
+import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.ShareUserBo;
 import com.ruoyi.zlyyh.domain.vo.ShareUserVo;
 import com.ruoyi.zlyyhadmin.service.IShareUserService;
@@ -35,6 +37,15 @@ import java.util.List;
 public class ShareUserController extends BaseController {
 
     private final IShareUserService iShareUserService;
+
+    /**
+     * 查询分销员列表
+     */
+    @SaCheckPermission("zlyyh:shareUser:list")
+    @GetMapping("/pageList")
+    public TableDataInfo<ShareUserVo> pageList(ShareUserBo bo, PageQuery pageQuery) {
+        return iShareUserService.queryPageList(bo, pageQuery);
+    }
 
     /**
      * 查询分销员列表

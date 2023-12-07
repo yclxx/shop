@@ -305,6 +305,7 @@ public class Product extends BaseEntity {
     private String payBankType;
 
     private String productSmallImg;
+    private String productTypeImg;
 
     private String isPoup;
 

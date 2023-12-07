@@ -39,36 +39,36 @@ public class RemoteShareServiceImpl implements RemoteShareService {
         ShareOrderEvent event = new ShareOrderEvent(shareUserId, number);
         log.info("分销订单事件，接收参数：{}", event);
         if (null == event.getNumber()) {
-            log.error("分销订单事件，接收参数为空,event:{}", event);
+            log.info("分销订单事件，接收参数为空,event:{}", event);
             return;
         }
         // 休眠1秒再处理
         ThreadUtil.sleep(RandomUtil.randomInt(1000, 1500));
         OrderVo orderVo = orderService.queryById(event.getNumber());
         if (null == orderVo) {
-            log.error("分销订单事件，订单不存在，event={}", event);
+            log.info("分销订单事件，订单不存在，event={}", event);
             return;
         }
         if (null != event.getShareUserId() && orderVo.getUserId().equals(event.getShareUserId())) {
-            log.error("分销订单事件，不能分销给自己，event={}，orderUserId={}", event, orderVo.getUserId());
+            log.info("分销订单事件，不能分销给自己，event={}，orderUserId={}", event, orderVo.getUserId());
             return;
         }
         PlatformVo platformVo = platformService.queryById(orderVo.getPlatformKey(), orderVo.getSupportChannel());
         if (null == platformVo) {
-            log.error("分销订单事件，平台不存在，event={}", event);
+            log.info("分销订单事件，平台不存在，event={}", event);
             return;
         }
         if ("0".equals(platformVo.getSharePermission())) {
-            log.error("分销订单事件，平台未开通分销功能，event={}", event);
+            log.info("分销订单事件，平台未开通分销功能，event={}", event);
             return;
         }
         ProductVo productVo = productService.queryById(orderVo.getProductId());
         if (null == productVo) {
-            log.error("分销订单事件，商品不存在，event={}", event);
+            log.info("分销订单事件，商品不存在，event={}", event);
             return;
         }
         if ("0".equals(productVo.getSharePermission())) {
-            log.error("分销订单事件，商品未开通分销功能，event={}，productId:{}", event, productVo.getProductId());
+            log.info("分销订单事件，商品未开通分销功能，event={}，productId:{}", event, productVo.getProductId());
             return;
         }
         String inviteeStatus = "0";
@@ -100,16 +100,24 @@ public class RemoteShareServiceImpl implements RemoteShareService {
             if (ObjectUtil.isEmpty(shareUserRecordVos)) {
                 // 新增记录
                 if (null == event.getShareUserId()) {
-                    log.error("分销订单事件，缺少分销用户ID，{}", event);
+                    log.info("分销订单事件，缺少分销用户ID，{}", event);
                     return;
                 }
                 ShareUserVo shareUserVo = shareUserService.queryById(event.getShareUserId());
                 if (null == shareUserVo) {
-                    log.error("分销订单事件，分销用户不存在{}", event);
+                    log.info("分销订单事件，分销用户不存在{}", event);
                     return;
                 }
                 if (!"1".equals(shareUserVo.getAuditStatus())) {
-                    log.error("分销订单事件，分销用户未审核通过，shareUser={},event={}", shareUserVo, event);
+                    log.info("分销订单事件，分销用户未审核通过，shareUser={},event={}", shareUserVo, event);
+                    return;
+                }
+                if (null != shareUserVo.getStartTime() && shareUserVo.getStartTime().getTime() > new Date().getTime()) {
+                    log.info("分销订单事件，分销用户未到开始分销时间，shareUser={},event={}", shareUserVo, event);
+                    return;
+                }
+                if (null != shareUserVo.getEndTime() && shareUserVo.getEndTime().getTime() < new Date().getTime()) {
+                    log.info("分销订单事件，分销用户已过结束分销时间，shareUser={},event={}", shareUserVo, event);
                     return;
                 }
                 // 查询是否存在记录

@@ -75,6 +75,15 @@ public class ShareUserVo {
     private String auditStatus;
 
     /**
+     * 开始时间
+     */
+    private Date startTime;
+    /**
+     * 结束时间
+     */
+    private Date endTime;
+
+    /**
      * 备注
      */
     @ExcelProperty(value = "备注")

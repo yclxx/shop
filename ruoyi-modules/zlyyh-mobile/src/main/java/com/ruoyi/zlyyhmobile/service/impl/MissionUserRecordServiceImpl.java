@@ -157,13 +157,12 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
             lqw.last("order by draw_time desc limit 50");
             List<MissionUserRecordVo> recordVos = baseMapper.selectVoList(lqw);
             for (MissionUserRecordVo userDrawVo : recordVos) {
-                if (StringUtils.isEmpty(userDrawVo.getSendAccount())) {
+                if (StringUtils.isBlank(userDrawVo.getSendAccount())) {
                     continue;
                 }
                 String str = DesensitizedUtil.mobilePhone(userDrawVo.getSendAccount()) + "获得" + userDrawVo.getDrawName();
                 recordVosString.add(str);
                 // 暂时提示真实内容
-
             }
             RedisUtils.setCacheList(key, recordVosString);
             RedisUtils.expire(key, Duration.ofMinutes(20));

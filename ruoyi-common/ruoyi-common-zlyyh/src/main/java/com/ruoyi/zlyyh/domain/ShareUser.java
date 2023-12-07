@@ -8,6 +8,8 @@ import com.ruoyi.common.encrypt.annotation.EncryptField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.Date;
+
 /**
  * 分销员对象 t_share_user
  *
@@ -51,6 +53,14 @@ public class ShareUser extends TreeEntity<ShareUser> {
      * 审核状态
      */
     private String auditStatus;
+    /**
+     * 开始时间
+     */
+    private Date startTime;
+    /**
+     * 结束时间
+     */
+    private Date endTime;
     /**
      * 备注
      */

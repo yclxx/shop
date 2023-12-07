@@ -9,6 +9,15 @@ export function listShareUser(query) {
   })
 }
 
+// 查询分销员列表
+export function pageListShareUser(query) {
+  return request({
+    url: '/zlyyh-admin/shareUser/pageList',
+    method: 'get',
+    params: query
+  })
+}
+
 // 查询分销员详细
 export function getShareUser(userId) {
   return request({
