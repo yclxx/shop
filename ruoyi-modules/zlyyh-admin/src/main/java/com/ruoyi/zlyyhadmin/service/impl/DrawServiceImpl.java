@@ -14,7 +14,6 @@ import com.ruoyi.zlyyh.domain.bo.DrawBo;
 import com.ruoyi.zlyyh.domain.vo.DrawVo;
 import com.ruoyi.zlyyh.enumd.DateType;
 import com.ruoyi.zlyyh.mapper.DrawMapper;
-import com.ruoyi.zlyyh.service.YsfConfigService;
 import com.ruoyi.zlyyh.utils.DrawRedisCacheUtils;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyh.utils.YsfUtils;
@@ -39,7 +38,6 @@ import java.util.Map;
 public class DrawServiceImpl implements IDrawService {
 
     private final DrawMapper baseMapper;
-    private final YsfConfigService ysfConfigService;
 
     /**
      * 查询奖品管理

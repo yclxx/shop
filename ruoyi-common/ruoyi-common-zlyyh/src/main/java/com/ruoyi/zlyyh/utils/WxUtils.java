@@ -55,6 +55,28 @@ import java.util.Map;
 @Slf4j
 public class WxUtils {
 
+    /**
+     * 发送模板消息
+     *
+     * @param accessToken token
+     * @param openId      用户openId
+     * @param templateId  模板Id
+     * @param page        页面
+     * @param msgData     消息
+     */
+    public static void sendTemplateMessage(String accessToken, String openId, String templateId, String page, Map<String, Object> msgData) {
+        String url = "https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=" + accessToken;
+        Map<String, Object> params = new HashMap<>();
+        params.put("miniprogram_state", "formal");
+        params.put("lang", "zh_CN");
+        params.put("template_id", templateId);
+        params.put("touser", openId);
+        params.put("page", page);
+        params.put("data", msgData);
+        String post = HttpUtil.post(url, JsonUtils.toJsonString(params));
+        log.info("微信消息推送，请求信息：{}，返回结果：{}", params, post);
+    }
+
     public static byte[] genQrCode(String accessToken, String scene, String page, String env_version) {
         String url = "https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=" + accessToken;
         Map<String, Object> body = new HashMap<>();
@@ -404,5 +426,26 @@ public class WxUtils {
             log.error("加载证书异常：", e);
             throw new ServiceException("加载证书异常");
         }
+    }
+
+    public static void main(String[] args) {
+        Map<String, Object> msgData = new HashMap<>();
+        Map<String, String> thing1 = new HashMap<>();
+        thing1.put("value", "天天抽奖");
+        msgData.put("thing6", thing1);
+
+        Map<String, String> thing7 = new HashMap<>();
+        thing7.put("value", "每天可抽微信小程序通用立减券");
+        msgData.put("thing7", thing7);
+
+        Map<String, String> thing10 = new HashMap<>();
+        thing10.put("value", "数量有限，先到先得");
+        msgData.put("thing10", thing10);
+
+        String accessToken = "75_0UxkZ8bu_47Qgxhn3YlZL1p1ZiRuHXHbNjg2jCdYwVlL6S1_RHPI_ldyojx9UbM6SSP7Yuk8tXPY3yZle4HsxacYLTlZuUdq5qXjp4BW3ZzfuX0RZyZ4tuI-39QMGUcAGAAUI";
+        String openId = "oKrd35bHD8K40_Jfs1jHARweC7TU";
+        String templateId = "oF-pemb-OKhpiuAME-FdMmPdqr-6CKuUIC2_1I12ZYA";
+        String page = "pages/index/index";
+        sendTemplateMessage(accessToken, openId, templateId, page, msgData);
     }
 }

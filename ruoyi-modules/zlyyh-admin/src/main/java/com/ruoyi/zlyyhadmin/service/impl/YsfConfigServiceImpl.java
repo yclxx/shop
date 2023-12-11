@@ -42,6 +42,23 @@ public class YsfConfigServiceImpl implements IYsfConfigService {
                 if (StringUtils.isNotBlank(result)) {
                     return result;
                 }
+            } else {
+                return queryValueByKey(key);
+            }
+        } catch (Exception ignored) {
+        }
+        return "";
+    }
+
+    @Cacheable(cacheNames = CacheNames.ysfConfig, key = "#key")
+    @Override
+    public String queryValueByKey(String key) {
+        try {
+            if (null != key) {
+                String result = baseMapper.queryValueByKeys(key);
+                if (StringUtils.isNotBlank(result)) {
+                    return result;
+                }
             }
         } catch (Exception ignored) {
         }
@@ -116,7 +133,7 @@ public class YsfConfigServiceImpl implements IYsfConfigService {
      * 保存前的数据校验
      */
     //private void validEntityBeforeSave(YsfConfig entity) {
-        //TODO 做一些数据校验,如唯一约束
+    //TODO 做一些数据校验,如唯一约束
     //}
 
     /**

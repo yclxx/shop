@@ -131,7 +131,7 @@ public class LianLianUtils {
         checkOrderParam.setPurchaseTime(DateUtils.getTime());
         checkOrderParam.setSettlePrice(settlePrice.multiply(BigDecimal.valueOf(100)).stripTrailingZeros().toPlainString());
         String encryptedData = JSONObject.toJSONString(checkOrderParam);
-        return sendLianLianHttp(channelId, secret, url, encryptedData, false);
+        return sendLianLianHttp(channelId, secret, url, encryptedData, true);
     }
 
     /**
@@ -156,7 +156,7 @@ public class LianLianUtils {
         createOrderParam.setQuantity(1);
         createOrderParam.setPayType(1);//余额
         String encryptedData = JSONObject.toJSONString(createOrderParam);
-        return sendLianLianHttp(channelId, secret, url, encryptedData, false);
+        return sendLianLianHttp(channelId, secret, url, encryptedData, true);
     }
 
     /**
@@ -168,7 +168,7 @@ public class LianLianUtils {
         queryParam.setChannelOrderId(channelOrderId);//渠道订单号
         queryParam.setChannelId(channelId);
         String encryptedData = JSONObject.toJSONString(queryParam);
-        return sendLianLianHttp(channelId, secret, url, encryptedData, false);
+        return sendLianLianHttp(channelId, secret, url, encryptedData, true);
     }
 
     /**
@@ -179,7 +179,7 @@ public class LianLianUtils {
         applyRefundParam.setChannelOrderNo(channelOrderId);//渠道订单号
         applyRefundParam.setOrderNoList(Collections.singletonList(orderId));//子订单号
         String encryptedData = JSONObject.toJSONString(applyRefundParam);
-        return sendLianLianHttp(channelId, secret, url, encryptedData, false);
+        return sendLianLianHttp(channelId, secret, url, encryptedData, true);
     }
 
     public static JSONObject sendLianLianHttp(String channelId, String secret, String url, String encryptedData, boolean showLog) {

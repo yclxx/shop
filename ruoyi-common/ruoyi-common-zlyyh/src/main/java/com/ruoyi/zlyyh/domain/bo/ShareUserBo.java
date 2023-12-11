@@ -74,5 +74,18 @@ public class ShareUserBo extends TreeEntity<ShareUserBo> {
      */
     private Long platformKey;
 
+    /**
+     * 姓名
+     */
+    private String userName;
 
+    /**
+     * 性别
+     */
+    private String sex;
+
+    /**
+     * 年龄段
+     */
+    private String ageType;
 }

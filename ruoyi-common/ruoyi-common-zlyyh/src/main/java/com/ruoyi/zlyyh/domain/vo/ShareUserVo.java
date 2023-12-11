@@ -113,4 +113,25 @@ public class ShareUserVo {
     @ExcelProperty(value = "更新时间")
     private Date updateTime;
 
+    /**
+     * 姓名
+     */
+    @Sensitive(strategy = SensitiveStrategy.NAME)
+    @ExcelProperty(value = "姓名")
+    private String userName;
+
+    /**
+     * 性别
+     */
+    @ExcelProperty(value = "性别", converter = ExcelDictConvert.class)
+    @ExcelDictFormat(dictType = "sex_type")
+    private String sex;
+
+    /**
+     * 年龄段
+     */
+    @ExcelProperty(value = "年龄", converter = ExcelDictConvert.class)
+    @ExcelDictFormat(dictType = "age_type_list")
+    private String ageType;
+
 }
