@@ -3687,4 +3687,22 @@ public class OrderServiceImpl implements IOrderService {
         order.setVerificationStatus(verificationStatus);
         updateOrder(order);
     }
+
+    @Override
+    public TableDataInfo<OrderVo> getUnUseOrderList(OrderBo bo, PageQuery pageQuery) {
+        LambdaQueryWrapper<Order> lqw = Wrappers.lambdaQuery();
+        lqw.eq(bo.getProductId() != null, Order::getProductId, bo.getProductId());
+        lqw.eq(bo.getUserId() != null, Order::getUserId, bo.getUserId());
+        lqw.eq(StringUtils.isNotBlank(bo.getPickupMethod()), Order::getPickupMethod, bo.getPickupMethod());
+        lqw.eq(StringUtils.isNotBlank(bo.getVerificationStatus()), Order::getVerificationStatus, bo.getVerificationStatus());
+        if (StringUtils.isNotBlank(bo.getStatus())) {
+            lqw.in(Order::getStatus, bo.getStatus().split(","));
+        }
+        if (StringUtils.isNotBlank(bo.getOrderType())) {
+            lqw.in(Order::getOrderType, bo.getOrderType().split(","));
+        }
+        lqw.eq(StringUtils.isNotBlank(bo.getSendStatus()), Order::getSendStatus, bo.getSendStatus());
+        Page<OrderVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+        return TableDataInfo.build(result);
+    }
 }

@@ -289,4 +289,6 @@ public interface IOrderService {
      * @param couponNum 优惠券数量
      */
     void upCouponStatusChange(String operTp, String transTp, String couponCd, String couponNum);
+
+    TableDataInfo<OrderVo> getUnUseOrderList(OrderBo bo, PageQuery pageQuery);
 }

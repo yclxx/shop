@@ -275,6 +275,19 @@ public class OrderController {
         return orderService.queryPageList(bo, pageQuery);
     }
 
+
+    /**
+     * 获取未使用订单列表 5，12，13，14，15，18
+     *
+     * @return 订单列表
+     */
+    @GetMapping("/getUnUseOrderList")
+    public TableDataInfo<OrderVo> getUnUseOrderList(OrderBo bo, PageQuery pageQuery) {
+        bo.setUserId(LoginHelper.getUserId());
+        //暂不需要支持端查订单
+        return orderService.getUnUseOrderList(bo, pageQuery);
+    }
+
     /**
      * 查询未支付订单数量
      *
