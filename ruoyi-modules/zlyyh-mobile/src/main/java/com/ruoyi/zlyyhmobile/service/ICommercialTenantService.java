@@ -19,6 +19,11 @@ public interface ICommercialTenantService {
     CommercialTenantVo queryById(CommercialTenantBo bo);
 
     /**
+     * 民生银行查询商户
+     */
+    CommercialTenantVo queryMsById(CommercialTenantBo bo);
+
+    /**
      * 查询商户列表
      */
     TableDataInfo<CommercialTenantVo> queryPageListByDayProduct(CommercialTenantBo bo, PageQuery pageQuery);

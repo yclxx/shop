@@ -813,11 +813,11 @@
                   <image-upload v-model="form.shareImage" :limit="1" />
                 </el-form-item>
               </el-col>
-              <!-- <el-col :span="8">
+              <el-col :span="8">
                 <el-form-item label="提供方logo" prop="providerLogo">
                   <image-upload v-model="form.providerLogo" :limit="1" />
                 </el-form-item>
-              </el-col> -->
+              </el-col>
               <el-col :span="8" v-if="form.toType == '4'">
                 <el-form-item label="页面地址" prop="url">
                   <image-upload v-model="form.url" :limit="1" />

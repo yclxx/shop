@@ -180,6 +180,47 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
         return commercialTenantVo;
     }
 
+
+    /**
+     * 民生银行查询商户
+     */
+    @Override
+    public CommercialTenantVo queryMsById(CommercialTenantBo bo) {
+        String cityCode = ServletUtils.getHeader(ZlyyhConstants.CITY_CODE);
+        CommercialTenantVo commercialTenantVo = CacheUtils.get(CacheNames.COMMERCIAL, bo.getCommercialTenantId());
+        if (null == commercialTenantVo) {
+            commercialTenantVo = baseMapper.selectVoById(bo.getCommercialTenantId());
+            CacheUtils.put(CacheNames.COMMERCIAL, bo.getCommercialTenantId(), commercialTenantVo);
+        }
+        // 如果是今日特惠 商品根据星期查
+
+
+        this.setMsProduct(commercialTenantVo, bo.getPlatformKey(), bo.getWeekDate(), cityCode, bo.getShopId());
+
+
+        ShopVo shopVo = null;
+        if (null != bo.getShopId()) {
+            shopVo = shopService.queryById(bo.getShopId());
+            if (null != bo.getLatitude() && null != bo.getLongitude()) {
+                // 计算距离
+                double v = MapUtils.distance(bo.getLongitude(), bo.getLatitude(), shopVo.getLongitude(), shopVo.getLatitude()) / 1000;
+                String mv = "" + v;
+                shopVo.setDistance(new BigDecimal(mv));
+                commercialTenantVo.setDistance(shopVo.getDistance());
+                if (ObjectUtil.isNotEmpty(shopVo.getDistance())) {
+                    BigDecimal distance = shopVo.getDistance().setScale(2, BigDecimal.ROUND_DOWN);
+                    shopVo.setDistanceString(distance.toString());
+                }
+            }
+            commercialTenantVo.setShopVo(shopVo);
+        }
+        if (null == shopVo) {
+            this.setShop(commercialTenantVo, bo, cityCode);
+        }
+        return commercialTenantVo;
+    }
+
+
     /**
      * 查询商户列表
      */
@@ -232,7 +273,7 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
                 CacheUtils.put(CacheNames.COMMERCIAL, shopVo.getCommercialTenantId(), ct);
             }
             // 查询商品信息
-            this.setProduct(ct, bo.getPlatformKey(), bo.getWeekDate(), cityCode, shopVo.getShopId());
+            this.setProduct(ct, bo.getPlatformKey(), shopVo.getShopId());
             ct.setShopVo(shopVo);
             commercialTenantVos.add(ObjectUtil.clone(ct));
         }
@@ -397,6 +438,33 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
                 next.setProductVo(list.get(0));
             }
         }
+    }
+
+
+    private void setMsProduct(CommercialTenantVo next, Long platformKey, String weekDate, String cityCode, Long shopId) {
+        // 如果是今日特惠 商品根据星期查
+        if (shopId != null) {
+            //如果传了shopId 查询商品门店关联表 就不按照商品类别分类了 统一进行作展示
+            List<ProductVo> productVos = productService.queryListByShopId(platformKey, shopId, weekDate, cityCode);
+            //Map<String, List<ProductVo>> collect1 = productVos1.stream().collect(Collectors.groupingBy(ProductVo::getProductType));
+        if (ObjectUtil.isNotEmpty(productVos)) {
+            List<ProductVo> otherProductVos = new ArrayList<>();
+            Map<String, List<ProductVo>> collect = productVos.stream().collect(Collectors.groupingBy(ProductVo::getProductType));
+            next.setProductCouponList(collect.get("0"));
+            next.setProductActivityList(collect.get("2"));
+            for (String s : collect.keySet()) {
+                if (!s.equals("0") && !s.equals("2")){
+                    System.out.println(collect.get(s));
+                    otherProductVos.addAll(collect.get(s));
+                }
+
+            }
+            next.setProductFoodList(otherProductVos);
+        }
+
+        }
+
+
     }
 
     private void setShop(CommercialTenantVo next, CommercialTenantBo bo, String cityCode) {

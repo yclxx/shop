@@ -27,6 +27,7 @@ import com.ruoyi.common.core.utils.JsonUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.core.utils.reflect.ReflectUtils;
 import com.ruoyi.zlyyh.domain.Order;
+import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyh.param.MsOrderVo;
 import com.ruoyi.zlyyh.properties.utils.YsfDistributionPropertiesUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class MsyhUtils {
@@ -280,6 +282,40 @@ public class MsyhUtils {
         System.out.println(callMapToXML(dataMap));
 
         System.out.println(Base64Utils.encodeToString(callMapToXML(dataMap)));
+
+        Map<String, List<String>> collect = new HashMap<>();
+        List<String> result = new ArrayList<>();
+        List<String> ab = new ArrayList<>();
+        ab.add("1");
+        ab.add("2");
+        ab.add("3");
+        List<String> ac = new ArrayList<>();
+        ac.add("2");
+        ac.add("3");
+        ac.add("4");
+        List<String> ad = new ArrayList<>();
+        ad.add("5");
+        ad.add("6");
+        ad.add("7");
+        List<String> ae = new ArrayList<>();
+        ae.add("1d");
+        ae.add("2d");
+        ae.add("3d");
+        collect.put("0",ab);
+        collect.put("1",ac);
+        collect.put("2",ad);
+        collect.put("3",ae);
+        System.out.println(collect);
+        for (String s : collect.keySet()) {
+//            System.out.println(collect.get(s));
+            if (!s.equals("0") && !s.equals("2")){
+                System.out.println(collect.get(s));
+                    result.addAll(collect.get(s));
+            }
+
+        }
+        System.out.println(result);
+
 
 
     }

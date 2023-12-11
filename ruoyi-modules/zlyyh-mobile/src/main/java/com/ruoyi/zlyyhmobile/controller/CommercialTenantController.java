@@ -48,6 +48,17 @@ public class CommercialTenantController {
     }
 
     /**
+     * 民生银行获取商户详情（产品列表拆分处理）
+     *
+     * @return 商户信息
+     */
+    @GetMapping("/ignore/getMsCommercialTenantInfo")
+    public R<CommercialTenantVo> getMsCommercialTenantInfo(CommercialTenantBo bo) {
+        bo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        return R.ok(commercialTenantService.queryMsById(bo));
+    }
+
+    /**
      * 查询商户分页表(商户端)
      */
     @GetMapping("/getPage")
