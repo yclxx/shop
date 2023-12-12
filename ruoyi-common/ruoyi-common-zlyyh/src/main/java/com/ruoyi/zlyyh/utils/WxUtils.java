@@ -13,7 +13,9 @@ import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.JsonUtils;
 import com.ruoyi.common.core.utils.SpringUtils;
 import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.excel.utils.ExcelUtil;
 import com.ruoyi.common.redis.utils.RedisUtils;
+import com.ruoyi.zlyyh.domain.vo.SendDyInfoVo;
 import com.wechat.pay.contrib.apache.httpclient.WechatPayHttpClientBuilder;
 import com.wechat.pay.contrib.apache.httpclient.auth.AutoUpdateCertificatesVerifier;
 import com.wechat.pay.contrib.apache.httpclient.auth.PrivateKeySigner;
@@ -36,14 +38,12 @@ import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -428,24 +428,33 @@ public class WxUtils {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+//        File file = new File("C:\\Users\\25487\\Desktop\\消息推送.xlsx");
+        File file = new File("");
+        BufferedInputStream in = new BufferedInputStream(new FileInputStream(
+            file));
+        List<SendDyInfoVo> hashMaps = ExcelUtil.importExcel(in, SendDyInfoVo.class);
+        log.info("用户信息：{}", hashMaps);
         Map<String, Object> msgData = new HashMap<>();
         Map<String, String> thing1 = new HashMap<>();
-        thing1.put("value", "天天抽奖");
+        thing1.put("value", "双十二购物狂欢");
         msgData.put("thing6", thing1);
 
         Map<String, String> thing7 = new HashMap<>();
-        thing7.put("value", "每天可抽微信小程序通用立减券");
+        thing7.put("value", "超多优惠券等你来领取");
         msgData.put("thing7", thing7);
 
         Map<String, String> thing10 = new HashMap<>();
-        thing10.put("value", "数量有限，先到先得");
+        thing10.put("value", "京东、淘宝、拼多多等");
         msgData.put("thing10", thing10);
 
-        String accessToken = "75_0UxkZ8bu_47Qgxhn3YlZL1p1ZiRuHXHbNjg2jCdYwVlL6S1_RHPI_ldyojx9UbM6SSP7Yuk8tXPY3yZle4HsxacYLTlZuUdq5qXjp4BW3ZzfuX0RZyZ4tuI-39QMGUcAGAAUI";
-        String openId = "oKrd35bHD8K40_Jfs1jHARweC7TU";
-        String templateId = "oF-pemb-OKhpiuAME-FdMmPdqr-6CKuUIC2_1I12ZYA";
-        String page = "pages/index/index";
-        sendTemplateMessage(accessToken, openId, templateId, page, msgData);
+        String accessToken = "75_1ZdZ2BBXokSvw9T-TSEMhtH57o_ACp4DTPotAZZqrhTYqNwyOwmvR9Xh7RF8DIdnTro9pBLUCI6dYT4bbwNorKairxeTePel34-crgf98rfMLef0aOdOgcNoRygVUWbAGAEDF";
+        for (SendDyInfoVo hashMap : hashMaps) {
+            String openId = hashMap.getOpenId();
+            String templateId = "oF-pemb-OKhpiuAME-FdMmPdqr-6CKuUIC2_1I12ZYA";
+            String page = "pages/index/index";
+            sendTemplateMessage(accessToken, openId, templateId, page, msgData);
+        }
+
     }
 }
