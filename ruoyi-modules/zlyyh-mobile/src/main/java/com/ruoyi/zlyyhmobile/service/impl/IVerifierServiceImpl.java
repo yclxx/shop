@@ -90,10 +90,10 @@ public class IVerifierServiceImpl implements IVerifierService {
         lqw.eq(ShopMerchant::getShopId, shopId);
         lqw.eq(ShopMerchant::getMerchantType, "0");
         List<ShopMerchantVo> wxMerchant = shopMerchantMapper.selectVoList(lqw);
+        lqw.clear();
         lqw.eq(ShopMerchant::getShopId, shopId);
         lqw.eq(ShopMerchant::getMerchantType, "2");
         List<ShopMerchantVo> payMerchant = shopMerchantMapper.selectVoList(lqw);
-
         Map<String, Object> map = new HashMap<>();
         map.put("shop", shop);
         map.put("commercialTenant", commercialTenantVo);
@@ -225,6 +225,7 @@ public class IVerifierServiceImpl implements IVerifierService {
             commercialTenant.setCommercialTenantName(bo.getCommercialTenant().getCommercialTenantName());
             commercialTenant.setCommercialTenantTitle(bo.getCommercialTenant().getCommercialTenantTitle());
             commercialTenant.setCommercialTenantImg(bo.getCommercialTenant().getCommercialTenantImg());
+            commercialTenant.setAdminMobile(bo.getCommercialTenant().getAdminMobile());
             commercialTenant.setActivityNature(bo.getCommercialTenant().getActivityNature());
             commercialTenant.setIsCache("1");
             commercialTenantMapper.updateById(commercialTenant);

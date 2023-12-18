@@ -155,7 +155,12 @@ public class ShareUserServiceImpl implements IShareUserService {
      * 保存前的数据校验
      */
     private void validEntityBeforeSave(ShareUser entity) {
-        //TODO 做一些数据校验,如唯一约束
+        if (null != entity.getParentId()) {
+            ShareUserVo shareUserVo = baseMapper.selectVoById(entity.getParentId());
+            if (null != shareUserVo) {
+                entity.setBusinessDistrictName(shareUserVo.getBusinessDistrictName());
+            }
+        }
     }
 
     /**

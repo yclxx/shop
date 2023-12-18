@@ -1055,8 +1055,10 @@ public class YsfUtils {
         String chnlId = "8126";
         String appId = "up_49pfnfkryxb4v_s28";
         String activityTp = "02";
-        String activityNo = "3102023112040116";
-        String mobile = "15542432188";
+        String activityNo = "3102023101930119";
+//        String activityNo = "3102023112040116";
+        String mobile = "15524576686";
+//        String mobile = "15542432188";
 //        String mobile = "17767132971";
 //        String mobile = "18340897551";
         String sm4Key = "d33fc2573c5ed170009a7525b7244786";
@@ -1073,26 +1075,26 @@ public class YsfUtils {
 //        }
 
         // 验证签名
-        String publicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkL8jl0DczWwUemsX1P97t4RBBAgqLpZYICjOkM/GWvR43h3m4wxfud0qye5Xrf/oiuE3XKtIfkcQLhYBaPdGMIUfSLLwGae3eJDPN4Iqv+bwN30C55Lu49YIFAR1LxR0LQ+n5XgGuPMnjF9LVoGnwMzKNbDA2txmoQEACw3D5UmVrIEzT6dMTPfyKzjSYNek3UmkymTEveZpZXcXkNjB++n2YQCueU7gdi8Y2LC1J0//xWTUjL0vjdLh7+B3TK7aQyUE0JxlZhgnWquFLuxi2FSEvBkgtK7Ki0QnfxAlp1ECVpXwLjbmz0Nzt22Bun85ZGhEdiOfs3hhRJzYgGe+MQIDAQAB";
-        String bizMethod = "mkt.CpnStateUpdtNotify";
-        String body = "{\"couponNum\":1,\"traceId\":\"48231201741069055953\",\"transTp\":\"01\",\"chnlId\":\"9001\",\"orderNo\":\"20231201203506110091505806\",\"transChnl\":\"0002\",\"couponNm\":\"2023大额基础营销（满5000元减80元）\",\"operTp\":\"01\",\"couponCd\":\"INNER_23120120325903358638229398935819\",\"couponId\":\"3102023113043445\",\"orderAt\":500000,\"transSeq\":\"202312012035161740041\",\"posTmn\":\"18332706\",\"discountAt\":8000,\"couponCdInfos\":[{\"subAcctOperAt\":1,\"couponCd\":\"INNER_23120120325903358638229398935819\"}],\"mchntCd\":\"898210250945557\",\"transDtTm\":\"20231201203516\"}";
-        String str = "version=1.0.0&appId=" + appId + "&bizMethod=" + bizMethod + "&reqId=100_202312012035161740041&body=" + body;
-        str = SecureUtil.sha256(str);
-        try {
-            boolean verify = verify(str, publicKey, "UdSYW9cBe0n6EG2aUB92Tswy W/CDXkKCY1osLGkgnAxRU33Mp15i6O4XM/UEl44AdyMmcKTH70hNiQXrAVZGIAbaL0KR6/hV/8uTSoXJqmuYivLX3RRRNz004EW3esTwZIVqJVo2quWysWoigD3nQPZfNbEasq1jehEdUQ/esfGeycCsukx7rdJU5UyX s0VgrMOGVd zbP27HlQYmbWMkyOCkFlodFomH2HZcU4Hc/KNapL5NIQ2CaxNYJqg vwC0vZefAE6Mos6f/GXv6 /O5HsF2ft yOOYPkJ1eEV4urPFU9m8HzjggSTc4PclUrzHhU9Wrz1vBcAU7i4JdoA==");
-            System.out.println(verify);
-        } catch (Exception e) {
-            log.error("银联开放平台接口调用签名异常", e);
-        }
+//        String publicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkL8jl0DczWwUemsX1P97t4RBBAgqLpZYICjOkM/GWvR43h3m4wxfud0qye5Xrf/oiuE3XKtIfkcQLhYBaPdGMIUfSLLwGae3eJDPN4Iqv+bwN30C55Lu49YIFAR1LxR0LQ+n5XgGuPMnjF9LVoGnwMzKNbDA2txmoQEACw3D5UmVrIEzT6dMTPfyKzjSYNek3UmkymTEveZpZXcXkNjB++n2YQCueU7gdi8Y2LC1J0//xWTUjL0vjdLh7+B3TK7aQyUE0JxlZhgnWquFLuxi2FSEvBkgtK7Ki0QnfxAlp1ECVpXwLjbmz0Nzt22Bun85ZGhEdiOfs3hhRJzYgGe+MQIDAQAB";
+//        String bizMethod = "mkt.CpnStateUpdtNotify";
+//        String body = "{\"couponNum\":1,\"traceId\":\"48231201741069055953\",\"transTp\":\"01\",\"chnlId\":\"9001\",\"orderNo\":\"20231201203506110091505806\",\"transChnl\":\"0002\",\"couponNm\":\"2023大额基础营销（满5000元减80元）\",\"operTp\":\"01\",\"couponCd\":\"INNER_23120120325903358638229398935819\",\"couponId\":\"3102023113043445\",\"orderAt\":500000,\"transSeq\":\"202312012035161740041\",\"posTmn\":\"18332706\",\"discountAt\":8000,\"couponCdInfos\":[{\"subAcctOperAt\":1,\"couponCd\":\"INNER_23120120325903358638229398935819\"}],\"mchntCd\":\"898210250945557\",\"transDtTm\":\"20231201203516\"}";
+//        String str = "version=1.0.0&appId=" + appId + "&bizMethod=" + bizMethod + "&reqId=100_202312012035161740041&body=" + body;
+//        str = SecureUtil.sha256(str);
+//        try {
+//            boolean verify = verify(str, publicKey, "UdSYW9cBe0n6EG2aUB92Tswy W/CDXkKCY1osLGkgnAxRU33Mp15i6O4XM/UEl44AdyMmcKTH70hNiQXrAVZGIAbaL0KR6/hV/8uTSoXJqmuYivLX3RRRNz004EW3esTwZIVqJVo2quWysWoigD3nQPZfNbEasq1jehEdUQ/esfGeycCsukx7rdJU5UyX s0VgrMOGVd zbP27HlQYmbWMkyOCkFlodFomH2HZcU4Hc/KNapL5NIQ2CaxNYJqg vwC0vZefAE6Mos6f/GXv6 /O5HsF2ft yOOYPkJ1eEV4urPFU9m8HzjggSTc4PclUrzHhU9Wrz1vBcAU7i4JdoA==");
+//            System.out.println(verify);
+//        } catch (Exception e) {
+//            log.error("银联开放平台接口调用签名异常", e);
+//        }
 
         // 查询活动剩余名额查询
 //        aggQueryCpnRemain(activityNo, chnlId, appId, privateKey);
         // 赠送优惠券
 //        couponAcquire(transSeq, activityNo, mobile, "1", "03", chnlId, appId, privateKey, sm4Key);
         // 用户优惠券状态查询
-//        List<String> activityNoList = new ArrayList<>();
-//        activityNoList.add(activityNo);
-//        userCoupon(mobile, activityNoList, "03", chnlId, appId, privateKey, sm4Key);
+        List<String> activityNoList = new ArrayList<>();
+        activityNoList.add(activityNo);
+        userCoupon(mobile, activityNoList, "03", chnlId, appId, privateKey, sm4Key);
         // 查询优惠券赠送结果
 //        couponAcqQuery(transSeq, "20231121", chnlId, appId, privateKey);
         // 赠送红包

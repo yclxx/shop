@@ -23,4 +23,9 @@ public interface IDrawService {
      */
     List<DrawVo> queryList(DrawBo bo);
 
+    /**
+     * 查询奖品管理列表
+     */
+    List<DrawVo> queryListNoCache(DrawBo bo);
+
 }

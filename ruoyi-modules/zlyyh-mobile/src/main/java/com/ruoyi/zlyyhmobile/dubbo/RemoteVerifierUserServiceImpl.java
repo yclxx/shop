@@ -380,7 +380,6 @@ public class RemoteVerifierUserServiceImpl implements RemoteVerifierUserService 
         param.put("backendToken", backendToken);
         param.put("openId", openId);
         param.put("accessToken", accessToken);
-
         String result;
         try {
             result = HttpRequest.post(YsfPropertiesUtils.getUserMobileUrl(platformKey)).header("Content-Type", "application/json;charset=UTF-8").header("Accept", "application/json").body(JsonUtils.toJsonString(param), "application/json").execute().body();

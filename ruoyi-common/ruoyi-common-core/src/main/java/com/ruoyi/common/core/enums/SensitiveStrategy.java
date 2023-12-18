@@ -29,6 +29,11 @@ public enum SensitiveStrategy {
     ADDRESS(s -> DesensitizedUtil.address(s, 8)),
 
     /**
+     * 姓名脱敏
+     */
+    NAME(DesensitizedUtil::chineseName),
+
+    /**
      * 邮箱脱敏
      */
     EMAIL(DesensitizedUtil::email),

@@ -110,7 +110,7 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
     public Boolean updateCommercialTenant(CommercialTenantBo bo) {
         CommercialTenant commercialTenant = baseMapper.selectById(bo.getCommercialTenantId());
         // 修改手机号与原手机号不同时处理
-        if (!commercialTenant.getAdminMobile().equals(bo.getAdminMobile())) {
+        if (StringUtils.isNotEmpty(commercialTenant.getAdminMobile()) && !commercialTenant.getAdminMobile().equals(bo.getAdminMobile())) {
             Verifier oldVerifier = verifierMapper.selectByMobile(commercialTenant.getAdminMobile());
             if (ObjectUtil.isNotEmpty(oldVerifier)) {
                 List<Shop> shops = shopService.queryListByCommercialId(commercialTenant.getCommercialTenantId());
@@ -141,7 +141,7 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
             }
         }
         CommercialTenant commercialTenant1 = BeanCopyUtils.copy(bo, CommercialTenant.class);
-        commercialTenant1.setIsCache("0");
+        commercialTenant1.setIsCache("1");
         return baseMapper.updateById(commercialTenant1) > 0;
     }
 
