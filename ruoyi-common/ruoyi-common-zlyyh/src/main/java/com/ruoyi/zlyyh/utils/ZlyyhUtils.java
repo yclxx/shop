@@ -109,6 +109,13 @@ public class ZlyyhUtils {
     }
 
     /**
+     * 用户选择所在城市 精确到市 例如 330100
+     */
+    public static String getUserCheckCityCode() {
+        return ServletUtils.getHeader(ZlyyhConstants.CITY_CODE);
+    }
+
+    /**
      * 用户真实所在城市 精确到区 例如 330105
      */
     public static String getAdCode() {
