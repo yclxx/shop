@@ -56,15 +56,24 @@
     <el-table v-if="refreshTable" v-loading="loading" :data="shareUserList" row-key="userId"
       :default-expand-all="isExpandAll" :tree-props="{children: 'children', hasChildren: 'hasChildren'}">
       <el-table-column label="商圈名称" prop="businessDistrictName" width="150" />
-      <el-table-column label="品牌名称" align="center" prop="commercialTenantName" width="150" />
-      <el-table-column label="门店名称" align="center" prop="shopName" width="150" />
-      <el-table-column label="用户信息" align="center" prop="userId" width="230">
+      <el-table-column label="用户信息" align="left" prop="userId" width="230">
         <template slot-scope="scope">
           <span>ID：{{ scope.row.userId }}</span><br>
           <span v-if="scope.row.userMobile">手机号：{{ scope.row.userMobile }}</span>
         </template>
       </el-table-column>
       <el-table-column label="云闪付手机号" align="center" prop="upMobile" width="120" />
+      <el-table-column label="姓名" align="center" prop="userName" width="68" />
+      <el-table-column label="性别" align="center" prop="sex" width="68">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sex_type" :value="scope.row.sex" />
+        </template>
+      </el-table-column>
+      <el-table-column label="年龄" align="center" prop="ageType" width="108">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.age_type_list" :value="scope.row.ageType" />
+        </template>
+      </el-table-column>
       <el-table-column label="状态" width="68" align="center" prop="status">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status" />
@@ -86,7 +95,9 @@
           <span>{{ parseTime(scope.row.endTime) }}</span><br />
         </template>
       </el-table-column>
-      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+      <el-table-column label="品牌名称" align="center" prop="commercialTenantName" width="150" />
+      <el-table-column label="门店名称" align="center" prop="shopName" width="150" />
+      <el-table-column label="创建时间" fixed="right" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
@@ -110,6 +121,23 @@
             <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id"></el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="云闪付手机号" prop="upMobile">
+          <el-input v-model="form.upMobile" placeholder="请输入云闪付手机号" />
+        </el-form-item>
+        <el-form-item label="姓名" prop="userName">
+          <el-input v-model="form.userName" placeholder="请输入姓名" />
+        </el-form-item>
+        <el-form-item label="性别" prop="sex">
+          <el-radio-group v-model="form.sex">
+            <el-radio v-for="dict in dict.type.sex_type" :key="dict.value" :label="dict.value">{{dict.label}}</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="年龄" prop="ageType">
+          <el-select v-model="form.ageType" placeholder="请选择年龄" style="width: 100%;" clearable>
+            <el-option v-for="dict in dict.type.age_type_list" :key="dict.value" :label="dict.label"
+              :value="dict.value" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="所属商圈" prop="parentId">
           <treeselect v-model="form.parentId" :options="shareUserOptions" :normalizer="normalizer"
             placeholder="请选择所属商圈" />
@@ -122,9 +150,6 @@
         </el-form-item>
         <el-form-item label="门店名称" prop="shopName">
           <el-input v-model="form.shopName" placeholder="请输入门店名称" />
-        </el-form-item>
-        <el-form-item label="云闪付手机号" prop="upMobile">
-          <el-input v-model="form.upMobile" placeholder="请输入云闪付手机号" />
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
@@ -176,7 +201,7 @@
 
   export default {
     name: "ShareUser",
-    dicts: ['audit_status', 'sys_normal_disable'],
+    dicts: ['audit_status', 'sys_normal_disable', 'sex_type', 'age_type_list'],
     components: {
       Treeselect
     },

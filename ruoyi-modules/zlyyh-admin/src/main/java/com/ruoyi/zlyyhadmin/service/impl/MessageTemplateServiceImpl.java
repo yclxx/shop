@@ -30,6 +30,7 @@ import com.ruoyi.zlyyh.utils.YsfUtils;
 import com.ruoyi.zlyyhadmin.domain.bo.UserInfoBo;
 import com.ruoyi.zlyyhadmin.service.IMessageTemplateService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -44,6 +45,7 @@ import java.util.Map;
  * @author yzg
  * @date 2023-11-23
  */
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class MessageTemplateServiceImpl implements IMessageTemplateService {
@@ -165,8 +167,7 @@ public class MessageTemplateServiceImpl implements IMessageTemplateService {
      * 发送云闪付消息
      */
     public void ysfMessage(String url, String backendToken, String openId, MessageTemplateVo messageTemplateVo,
-                           PlatformChannelVo platformChannelVo,
-                           JSONArray jsonArray) {
+                           PlatformChannelVo platformChannelVo, JSONArray jsonArray) {
         try {
             Map<String, Object> contentData = new HashMap<>();
             // 我方唯一标识
@@ -183,12 +184,12 @@ public class MessageTemplateServiceImpl implements IMessageTemplateService {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
                 contentData.put(jsonObject.getString("key"), jsonObject.getString("value"));
             }
-            //log.info("云闪付预警消息参数：{}", JSONObject.toJSONString(contentData));
-            String s = HttpUtil.post(url, JSONObject.toJSONString(contentData));
-            System.out.println("云闪付预警消息返回结果：" + s);
-            //log.info("云闪付预警消息返回结果：{}", s);
+            String jsonString = JSONObject.toJSONString(contentData);
+
+            String s = HttpUtil.post(url, jsonString);
+            log.info("云闪付消息推送，请求参数：{},返回结果：{}", jsonString, s);
         } catch (Exception e) {
-            //log.info("云闪付预警异常：", e);
+            log.info("云闪付消息发送异常：", e);
         }
     }
 

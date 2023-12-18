@@ -1,7 +1,6 @@
 package com.ruoyi.zlyyhmobile.controller;
 
 import cn.hutool.core.codec.Base64;
-import cn.hutool.core.util.ObjectUtil;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.core.web.controller.BaseController;
@@ -75,9 +74,9 @@ public class ShareUserController extends BaseController {
     public R<Void> add(@RequestBody ShareUserBo bo) {
         bo.setUserId(LoginHelper.getUserId());
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
-        if (ObjectUtil.isNull(bo.getParentId())) {
-            return R.fail("请选择商圈");
-        }
+//        if (ObjectUtil.isNull(bo.getParentId())) {
+//            return R.fail("请选择商圈");
+//        }
         UserVo userVo = userService.queryById(bo.getUserId(), ZlyyhUtils.getPlatformChannel());
         if (null == userVo) {
             return R.fail("登录超时，请退出重试！");

@@ -4,6 +4,9 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.DesensitizedUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.http.HttpStatus;
+import com.baomidou.lock.LockInfo;
+import com.baomidou.lock.LockTemplate;
+import com.baomidou.lock.executor.RedissonLockExecutor;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -28,6 +31,7 @@ import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
 import com.ruoyi.zlyyhmobile.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,10 +55,11 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
     private final IUserService userService;
     private final YsfConfigService ysfConfigService;
     private final IOrderService orderService;
-    private final IPlatformService platformService;
     private final IMissionService missionService;
     private final IMissionGroupService missionGroupService;
     private final String inviteBind = "inviteBind:";
+    @Autowired
+    private LockTemplate lockTemplate;
 
     /**
      * 绑定用户邀请关系
@@ -156,89 +161,100 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
         if (userId.equals(bo.getUserId())) {
             throw new ServiceException("不能给自己助力");
         }
-        // 校验用户是否满足条件
-        MissionVo missionVo = missionService.queryById(bo.getMissionId());
-        // 查询用户信息
-        UserVo userVo = userService.queryById(userId, channel);
-        if (null == userVo || !userVo.getPlatformKey().equals(platformId)) {
-            throw new ServiceException("登录超时，请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
+        String key = "inviteUser:" + platformId + ":" + userId + ":" + bo.getMissionId();
+        final LockInfo lockInfo = lockTemplate.lock("lock" + key, 30000L, 1000L, RedissonLockExecutor.class);
+        if (null == lockInfo) {
+            throw new ServiceException("操作频繁，请稍后重试");
         }
-        int day = 30;
+        // 获取锁成功，处理业务
         try {
-            String s = ysfConfigService.queryValueByKey(platformId, ZlyyhConstants.inviteUserDay);
-            if (StringUtils.isNotBlank(s)) {
-                day = Integer.parseInt(s);
+            // 校验用户是否满足条件
+            MissionVo missionVo = missionService.queryById(bo.getMissionId());
+            // 查询用户信息
+            UserVo userVo = userService.queryById(userId, channel);
+            if (null == userVo || !userVo.getPlatformKey().equals(platformId)) {
+                throw new ServiceException("登录超时，请退出重试", HttpStatus.HTTP_UNAUTHORIZED);
             }
-        } catch (Exception e) {
-            log.error("邀请助力，获取ysfConfig配置异常：", e);
-        }
-        String cacheKey = inviteBind + bo.getMissionId() + ":" + userId;
-        Long cacheObject = RedisUtils.getCacheObject(cacheKey);
-        if (null == cacheObject || !cacheObject.equals(bo.getUserId())) {
-            if (null == userVo.getLastLoginDate()) {
+            int day = 30;
+            try {
+                String s = ysfConfigService.queryValueByKey(platformId, ZlyyhConstants.inviteUserDay);
+                if (StringUtils.isNotBlank(s)) {
+                    day = Integer.parseInt(s);
+                }
+            } catch (Exception e) {
+                log.error("邀请助力，获取ysfConfig配置异常：", e);
+            }
+            String cacheKey = inviteBind + bo.getMissionId() + ":" + userId;
+            Long cacheObject = RedisUtils.getCacheObject(cacheKey);
+            if (null == cacheObject || !cacheObject.equals(bo.getUserId())) {
+                if (null == userVo.getLastLoginDate()) {
 //                // 查询用户订单
 //                Long orderCount = orderService.countByUserId(userId, day);
 //                if (null != orderCount && orderCount > 0) {
 //                    log.info("绑定用户邀请关系，用户不是新用户，被邀请用户ID：{}，30天内有订单：{}，bo={}", userId, orderCount, bo);
 //                    throw new ServiceException("您不符合助力条件");
 //                }
-            } else {
-                if (DateUtils.getDatePoorDay(new Date(), userVo.getLastLoginDate(), true) <= day) {
-                    log.info("绑定用户邀请关系，用户不是新用户，被邀请用户ID：{}，上次登录时间：{}，bo={}", userId, DateUtils.parseDateToStr(DateUtils.YYYY_MM_DD_HH_MM_SS, userVo.getLastLoginDate()), bo);
-                    throw new ServiceException("您不符合助力条件");
+                } else {
+                    if (DateUtils.getDatePoorDay(new Date(), userVo.getLastLoginDate(), true) <= day) {
+                        log.info("绑定用户邀请关系，用户不是新用户，被邀请用户ID：{}，上次登录时间：{}，bo={}", userId, DateUtils.parseDateToStr(DateUtils.YYYY_MM_DD_HH_MM_SS, userVo.getLastLoginDate()), bo);
+                        throw new ServiceException("您不符合助力条件");
+                    }
                 }
             }
-        }
-        // 查询用户是否被邀请过了
-        Long count = baseMapper.selectCount(new LambdaQueryWrapper<InviteUserLog>().eq(InviteUserLog::getInviteUserId, userId).eq(InviteUserLog::getMissionId, bo.getMissionId()).last("and create_time >= DATE_SUB(CURDATE(), INTERVAL " + day + " DAY)"));
-        if (count > 0) {
-            throw new ServiceException("只能助力一次");
-        }
-        // 查询用户今日是否已达标
-        List<ProductVo> productVos = missionGroupService.missionProduct(missionVo.getMissionId(), missionVo.getPlatformKey(), ZlyyhUtils.getCityCodeByAdCode(adCode));
-        if (ObjectUtil.isEmpty(productVos)) {
-            throw new ServiceException("感谢您的助力，本次活动已结束");
-        }
-        // 查询用户今日已获奖励次数
-        Long userInviteLogCount = getUserInviteLogCount(bo.getUserId(), bo.getMissionId());
-        if (null == userInviteLogCount) {
-            userInviteLogCount = 0L;
-        }
-        if (productVos.size() > 1) {
-            if (userInviteLogCount >= productVos.size()) {
-                throw new ServiceException("感谢您的助力，今日已达标");
+            // 查询用户是否被邀请过了
+            Long count = baseMapper.selectCount(new LambdaQueryWrapper<InviteUserLog>().eq(InviteUserLog::getInviteUserId, userId).eq(InviteUserLog::getMissionId, bo.getMissionId()).last("and create_time >= DATE_SUB(CURDATE(), INTERVAL " + day + " DAY)"));
+            if (count > 0) {
+                throw new ServiceException("只能助力一次");
             }
-        } else {
-            ProductVo productVo = productVos.get(0);
-            if (productVo.getDayUserCount() > 0 && userInviteLogCount >= productVo.getDayUserCount()) {
-                throw new ServiceException("感谢您的助力，今日已达标");
+            // 查询用户今日是否已达标
+            List<ProductVo> productVos = missionGroupService.missionProduct(missionVo.getMissionId(), missionVo.getPlatformKey(), ZlyyhUtils.getCityCodeByAdCode(adCode));
+            if (ObjectUtil.isEmpty(productVos)) {
+                throw new ServiceException("感谢您的助力，本次活动已结束");
             }
-        }
+            // 查询用户今日已获奖励次数
+            Long userInviteLogCount = getUserInviteLogCount(bo.getUserId(), bo.getMissionId());
+            if (null == userInviteLogCount) {
+                userInviteLogCount = 0L;
+            }
+            if (productVos.size() > 1) {
+                if (userInviteLogCount >= productVos.size()) {
+                    throw new ServiceException("感谢您的助力，今日已达标");
+                }
+            } else {
+                ProductVo productVo = productVos.get(0);
+                if (productVo.getDayUserCount() > 0 && userInviteLogCount >= productVo.getDayUserCount()) {
+                    throw new ServiceException("感谢您的助力，今日已达标");
+                }
+            }
 
-        log.info("助力成功，被邀请用户ID：{}，邀请用户ID：{}", userId, bo.getUserId());
-        InviteUserLog add = new InviteUserLog();
-        add.setUserId(bo.getUserId());
-        add.setInviteUserId(userId);
-        add.setInviteCityName(cityName);
-        add.setInviteCityCode(adCode);
-        add.setMissionId(bo.getMissionId());
-        add.setPlatformKey(platformId);
-        add.setSupportChannel(channel);
-        // 生成订单
-        CreateOrderBo createOrderBo = new CreateOrderBo();
-        createOrderBo.setProductId(productVos.get(userInviteLogCount.intValue()).getProductId());
-        createOrderBo.setUserId(add.getUserId());
-        createOrderBo.setAdcode(adCode);
-        createOrderBo.setCityName(cityName);
-        createOrderBo.setPlatformKey(platformId);
-        createOrderBo.setChannel(channel);
-        CreateOrderResult order = orderService.createOrder(createOrderBo, true);
-        // 回填订单号
-        add.setNumber(order.getNumber());
-        PermissionUtils.setPlatformDeptIdAndUserId(add, add.getPlatformKey(), true, false);
-        boolean flag = baseMapper.insert(add) > 0;
-        if (!flag) {
-            throw new ServiceException("操作失败，请稍后重试");
+            log.info("助力成功，被邀请用户ID：{}，邀请用户ID：{}", userId, bo.getUserId());
+            InviteUserLog add = new InviteUserLog();
+            add.setUserId(bo.getUserId());
+            add.setInviteUserId(userId);
+            add.setInviteCityName(cityName);
+            add.setInviteCityCode(adCode);
+            add.setMissionId(bo.getMissionId());
+            add.setPlatformKey(platformId);
+            add.setSupportChannel(channel);
+            // 生成订单
+            CreateOrderBo createOrderBo = new CreateOrderBo();
+            createOrderBo.setProductId(productVos.get(userInviteLogCount.intValue()).getProductId());
+            createOrderBo.setUserId(add.getUserId());
+            createOrderBo.setAdcode(adCode);
+            createOrderBo.setCityName(cityName);
+            createOrderBo.setPlatformKey(platformId);
+            createOrderBo.setChannel(channel);
+            CreateOrderResult order = orderService.createOrder(createOrderBo, true);
+            // 回填订单号
+            add.setNumber(order.getNumber());
+            PermissionUtils.setPlatformDeptIdAndUserId(add, add.getPlatformKey(), true, false);
+            boolean flag = baseMapper.insert(add) > 0;
+            if (!flag) {
+                throw new ServiceException("操作失败，请稍后重试");
+            }
+        } finally {
+            //释放锁
+            lockTemplate.releaseLock(lockInfo);
         }
     }
 

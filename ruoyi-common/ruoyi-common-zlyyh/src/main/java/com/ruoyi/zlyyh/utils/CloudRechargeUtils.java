@@ -1,5 +1,6 @@
 package com.ruoyi.zlyyh.utils;
 
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.http.HttpException;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -210,5 +211,22 @@ public class CloudRechargeUtils {
             throw new ServiceException("通知内容为空");
         }
         log.info("云充值中心通知内容{}", cloudRechargeEntity);
+    }
+
+    public static void main(String[] args) {
+        String productId = "123";
+        Map<String, Object> data = new HashMap<>();
+        data.put("productId", productId);
+        data.put("count", 1L);
+        data.put("account", "17817392639");
+        data.put("externalOrderNumber", IdUtil.getSnowflakeNextIdStr());
+        CloudRechargeResult huiguyunResult;
+        try {
+            huiguyunResult = CloudRechargeUtils.doPostHuiguyun("1470673407350804480", data, "468f204668e04db9b835c54ea1df8979", "57YDOWyoJ9+/gmhC/6a6kQ==", "https://cards.rewards95.cn/prod-api//api_v1/createOrderCheck");
+        } catch (Exception e) {
+            log.error("充值中心请求异常：", e);
+            return;
+        }
+        log.info("参数：{},响应：{}", data, huiguyunResult);
     }
 }

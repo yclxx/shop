@@ -14,6 +14,7 @@ import com.ruoyi.common.core.utils.JsonUtils;
 import com.ruoyi.common.core.utils.SpringUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.redis.utils.RedisUtils;
+import com.ruoyi.zlyyh.domain.vo.SendDyInfoVo;
 import com.wechat.pay.contrib.apache.httpclient.WechatPayHttpClientBuilder;
 import com.wechat.pay.contrib.apache.httpclient.auth.AutoUpdateCertificatesVerifier;
 import com.wechat.pay.contrib.apache.httpclient.auth.PrivateKeySigner;
@@ -43,7 +44,9 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -54,6 +57,28 @@ import java.util.Map;
  */
 @Slf4j
 public class WxUtils {
+
+    /**
+     * 发送模板消息
+     *
+     * @param accessToken token
+     * @param openId      用户openId
+     * @param templateId  模板Id
+     * @param page        页面
+     * @param msgData     消息
+     */
+    public static void sendTemplateMessage(String accessToken, String openId, String templateId, String page, Map<String, Object> msgData) {
+        String url = "https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=" + accessToken;
+        Map<String, Object> params = new HashMap<>();
+        params.put("miniprogram_state", "formal");
+        params.put("lang", "zh_CN");
+        params.put("template_id", templateId);
+        params.put("touser", openId);
+        params.put("page", page);
+        params.put("data", msgData);
+        String post = HttpUtil.post(url, JsonUtils.toJsonString(params));
+        log.info("微信消息推送，请求信息：{}，返回结果：{}", params, post);
+    }
 
     public static byte[] genQrCode(String accessToken, String scene, String page, String env_version) {
         String url = "https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=" + accessToken;
@@ -404,5 +429,39 @@ public class WxUtils {
             log.error("加载证书异常：", e);
             throw new ServiceException("加载证书异常");
         }
+    }
+
+    public static void main(String[] args) throws Exception {
+//        File file = new File("C:\\Users\\25487\\Desktop\\消息推送.xlsx");
+//        File file = new File("");
+//        BufferedInputStream in = new BufferedInputStream(new FileInputStream(
+//            file));
+//        List<SendDyInfoVo> hashMaps = ExcelUtil.importExcel(in, SendDyInfoVo.class);
+        List<SendDyInfoVo> hashMaps = new ArrayList<>();
+        SendDyInfoVo sendDyInfoVo = new SendDyInfoVo();
+        sendDyInfoVo.setOpenId("oKrd35bHD8K40_Jfs1jHARweC7TU");
+        hashMaps.add(sendDyInfoVo);
+        log.info("用户信息：{}", hashMaps);
+        Map<String, Object> msgData = new HashMap<>();
+        Map<String, String> thing1 = new HashMap<>();
+        thing1.put("value", "双十二购物狂欢");
+        msgData.put("thing6", thing1);
+
+        Map<String, String> thing7 = new HashMap<>();
+        thing7.put("value", "超多优惠券等你来领取");
+        msgData.put("thing7", thing7);
+
+        Map<String, String> thing10 = new HashMap<>();
+        thing10.put("value", "京东、淘宝、拼多多等");
+        msgData.put("thing10", thing10);
+
+        String accessToken = "75_dBq5ZwjOiGJPHFApPrbbe9gCh6MJtkLCykSQgVZZPSzJ2nKhDyOotjFoIGkXnN9wH_HmZrI4cKzyexSxNiGCsNs4GyhStuzF6m5J3fbNPK1B6oLVJ7HYR2Ld5Y8MDPiAAASJV";
+        String templateId = "oF-pemb-OKhpiuAME-FdMmPdqr-6CKuUIC2_1I12ZYA";
+//        String page = "pages/index/index";
+        String page = "/pages/imgpage/index?src=https%3A%2F%2Fimg01.yzcdn.cn%2Fupload_files%2F2023%2F12%2F13%2FFrRDIJJEdIygllNJZsbJ3LT9chay.jpg";
+        for (SendDyInfoVo hashMap : hashMaps) {
+            sendTemplateMessage(accessToken, hashMap.getOpenId(), templateId, page, msgData);
+        }
+
     }
 }

@@ -21,7 +21,7 @@ import java.util.Date;
 @TableName("t_share_user")
 public class ShareUser extends TreeEntity<ShareUser> {
 
-    private static final long serialVersionUID=1L;
+    private static final long serialVersionUID = 1L;
 
     /**
      * 用户ID
@@ -83,4 +83,18 @@ public class ShareUser extends TreeEntity<ShareUser> {
      */
     private Long sysUserId;
 
+    /**
+     * 姓名
+     */
+    private String userName;
+
+    /**
+     * 性别
+     */
+    private String sex;
+
+    /**
+     * 年龄段
+     */
+    private String ageType;
 }

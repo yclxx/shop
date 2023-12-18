@@ -216,4 +216,8 @@ public interface CacheNames {
      * 核销人员信息缓存
      */
     String M_VERIFIER = "m_verifier#1d";
+    /**
+     * 银联产品查询缓存
+     */
+    String UNIONPAY_PRODUCT = "unionpayProduct#60m";
 }

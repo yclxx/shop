@@ -691,50 +691,61 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
      */
     @Override
     public CreateOrderResult payMissionGroupProduct(Long missionId, Long userId, Long platformId, String channel, String cityName, String adCode) {
-        MissionVo missionVo = missionService.queryById(missionId);
-        if (null == missionVo) {
-            log.error("任务不存在：{}", missionId);
-            throw new ServiceException("任务不存在");
+        String key = "payMissionGroupProduct:" + platformId + ":" + userId + ":" + missionId;
+        final LockInfo lockInfo = lockTemplate.lock("lock" + key, 30000L, 1000L, RedissonLockExecutor.class);
+        if (null == lockInfo) {
+            throw new ServiceException("操作频繁，请稍后重试");
         }
-        checkMissionStatus(missionVo.getStatus(), missionVo.getStartDate(), missionVo.getEndDate());
-        MissionGroupVo missionGroupVo = missionGroupService.queryById(missionVo.getMissionGroupId());
-        if (null == missionGroupVo) {
-            log.error("任务不存在：{}", missionId);
-            throw new ServiceException("任务不存在");
-        }
-        checkMissionStatus(missionGroupVo.getStatus(), missionGroupVo.getStartDate(), missionGroupVo.getEndDate());
-        UserProductCount userProductPayCount = this.getUserProductPayCount(missionVo.getMissionGroupId(), missionId, userId, ServletUtils.getHeader(ZlyyhConstants.CITY_CODE));
-        if (null == userProductPayCount || null == userProductPayCount.getProductId()) {
-            log.error("任务配置错误：{}", missionId);
-            throw new ServiceException("任务配置错误");
-        }
-        if (!userProductPayCount.isDayPay()) {
-            log.error("用户：{}，今日已达参与上限：{}", userId, missionId);
-            throw new ServiceException("今日已达参与上限");
-        }
-        if ("1".equals(missionVo.getMissionAffiliation())) {
-            // 查询是否是62会员 先查缓存
-            MemberVipBalanceVo user62VipInfo = userService.getUser62VipInfo(true, userId);
-            if (null == user62VipInfo) {
-                throw new ServiceException("会员信息查询失败，请稍后重试");
+        // 获取锁成功，处理业务
+        try {
+            MissionVo missionVo = missionService.queryById(missionId);
+            if (null == missionVo) {
+                log.error("任务不存在：{}", missionId);
+                throw new ServiceException("任务不存在");
             }
-            if (!"01".equals(user62VipInfo.getStatus()) && !"03".equals(user62VipInfo.getStatus())) {
-                // 不是会员，再次查询，防止用户开通之后，我方缓存未更新问题
-                user62VipInfo = userService.getUser62VipInfo(false, userId);
+            checkMissionStatus(missionVo.getStatus(), missionVo.getStartDate(), missionVo.getEndDate());
+            MissionGroupVo missionGroupVo = missionGroupService.queryById(missionVo.getMissionGroupId());
+            if (null == missionGroupVo) {
+                log.error("任务不存在：{}", missionId);
+                throw new ServiceException("任务不存在");
+            }
+            checkMissionStatus(missionGroupVo.getStatus(), missionGroupVo.getStartDate(), missionGroupVo.getEndDate());
+            UserProductCount userProductPayCount = this.getUserProductPayCount(missionVo.getMissionGroupId(), missionId, userId, ServletUtils.getHeader(ZlyyhConstants.CITY_CODE));
+            if (null == userProductPayCount || null == userProductPayCount.getProductId()) {
+                log.error("任务配置错误：{}", missionId);
+                throw new ServiceException("任务配置错误");
+            }
+            if (!userProductPayCount.isDayPay()) {
+                log.error("用户：{}，今日已达参与上限：{}", userId, missionId);
+                throw new ServiceException("今日已达参与上限");
+            }
+            if ("1".equals(missionVo.getMissionAffiliation())) {
+                // 查询是否是62会员 先查缓存
+                MemberVipBalanceVo user62VipInfo = userService.getUser62VipInfo(true, userId);
+                if (null == user62VipInfo) {
+                    throw new ServiceException("会员信息查询失败，请稍后重试");
+                }
                 if (!"01".equals(user62VipInfo.getStatus()) && !"03".equals(user62VipInfo.getStatus())) {
-                    throw new ServiceException("请先开通62会员");
+                    // 不是会员，再次查询，防止用户开通之后，我方缓存未更新问题
+                    user62VipInfo = userService.getUser62VipInfo(false, userId);
+                    if (!"01".equals(user62VipInfo.getStatus()) && !"03".equals(user62VipInfo.getStatus())) {
+                        throw new ServiceException("请先开通62会员");
+                    }
                 }
             }
+            asyncSecondService.sendInviteDraw(userId, platformId, missionVo.getMissionGroupId(), channel, cityName, adCode);
+            CreateOrderBo createOrderBo = new CreateOrderBo();
+            createOrderBo.setProductId(userProductPayCount.getProductId());
+            createOrderBo.setUserId(userId);
+            createOrderBo.setAdcode(adCode);
+            createOrderBo.setCityName(cityName);
+            createOrderBo.setPlatformKey(platformId);
+            createOrderBo.setChannel(channel);
+            return orderService.createOrder(createOrderBo, true);
+        } finally {
+            //释放锁
+            lockTemplate.releaseLock(lockInfo);
         }
-        asyncSecondService.sendInviteDraw(userId, platformId, missionVo.getMissionGroupId(), channel, cityName, adCode);
-        CreateOrderBo createOrderBo = new CreateOrderBo();
-        createOrderBo.setProductId(userProductPayCount.getProductId());
-        createOrderBo.setUserId(userId);
-        createOrderBo.setAdcode(adCode);
-        createOrderBo.setCityName(cityName);
-        createOrderBo.setPlatformKey(platformId);
-        createOrderBo.setChannel(channel);
-        return orderService.createOrder(createOrderBo, true);
     }
 
     private void checkMissionStatus(String status, Date startDate, Date endDate) {
@@ -887,7 +898,7 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
             bo.setMissionGroupId(missionGroupId);
             bo.setPlatformKey(platformKey);
             bo.setDrawWinning("0");
-            drawVos = drawService.queryList(bo);
+            drawVos = drawService.queryListNoCache(bo);
             if (ObjectUtil.isEmpty(drawVos)) {
                 return new ArrayList<>();
             }
@@ -905,6 +916,11 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
                 continue;
             }
             if (null != drawVo.getSellEndDate() && DateUtils.compare(drawVo.getSellEndDate()) < 0) {
+                updateCache = true;
+                iterator.remove();
+                continue;
+            }
+            if (!"0".equals(drawVo.getDrawWinning())) {
                 updateCache = true;
                 iterator.remove();
                 continue;

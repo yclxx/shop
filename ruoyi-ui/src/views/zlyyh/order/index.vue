@@ -68,7 +68,8 @@
       <el-table-column label="订单号" align="left" prop="number" width="270">
         <template slot-scope="scope">
           <span>订单号：{{ scope.row.number }}</span><br>
-          <span v-if="scope.row.parentNumber">券包母订单：{{ scope.row.parentNumber }}</span><br v-if="scope.row.parentNumber">
+          <span v-if="scope.row.parentNumber">券包母订单：{{ scope.row.parentNumber }}</span><br
+            v-if="scope.row.parentNumber">
           <span>大订单编号：{{ scope.row.collectiveNumber }}</span>
         </template>
       </el-table-column>
@@ -125,6 +126,11 @@
         </template>
       </el-table-column>
       <el-table-column label="购买数量" align="center" prop="count" />
+      <el-table-column label="核销状态" align="center" prop="verificationStatus">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.t_order_verification_status" :value="scope.row.verificationStatus" />
+        </template>
+      </el-table-column>
       <el-table-column label="平台" align="center" prop="platformKey" width="130" :formatter="platformFormatter" />
       <el-table-column label="客户端" align="center" prop="supportChannel">
         <template slot-scope="scope">
@@ -397,7 +403,8 @@
   export default {
     name: "Order",
     dicts: ['t_order_status', 't_order_pickup_method', 't_order_send_status', 't_order_push_status',
-      't_product_type','channel_type'],
+      't_product_type', 'channel_type', 't_order_verification_status'
+    ],
     data() {
       return {
         refundWay: '0',
