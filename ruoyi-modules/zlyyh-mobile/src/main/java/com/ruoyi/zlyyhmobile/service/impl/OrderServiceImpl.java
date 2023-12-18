@@ -469,6 +469,11 @@ public class OrderServiceImpl implements IOrderService {
         }
         if (!"0".equals(orderPushCache.getStatus())) {
             log.error("发券订单号{}，订单已有最终状态，不做查询处理", pushNumber);
+            if ("1".equals(orderPushCache.getStatus())) {
+                sendResult(R.ok("订单已发券"), orderPushCache, order, cache, false);
+            } else if ("2".equals(orderPushCache.getStatus())) {
+                sendResult(R.fail(orderPushCache.getRemark()), orderPushCache, order, cache, false);
+            }
             return;
         }
         if ("0".equals(order.getOrderType())) {
