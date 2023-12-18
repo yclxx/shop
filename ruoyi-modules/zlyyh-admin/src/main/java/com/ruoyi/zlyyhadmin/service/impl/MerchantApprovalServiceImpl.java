@@ -287,6 +287,7 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
                     ShopMerchant shopMerchant = new ShopMerchant();
                     shopMerchant.setShopId(shop.getShopId());
                     shopMerchant.setMerchantNo(jsonObject.getString("merchantNo"));
+                    shopMerchant.setTerminalNo(jsonObject.getString("terminalNo"));
                     shopMerchant.setMerchantType(jsonObject.getString("merchantType"));
                     shopMerchant.setSettlement(jsonObject.getString("settlement"));
                     shopMerchant.setSettlementWay(jsonObject.getString("settlementWay"));

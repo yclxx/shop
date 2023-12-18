@@ -88,14 +88,6 @@ public class VerifierController extends BaseController {
     }
 
     /**
-     * 商户端修改门店
-     */
-    @PostMapping("/updateShop")
-    public R updateShop(@RequestBody ShopBo bo) {
-        return R.ok(verifierService.updateShop(bo));
-    }
-
-    /**
      * 商户端修改门店详情
      */
     @PostMapping("/insertShop")
@@ -171,7 +163,7 @@ public class VerifierController extends BaseController {
      * 取消门店与核销人员关系
      */
     @PostMapping("/cancelVerifier")
-    public R cancelVerifier(@RequestBody CodeBo bo) {
+    public R cancelVerifier(@RequestBody VerifierBo bo) {
         return R.ok(verifierService.cancelVerifier(bo));
     }
 
@@ -179,7 +171,7 @@ public class VerifierController extends BaseController {
      * 添加门店与核销人员关系
      */
     @PostMapping("/addVerifier")
-    public R addVerifier(@RequestBody CodeBo bo) {
+    public R addVerifier(@RequestBody VerifierBo bo) {
         return R.ok(verifierService.addVerifier(bo));
     }
 
