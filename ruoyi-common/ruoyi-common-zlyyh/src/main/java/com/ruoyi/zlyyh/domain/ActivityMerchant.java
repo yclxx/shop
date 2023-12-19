@@ -8,15 +8,15 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 门店商户号对象 t_shop_merchant
+ * 活动商户号对象 t_activity_merchant
  *
- * @author yzgnet
- * @date 2023-03-21
+ * @author yzg
+ * @date 2023-12-14
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("t_shop_merchant")
-public class ShopMerchant extends BaseEntity {
+@TableName("t_activity_merchant")
+public class ActivityMerchant extends BaseEntity {
 
     private static final long serialVersionUID = 1L;
 
@@ -26,25 +26,25 @@ public class ShopMerchant extends BaseEntity {
     @TableId(value = "id")
     private Long id;
     /**
-     * 门店ID
+     * 核销人员
      */
-    private Long shopId;
+    private Long verifierId;
+    /**
+     * 活动ID
+     */
+    private Long activityId;
     /**
      * 商户号
      */
     private String merchantNo;
     /**
-     * 终端号
-     */
-    private String terminalNo;
-    /**
-     * 商户类型（0-微信 1-云闪付 2-支付宝）
+     * 商户类型
      */
     private String merchantType;
     /**
-     * 收款方式
+     * 状态
      */
-    private String paymentMethod;
+    private String status;
     /**
      * 结算方式
      */
@@ -54,14 +54,6 @@ public class ShopMerchant extends BaseEntity {
      */
     private String settlement;
     /**
-     * 收单机构
-     */
-    private String acquirer;
-    /**
-     * 状态（0正常 1停用）
-     */
-    private String status;
-    /**
      * 备注
      */
     private String remark;
@@ -70,5 +62,17 @@ public class ShopMerchant extends BaseEntity {
      */
     @TableLogic
     private Long delFlag;
+    /**
+     * 收款方式（主扫1，2被扫）
+     */
+    private String paymentMethod;
+    /**
+     * 收单机构
+     */
+    private String acquirer;
+    /**
+     * 终端编号
+     */
+    private String terminalNo;
 
 }

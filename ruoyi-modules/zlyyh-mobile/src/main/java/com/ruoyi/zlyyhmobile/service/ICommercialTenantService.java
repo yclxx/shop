@@ -5,6 +5,8 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.CommercialTenantBo;
 import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
 
+import java.util.List;
+
 /**
  * 商户Service接口
  *
@@ -39,7 +41,7 @@ public interface ICommercialTenantService {
 
     CommercialTenantVo getDetails(Long commercialTenantId);
 
-    CommercialTenantVo getCommercialTenant();
+    List<CommercialTenantVo> getCommercialTenant(CommercialTenantBo bo);
 
     Boolean updateCommercialTenant(CommercialTenantBo bo);
 }
