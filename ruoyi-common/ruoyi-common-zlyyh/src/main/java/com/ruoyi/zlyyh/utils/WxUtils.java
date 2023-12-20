@@ -429,30 +429,30 @@ public class WxUtils {
     }
 
     public static void main(String[] args) throws Exception {
-        File file = new File("C:\\Users\\25487\\Desktop\\1214消息推送.xlsx");
+//        File file = new File("C:\\Users\\25487\\Desktop\\消息推送.xlsx");
 //        File file = new File("");
-        BufferedInputStream in = new BufferedInputStream(new FileInputStream(
-            file));
-        List<SendDyInfoVo> hashMaps = ExcelUtil.importExcel(in, SendDyInfoVo.class);
-//        List<SendDyInfoVo> hashMaps = new ArrayList<>();
-//        SendDyInfoVo sendDyInfoVo = new SendDyInfoVo();
-//        sendDyInfoVo.setOpenId("oKrd35bHD8K40_Jfs1jHARweC7TU");
-//        hashMaps.add(sendDyInfoVo);
+//        BufferedInputStream in = new BufferedInputStream(new FileInputStream(
+//            file));
+//        List<SendDyInfoVo> hashMaps = ExcelUtil.importExcel(in, SendDyInfoVo.class);
+        List<SendDyInfoVo> hashMaps = new ArrayList<>();
+        SendDyInfoVo sendDyInfoVo = new SendDyInfoVo();
+        sendDyInfoVo.setOpenId("oKrd35bHD8K40_Jfs1jHARweC7TU");
+        hashMaps.add(sendDyInfoVo);
         log.info("用户信息：{}", hashMaps);
         Map<String, Object> msgData = new HashMap<>();
         Map<String, String> thing1 = new HashMap<>();
-        thing1.put("value", "大连冬季消费券&云闪付优惠专场直播");
+        thing1.put("value", "双十二购物狂欢");
         msgData.put("thing6", thing1);
 
         Map<String, String> thing7 = new HashMap<>();
-        thing7.put("value", "直播间分享各种神券用法，送无门槛红包。");
+        thing7.put("value", "超多优惠券等你来领取");
         msgData.put("thing7", thing7);
 
         Map<String, String> thing10 = new HashMap<>();
-        thing10.put("value", "12月15日14:00直播");
+        thing10.put("value", "京东、淘宝、拼多多等");
         msgData.put("thing10", thing10);
 
-        String accessToken = "75_HgyB5whSEiiGHxvNlHcZkMs1db_5Z_q0L058T5dg7Hpdrkp9BS9rsLm1iHdY0xKuswEP4jEOcuQhrAKCABTFtPSJCB67pVsrG_k24BWbtTBWhZ4wCPAmI8Ue2M0KBIeAIAARY";
+        String accessToken = "75_dBq5ZwjOiGJPHFApPrbbe9gCh6MJtkLCykSQgVZZPSzJ2nKhDyOotjFoIGkXnN9wH_HmZrI4cKzyexSxNiGCsNs4GyhStuzF6m5J3fbNPK1B6oLVJ7HYR2Ld5Y8MDPiAAASJV";
         String templateId = "oF-pemb-OKhpiuAME-FdMmPdqr-6CKuUIC2_1I12ZYA";
 //        String page = "pages/index/index";
         String page = "/pages/imgpage/index?src=https%3A%2F%2Fimg01.yzcdn.cn%2Fupload_files%2F2023%2F12%2F13%2FFrRDIJJEdIygllNJZsbJ3LT9chay.jpg";
