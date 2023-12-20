@@ -168,6 +168,12 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="商品ID" prop="productId">
+              <span slot="label">
+                商品ID
+                <el-tooltip content="浏览完成之后的奖励,每个任务需要对应一个商品,不可多个任务对应一个商品," placement="top">
+                  <i class="el-icon-question"></i>
+                </el-tooltip>
+              </span>
               <el-input v-model="form.productId" placeholder="请输入商品ID" />
             </el-form-item>
           </el-col>
@@ -438,6 +444,7 @@
           platformKey: undefined,
           supportChannel: [],
           assignDate: '0',
+          status: '0',
           weekDate: undefined,
           productId: undefined,
           sort: undefined,

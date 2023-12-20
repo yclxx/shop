@@ -6,10 +6,12 @@ import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.core.web.controller.BaseController;
+import com.ruoyi.common.idempotent.annotation.RepeatSubmit;
 import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.zlyyh.domain.bo.BrowseBo;
 import com.ruoyi.zlyyh.domain.vo.BrowseVo;
 import com.ruoyi.zlyyh.domain.vo.UserVo;
+import com.ruoyi.zlyyh.service.YsfConfigService;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.service.IBrowseService;
 import com.ruoyi.zlyyhmobile.service.IUserService;
@@ -37,11 +39,23 @@ public class BrowseController extends BaseController {
 
     private final IBrowseService iBrowseService;
     private final IUserService userService;
+    private final YsfConfigService ysfConfigService;
+
+    /**
+     * 获取浏览任务配置信息
+     *
+     * @return 平台信息
+     */
+    @GetMapping("/ignore/getBrowseSetting")
+    public R<String> getBrowseSetting() {
+        String url = ysfConfigService.queryValueByKey(ZlyyhUtils.getPlatformId(), "browseTitle");
+        return R.ok("操作成功", url);
+    }
 
     /**
      * 查询浏览任务列表
      */
-    @GetMapping("/list")
+    @GetMapping("/ignore/list")
     public R<List<BrowseVo>> list(BrowseBo bo) {
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
         bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
@@ -58,12 +72,25 @@ public class BrowseController extends BaseController {
             // 城市筛选
             return StringUtils.isBlank(bo.getShowCity()) || item.getShowCity().contains(bo.getShowCity()) || "ALL".equalsIgnoreCase(item.getShowCity());
         }).collect(Collectors.toList());
+        Long userId = null;
+        try {
+            userId = LoginHelper.getUserId();
+        } catch (Exception ignored) {
+        }
+        if (null != userId) {
+            for (BrowseVo browseVo : collect) {
+                if (!iBrowseService.queryUserWhetherToParticipateToday(userId, browseVo)) {
+                    browseVo.setBrowseCount(1);
+                }
+            }
+        }
         return R.ok(collect);
     }
 
     /**
      * 完成浏览任务
      */
+    @RepeatSubmit
     @PostMapping("/perform/{browseId}")
     public R<Void> perform(@PathVariable("browseId") Long browseId) {
         // 获取平台ID

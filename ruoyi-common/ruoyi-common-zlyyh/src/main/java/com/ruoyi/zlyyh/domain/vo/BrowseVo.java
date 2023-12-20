@@ -8,8 +8,6 @@ import lombok.Data;
 
 import java.util.Date;
 
-
-
 /**
  * 浏览任务视图对象
  *
@@ -129,5 +127,8 @@ public class BrowseVo {
     @ExcelProperty(value = "创建时间")
     private Date createTime;
 
-
+    /**
+     * 用户是否浏览，0-未浏览，1-已浏览
+     */
+    private Integer browseCount = 0;
 }
