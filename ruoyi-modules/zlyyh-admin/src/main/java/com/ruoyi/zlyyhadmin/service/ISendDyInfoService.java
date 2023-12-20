@@ -32,6 +32,11 @@ public interface ISendDyInfoService {
     List<SendDyInfoVo> queryList(SendDyInfoBo bo);
 
     /**
+     * 湖北订阅消息
+     */
+    void sendHuBeiDyInfo();
+
+    /**
      * 修改用户订阅
      */
     Boolean insertByBo(SendDyInfoBo bo);

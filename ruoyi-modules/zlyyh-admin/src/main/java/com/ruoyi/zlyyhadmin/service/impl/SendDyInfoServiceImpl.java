@@ -1,6 +1,9 @@
 package com.ruoyi.zlyyhadmin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -8,16 +11,23 @@ import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.SendDyInfo;
+import com.ruoyi.zlyyh.domain.YsfConfig;
 import com.ruoyi.zlyyh.domain.bo.SendDyInfoBo;
+import com.ruoyi.zlyyh.domain.vo.PlatformVo;
 import com.ruoyi.zlyyh.domain.vo.SendDyInfoVo;
 import com.ruoyi.zlyyh.mapper.SendDyInfoMapper;
+import com.ruoyi.zlyyh.properties.WxProperties;
+import com.ruoyi.zlyyh.service.YsfConfigService;
+import com.ruoyi.zlyyh.utils.WxUtils;
+import com.ruoyi.zlyyh.utils.ZlyyhUtils;
+import com.ruoyi.zlyyhadmin.service.IPlatformService;
 import com.ruoyi.zlyyhadmin.service.ISendDyInfoService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 用户订阅Service业务层处理
@@ -25,11 +35,15 @@ import java.util.Map;
  * @author yzg
  * @date 2023-12-07
  */
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class SendDyInfoServiceImpl implements ISendDyInfoService {
 
     private final SendDyInfoMapper baseMapper;
+    private final WxProperties wxProperties;
+    private final YsfConfigService ysfConfigService;
+    private final IPlatformService platformService;
 
     /**
      * 查询用户订阅
@@ -57,6 +71,77 @@ public class SendDyInfoServiceImpl implements ISendDyInfoService {
         LambdaQueryWrapper<SendDyInfo> lqw = buildQueryWrapper(bo);
         return baseMapper.selectVoList(lqw);
     }
+
+    @Override
+    public void sendHuBeiDyInfo(){
+        SendDyInfoBo sendDyInfoBo = new SendDyInfoBo();
+        sendDyInfoBo.setTmplId("gMc9x6bNe4fBhcQFZMSaOYQDM2hpC3KYozpvFofUuQ4");
+        LambdaQueryWrapper<SendDyInfo> lqw = new LambdaQueryWrapper<>();
+        lqw.eq(StringUtils.isNotBlank(sendDyInfoBo.getTmplId()), SendDyInfo::getTmplId, sendDyInfoBo.getTmplId());
+        long total = baseMapper.selectCount(lqw);
+        //分页查询
+        int pageIndex = 1;
+        int pageSize = 50;
+        PageQuery pageQuery = new PageQuery();
+        pageQuery.setPageSize(pageSize);
+        while (true) {
+            pageQuery.setPageNum(pageIndex);
+            pageQuery.setPageSize(pageSize);
+            TableDataInfo<SendDyInfoVo> sendDyInfoVoTableDataInfo = queryPageList(sendDyInfoBo, pageQuery);
+            List<SendDyInfoVo> sendDyInfoVos = sendDyInfoVoTableDataInfo.getRows();
+            //发送信息
+            if(!CollectionUtils.isEmpty(sendDyInfoVos)){
+                for (SendDyInfoVo sendDyInfoVo : sendDyInfoVos) {
+                    if(sendDyInfoVo.getDyCount() <= 0){
+                        continue;
+                    }
+                    try {
+                        PlatformVo platformVo = platformService.queryById(sendDyInfoVo.getPlatformKey());
+                        String appId = platformVo.getAppId();
+                        String secret = platformVo.getSecret();
+                        String accessToken = WxUtils.getAccessToken("wxc89878a20aed9821", "18d18d7fd8d7226fadce016cd9759ad3",wxProperties.getAccessTokenUrl());
+                        boolean flag = sendInfo(accessToken, sendDyInfoBo.getTmplId(), sendDyInfoVo.getOpenId(), sendDyInfoVo.getPlatformKey());
+                        if(flag){
+                            sendDyInfoVo.setDyCount(sendDyInfoVo.getDyCount() - 1);
+                            SendDyInfo sendDyInfo = BeanUtil.toBean(sendDyInfoVo, SendDyInfo.class);
+                            baseMapper.updateById(sendDyInfo);
+                        }
+                    }catch (Exception e){
+                        log.error(e.getMessage());
+                    }
+
+                }
+            }
+
+            int sum = pageIndex * pageSize;
+            if (sum >= total) {
+                break;
+            }
+            pageIndex++;
+        }
+
+
+    }
+
+
+    private boolean sendInfo(String accessToken,String templateId,String openId,Long platformKey){
+        String thing4 = ysfConfigService.queryValueByKey(platformKey, "thing4");
+        String thing5 = ysfConfigService.queryValueByKey(platformKey, "thing5");
+        if(ObjectUtil.isEmpty(thing4) || ObjectUtil.isEmpty(thing5)){
+            return false;
+        }
+        Map<String, Object> msgData = new HashMap<>();
+        Map<String, String> thing4Map = new HashMap<>();
+        thing4Map.put("value", thing4);
+        msgData.put("thing4", thing4Map);
+        Map<String, String> thing5Map = new HashMap<>();
+        thing5Map.put("value", thing5);
+        msgData.put("thing5", thing5Map);
+        String page = "/pages/index/index";
+        WxUtils.sendTemplateMessage(accessToken, openId, templateId, page, msgData);
+        return true;
+    }
+
 
     private LambdaQueryWrapper<SendDyInfo> buildQueryWrapper(SendDyInfoBo bo) {
         Map<String, Object> params = bo.getParams();
