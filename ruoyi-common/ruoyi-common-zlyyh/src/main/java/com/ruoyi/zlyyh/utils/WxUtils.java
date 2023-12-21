@@ -437,28 +437,53 @@ public class WxUtils {
 //        BufferedInputStream in = new BufferedInputStream(new FileInputStream(
 //            file));
 //        List<SendDyInfoVo> hashMaps = ExcelUtil.importExcel(in, SendDyInfoVo.class);
+//        List<SendDyInfoVo> hashMaps = new ArrayList<>();
+//        SendDyInfoVo sendDyInfoVo = new SendDyInfoVo();
+//        sendDyInfoVo.setOpenId("oKrd35bHD8K40_Jfs1jHARweC7TU");
+//        hashMaps.add(sendDyInfoVo);
+//        log.info("用户信息：{}", hashMaps);
+//        Map<String, Object> msgData = new HashMap<>();
+//        Map<String, String> thing1 = new HashMap<>();
+//        thing1.put("value", "双十二购物狂欢");
+//        msgData.put("thing6", thing1);
+//
+//        Map<String, String> thing7 = new HashMap<>();
+//        thing7.put("value", "超多优惠券等你来领取");
+//        msgData.put("thing7", thing7);
+//
+//        Map<String, String> thing10 = new HashMap<>();
+//        thing10.put("value", "京东、淘宝、拼多多等");
+//        msgData.put("thing10", thing10);
+//
+//        String accessToken = "75_dBq5ZwjOiGJPHFApPrbbe9gCh6MJtkLCykSQgVZZPSzJ2nKhDyOotjFoIGkXnN9wH_HmZrI4cKzyexSxNiGCsNs4GyhStuzF6m5J3fbNPK1B6oLVJ7HYR2Ld5Y8MDPiAAASJV";
+//        String templateId = "oF-pemb-OKhpiuAME-FdMmPdqr-6CKuUIC2_1I12ZYA";
+////        String page = "pages/index/index";
+//        String page = "/pages/imgpage/index?src=https%3A%2F%2Fimg01.yzcdn.cn%2Fupload_files%2F2023%2F12%2F13%2FFrRDIJJEdIygllNJZsbJ3LT9chay.jpg";
+//        for (SendDyInfoVo hashMap : hashMaps) {
+//            sendTemplateMessage(accessToken, hashMap.getOpenId(), templateId, page, msgData);
+//        }
+
+
         List<SendDyInfoVo> hashMaps = new ArrayList<>();
         SendDyInfoVo sendDyInfoVo = new SendDyInfoVo();
-        sendDyInfoVo.setOpenId("oKrd35bHD8K40_Jfs1jHARweC7TU");
+        sendDyInfoVo.setOpenId("oc7GL68XMhsO5Przo_bz0KjOjG2E");
         hashMaps.add(sendDyInfoVo);
         log.info("用户信息：{}", hashMaps);
         Map<String, Object> msgData = new HashMap<>();
         Map<String, String> thing1 = new HashMap<>();
         thing1.put("value", "双十二购物狂欢");
-        msgData.put("thing6", thing1);
+        msgData.put("thing4", thing1);
 
         Map<String, String> thing7 = new HashMap<>();
         thing7.put("value", "超多优惠券等你来领取");
-        msgData.put("thing7", thing7);
+        msgData.put("thing5", thing7);
 
-        Map<String, String> thing10 = new HashMap<>();
-        thing10.put("value", "京东、淘宝、拼多多等");
-        msgData.put("thing10", thing10);
 
-        String accessToken = "75_dBq5ZwjOiGJPHFApPrbbe9gCh6MJtkLCykSQgVZZPSzJ2nKhDyOotjFoIGkXnN9wH_HmZrI4cKzyexSxNiGCsNs4GyhStuzF6m5J3fbNPK1B6oLVJ7HYR2Ld5Y8MDPiAAASJV";
-        String templateId = "oF-pemb-OKhpiuAME-FdMmPdqr-6CKuUIC2_1I12ZYA";
+
+        String accessToken = "75_Cz2Urvv9lH-fPlm1ujiSc628U7D_zefN4S_-eGyWx6SqXJ-4xPK8jY_QSULavAeEn-5Q00oYeh8HA1kGEUuQCT2rIT1AQ17UdSu4mmcA_HnLKJGH50tcDILn4cUCTAdAGAGXE";
+        String templateId = "gMc9x6bNe4fBhcQFZMSaOYQDM2hpC3KYozpvFofUuQ4";
 //        String page = "pages/index/index";
-        String page = "/pages/imgpage/index?src=https%3A%2F%2Fimg01.yzcdn.cn%2Fupload_files%2F2023%2F12%2F13%2FFrRDIJJEdIygllNJZsbJ3LT9chay.jpg";
+        String page = "/pages/index/index";
         for (SendDyInfoVo hashMap : hashMaps) {
             sendTemplateMessage(accessToken, hashMap.getOpenId(), templateId, page, msgData);
         }
