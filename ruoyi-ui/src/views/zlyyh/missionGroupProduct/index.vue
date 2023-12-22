@@ -44,6 +44,7 @@
       <el-table-column label="ID" align="center" width="190" prop="id" v-if="true" />
       <el-table-column label="任务组" align="center" min-width="100" prop="missionGroupId"
         :formatter="formatterMissionGroup" />
+      <el-table-column label="任务" align="center" min-width="100" prop="missionId" :formatter="formatterMission" />
       <el-table-column label="商品" align="center" prop="productId" :formatter="formatterProduct" />
       <el-table-column label="排序" width="68" align="center" prop="sort" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">

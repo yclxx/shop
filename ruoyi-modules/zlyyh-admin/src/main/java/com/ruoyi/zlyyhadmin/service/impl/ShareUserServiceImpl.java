@@ -161,6 +161,12 @@ public class ShareUserServiceImpl implements IShareUserService {
                 entity.setBusinessDistrictName(shareUserVo.getBusinessDistrictName());
             }
         }
+        if (StringUtils.isNotBlank(entity.getUpMobile()) && entity.getUpMobile().contains("*")) {
+            entity.setUpMobile(null);
+        }
+        if (StringUtils.isNotBlank(entity.getUserName()) && entity.getUserName().contains("*")) {
+            entity.setUserName(null);
+        }
     }
 
     /**
