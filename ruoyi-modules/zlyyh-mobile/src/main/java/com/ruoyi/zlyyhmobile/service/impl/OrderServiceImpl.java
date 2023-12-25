@@ -1779,11 +1779,10 @@ public class OrderServiceImpl implements IOrderService {
                 RedisUtils.incrAtomicValue(productCacheKey);
                 RedisUtils.incrAtomicValue(userCacheKey);
             }
-            if (null != duration) {
-                // 设置失效时间
-                RedisUtils.expire(productCacheKey, duration);
-                RedisUtils.expire(userCacheKey, duration);
-            }
+            duration = ZlyyhUtils.getDurationByDateTypeAndDefault(value, duration);
+            // 设置失效时间
+            RedisUtils.expire(productCacheKey, duration);
+            RedisUtils.expire(userCacheKey, duration);
         }
     }
 

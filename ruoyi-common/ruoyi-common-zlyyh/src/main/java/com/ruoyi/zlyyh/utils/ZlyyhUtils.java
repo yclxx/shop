@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.time.Duration;
 
 /**
  * @author 25487
@@ -187,6 +188,46 @@ public class ZlyyhUtils {
             throw new ServiceException("请求错误，请退出重试！[platform is null]");
         }
         return Long.parseLong(platformKeyHeader);
+    }
+
+    /**
+     * 根据时间类型获取缓存失效时间
+     *
+     * @param dateType 时间类型
+     * @return 缓存失效时间
+     */
+    public static Duration getDurationByDateType(DateType dateType) {
+        if (null == dateType) {
+            return null;
+        }
+        switch (dateType) {
+            case DAY:
+                return Duration.ofDays(3);
+            case WEEK:
+                return Duration.ofDays(10);
+            case MONTH:
+                return Duration.ofDays(35);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * 根据时间类型获取缓存失效时间
+     *
+     * @param dateType 时间类型
+     * @param duration 默认失效时间，如为空则默认65天
+     * @return 缓存失效时间
+     */
+    public static Duration getDurationByDateTypeAndDefault(DateType dateType, Duration duration) {
+        Duration durationByDateType = ZlyyhUtils.getDurationByDateType(dateType);
+        if (null != durationByDateType) {
+            duration = durationByDateType;
+        }
+        if (null == duration) {
+            duration = Duration.ofDays(65);
+        }
+        return duration;
     }
 
     public static void main(String[] args) {
