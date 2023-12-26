@@ -316,4 +316,8 @@ public class Product extends BaseEntity {
     private BigDecimal shareTwoAmount;
 
     private String couponTip;
+
+    private String warnMessage;
+    private String warnEmail;
+    private String autoRefund;
 }

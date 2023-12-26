@@ -140,4 +140,9 @@ public class Platform extends BaseEntity {
      * 同一用户每月可获奖励上限,0为不限制
      */
     private BigDecimal shareAwardMonthAmount;
+
+    /**
+     * 分销奖励是否展示给所有顾客
+     */
+    private String showAllPerson;
 }

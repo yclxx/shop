@@ -156,6 +156,14 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
+            <el-form-item label="分销奖励是否所有用户可见" prop="showAllPerson">
+              <el-select v-model="form.showAllPerson" style="width: 100%;" placeholder="请选择是否全员可见">
+                <el-option v-for="dict in dict.type.t_right_not" :key="dict.value" :label="dict.label"
+                           :value="dict.value"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
             <el-form-item label="分销奖励" prop="shareAwardType">
               <el-select v-model="form.shareAwardType" style="width: 100%;" placeholder="请选择是否开通分销功能">
                 <el-option v-for="dict in dict.type.share_award_type" :key="dict.value" :label="dict.label"
@@ -329,7 +337,7 @@
   export default {
     name: "Platform",
     dicts: ['t_platform_status', 't_platform_union_pay_vip', 'channel_type', 't_show_index_type',
-      't_platform_share_permission', 'share_award_type'
+      't_platform_share_permission', 'share_award_type','t_right_not'
     ],
     components: {
       Treeselect
