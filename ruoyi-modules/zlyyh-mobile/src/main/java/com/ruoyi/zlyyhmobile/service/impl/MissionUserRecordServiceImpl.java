@@ -811,10 +811,10 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
 
     private MissionUserRecord getMissionUserRecord(Long missionUserId, Long missionGroupId, Long platformKey) {
         LambdaQueryWrapper<MissionUserRecord> lqw = buildUserDrawCountQuery(missionUserId, missionGroupId);
-        List<Long> missionIds = this.getMissionIds(missionGroupId, platformKey, missionUserId);
-        if (ObjectUtil.isEmpty(missionIds)) {
-            throw new ServiceException("抱歉，奖品已发完或已达规则上限");
-        }
+//        List<Long> missionIds = this.getMissionIds(missionGroupId, platformKey, missionUserId);
+//        if (ObjectUtil.isEmpty(missionIds)) {
+//            throw new ServiceException("抱歉，奖品已发完或已达规则上限");
+//        }
 //        lqw.in(MissionUserRecord::getMissionId, missionIds);
         lqw.last("order by mission_user_record_id asc limit 1");
         return baseMapper.selectOne(lqw);
