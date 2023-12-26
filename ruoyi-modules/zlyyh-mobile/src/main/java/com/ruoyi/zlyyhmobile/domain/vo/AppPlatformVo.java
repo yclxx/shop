@@ -91,4 +91,8 @@ public class AppPlatformVo {
      * 首页显示类型
      */
     private String indexShowType;
+    /**
+     *  分销奖励是否只有分销员显示
+     */
+    private String showAllPerson;
 }

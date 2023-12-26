@@ -177,4 +177,6 @@ public class PlatformVo implements Serializable {
      * 同一用户每月可获奖励上限,0为不限制
      */
     private BigDecimal shareAwardMonthAmount;
+
+    private String showAllPerson;
 }

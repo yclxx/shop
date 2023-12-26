@@ -60,6 +60,16 @@
           <el-option v-for="dict in dict.type.t_show_index" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
+      <el-form-item label="自动退款" prop="autoRefund">
+        <el-select v-model="queryParams.autoRefund" placeholder="请选择是否自动退款" clearable style="width: 100%;">
+          <el-option v-for="dict in dict.type.t_right_not" :key="dict.value" :label="dict.label" :value="dict.value" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="是否预警" prop="warnMessage">
+        <el-select v-model="queryParams.warnMessage" placeholder="请选择是否预警" clearable style="width: 100%;">
+          <el-option v-for="dict in dict.type.t_right_not" :key="dict.value" :label="dict.label" :value="dict.value" />
+        </el-select>
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -806,6 +816,28 @@
                   </el-input>
                 </el-form-item>
               </el-col>
+              <el-col :span="8">
+                <el-form-item label="是否自动退款" prop="autoRefund">
+                  <el-select v-model="form.autoRefund" style="width: 100%;" placeholder="请选择是否自动退款">
+                    <el-option v-for="dict in dict.type.t_right_not" :key="dict.value"
+                               :label="dict.label" :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="是否预警" prop="warnMessage">
+                  <el-select v-model="form.warnMessage" style="width: 100%;" placeholder="请选择是否预警">
+                    <el-option v-for="dict in dict.type.t_right_not" :key="dict.value"
+                               :label="dict.label" :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8" v-if="form.warnMessage && form.warnMessage == '1'">
+                <el-form-item label="预警邮箱" prop="warnEmail">
+                  <el-input v-model="form.warnEmail" placeholder="请输入预警邮箱" />
+                </el-form-item>
+              </el-col>
+
             </el-row>
             <el-row>
               <el-col :span="8">
@@ -929,7 +961,7 @@
       't_product_show_original_amount', 't_product_pickup_method', 't_grad_period_date_list', 't_product_search',
       't_search_status', 't_product_pay_user', 't_show_index', 't_product_send_account_type', 't_cus_refund',
       'sys_normal_disable', 't_product_check_pay_city', 't_product_union_pay', 'sys_yes_no', 'channel_type',
-      't_platform_share_permission', 'share_amount_type'
+      't_platform_share_permission', 'share_amount_type','t_right_not'
     ],
     data() {
       return {
@@ -1030,6 +1062,8 @@
           url: undefined,
           showIndex: undefined,
           status: undefined,
+          autoRefund: undefined,
+          warnMessage: undefined,
           showStartDate: undefined,
           showEndDate: undefined,
           sellStartDate: undefined,
@@ -1316,6 +1350,9 @@
           appId: undefined,
           url: undefined,
           status: "0",
+          autoRefund: '0',
+          warnMessage: '0',
+          warnEmail: undefined,
           search: undefined,
           showStartDate: undefined,
           showEndDate: undefined,
