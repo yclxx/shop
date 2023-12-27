@@ -319,5 +319,6 @@ public class Product extends BaseEntity {
 
     private String warnMessage;
     private String warnEmail;
+    private Long warnCount;
     private String autoRefund;
 }

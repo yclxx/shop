@@ -838,6 +838,19 @@
                 </el-form-item>
               </el-col>
 
+              <el-col :span="8" v-if="form.warnMessage && form.warnMessage == '1'">
+                <el-form-item label="预警数量" prop="warnCount">
+                  <span slot="label">
+                    预警数量
+                    <el-tooltip content="预警数量-1 代表不限制" placement="top">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input v-model="form.warnCount" placeholder="请输入预警数量" />
+                </el-form-item>
+              </el-col>
+
+
             </el-row>
             <el-row>
               <el-col :span="8">
@@ -1353,6 +1366,7 @@
           autoRefund: '0',
           warnMessage: '0',
           warnEmail: undefined,
+          warnCount: undefined,
           search: undefined,
           showStartDate: undefined,
           showEndDate: undefined,

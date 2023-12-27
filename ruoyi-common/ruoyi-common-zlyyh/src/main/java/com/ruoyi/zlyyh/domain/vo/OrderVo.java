@@ -279,4 +279,9 @@ public class OrderVo implements Serializable {
      * 支持端
      */
     private String supportChannel;
+
+    /**
+     * 自动退款
+     */
+    private String autoRefund;
 }

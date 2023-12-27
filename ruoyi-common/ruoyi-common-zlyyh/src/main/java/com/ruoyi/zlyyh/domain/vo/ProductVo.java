@@ -434,5 +434,6 @@ public class ProductVo implements Serializable {
     private String couponTip;
     private String warnMessage;
     private String warnEmail;
+    private Long warnCount;
     private String autoRefund;
 }
