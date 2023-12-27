@@ -1,6 +1,7 @@
 package com.ruoyi.job.service;
 
 import com.ruoyi.system.api.RemoteSendDyInfoService;
+import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
@@ -20,6 +21,7 @@ public class SendDyInfoService {
      */
     @XxlJob("sendHuBeiDyInfo")
     public void sendHuBeiDyInfo() {
-        remoteSendDyInfoService.sendHuBeiDyInfo();
+        String jobParam = XxlJobHelper.getJobParam();
+        remoteSendDyInfoService.sendHuBeiDyInfo(jobParam);
     }
 }
