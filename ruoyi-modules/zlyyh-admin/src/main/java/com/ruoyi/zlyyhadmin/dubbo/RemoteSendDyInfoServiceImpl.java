@@ -1,7 +1,6 @@
 package com.ruoyi.zlyyhadmin.dubbo;
 
-import com.ruoyi.system.api.RemoteSendDyInfo;
-import com.ruoyi.zlyyhadmin.service.IProductService;
+import com.ruoyi.system.api.RemoteSendDyInfoService;
 import com.ruoyi.zlyyhadmin.service.ISendDyInfoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +12,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Service
 @DubboService
-public class RemoteSendDyInfoImpl implements RemoteSendDyInfo {
+public class RemoteSendDyInfoServiceImpl implements RemoteSendDyInfoService {
     private final ISendDyInfoService sendDyInfoService;
 
 
