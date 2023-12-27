@@ -472,6 +472,11 @@ public class OrderServiceImpl implements IOrderService {
         }
         if (!"0".equals(orderPushCache.getStatus())) {
             log.error("发券订单号{}，订单已有最终状态，不做查询处理", pushNumber);
+            if ("1".equals(orderPushCache.getStatus())) {
+                sendResult(R.ok("订单已发券"), orderPushCache, order, cache, false);
+            } else if ("2".equals(orderPushCache.getStatus())) {
+                sendResult(R.fail(orderPushCache.getRemark()), orderPushCache, order, cache, false);
+            }
             return;
         }
         if ("0".equals(order.getOrderType())) {
@@ -861,12 +866,16 @@ public class OrderServiceImpl implements IOrderService {
                 order.setTotalAmount(amount.multiply(new BigDecimal(order.getCount())));
                 order.setReducedPrice(reducedPrice.multiply(new BigDecimal(order.getCount())));
                 order.setWantAmount(order.getTotalAmount().subtract(order.getReducedPrice()));
-
+                if (order.getWantAmount().signum() < 1) {
+                    order.setWantAmount(new BigDecimal("0.01"));
+                }
                 //添加大订单价格
                 collectiveOrder.setTotalAmount(amount.multiply(new BigDecimal(order.getCount())));
                 collectiveOrder.setReducedPrice(reducedPrice.multiply(new BigDecimal(order.getCount())));
                 collectiveOrder.setWantAmount(order.getTotalAmount().subtract(order.getReducedPrice()));
-
+                if (collectiveOrder.getWantAmount().signum() < 1) {
+                    collectiveOrder.setWantAmount(new BigDecimal("0.01"));
+                }
                 if ("12".equals(productVo.getProductType()) || "1".equals(productVo.getUnionPay())) {
                     String externalProductId = "1".equals(productVo.getUnionPay()) ? productVo.getUnionProductId() : productVo.getExternalProductId();
                     if (StringUtils.isEmpty(externalProductId)) {
@@ -1217,7 +1226,9 @@ public class OrderServiceImpl implements IOrderService {
         collectiveOrder.setTotalAmount(amount);
         collectiveOrder.setReducedPrice(reducedPrice);
         collectiveOrder.setWantAmount(amount.subtract(reducedPrice));
-
+        if (collectiveOrder.getWantAmount().signum() < 1) {
+            collectiveOrder.setWantAmount(new BigDecimal("0.01"));
+        }
         collectiveOrderMapper.insert(collectiveOrder);
         collectiveOrder = getCollectiveOrder(collectiveOrder.getCollectiveNumber());
         return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), null, "1");
@@ -1773,11 +1784,10 @@ public class OrderServiceImpl implements IOrderService {
                 RedisUtils.incrAtomicValue(productCacheKey);
                 RedisUtils.incrAtomicValue(userCacheKey);
             }
-            if (null != duration) {
-                // 设置失效时间
-                RedisUtils.expire(productCacheKey, duration);
-                RedisUtils.expire(userCacheKey, duration);
-            }
+            duration = ZlyyhUtils.getDurationByDateTypeAndDefault(value, duration);
+            // 设置失效时间
+            RedisUtils.expire(productCacheKey, duration);
+            RedisUtils.expire(userCacheKey, duration);
         }
     }
 

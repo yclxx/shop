@@ -34,6 +34,10 @@ public class ShopMerchant extends BaseEntity {
      */
     private String merchantNo;
     /**
+     * 终端号
+     */
+    private String terminalNo;
+    /**
      * 商户类型（0-微信 1-云闪付 2-支付宝）
      */
     private String merchantType;
