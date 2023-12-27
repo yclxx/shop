@@ -23,8 +23,6 @@ public interface IShopService {
      */
     ShopVo queryById(Long shopId);
 
-    Shop getShopBytId(Long shopId);
-
     Boolean updateShopById(ShopBo bo);
 
     /**

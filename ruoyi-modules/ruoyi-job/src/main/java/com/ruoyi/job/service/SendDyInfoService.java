@@ -1,7 +1,7 @@
 package com.ruoyi.job.service;
 
-import com.ruoyi.system.api.RemoteAppUserService;
-import com.ruoyi.system.api.RemoteSendDyInfo;
+import com.ruoyi.system.api.RemoteSendDyInfoService;
+import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
@@ -14,13 +14,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class SendDyInfoService {
     @DubboReference(retries = 0)
-    private RemoteSendDyInfo remoteSendDyInfo;
+    private RemoteSendDyInfoService remoteSendDyInfoService;
 
     /**
      * 过期取消订单
      */
     @XxlJob("sendHuBeiDyInfo")
-    public void userLog() {
-        remoteSendDyInfo.sendHuBeiDyInfo();
+    public void sendHuBeiDyInfo() {
+        String jobParam = XxlJobHelper.getJobParam();
+        remoteSendDyInfoService.sendHuBeiDyInfo(jobParam);
     }
 }

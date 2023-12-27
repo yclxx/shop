@@ -107,4 +107,13 @@ public class OrderService {
     public void queryShareAwardStatus() {
         remoteAppOrderService.queryShareAwardStatus();
     }
+
+
+    /**
+     * 银联票券自动退款
+     */
+    @XxlJob("autoRefundOrder")
+    public void autoRefundOrder() {
+        remoteAppOrderService.autoRefundOrder();
+    }
 }

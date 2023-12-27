@@ -38,6 +38,11 @@ public class ShopMerchantBo extends BaseEntity {
     private String merchantNo;
 
     /**
+     * 终端号
+     */
+    private String terminalNo;
+
+    /**
      * 商户类型（0-微信 1-云闪付 2-支付宝）
      */
     @NotBlank(message = "商户类型不能为空", groups = { AddGroup.class, EditGroup.class })

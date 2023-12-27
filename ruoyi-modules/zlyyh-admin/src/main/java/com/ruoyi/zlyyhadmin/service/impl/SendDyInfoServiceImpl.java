@@ -96,9 +96,6 @@ public class SendDyInfoServiceImpl implements ISendDyInfoService {
                         continue;
                     }
                     try {
-                        PlatformVo platformVo = platformService.queryById(sendDyInfoVo.getPlatformKey());
-                        String appId = platformVo.getAppId();
-                        String secret = platformVo.getSecret();
                         String accessToken = WxUtils.getAccessToken("wxc89878a20aed9821", "18d18d7fd8d7226fadce016cd9759ad3",wxProperties.getAccessTokenUrl());
                         boolean flag = sendInfo(accessToken, sendDyInfoBo.getTmplId(), sendDyInfoVo.getOpenId(), sendDyInfoVo.getPlatformKey());
                         if(flag){

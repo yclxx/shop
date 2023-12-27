@@ -13,6 +13,7 @@ import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.JsonUtils;
 import com.ruoyi.common.core.utils.SpringUtils;
 import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.excel.utils.ExcelUtil;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.zlyyh.domain.vo.SendDyInfoVo;
 import com.wechat.pay.contrib.apache.httpclient.WechatPayHttpClientBuilder;
@@ -37,14 +38,10 @@ import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -432,58 +429,33 @@ public class WxUtils {
     }
 
     public static void main(String[] args) throws Exception {
-//        File file = new File("C:\\Users\\25487\\Desktop\\消息推送.xlsx");
+        File file = new File("C:\\Users\\25487\\Desktop\\消息推送.xlsx");
 //        File file = new File("");
-//        BufferedInputStream in = new BufferedInputStream(new FileInputStream(
-//            file));
-//        List<SendDyInfoVo> hashMaps = ExcelUtil.importExcel(in, SendDyInfoVo.class);
+        BufferedInputStream in = new BufferedInputStream(new FileInputStream(
+            file));
+        List<SendDyInfoVo> hashMaps = ExcelUtil.importExcel(in, SendDyInfoVo.class);
 //        List<SendDyInfoVo> hashMaps = new ArrayList<>();
 //        SendDyInfoVo sendDyInfoVo = new SendDyInfoVo();
 //        sendDyInfoVo.setOpenId("oKrd35bHD8K40_Jfs1jHARweC7TU");
 //        hashMaps.add(sendDyInfoVo);
-//        log.info("用户信息：{}", hashMaps);
-//        Map<String, Object> msgData = new HashMap<>();
-//        Map<String, String> thing1 = new HashMap<>();
-//        thing1.put("value", "双十二购物狂欢");
-//        msgData.put("thing6", thing1);
-//
-//        Map<String, String> thing7 = new HashMap<>();
-//        thing7.put("value", "超多优惠券等你来领取");
-//        msgData.put("thing7", thing7);
-//
-//        Map<String, String> thing10 = new HashMap<>();
-//        thing10.put("value", "京东、淘宝、拼多多等");
-//        msgData.put("thing10", thing10);
-//
-//        String accessToken = "75_dBq5ZwjOiGJPHFApPrbbe9gCh6MJtkLCykSQgVZZPSzJ2nKhDyOotjFoIGkXnN9wH_HmZrI4cKzyexSxNiGCsNs4GyhStuzF6m5J3fbNPK1B6oLVJ7HYR2Ld5Y8MDPiAAASJV";
-//        String templateId = "oF-pemb-OKhpiuAME-FdMmPdqr-6CKuUIC2_1I12ZYA";
-////        String page = "pages/index/index";
-//        String page = "/pages/imgpage/index?src=https%3A%2F%2Fimg01.yzcdn.cn%2Fupload_files%2F2023%2F12%2F13%2FFrRDIJJEdIygllNJZsbJ3LT9chay.jpg";
-//        for (SendDyInfoVo hashMap : hashMaps) {
-//            sendTemplateMessage(accessToken, hashMap.getOpenId(), templateId, page, msgData);
-//        }
-
-
-        List<SendDyInfoVo> hashMaps = new ArrayList<>();
-        SendDyInfoVo sendDyInfoVo = new SendDyInfoVo();
-        sendDyInfoVo.setOpenId("oc7GL68XMhsO5Przo_bz0KjOjG2E");
-        hashMaps.add(sendDyInfoVo);
         log.info("用户信息：{}", hashMaps);
         Map<String, Object> msgData = new HashMap<>();
         Map<String, String> thing1 = new HashMap<>();
-        thing1.put("value", "双十二购物狂欢");
-        msgData.put("thing4", thing1);
+        thing1.put("value", "嗨购大连恒隆广场");
+        msgData.put("thing6", thing1);
 
         Map<String, String> thing7 = new HashMap<>();
-        thing7.put("value", "超多优惠券等你来领取");
-        msgData.put("thing5", thing7);
+        thing7.put("value", "一元购满500减100优惠券");
+        msgData.put("thing7", thing7);
 
+        Map<String, String> thing10 = new HashMap<>();
+        thing10.put("value", "活动期间可购两张， 数量有限，先到先得");
+        msgData.put("thing10", thing10);
 
-
-        String accessToken = "75_Cz2Urvv9lH-fPlm1ujiSc628U7D_zefN4S_-eGyWx6SqXJ-4xPK8jY_QSULavAeEn-5Q00oYeh8HA1kGEUuQCT2rIT1AQ17UdSu4mmcA_HnLKJGH50tcDILn4cUCTAdAGAGXE";
-        String templateId = "gMc9x6bNe4fBhcQFZMSaOYQDM2hpC3KYozpvFofUuQ4";
+        String accessToken = "75_73_tkBbRnCEefKQ87m5xMvnAItUbLA5-48fEEhMHSSZ36thSli6ER-0ONKlkn1N0OH2377m_-KI7i-udGnv7r37KBMzRsBkHS4_lrlxkcIyl_Y4hlzNK-HGovEEJPTgAEANTX";
+        String templateId = "oF-pemb-OKhpiuAME-FdMmPdqr-6CKuUIC2_1I12ZYA";
 //        String page = "pages/index/index";
-        String page = "/pages/index/index";
+        String page = "pages/template/index?templateId=1737396617601662977";
         for (SendDyInfoVo hashMap : hashMaps) {
             sendTemplateMessage(accessToken, hashMap.getOpenId(), templateId, page, msgData);
         }

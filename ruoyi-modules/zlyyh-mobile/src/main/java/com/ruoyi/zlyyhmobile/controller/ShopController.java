@@ -7,7 +7,6 @@ import com.ruoyi.common.core.utils.ip.AddressUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
-import com.ruoyi.zlyyh.domain.Shop;
 import com.ruoyi.zlyyh.domain.bo.MerchantApprovalBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
@@ -67,16 +66,6 @@ public class ShopController {
     @GetMapping("/{shopId}")
     public R<ShopVo> getShopListByProductId(@NotNull(message = "主键不能为空") @PathVariable Long shopId) {
         return R.ok(shopService.queryById(shopId));
-    }
-
-    /**
-     * 获取商品门店信息(去除电话脱敏)
-     *
-     * @return 门店列表
-     */
-    @GetMapping("/details/{shopId}")
-    public R<Shop> getShopBytId(@NotNull(message = "主键不能为空") @PathVariable Long shopId) {
-        return R.ok(shopService.getShopBytId(shopId));
     }
 
     /**

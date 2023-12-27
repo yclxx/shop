@@ -61,12 +61,6 @@ public class ShopServiceImpl implements IShopService {
     }
 
     @Override
-    public Shop getShopBytId(Long shopId) {
-        Shop shop = baseMapper.selectById(shopId);
-        return shop;
-    }
-
-    @Override
     public Boolean updateShopById(ShopBo bo) {
         if (ObjectUtil.isNotEmpty(bo)) {
             this.getAddressCode(bo);

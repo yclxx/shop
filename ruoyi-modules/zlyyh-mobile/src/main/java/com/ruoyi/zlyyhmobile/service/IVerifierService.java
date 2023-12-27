@@ -26,7 +26,6 @@ public interface IVerifierService {
 
     Boolean updateShopId(ShopAndMerchantBo bo);
 
-    Boolean updateShop(ShopBo bo);
 
     Boolean insertShop(ShopAndMerchantBo bo);
 
@@ -42,9 +41,9 @@ public interface IVerifierService {
 
     TableDataInfo<VerifierVo> getVerifierListByShop(CodeBo bo, PageQuery pageQuery);
 
-    Boolean cancelVerifier(CodeBo bo);
+    Boolean cancelVerifier(VerifierBo bo);
 
-    Boolean addVerifier(CodeBo bo);
+    Boolean addVerifier(VerifierBo bo);
 
     Boolean updateProductById(ProductBo bo);
 

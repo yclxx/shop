@@ -1,10 +1,10 @@
 package com.ruoyi.system.api;
 
-public interface RemoteSendDyInfo {
+public interface RemoteSendDyInfoService {
 
     /**
      * 发送鄂U惠订阅信息
      */
-    void sendHuBeiDyInfo();
+    void sendHuBeiDyInfo(String job);
 
 }

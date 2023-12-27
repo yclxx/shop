@@ -1055,9 +1055,9 @@ public class YsfUtils {
         String chnlId = "8126";
         String appId = "up_49pfnfkryxb4v_s28";
         String activityTp = "02";
-        String activityNo = "3102023101930119";
+        String activityNo = "3102023121949067";
 //        String activityNo = "3102023112040116";
-        String mobile = "15524576686";
+        String mobile = "18840821200";
 //        String mobile = "15542432188";
 //        String mobile = "17767132971";
 //        String mobile = "18340897551";

@@ -89,6 +89,11 @@ public interface IOrderService {
     void cancel(Long number, Long userId);
 
     /**
+     * 过期自动退款
+     */
+    void autoRefundOrder();
+
+    /**
      * 手机端订单退款
      *
      * @param number 订单号

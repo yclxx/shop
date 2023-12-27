@@ -14,12 +14,9 @@ import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.CacheUtils;
-import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.CommercialTenant;
-import com.ruoyi.zlyyh.domain.Shop;
 import com.ruoyi.zlyyh.domain.Verifier;
-import com.ruoyi.zlyyh.domain.VerifierShop;
 import com.ruoyi.zlyyh.domain.bo.CommercialTenantBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
 import com.ruoyi.zlyyh.domain.vo.*;
@@ -60,10 +57,6 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
 
     /**
      * 查询门店商户列表
-     *
-     * @param bo        查询条件
-     * @param pageQuery 分页条件
-     * @return 结果
      */
     @Override
     public TableDataInfo<CommercialTenantVo> getShopCommercialTenantList(CommercialTenantBo bo, PageQuery pageQuery) {
@@ -93,56 +86,38 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
     }
 
     @Override
-    public CommercialTenantVo getCommercialTenant() {
-        Verifier verifier = verifierMapper.selectById(LoginHelper.getUserId());
+    public List<CommercialTenantVo> getCommercialTenant(CommercialTenantBo bo) {
         LambdaQueryWrapper<CommercialTenant> lqw = Wrappers.lambdaQuery();
-        lqw.orderByDesc(CommercialTenant::getCreateTime);
-        if (verifier.getIsBd()) {
-            lqw.eq(CommercialTenant::getVerifierId, verifier.getId());
-        } else {
-            lqw.eq(CommercialTenant::getAdminMobile, verifier.getMobile());
-        }
-        List<CommercialTenantVo> commercialTenantVos = baseMapper.selectVoList(lqw);
-        return commercialTenantVos.get(0);
+        lqw.eq(CommercialTenant::getVerifierId, bo.getVerifierId());
+        return baseMapper.selectVoList(lqw);
     }
 
     @Override
     public Boolean updateCommercialTenant(CommercialTenantBo bo) {
-        CommercialTenant commercialTenant = baseMapper.selectById(bo.getCommercialTenantId());
-        // 修改手机号与原手机号不同时处理
-        if (StringUtils.isNotEmpty(commercialTenant.getAdminMobile()) && !commercialTenant.getAdminMobile().equals(bo.getAdminMobile())) {
-            Verifier oldVerifier = verifierMapper.selectByMobile(commercialTenant.getAdminMobile());
-            if (ObjectUtil.isNotEmpty(oldVerifier)) {
-                List<Shop> shops = shopService.queryListByCommercialId(commercialTenant.getCommercialTenantId());
-                if (ObjectUtil.isNotEmpty(shops)) {
-                    Long verifierId;
-                    Verifier newVerifier = verifierMapper.selectByMobile(bo.getAdminMobile());
-                    if (ObjectUtil.isEmpty(newVerifier)) {
-                        newVerifier = new Verifier();
-                        newVerifier.setId(IdUtil.getSnowflakeNextId());
-                        newVerifier.setMobile(bo.getAdminMobile());
-                        newVerifier.setReloadUser("0");
-                        newVerifier.setStatus("0");
-                        newVerifier.setIsVerifier(true);
-                        newVerifier.setIsAdmin(true);
-                        verifierMapper.insert(newVerifier);
-                        verifierId = newVerifier.getId();
-                    } else {
-                        verifierId = newVerifier.getId();
-                    }
-                    shops.forEach(o -> {
-                        VerifierShop verifierShop = verifierShopMapper.selectByShopIdAndVerifierId(o.getShopId(), oldVerifier.getId());
-                        if (ObjectUtil.isNotEmpty(verifierShop)) {
-                            verifierShop.setVerifierId(verifierId);
-                            verifierShopMapper.updateById(verifierShop);
-                        }
-                    });
-                }
-            }
+        CommercialTenant commercialTenant;
+        if (ObjectUtil.isNotEmpty(bo.getCommercialTenantId())) {
+            commercialTenant = baseMapper.selectById(bo.getCommercialTenantId());
+            commercialTenant.setIsCache("1");
+            baseMapper.updateById(commercialTenant);
+        } else {
+            commercialTenant = BeanCopyUtils.copy(bo, CommercialTenant.class);
+            commercialTenant.setCommercialTenantId(IdUtil.getSnowflakeNextId());
+            commercialTenant.setIsCache("1");
+            baseMapper.insert(commercialTenant);
         }
-        CommercialTenant commercialTenant1 = BeanCopyUtils.copy(bo, CommercialTenant.class);
-        commercialTenant1.setIsCache("1");
-        return baseMapper.updateById(commercialTenant1) > 0;
+        Verifier verifier = verifierMapper.selectByMobile(bo.getAdminMobile());
+        if (ObjectUtil.isEmpty(verifier)) {
+            Verifier newVerifier = new Verifier();
+            newVerifier.setId(IdUtil.getSnowflakeNextId());
+            newVerifier.setMobile(bo.getAdminMobile());
+            newVerifier.setReloadUser("0");
+            newVerifier.setStatus("0");
+            newVerifier.setIsVerifier(true);
+            newVerifier.setIsAdmin(true);
+            verifierMapper.insert(newVerifier);
+        }
+        // 修改手机号与原手机号不同时处理
+        return true;
     }
 
     /**

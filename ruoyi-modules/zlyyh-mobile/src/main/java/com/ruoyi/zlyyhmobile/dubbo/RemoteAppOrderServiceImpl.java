@@ -445,4 +445,13 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
             pageNum++;
         }
     }
+
+    /**
+     * 自动退款
+     */
+    @Async
+    @Override
+    public void autoRefundOrder() {
+        orderService.autoRefundOrder();
+    }
 }

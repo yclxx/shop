@@ -37,6 +37,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <result property="shareAwardProductId" column="share_award_product_id"/>
     <result property="shareAwardInsAcctId" column="share_award_ins_acct_id"/>
     <result property="shareAwardMonthAmount" column="share_award_month_amount"/>
+    <result property="showAllPerson" column="show_all_person"/>
     </resultMap>
 
 

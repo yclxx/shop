@@ -157,6 +157,8 @@ public class ProductServiceImpl implements IProductService {
         lqw.eq(StringUtils.isNotBlank(bo.getProductType()), Product::getProductType, bo.getProductType());
         lqw.eq(StringUtils.isNotBlank(bo.getPickupMethod()), Product::getPickupMethod, bo.getPickupMethod());
         lqw.eq(StringUtils.isNotBlank(bo.getStatus()), Product::getStatus, bo.getStatus());
+        lqw.eq(StringUtils.isNotBlank(bo.getAutoRefund()), Product::getAutoRefund, bo.getAutoRefund());
+        lqw.eq(StringUtils.isNotBlank(bo.getWarnMessage()), Product::getWarnMessage, bo.getWarnMessage());
 
         lqw.between(params.get("beginStartDate") != null && params.get("endStartDate") != null, Product::getShowStartDate, params.get("beginStartDate"), params.get("endStartDate"));
         lqw.between(params.get("beginEndDate") != null && params.get("endEndDate") != null, Product::getShowEndDate, params.get("beginEndDate"), params.get("endEndDate"));
@@ -248,6 +250,8 @@ public class ProductServiceImpl implements IProductService {
         lqw.eq(StringUtils.isNotBlank(bo.getAppId()), Product::getAppId, bo.getAppId());
         lqw.eq(StringUtils.isNotBlank(bo.getUrl()), Product::getUrl, bo.getUrl());
         lqw.eq(StringUtils.isNotBlank(bo.getStatus()), Product::getStatus, bo.getStatus());
+        lqw.eq(StringUtils.isNotBlank(bo.getAutoRefund()), Product::getAutoRefund, bo.getAutoRefund());
+        lqw.eq(StringUtils.isNotBlank(bo.getWarnMessage()), Product::getWarnMessage, bo.getWarnMessage());
         lqw.eq(StringUtils.isNotBlank(bo.getSearchStatus()), Product::getSearchStatus, bo.getSearchStatus());
         lqw.eq(bo.getSellStartDate() != null, Product::getSellStartDate, bo.getSellStartDate());
         lqw.eq(bo.getSellEndDate() != null, Product::getSellEndDate, bo.getSellEndDate());

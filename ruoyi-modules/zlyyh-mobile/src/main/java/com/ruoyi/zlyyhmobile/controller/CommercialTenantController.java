@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 @Validated
 @RequiredArgsConstructor
 @RestController
@@ -38,8 +39,6 @@ public class CommercialTenantController {
 
     /**
      * 获取商户详情
-     *
-     * @return 商户信息
      */
     @GetMapping("/ignore/getCommercialTenantInfo")
     public R<CommercialTenantVo> getCommercialTenantInfo(CommercialTenantBo bo) {
@@ -79,8 +78,9 @@ public class CommercialTenantController {
      * 查询商户详情(商户端)
      */
     @GetMapping("/getCommercialTenant")
-    public R<CommercialTenantVo> getCommercialTenant() {
-        return R.ok(commercialTenantService.getCommercialTenant());
+    public R<List<CommercialTenantVo>> getCommercialTenant(CommercialTenantBo bo) {
+        bo.setVerifierId(LoginHelper.getUserId());
+        return R.ok(commercialTenantService.getCommercialTenant(bo));
     }
 
     /**
@@ -88,6 +88,7 @@ public class CommercialTenantController {
      */
     @PostMapping("/updateCommercialTenant")
     public R updateCommercialTenant(@RequestBody CommercialTenantBo bo) {
+        bo.setVerifierId(LoginHelper.getUserId());
         return R.ok(commercialTenantService.updateCommercialTenant(bo));
     }
 }

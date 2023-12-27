@@ -25,5 +25,7 @@ public class ProductJoinParam implements Serializable {
     private Long couponId;
     private Long shopId;
     private Long sort;
+    private String warnMessage;
+    private String autoRefund;
     private Map<String, Object> params = new HashMap<>();
 }
