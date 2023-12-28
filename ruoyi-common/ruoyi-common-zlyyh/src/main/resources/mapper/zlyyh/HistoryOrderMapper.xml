@@ -54,6 +54,7 @@
         <result property="productSkuName" column="product_sku_name"/>
         <result property="verificationStatus" column="verification_status"/>
         <result property="collectiveNumber" column="collective_number"/>
+        <result property="autoRefund" column="auto_refund"/>
     </resultMap>
 
 
