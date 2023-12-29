@@ -19,11 +19,7 @@ public class RemoteSendDyInfoServiceImpl implements RemoteSendDyInfoService {
     @Async
     @Override
     public void sendHuBeiDyInfo(String job) {
-        if ("123".equals(job)){
-            log.info("订阅定时任务可以正常执行");
-            return;
-        }
-        sendDyInfoService.sendHuBeiDyInfo();
+        sendDyInfoService.sendHuBeiDyInfo(job);
     }
 
 

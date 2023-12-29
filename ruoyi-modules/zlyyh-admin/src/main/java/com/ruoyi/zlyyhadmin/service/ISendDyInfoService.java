@@ -34,7 +34,7 @@ public interface ISendDyInfoService {
     /**
      * 湖北订阅消息
      */
-    void sendHuBeiDyInfo();
+    void sendHuBeiDyInfo(String job);
 
     /**
      * 修改用户订阅
