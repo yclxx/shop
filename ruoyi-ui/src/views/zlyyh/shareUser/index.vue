@@ -105,8 +105,10 @@
       <el-table-column label="备注" width="100" :show-overflow-tooltip="true" align="center" prop="remark" />
       <el-table-column label="操作" align="center" fixed="right" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
-            v-hasPermi="['zlyyh:shareUser:edit']">修改</el-button>
+          <el-button size="mini" type="text" icon="el-icon-edit" v-if="scope.row.auditStatus != '0'"
+            @click="handleUpdate(scope.row)" v-hasPermi="['zlyyh:shareUser:allEdit']">修改</el-button>
+          <el-button size="mini" type="text" v-if="scope.row.auditStatus == '0'" icon="el-icon-edit"
+            @click="handleUpdate(scope.row)" v-hasPermi="['zlyyh:shareUser:edit']">审核</el-button>
           <el-button size="mini" type="text" icon="el-icon-plus" @click="handleAdd(scope.row)"
             v-hasPermi="['zlyyh:shareUser:add']">新增</el-button>
         </template>
@@ -117,32 +119,36 @@
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="平台" prop="platformKey">
-          <el-select v-model="form.platformKey" placeholder="请选择平台" style="width: 100%;">
+          <el-select :disabled="form.userId" v-model="form.platformKey" placeholder="请选择平台" style="width: 100%;">
             <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="云闪付手机号" prop="upMobile">
-          <el-input v-model="form.upMobile" placeholder="请输入云闪付手机号" />
+          <el-input :disabled="form.userId" v-model="form.upMobile" placeholder="请输入云闪付手机号" />
         </el-form-item>
         <el-form-item label="姓名" prop="userName">
-          <el-input v-model="form.userName" placeholder="请输入姓名" />
+          <el-input :disabled="form.userId" v-model="form.userName" placeholder="请输入姓名" />
         </el-form-item>
         <el-form-item label="性别" prop="sex">
-          <el-radio-group v-model="form.sex">
+          <el-radio-group :disabled="form.userId" v-model="form.sex">
             <el-radio v-for="dict in dict.type.sex_type" :key="dict.value" :label="dict.value">{{dict.label}}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="年龄" prop="ageType">
-          <el-select v-model="form.ageType" placeholder="请选择年龄" style="width: 100%;" clearable>
+          <el-select :disabled="form.userId" v-model="form.ageType" placeholder="请选择年龄" style="width: 100%;" clearable>
             <el-option v-for="dict in dict.type.age_type_list" :key="dict.value" :label="dict.label"
               :value="dict.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="所属商圈" prop="parentId">
-          <treeselect v-model="form.parentId" :options="shareUserOptions" :normalizer="normalizer"
-            placeholder="请选择所属商圈" />
+        <el-form-item label="所属商圈" prop="parentId" v-if="form.userId">
+          <!-- <treeselect v-model="form.parentId" :options="shareUserOptions" :normalizer="normalizer"
+            placeholder="请选择所属商圈" /> -->
+          <el-select v-model="form.parentId" placeholder="请选择所属商圈" style="width: 100%;">
+            <el-option v-for="item in selectUserList" :key="item.userId" :label="item.businessDistrictName"
+              :value="item.userId"></el-option>
+          </el-select>
         </el-form-item>
-        <el-form-item label="商圈名称" prop="businessDistrictName">
+        <el-form-item label="商圈名称" v-if="!form.userId" prop="businessDistrictName">
           <el-input v-model="form.businessDistrictName" placeholder="请输入商圈名称" />
         </el-form-item>
         <el-form-item label="品牌名称" prop="commercialTenantName">
@@ -250,7 +256,8 @@
             message: "用户ID不能为空",
             trigger: "blur"
           }],
-        }
+        },
+        selectUserList: []
       };
     },
     created() {
@@ -258,6 +265,7 @@
       selectListPlatform({}).then(response => {
         this.platformList = response.data;
       });
+      this.getSelectList()
     },
     methods: {
       changePlatform(row) {
@@ -284,6 +292,14 @@
         listShareUser(this.queryParams).then(response => {
           this.shareUserList = this.handleTree(response.data, "userId", "parentId");
           this.loading = false;
+        });
+      },
+      getSelectList() {
+        let queryParams = {
+          parentId: '0'
+        }
+        listShareUser(queryParams).then(response => {
+          this.selectUserList = response.data
         });
       },
       /** 转换分销员数据结构 */

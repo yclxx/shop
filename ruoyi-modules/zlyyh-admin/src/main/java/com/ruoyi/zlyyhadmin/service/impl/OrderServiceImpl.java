@@ -125,6 +125,7 @@ public class OrderServiceImpl implements IOrderService {
         lqw.eq(StringUtils.isNotBlank(bo.getOrderCityCode()), Order::getOrderCityCode, bo.getOrderCityCode());
         lqw.eq(bo.getParentNumber() != null, Order::getParentNumber, bo.getParentNumber());
         lqw.eq(bo.getPlatformKey() != null, Order::getPlatformKey, bo.getPlatformKey());
+        lqw.eq(StringUtils.isNotBlank(bo.getVerificationStatus()),Order::getVerificationStatus,bo.getVerificationStatus());
         lqw.between(params.get("beginCreateTime") != null && params.get("endCreateTime") != null,
             Order::getCreateTime, params.get("beginCreateTime"), params.get("endCreateTime"));
         return lqw;

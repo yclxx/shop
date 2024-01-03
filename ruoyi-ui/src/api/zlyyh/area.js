@@ -99,6 +99,12 @@ export function searchShowCityTreeSelect(searchId) {
     method: 'get'
   })
 }
+export function browseShowCityTreeSelect(browseId) {
+  return request({
+    url: '/zlyyh-admin/area/browseShowCityTreeSelect/' + browseId,
+    method: 'get'
+  })
+}
 
 //查询page列表
 export function selectCityList(query) {

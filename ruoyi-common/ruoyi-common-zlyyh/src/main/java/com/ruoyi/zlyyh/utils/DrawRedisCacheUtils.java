@@ -13,55 +13,6 @@ import java.util.List;
  * @author 25487
  */
 public class DrawRedisCacheUtils {
-    /**
-     * 添加用户已兑换额度
-     *
-     * @param missionGroupId 任务组ID
-     * @return 发放数量
-     */
-    public static void addUserMissionConvertCount(Long missionGroupId, Long missionUserId, BigDecimal decimal) {
-        if (null == decimal) {
-            return;
-        }
-        RedisUtils.addAtomicDouble(getUserMissionConvertRedisKey(missionGroupId, missionUserId), decimal.doubleValue());
-    }
-
-    /**
-     * 设置用户已兑换额度
-     *
-     * @param missionGroupId 任务组ID
-     * @return 发放数量
-     */
-    public static void setUserMissionConvertCount(Long missionGroupId, Long missionUserId, BigDecimal decimal, Duration duration) {
-        if (null == decimal) {
-            return;
-        }
-        RedisUtils.setAtomicDouble(getUserMissionConvertRedisKey(missionGroupId, missionUserId), decimal.doubleValue());
-        if (null != duration) {
-            RedisUtils.expire(getUserMissionConvertRedisKey(missionGroupId, missionUserId), duration);
-        }
-    }
-
-    /**
-     * 获取用户已兑换额度
-     *
-     * @param missionGroupId 任务组ID
-     * @return 发放数量
-     */
-    public static double getUserMissionConvertCount(Long missionGroupId, Long missionUserId) {
-        return RedisUtils.getAtomicDouble(getUserMissionConvertRedisKey(missionGroupId, missionUserId));
-    }
-
-    /**
-     * 获取用户已兑换额度缓存key
-     *
-     * @param missionGroupId 奖品ID
-     * @param missionUserId  任务用户ID
-     * @return redis缓存key
-     */
-    private static String getUserMissionConvertRedisKey(Long missionGroupId, Long missionUserId) {
-        return "userMissionConvertCache:" + missionGroupId + ":" + missionUserId;
-    }
 
     /**
      * 获取用户任务发放额度
@@ -102,9 +53,8 @@ public class DrawRedisCacheUtils {
             return;
         }
         RedisUtils.setAtomicDouble(getUserMissionQuotaRedisKey(missionId, missionUserId, dateType), quota.doubleValue());
-        if (null != duration) {
-            RedisUtils.expire(getUserMissionQuotaRedisKey(missionId, missionUserId, dateType), duration);
-        }
+        duration = ZlyyhUtils.getDurationByDateTypeAndDefault(dateType, duration);
+        RedisUtils.expire(getUserMissionQuotaRedisKey(missionId, missionUserId, dateType), duration);
     }
 
     /**
@@ -155,9 +105,8 @@ public class DrawRedisCacheUtils {
             return;
         }
         RedisUtils.setAtomicDouble(getMissionQuotaRedisKey(missionId, dateType), quota.doubleValue());
-        if (null != duration) {
-            RedisUtils.expire(getMissionQuotaRedisKey(missionId, dateType), duration);
-        }
+        duration = ZlyyhUtils.getDurationByDateTypeAndDefault(dateType, duration);
+        RedisUtils.expire(getMissionQuotaRedisKey(missionId, dateType), duration);
     }
 
     /**
@@ -200,9 +149,8 @@ public class DrawRedisCacheUtils {
      */
     public static void setDrawCount(Long drawId, DateType dateType, Long value, Duration duration) {
         RedisUtils.setAtomicValue(getDrawCountRedisKey(drawId, dateType), value);
-        if (null != duration) {
-            RedisUtils.expire(getDrawCountRedisKey(drawId, dateType), duration);
-        }
+        duration = ZlyyhUtils.getDurationByDateTypeAndDefault(dateType, duration);
+        RedisUtils.expire(getDrawCountRedisKey(drawId, dateType), duration);
     }
 
     /**
@@ -247,9 +195,8 @@ public class DrawRedisCacheUtils {
      */
     public static void setUserDrawCount(Long drawId, Long missionUserId, DateType dateType, Long value, Duration duration) {
         RedisUtils.setAtomicValue(getUserDrawCountRedisKey(drawId, missionUserId, dateType), value);
-        if (null != duration) {
-            RedisUtils.expire(getUserDrawCountRedisKey(drawId, missionUserId, dateType), duration);
-        }
+        duration = ZlyyhUtils.getDurationByDateTypeAndDefault(dateType, duration);
+        RedisUtils.expire(getUserDrawCountRedisKey(drawId, missionUserId, dateType), duration);
     }
 
     /**

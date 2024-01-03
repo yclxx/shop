@@ -79,4 +79,10 @@ public interface RemoteAppOrderService {
      * 查询订单分享奖励状态
      */
     void queryShareAwardStatus();
+
+
+    /**
+     * 订单自动退款
+     */
+    void autoRefundOrder();
 }

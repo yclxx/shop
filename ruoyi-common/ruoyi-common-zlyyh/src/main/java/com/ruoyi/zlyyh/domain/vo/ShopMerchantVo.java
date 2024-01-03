@@ -38,6 +38,12 @@ public class ShopMerchantVo {
     private String merchantNo;
 
     /**
+     * 终端号
+     */
+    @ExcelProperty(value = "终端号")
+    private String terminalNo;
+
+    /**
      * 商户类型（0-微信 1-云闪付 2-支付宝）
      */
     @ExcelProperty(value = "商户类型", converter = ExcelDictConvert.class)

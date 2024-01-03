@@ -220,4 +220,12 @@ public interface CacheNames {
      * 银联产品查询缓存
      */
     String UNIONPAY_PRODUCT = "unionpayProduct#60m";
+    /**
+     * 浏览任务
+     */
+    String BROWSELIST = "browseList#40m";
+    /**
+     * 浏览任务
+     */
+    String BROWSEVO = "browseVo#120m";
 }

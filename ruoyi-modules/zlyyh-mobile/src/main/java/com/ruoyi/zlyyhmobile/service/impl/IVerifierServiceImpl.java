@@ -73,6 +73,7 @@ public class IVerifierServiceImpl implements IVerifierService {
     @Override
     public List<ShopVo> queryShopList(VerifierBo bo) {
         LambdaQueryWrapper<Shop> lqw = Wrappers.lambdaQuery();
+        lqw.orderByDesc(Shop::getCreateTime);
         lqw.inSql(Shop::getShopId, "SELECT shop_id FROM t_verifier_shop WHERE verifier_id = " + bo.getId());
         List<ShopVo> result = shopMapper.selectVoList(lqw);
         return result;
@@ -190,12 +191,6 @@ public class IVerifierServiceImpl implements IVerifierService {
     }
 
     @Override
-    public Boolean updateShop(ShopBo bo) {
-        Shop shop = BeanCopyUtils.copy(bo, Shop.class);
-        return shopMapper.updateById(shop) > 0;
-    }
-
-    @Override
     public Boolean insertShop(ShopAndMerchantBo bo) {
         int i = 0;
         Long shopId = IdUtil.getSnowflakeNextId();
@@ -274,11 +269,25 @@ public class IVerifierServiceImpl implements IVerifierService {
     @Override
     public TableDataInfo<ShopVo> queryShopPageList(VerifierBo bo, PageQuery pageQuery) {
         LambdaQueryWrapper<Shop> lqw = Wrappers.lambdaQuery();
+        if (StringUtils.isNotEmpty(bo.getUsername())) {
+            lqw.likeLeft(Shop::getShopName, bo.getUsername());
+        }
+        if (StringUtils.isNotEmpty(bo.getCityCode())) {
+            lqw.likeLeft(Shop::getDistrict, bo.getCityCode());
+        }
         lqw.orderByDesc(Shop::getCreateTime);
-        if (ObjectUtil.isNotEmpty(bo.getCommercialTenantId())) {
-            lqw.eq(Shop::getCommercialTenantId, bo.getCommercialTenantId());
+        if (StringUtils.isNotEmpty(bo.getContract()) && bo.getContract().equals("5")) {
+            String sql = "SELECT commercial_tenant_id FROM t_commercial_tenant WHERE verifier_id =" + bo.getId();
+            if (StringUtils.isNotEmpty(bo.getOrg())) {
+                sql = sql + " AND commercial_tenant_name LIKE '" + bo.getOrg() + "%'";
+            }
+            lqw.inSql(Shop::getCommercialTenantId, sql);
         } else {
-            lqw.inSql(Shop::getShopId, "SELECT shop_id FROM t_verifier_shop WHERE verifier_id = " + bo.getId());
+            if (ObjectUtil.isNotEmpty(bo.getCommercialTenantId())) {
+                lqw.eq(Shop::getCommercialTenantId, bo.getCommercialTenantId());
+            } else {
+                lqw.inSql(Shop::getShopId, "SELECT shop_id FROM t_verifier_shop WHERE verifier_id = " + bo.getId());
+            }
         }
         Page<ShopVo> result = shopMapper.selectVoPage(pageQuery.build(), lqw);
         return TableDataInfo.build(result);
@@ -326,9 +335,9 @@ public class IVerifierServiceImpl implements IVerifierService {
      * 解除核销人员与门店关系
      */
     @Override
-    public Boolean cancelVerifier(CodeBo bo) {
+    public Boolean cancelVerifier(VerifierBo bo) {
         LambdaQueryWrapper<VerifierShop> lqw = Wrappers.lambdaQuery();
-        lqw.eq(VerifierShop::getVerifierId, bo.getVerifierId());
+        lqw.eq(VerifierShop::getVerifierId, bo.getId());
         lqw.eq(VerifierShop::getShopId, bo.getShopId());
         return verifierShopMapper.delete(lqw) > 0;
     }
@@ -337,29 +346,29 @@ public class IVerifierServiceImpl implements IVerifierService {
      * 添加核销人员与门店关系
      */
     @Override
-    public Boolean addVerifier(CodeBo bo) {
-        if (StringUtils.isEmpty(bo.getVerifierMobile())) return false;
+    public Boolean addVerifier(VerifierBo bo) {
+        if (StringUtils.isEmpty(bo.getMobile())) return false;
+        if (StringUtils.isEmpty(bo.getUsername())) return false;
         // 核销人员查询
-        LambdaQueryWrapper<Verifier> lqw = Wrappers.lambdaQuery();
-        lqw.eq(Verifier::getMobile, bo.getVerifierMobile());
-        VerifierVo verifierVo = baseMapper.selectVoOne(lqw);
+        Verifier verifier = baseMapper.selectByMobile(bo.getMobile());
         // 判断核销人员是否存在
-        if (ObjectUtil.isNotEmpty(verifierVo)) {
+        if (ObjectUtil.isNotEmpty(verifier)) {
             // 绑定核销人员与门店
             LambdaQueryWrapper<VerifierShop> lqw2 = Wrappers.lambdaQuery();
-            lqw2.eq(VerifierShop::getVerifierId, verifierVo.getId());
+            lqw2.eq(VerifierShop::getVerifierId, verifier.getId());
             lqw2.eq(VerifierShop::getShopId, bo.getShopId());
             // 判断是否已经是核销人员
             if (verifierShopMapper.selectCount(lqw2) > 0) {
                 return true;
             }
-            return handleVerifierShop(verifierVo.getId(), bo.getShopId());
+            return handleVerifierShop(verifier.getId(), bo.getShopId());
         } else {
             // 新增核销人员
-            Verifier verifier = new Verifier();
+            verifier = new Verifier();
             verifier.setId(IdUtil.getSnowflakeNextId());
             verifier.setPlatformKey(ZlyyhUtils.getPlatformId());
-            verifier.setMobile(bo.getVerifierMobile());
+            verifier.setMobile(bo.getMobile());
+            verifier.setUsername(bo.getUsername());
             verifier.setIsVerifier(true);
             verifier.setIsAdmin(false);
             verifier.setIsBd(false);

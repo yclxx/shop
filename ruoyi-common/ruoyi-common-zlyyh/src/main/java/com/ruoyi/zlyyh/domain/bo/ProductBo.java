@@ -382,4 +382,8 @@ public class ProductBo extends BaseEntity {
     private String shareAmountType;
     private BigDecimal shareOneAmount;
     private BigDecimal shareTwoAmount;
+    private String warnMessage;
+    private String warnEmail;
+    private Long warnCount;
+    private String autoRefund;
 }

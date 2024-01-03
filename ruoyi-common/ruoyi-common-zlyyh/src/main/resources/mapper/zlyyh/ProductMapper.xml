@@ -84,6 +84,10 @@
         <result property="shareOneAmount" column="share_one_amount"/>
         <result property="shareTwoAmount" column="share_two_amount"/>
         <result property="couponTip" column="coupon_tip"/>
+        <result property="autoRefund" column="auto_refund"/>
+        <result property="warnMessage" column="warn_message"/>
+        <result property="warnEmail" column="warn_email"/>
+        <result property="warnCount" column="warn_count"/>
     </resultMap>
 
     <select id="selectPageByShopId" resultType="com.ruoyi.zlyyh.domain.vo.ProductVo">

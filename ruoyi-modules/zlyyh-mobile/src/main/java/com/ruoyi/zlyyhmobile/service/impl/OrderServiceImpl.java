@@ -10,6 +10,8 @@ import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
+
+import cn.hutool.extra.mail.MailUtil;
 import cn.hutool.http.HttpStatus;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONArray;
@@ -26,6 +28,7 @@ import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.exception.user.UserException;
 import com.ruoyi.common.core.utils.*;
+import com.ruoyi.common.core.utils.reflect.ReflectUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.RedisUtils;
@@ -34,6 +37,7 @@ import com.ruoyi.zlyyh.constant.YsfUpConstants;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.AppWxPayCallbackParams;
+import com.ruoyi.zlyyh.domain.bo.OrderBackTransBo;
 import com.ruoyi.zlyyh.domain.bo.OrderBo;
 import com.ruoyi.zlyyh.domain.bo.ProductAmountBo;
 import com.ruoyi.zlyyh.domain.vo.*;
@@ -66,6 +70,7 @@ import com.wechat.pay.contrib.apache.httpclient.auth.AutoUpdateCertificatesVerif
 import com.wechat.pay.contrib.apache.httpclient.auth.PrivateKeySigner;
 import com.wechat.pay.contrib.apache.httpclient.auth.WechatPay2Credentials;
 import com.wechat.pay.contrib.apache.httpclient.util.PemUtil;
+import jodd.util.CollectionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -74,8 +79,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.Email;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -85,6 +92,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -469,6 +477,11 @@ public class OrderServiceImpl implements IOrderService {
         }
         if (!"0".equals(orderPushCache.getStatus())) {
             log.error("发券订单号{}，订单已有最终状态，不做查询处理", pushNumber);
+            if ("1".equals(orderPushCache.getStatus())) {
+                sendResult(R.ok("订单已发券"), orderPushCache, order, cache, false);
+            } else if ("2".equals(orderPushCache.getStatus())) {
+                sendResult(R.fail(orderPushCache.getRemark()), orderPushCache, order, cache, false);
+            }
             return;
         }
         if ("0".equals(order.getOrderType())) {
@@ -684,6 +697,7 @@ public class OrderServiceImpl implements IOrderService {
             order.setNumber(IdUtil.getSnowflakeNextId());
             order.setProductId(productVo.getProductId());
             order.setCusRefund(productVo.getCusRefund());
+            order.setAutoRefund(productVo.getAutoRefund());
             order.setUserId(bo.getUserId());
             order.setProductName(productVo.getProductName());
             order.setProductImg(productVo.getProductImg());
@@ -755,6 +769,19 @@ public class OrderServiceImpl implements IOrderService {
 
             // 设置领取缓存
             this.setOrderCountCache(platformVo.getPlatformKey(), bo.getUserId(), productVo.getProductId(), productVo.getSellEndDate(), order.getCount());
+            //开启预警判断
+            if (ObjectUtil.isNotEmpty(productVo.getWarnMessage()) && productVo.getWarnMessage().equals("1")){
+                //查询已发送数量
+                long count = RedisUtils.getAtomicValue(countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
+                if (ObjectUtil.isNotEmpty(productVo.getWarnCount()) && ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && count >= productVo.getWarnCount()){
+                    //达成以上条件发送邮件
+                    String title ="商品数量预警";
+                    String text = productVo.getProductName()+":数量不足"+productVo.getWarnCount()+"请及时处理";
+                    sendWarnEmail(productVo.getWarnEmail(),title,text,true);
+                }
+
+            }
+
             try {
                 if ("0".equals(productVo.getPickupMethod())) {
                     order.setStatus("2");
@@ -857,12 +884,16 @@ public class OrderServiceImpl implements IOrderService {
                 order.setTotalAmount(amount.multiply(new BigDecimal(order.getCount())));
                 order.setReducedPrice(reducedPrice.multiply(new BigDecimal(order.getCount())));
                 order.setWantAmount(order.getTotalAmount().subtract(order.getReducedPrice()));
-
+                if (order.getWantAmount().signum() < 1) {
+                    order.setWantAmount(new BigDecimal("0.01"));
+                }
                 //添加大订单价格
                 collectiveOrder.setTotalAmount(amount.multiply(new BigDecimal(order.getCount())));
                 collectiveOrder.setReducedPrice(reducedPrice.multiply(new BigDecimal(order.getCount())));
                 collectiveOrder.setWantAmount(order.getTotalAmount().subtract(order.getReducedPrice()));
-
+                if (collectiveOrder.getWantAmount().signum() < 1) {
+                    collectiveOrder.setWantAmount(new BigDecimal("0.01"));
+                }
                 if ("12".equals(productVo.getProductType()) || "1".equals(productVo.getUnionPay())) {
                     String externalProductId = "1".equals(productVo.getUnionPay()) ? productVo.getUnionProductId() : productVo.getExternalProductId();
                     if (StringUtils.isEmpty(externalProductId)) {
@@ -917,6 +948,31 @@ public class OrderServiceImpl implements IOrderService {
             lockTemplate.releaseLock(lockInfo);
         }
     }
+    public static String countByProductIdRedisKey(Long platformKey, Long productId, DateType dateType) {
+        return "orderLimitCache:product:" + platformKey + ":" + productId + ":" + ZlyyhUtils.getDateCacheKey(dateType);
+    }
+    private void sendWarnEmail(String emails, String title, String text,boolean checkEmail){
+        log.info("发送邮件参数，emails={},title={},text={}", emails, title, text);
+        if (StringUtils.isBlank(emails)) {
+            return;
+        }
+        if(checkEmail){
+            String data = emails + title + text;
+            // 签名
+            String sign = DigestUtils.md5DigestAsHex(data.getBytes(StandardCharsets.UTF_8)).toLowerCase();
+            // 查询签名是否存在，存在则说明已发送了，不再发送
+            String redisKey = "emailLog:"+sign;
+            String cache = RedisUtils.getCacheObject(redisKey);
+            if(StringUtils.isNotBlank(cache)){
+                return ;
+            }
+            RedisUtils.setCacheObject(redisKey, DateUtil.now(),Duration.ofHours(1));
+        }
+        MailUtil.sendText(emails,title,text);
+
+    }
+
+
 
     /**
      * 购物车创建订单
@@ -1113,6 +1169,7 @@ public class OrderServiceImpl implements IOrderService {
             order.setUserId(bo.getUserId());
             order.setProductName(productVo.getProductName());
             order.setProductImg(productVo.getProductImg());
+            order.setAutoRefund(productVo.getAutoRefund());
             order.setPickupMethod(productVo.getPickupMethod());
             order.setSupportChannel(bo.getChannel());
             order.setExpireDate(collectiveOrder.getExpireDate());
@@ -1153,6 +1210,21 @@ public class OrderServiceImpl implements IOrderService {
             }
             //如果是供应商美食订单走这里
             addFoodOrder(productVo, order, userVo, platformVo);
+            // 设置领取缓存
+            this.setOrderCountCache(platformVo.getPlatformKey(), bo.getUserId(), productVo.getProductId(), productVo.getSellEndDate(), order.getCount());
+            //开启预警判断
+            if (ObjectUtil.isNotEmpty(productVo.getWarnMessage()) && productVo.getWarnMessage().equals("1")){
+                //查询已发送数量
+                long totalCount = RedisUtils.getAtomicValue(countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
+                if (ObjectUtil.isNotEmpty(productVo.getWarnCount()) && ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && totalCount >= productVo.getWarnCount()){
+                    //达成以上条件发送邮件
+                    String title ="商品数量预警";
+                    String text = productVo.getProductName()+":数量不足"+productVo.getWarnCount()+"请及时处理";
+                    sendWarnEmail(productVo.getWarnEmail(),title,text,true);
+                }
+
+            }
+
             // 小订单金额，单个商品销售价
             BigDecimal amountSmall = productVo.getSellAmount();
             // 会员优惠金额
@@ -1212,7 +1284,9 @@ public class OrderServiceImpl implements IOrderService {
         collectiveOrder.setTotalAmount(amount);
         collectiveOrder.setReducedPrice(reducedPrice);
         collectiveOrder.setWantAmount(amount.subtract(reducedPrice));
-
+        if (collectiveOrder.getWantAmount().signum() < 1) {
+            collectiveOrder.setWantAmount(new BigDecimal("0.01"));
+        }
         collectiveOrderMapper.insert(collectiveOrder);
         collectiveOrder = getCollectiveOrder(collectiveOrder.getCollectiveNumber());
         return new CreateOrderResult(collectiveOrder.getCollectiveNumber(), null, "1");
@@ -1768,11 +1842,10 @@ public class OrderServiceImpl implements IOrderService {
                 RedisUtils.incrAtomicValue(productCacheKey);
                 RedisUtils.incrAtomicValue(userCacheKey);
             }
-            if (null != duration) {
-                // 设置失效时间
-                RedisUtils.expire(productCacheKey, duration);
-                RedisUtils.expire(userCacheKey, duration);
-            }
+            duration = ZlyyhUtils.getDurationByDateTypeAndDefault(value, duration);
+            // 设置失效时间
+            RedisUtils.expire(productCacheKey, duration);
+            RedisUtils.expire(userCacheKey, duration);
         }
     }
 
@@ -1948,6 +2021,254 @@ public class OrderServiceImpl implements IOrderService {
             throw new ServiceException("订单不可取消！");
         }
     }
+
+    /**
+     *订单自动退款
+     * *
+     */
+    @Async
+    @Override
+    public void autoRefundOrder(){
+        //通过商品自动退款字段 以及时间等条件查询可以自动退款的订单
+        LambdaQueryWrapper<Order> lqw = new LambdaQueryWrapper<>();
+        lqw.eq(Order::getAutoRefund, "1");
+        lqw.eq(Order::getStatus, "2");
+        //自动退款目前只支持银联票券的退款  其他暂时不考虑
+        lqw.eq(Order::getOrderType,"18");
+        lqw.in(Order::getVerificationStatus,"0", "2");
+        lqw.le(Order::getUsedEndTime, new Date());
+        lqw.ge(Order::getCreateTime,DateUtils.parseDate("2023-9-29"));
+        Long orderCount = baseMapper.selectCount(lqw);
+        //分页查询
+        int pageIndex = 1;
+        int pageSize = 50;
+        PageQuery pageQuery = new PageQuery();
+        pageQuery.setPageSize(pageSize);
+        //循环退款
+        while (true){
+            pageQuery.setPageNum(pageIndex);
+            pageQuery.setPageSize(pageSize);
+            Page<OrderVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+            List<OrderVo> orderVos = result.getRecords();
+            if (CollectionUtils.isNotEmpty(orderVos)){
+                //进行退款
+                for (OrderVo orderVo : orderVos) {
+                    try {
+                        orderAutoRefund(orderVo);
+                    }catch (Exception e){
+                        log.error("订单自动退款失败，订单号：{}，错误：{}",orderVo.getNumber(),e);
+                    }
+
+                }
+            }
+            int sum = pageIndex * pageSize;
+            if (sum >= orderCount) {
+                break;
+            }
+            pageIndex++;
+        }
+
+    }
+
+    /**
+     * @param orderVo 订单
+     *
+     */
+    private void orderAutoRefund(OrderVo orderVo){
+        Order order = baseMapper.selectById(orderVo.getNumber());
+        //查询大订单
+        CollectiveOrder collectiveOrder = getCollectiveOrder(orderVo.getCollectiveNumber());
+        String orderType = orderVo.getOrderType();
+        if (!orderType.equals("18")){
+            return;
+        }
+        MerchantVo merchantVo = null;
+        if (!"2".equals(orderVo.getPickupMethod())) {
+            merchantVo = merchantService.queryById(orderVo.getPayMerchant());
+            if (ObjectUtil.isEmpty(merchantVo)) {
+                throw new ServiceException("商户不存在，请联系客服处理");
+            }
+        }
+        OrderBackTrans orderBackTrans = new OrderBackTrans();
+        orderBackTrans.setRefund(orderVo.getOutAmount());
+        orderBackTrans.setThNumber(IdUtils.getSnowflakeNextIdStr("T"));
+        orderBackTrans.setOrderBackTransState("0");
+        orderBackTrans.setNumber(orderVo.getNumber());
+        order.setStatus("4");
+        // 退款检查
+        try {
+            checkOrderStatus(orderBackTrans, order.getOutAmount(), order.getStatus());
+        } catch (Exception e) {
+            // 有可能订单还没更新，休眠1秒
+            ThreadUtil.sleep(3000);
+            order = baseMapper.selectById(orderBackTrans.getNumber());
+            try {
+                checkOrderStatus(orderBackTrans, order.getOutAmount(), order.getStatus());
+            } catch (Exception ex) {
+                checkOrderStatus(orderBackTrans, order.getWantAmount(), order.getStatus());
+            }
+        }
+        //1.付费领取
+        if ("1".equals(order.getPickupMethod())) {
+            orderBackTrans.setPickupMethod("1");
+            if (ObjectUtil.isNotEmpty(merchantVo) && "0".equals(merchantVo.getMerchantType())) {
+                // 云闪付退款
+                ysfRefund(orderBackTrans, order, merchantVo);
+            } else if (ObjectUtil.isNotEmpty(merchantVo) && "1".equals(merchantVo.getMerchantType())) {
+                // 微信退款
+                wxRefund(orderBackTrans, order, merchantVo);
+            } else {
+                throw new ServiceException("商户号错误");
+            }
+        } else if ("2".equals(order.getPickupMethod())) {
+            orderBackTrans.setPickupMethod("2");
+            //2.积点兑换
+            UserVo userVo = userService.queryById(order.getUserId(), PlatformEnumd.MP_YSF.getChannel());
+            if (ObjectUtil.isEmpty(userVo)) {
+                throw new ServiceException("用户不存在，请联系客服处理");
+            }
+            R<Void> result = YsfUtils.memberPointAcquire(orderVo.getNumber(), Integer.toUnsignedLong(orderBackTrans.getRefund().intValue()), "1", orderVo.getProductName() + "退款", userVo.getOpenId(), "1", orderVo.getPlatformKey());
+            if (result.getCode() == 200) {
+                orderBackTrans.setPickupMethod("2");
+                orderBackTrans.setSuccessTime(DateUtils.getNowDate());
+                orderBackTrans.setOrderBackTransState("2");
+                order.setStatus("5");
+                //全退完了
+                collectiveOrder.setStatus("5");
+                collectiveOrder.setCancelAmount(collectiveOrder.getCancelAmount().add(order.getWantAmount()));
+                collectiveOrder.setCancelStatus("1");
+            } else {
+                orderBackTrans.setOrderBackTransState("1");
+                order.setStatus("6");
+                //退款失败
+                collectiveOrder.setStatus("6");
+                collectiveOrder.setCancelAmount(collectiveOrder.getCancelAmount().add(order.getWantAmount()));
+                collectiveOrder.setCancelStatus("2");
+            }
+        }
+        collectiveOrderMapper.updateById(collectiveOrder);
+        order = updateOrder(order);
+
+        PermissionUtils.setDeptIdAndUserId(orderBackTrans, order.getSysDeptId(), order.getSysUserId());
+        orderBackTransMapper.insert(orderBackTrans);
+
+    }
+
+
+    /**
+     * 校验订单退款状态
+     *
+     * @param bo        退款信息
+     * @param outAmount 退款金额
+     * @param status    订单状态
+     */
+    private void checkOrderStatus(OrderBackTrans bo, BigDecimal outAmount, String status) {
+        if (bo.getRefund().compareTo(outAmount) > 0) {
+            log.info("订单退款金额：{}，订单实际支付金额：{}", bo.getRefund(), outAmount);
+            throw new ServiceException("退款金额不能超出订单金额");
+        }
+    }
+
+    /**
+     * 微信订单退款
+     *
+     * @param orderBackTrans         退款信息
+     * @param order        订单信息
+     * @param merchantVo 商户号信息
+     */
+    private void wxRefund(OrderBackTrans orderBackTrans, Order order, MerchantVo merchantVo) {
+        String refundCallbackUrl = merchantVo.getRefundCallbackUrl();
+        if (!refundCallbackUrl.contains(merchantVo.getId().toString())) {
+            refundCallbackUrl = refundCallbackUrl + "/" + merchantVo.getId();
+        }
+        BigDecimal outAmount = order.getOutAmount();
+        Integer amountTotal = BigDecimalUtils.toMinute(outAmount);
+        if (amountTotal < 1) {
+            outAmount = order.getWantAmount();
+            amountTotal = BigDecimalUtils.toMinute(outAmount);
+        }
+        if (amountTotal < 1) {
+            throw new ServiceException("退款金额错误");
+        }
+        String s;
+        try {
+            Long oldNumber = order.getCollectiveNumber();
+            if (null == oldNumber) {
+                oldNumber = orderBackTrans.getNumber();
+            }
+            s = WxUtils.wxRefund(oldNumber.toString(), orderBackTrans.getThNumber(), wxProperties.getRefundUrl(), merchantVo.getMerchantNo(), null, BigDecimalUtils.toMinute(orderBackTrans.getRefund()), amountTotal, refundCallbackUrl, merchantVo.getCertPath(), merchantVo.getMerchantKey(), merchantVo.getApiKey());
+        } catch (Exception e) {
+            log.error("微信退款异常：", e);
+            throw new ServiceException("退款异常");
+        }
+        if (StringUtils.isBlank(s)) {
+            throw new ServiceException("请求失败，请联系管理员处理");
+        }
+        log.info("订单：{}，微信退款返回数据：{}", orderBackTrans.getNumber(), s);
+        Map<String, Object> result = JsonUtils.parseMap(s);
+        if (null == result) {
+            throw new ServiceException("请求失败，请联系管理员处理");
+        }
+        // 微信退款单号
+        String refund_id = (String) result.get("refund_id");
+        // 退款成功时间
+        String success_time = (String) result.get("success_time");
+        // 退款受理时间
+        String create_time = (String) result.get("create_time");
+        // 退款状态
+        // SUCCESS：退款成功
+        // CLOSED：退款关闭
+        // PROCESSING：退款处理中
+        // ABNORMAL：退款异常
+        String status = (String) result.get("status");
+        // 优惠退款信息
+        Object promotion_detail = result.get("promotion_detail");
+        // 金额信息
+        Map<String, Object> map = BeanUtil.beanToMap(result.get("amount"));
+        // 新增退款订单信息
+        orderBackTrans.setRefundId(refund_id);
+        if (("SUCCESS").equals(status)) {
+            // 退款成功
+            orderBackTrans.setPickupMethod("1");
+            orderBackTrans.setOrderBackTransState("2");
+            orderBackTrans.setSuccessTime(DateUtils.getNowDate());
+            order.setStatus("5");
+        } else if (!("PROCESSING").equals(status)) {
+            orderBackTrans.setOrderBackTransState("1");
+            order.setStatus("6");
+        }
+    }
+
+    /**
+     * 云闪付订单退款
+     ** @param merchantVo 商户号信息
+     */
+    private void ysfRefund(OrderBackTrans orderBackTrans, Order order, MerchantVo merchantVo) {
+        OrderInfoVo orderInfoVo = orderInfoMapper.selectVoById(orderBackTrans.getNumber());
+        Map<String, String> result = PayUtils.backTransReq(orderInfoVo.getQueryId(), BigDecimalUtils.toMinute(orderBackTrans.getRefund()).toString(), orderBackTrans.getThNumber(), merchantVo.getRefundCallbackUrl(), merchantVo.getMerchantNo(), merchantVo.getMerchantKey(), merchantVo.getCertPath(), orderInfoVo.getIssAddnData());
+        if (null == result) {
+            throw new ServiceException("请求失败，请联系客服处理");
+        }
+        String respCode = result.get("respCode");
+        String queryId = result.get("queryId");
+        String txnTime = result.get("txnTime");
+        String origQryId = result.get("origQryId");
+        if (("00").equals(respCode)) {
+            orderBackTrans.setQueryId(queryId);
+            orderBackTrans.setOrigQryId(origQryId);
+            orderBackTrans.setTxnTime(txnTime);
+            orderBackTrans.setOrderBackTransState("2");
+            orderBackTrans.setPickupMethod("1");
+            orderBackTrans.setSuccessTime(DateUtils.getNowDate());
+            order.setStatus("5");
+        } else if (!("03").equals(respCode) && !("04").equals(respCode) && !("05").equals(respCode)) {
+            LogUtil.writeLog("【" + orderBackTrans.getNumber() + "】退款失败，应答信息respCode=" + respCode + ",respMsg=" + result.get("respMsg"));
+            //其他应答码为失败请排查原因
+            orderBackTrans.setOrderBackTransState("1");
+            order.setStatus("6");
+        }
+    }
+
 
     @Override
     public void orderRefund(Long number, Long userId) {

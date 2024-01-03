@@ -175,12 +175,16 @@ public class AreaServiceImpl implements IAreaService {
     @Override
     public List<Long> selectPlatformCityByBannerId(Long bannerId) {
         Banner banner = bannerMapper.selectById(bannerId);
-        if (null != banner && null != banner.getShowCity()) {
+        return getCityIds(null != banner ? banner.getShowCity() : null);
+    }
+
+    public List<Long> getCityIds(String showCity) {
+        if (StringUtils.isNotBlank(showCity)) {
             List<Long> list = new ArrayList<>();
-            if (banner.getShowCity().equals("ALL")) {
+            if (showCity.equals("ALL")) {
                 list.add(99L);
             } else {
-                String[] split = banner.getShowCity().split(",");
+                String[] split = showCity.split(",");
                 for (String s : split) {
                     list.add(Long.parseLong(s));
                 }
@@ -193,19 +197,7 @@ public class AreaServiceImpl implements IAreaService {
     @Override
     public List<Long> selectPlatformCityByNewsId(Long newsId) {
         HotNews hotNews = hotNewsMapper.selectById(newsId);
-        if (null != hotNews && null != hotNews.getShowCity()) {
-            List<Long> list = new ArrayList<>();
-            if (hotNews.getShowCity().equals("ALL")) {
-                list.add(99L);
-            } else {
-                String[] split = hotNews.getShowCity().split(",");
-                for (String s : split) {
-                    list.add(Long.parseLong(s));
-                }
-            }
-            return list;
-        }
-        return null;
+        return getCityIds(null != hotNews ? hotNews.getShowCity() : null);
     }
 
     @Override
@@ -229,18 +221,6 @@ public class AreaServiceImpl implements IAreaService {
     @Override
     public List<Long> selectPlatformCityBySearchId(Long searchId) {
         SearchGroup searchGroup = searchGroupMapper.selectById(searchId);
-        if (null != searchGroup && null != searchGroup.getShowCity()) {
-            List<Long> list = new ArrayList<>();
-            if (searchGroup.getShowCity().equals("ALL")) {
-                list.add(99L);
-            } else {
-                String[] split = searchGroup.getShowCity().split(",");
-                for (String s : split) {
-                    list.add(Long.parseLong(s));
-                }
-            }
-            return list;
-        }
-        return null;
+        return getCityIds(null != searchGroup ? searchGroup.getShowCity() : null);
     }
 }

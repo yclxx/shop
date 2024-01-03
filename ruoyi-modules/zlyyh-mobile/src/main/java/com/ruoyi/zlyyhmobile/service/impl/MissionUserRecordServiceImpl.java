@@ -220,10 +220,10 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
             throw new ServiceException("未找到活动信息");
         }
         if (!"0".equals(missionGroupVo.getStatus())) {
-            throw new ServiceException("活动已结束");
+            throw new ServiceException("本期活动已结束,敬请期待下期活动");
         }
         if (null != missionGroupVo.getEndDate() && DateUtils.compare(missionGroupVo.getEndDate()) < 0) {
-            throw new ServiceException("活动已结束");
+            throw new ServiceException("本期活动已结束,敬请期待下期活动");
         }
         ZlyyhUtils.checkCity(missionGroupVo.getShowCity());
         // 上锁
@@ -750,13 +750,13 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
 
     private void checkMissionStatus(String status, Date startDate, Date endDate) {
         if ("1".equals(status)) {
-            throw new ServiceException("任务已结束");
+            throw new ServiceException("本期活动已结束,敬请期待下期活动");
         }
         if (null != startDate && DateUtils.compare(startDate) > 0) {
             throw new ServiceException("开始时间:" + DateUtils.parseDateToStr("yyyy-MM-dd HH:mm:ss", startDate));
         }
         if (null != endDate && DateUtils.compare(endDate) < 0) {
-            throw new ServiceException("任务已结束");
+            throw new ServiceException("本期活动已结束,敬请期待下期活动");
         }
     }
 
@@ -811,10 +811,10 @@ public class MissionUserRecordServiceImpl implements IMissionUserRecordService {
 
     private MissionUserRecord getMissionUserRecord(Long missionUserId, Long missionGroupId, Long platformKey) {
         LambdaQueryWrapper<MissionUserRecord> lqw = buildUserDrawCountQuery(missionUserId, missionGroupId);
-        List<Long> missionIds = this.getMissionIds(missionGroupId, platformKey, missionUserId);
-        if (ObjectUtil.isEmpty(missionIds)) {
-            throw new ServiceException("抱歉，奖品已发完或已达规则上限");
-        }
+//        List<Long> missionIds = this.getMissionIds(missionGroupId, platformKey, missionUserId);
+//        if (ObjectUtil.isEmpty(missionIds)) {
+//            throw new ServiceException("抱歉，奖品已发完或已达规则上限");
+//        }
 //        lqw.in(MissionUserRecord::getMissionId, missionIds);
         lqw.last("order by mission_user_record_id asc limit 1");
         return baseMapper.selectOne(lqw);

@@ -432,4 +432,8 @@ public class ProductVo implements Serializable {
     private BigDecimal shareTwoAmount;
 
     private String couponTip;
+    private String warnMessage;
+    private String warnEmail;
+    private Long warnCount;
+    private String autoRefund;
 }

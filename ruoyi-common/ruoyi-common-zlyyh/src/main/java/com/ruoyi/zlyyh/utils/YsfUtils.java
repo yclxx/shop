@@ -1055,9 +1055,9 @@ public class YsfUtils {
         String chnlId = "8126";
         String appId = "up_49pfnfkryxb4v_s28";
         String activityTp = "02";
-        String activityNo = "3102023101930119";
+        String activityNo = "3102023112842501";
 //        String activityNo = "3102023112040116";
-        String mobile = "15524576686";
+        String mobile = "17767132971";
 //        String mobile = "15542432188";
 //        String mobile = "17767132971";
 //        String mobile = "18340897551";
@@ -1090,11 +1090,11 @@ public class YsfUtils {
         // 查询活动剩余名额查询
 //        aggQueryCpnRemain(activityNo, chnlId, appId, privateKey);
         // 赠送优惠券
-//        couponAcquire(transSeq, activityNo, mobile, "1", "03", chnlId, appId, privateKey, sm4Key);
+        couponAcquire(transSeq, activityNo, mobile, "1", "03", chnlId, appId, privateKey, sm4Key);
         // 用户优惠券状态查询
-        List<String> activityNoList = new ArrayList<>();
-        activityNoList.add(activityNo);
-        userCoupon(mobile, activityNoList, "03", chnlId, appId, privateKey, sm4Key);
+//        List<String> activityNoList = new ArrayList<>();
+//        activityNoList.add(activityNo);
+//        userCoupon(mobile, activityNoList, "03", chnlId, appId, privateKey, sm4Key);
         // 查询优惠券赠送结果
 //        couponAcqQuery(transSeq, "20231121", chnlId, appId, privateKey);
         // 赠送红包

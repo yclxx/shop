@@ -15,7 +15,9 @@ import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.zlyyh.domain.Area;
 import com.ruoyi.zlyyh.domain.bo.AreaBo;
 import com.ruoyi.zlyyh.domain.vo.AreaVo;
+import com.ruoyi.zlyyh.domain.vo.BrowseVo;
 import com.ruoyi.zlyyhadmin.service.IAreaService;
+import com.ruoyi.zlyyhadmin.service.IBrowseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +44,7 @@ import java.util.Map;
 public class AreaController extends BaseController {
 
     private final IAreaService iAreaService;
+    private final IBrowseService browseService;
 
     /**
      * 查询行政区列表
@@ -57,9 +60,9 @@ public class AreaController extends BaseController {
      * 查询城市下拉列表
      */
     @GetMapping("/selectCityList")
-    public R<List<SelectListEntity>> selectCityList(AreaBo bo){
+    public R<List<SelectListEntity>> selectCityList(AreaBo bo) {
         List<AreaVo> areaVos = iAreaService.queryList(bo);
-        return R.ok(BeanCopyUtils.copyListToSelectListVo(areaVos, ColumnUtil.getFieldName(AreaVo::getId),ColumnUtil.getFieldName(AreaVo::getAreaName),ColumnUtil.getFieldName(AreaVo::getAdcode)));
+        return R.ok(BeanCopyUtils.copyListToSelectListVo(areaVos, ColumnUtil.getFieldName(AreaVo::getId), ColumnUtil.getFieldName(AreaVo::getAreaName), ColumnUtil.getFieldName(AreaVo::getAdcode)));
     }
 
     /**
@@ -68,7 +71,7 @@ public class AreaController extends BaseController {
     @GetMapping("/listSelect")
     public R<List<SelectListEntity>> listSelect(AreaBo bo) {
         List<AreaVo> list = iAreaService.queryList(bo);
-        return R.ok(BeanCopyUtils.copyListToSelectListVo(list, ColumnUtil.getFieldName(AreaVo::getId),ColumnUtil.getFieldName(AreaVo::getAdcode),ColumnUtil.getFieldName(AreaVo::getAreaName)));
+        return R.ok(BeanCopyUtils.copyListToSelectListVo(list, ColumnUtil.getFieldName(AreaVo::getId), ColumnUtil.getFieldName(AreaVo::getAdcode), ColumnUtil.getFieldName(AreaVo::getAreaName)));
     }
 
     /**
@@ -89,7 +92,7 @@ public class AreaController extends BaseController {
      */
     @SaCheckPermission("zlyyh:area:query")
     @GetMapping("/{id}")
-    public R<AreaVo> getInfo(@NotNull(message = "主键不能为空")@PathVariable Long id) {
+    public R<AreaVo> getInfo(@NotNull(message = "主键不能为空") @PathVariable Long id) {
         return R.ok(iAreaService.queryById(id));
     }
 
@@ -129,7 +132,7 @@ public class AreaController extends BaseController {
      * 获取行政区下拉树列表
      */
     @GetMapping("/treeselect")
-    public R<List<Tree<Long>>> treeselect(Area area){
+    public R<List<Tree<Long>>> treeselect(Area area) {
         List<Area> areaList = iAreaService.selectCityList(area);
         return R.ok(iAreaService.buildCityTreeSelect(areaList));
     }
@@ -138,12 +141,12 @@ public class AreaController extends BaseController {
      * 加载对应城市列表树
      */
     @GetMapping("/platformCityTreeselect/{platform}")
-    public R<Map<String,Object>> platformCityTreeselect(@PathVariable("platform") Long platform){
+    public R<Map<String, Object>> platformCityTreeselect(@PathVariable("platform") Long platform) {
         Area area = new Area();
         List<Area> areas = iAreaService.selectCityList(area);
-        Map<String,Object> ajax = new HashMap<>();
-        ajax.put("checkedKeys",iAreaService.selectPlatformCityByPlatform(platform));
-        ajax.put("citys",iAreaService.buildCityTreeSelect(areas));
+        Map<String, Object> ajax = new HashMap<>();
+        ajax.put("checkedKeys", iAreaService.selectPlatformCityByPlatform(platform));
+        ajax.put("citys", iAreaService.buildCityTreeSelect(areas));
         return R.ok(ajax);
     }
 
@@ -151,12 +154,12 @@ public class AreaController extends BaseController {
      * 加载banner对应城市列表树
      */
     @GetMapping("/bannerShowCityTreeSelect/{bannerId}")
-    public R<Map<String,Object>> bannerShowCityTreeSelect(@PathVariable("bannerId") Long bannerId){
+    public R<Map<String, Object>> bannerShowCityTreeSelect(@PathVariable("bannerId") Long bannerId) {
         Area area = new Area();
         List<Area> areas = iAreaService.selectCityList(area);
-        Map<String,Object> ajax = new HashMap<>();
-        ajax.put("checkedKeys",iAreaService.selectPlatformCityByBannerId(bannerId));
-        ajax.put("citys",iAreaService.buildCityTreeSelect(areas));
+        Map<String, Object> ajax = new HashMap<>();
+        ajax.put("checkedKeys", iAreaService.selectPlatformCityByBannerId(bannerId));
+        ajax.put("citys", iAreaService.buildCityTreeSelect(areas));
         return R.ok(ajax);
     }
 
@@ -164,33 +167,46 @@ public class AreaController extends BaseController {
      * 加载banner对应城市列表树
      */
     @GetMapping("/hotNewsShowCityTreeSelect/{newsId}")
-    public R<Map<String,Object>> hotNewsShowCityTreeSelect(@PathVariable("newsId") Long newsId){
+    public R<Map<String, Object>> hotNewsShowCityTreeSelect(@PathVariable("newsId") Long newsId) {
         Area area = new Area();
         List<Area> areas = iAreaService.selectCityList(area);
-        Map<String,Object> ajax = new HashMap<>();
-        ajax.put("checkedKeys",iAreaService.selectPlatformCityByNewsId(newsId));
-        ajax.put("citys",iAreaService.buildCityTreeSelect(areas));
+        Map<String, Object> ajax = new HashMap<>();
+        ajax.put("checkedKeys", iAreaService.selectPlatformCityByNewsId(newsId));
+        ajax.put("citys", iAreaService.buildCityTreeSelect(areas));
         return R.ok(ajax);
     }
 
     @GetMapping("/productShowCityTreeSelect/{productId}")
-    public R<Map<String,Object>> productShowCityTreeSelect(@PathVariable("productId") Long productId){
+    public R<Map<String, Object>> productShowCityTreeSelect(@PathVariable("productId") Long productId) {
         Area area = new Area();
         List<Area> areas = iAreaService.selectCityList(area);
-        Map<String,Object> ajax = new HashMap<>();
-        ajax.put("checkedKeys",iAreaService.selectPlatformCityByProductId(productId));
-        ajax.put("citys",iAreaService.buildCityTreeSelect(areas));
+        Map<String, Object> ajax = new HashMap<>();
+        ajax.put("checkedKeys", iAreaService.selectPlatformCityByProductId(productId));
+        ajax.put("citys", iAreaService.buildCityTreeSelect(areas));
         return R.ok(ajax);
     }
 
     @GetMapping("/searchShowCityTreeSelect/{searchId}")
-    public R<Map<String,Object>> searchShowCityTreeSelect(@PathVariable("searchId") Long searchId){
+    public R<Map<String, Object>> searchShowCityTreeSelect(@PathVariable("searchId") Long searchId) {
         Area area = new Area();
         List<Area> areas = iAreaService.selectCityList(area);
-        Map<String,Object> ajax = new HashMap<>();
-        ajax.put("checkedKeys",iAreaService.selectPlatformCityBySearchId(searchId));
-        ajax.put("citys",iAreaService.buildCityTreeSelect(areas));
+        Map<String, Object> ajax = new HashMap<>();
+        ajax.put("checkedKeys", iAreaService.selectPlatformCityBySearchId(searchId));
+        ajax.put("citys", iAreaService.buildCityTreeSelect(areas));
         return R.ok(ajax);
     }
 
+    /**
+     * 加载浏览任务对应城市列表树
+     */
+    @GetMapping("/browseShowCityTreeSelect/{browseId}")
+    public R<Map<String, Object>> browseShowCityTreeSelect(@PathVariable("browseId") Long browseId) {
+        Area area = new Area();
+        List<Area> areas = iAreaService.selectCityList(area);
+        Map<String, Object> ajax = new HashMap<>();
+        BrowseVo browseVo = browseService.queryById(browseId);
+        ajax.put("checkedKeys", iAreaService.getCityIds(null != browseVo ? browseVo.getShowCity() : null));
+        ajax.put("citys", iAreaService.buildCityTreeSelect(areas));
+        return R.ok(ajax);
+    }
 }

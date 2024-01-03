@@ -21,7 +21,6 @@ public interface IAreaService {
      */
     AreaVo queryById(Long id);
 
-
     /**
      * 查询行政区列表
      */
@@ -49,6 +48,7 @@ public interface IAreaService {
 
     /**
      * 查询行政下拉树
+     *
      * @return
      */
     List<Tree<Long>> buildCityTreeSelect(List<Area> areaList);
@@ -63,5 +63,8 @@ public interface IAreaService {
     List<Long> selectPlatformCityByNewsId(Long bannerId);
 
     List<Long> selectPlatformCityByProductId(Long productId);
+
     List<Long> selectPlatformCityBySearchId(Long searchId);
+
+    List<Long> getCityIds(String showCity);
 }
