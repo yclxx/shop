@@ -2028,7 +2028,7 @@ public class OrderServiceImpl implements IOrderService {
      */
     @Async
     @Override
-    public void autoRefundOrder(){
+    public void autoRefundOrder(String job){
         //通过商品自动退款字段 以及时间等条件查询可以自动退款的订单
         LambdaQueryWrapper<Order> lqw = new LambdaQueryWrapper<>();
         lqw.eq(Order::getAutoRefund, "1");
@@ -2037,8 +2037,12 @@ public class OrderServiceImpl implements IOrderService {
         lqw.eq(Order::getOrderType,"18");
         lqw.in(Order::getVerificationStatus,"0", "2");
         lqw.le(Order::getUsedEndTime, new Date());
-        lqw.ge(Order::getCreateTime,DateUtils.parseDate("2023-9-29"));
+        lqw.ge(Order::getCreateTime,DateUtils.parseDate("2023-12-29"));
         Long orderCount = baseMapper.selectCount(lqw);
+        if ("123".equals(job)){
+            log.info("需要退款数量：{}",orderCount);
+            return;
+        }
         //分页查询
         int pageIndex = 1;
         int pageSize = 50;
@@ -2062,7 +2066,7 @@ public class OrderServiceImpl implements IOrderService {
                 }
             }
             int sum = pageIndex * pageSize;
-            if (sum >= orderCount) {
+            if (sum >= orderCount || sum >=1000) {
                 break;
             }
             pageIndex++;
@@ -2108,6 +2112,7 @@ public class OrderServiceImpl implements IOrderService {
                 checkOrderStatus(orderBackTrans, order.getWantAmount(), order.getStatus());
             }
         }
+
         //1.付费领取
         if ("1".equals(order.getPickupMethod())) {
             orderBackTrans.setPickupMethod("1");
