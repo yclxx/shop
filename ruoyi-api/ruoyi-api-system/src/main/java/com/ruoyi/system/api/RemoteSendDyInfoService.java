@@ -7,4 +7,9 @@ public interface RemoteSendDyInfoService {
      */
     void sendHuBeiDyInfo(String job);
 
+    /**
+     * 发送微信订阅信息
+     */
+    void sendWxMsg(String job);
+
 }

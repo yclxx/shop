@@ -6,14 +6,18 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ruoyi.common.core.utils.JsonUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.zlyyh.domain.PlatformChannel;
 import com.ruoyi.zlyyh.domain.SendDyInfo;
 import com.ruoyi.zlyyh.domain.bo.SendDyInfoBo;
+import com.ruoyi.zlyyh.domain.vo.PlatformChannelVo;
 import com.ruoyi.zlyyh.domain.vo.SendDyInfoVo;
+import com.ruoyi.zlyyh.domain.vo.WxMsgJobVo;
+import com.ruoyi.zlyyh.mapper.PlatformChannelMapper;
 import com.ruoyi.zlyyh.mapper.SendDyInfoMapper;
-import com.ruoyi.zlyyh.mapper.UserMapper;
 import com.ruoyi.zlyyh.properties.WxProperties;
 import com.ruoyi.zlyyh.service.YsfConfigService;
 import com.ruoyi.zlyyh.utils.WxUtils;
@@ -39,7 +43,7 @@ public class SendDyInfoServiceImpl implements ISendDyInfoService {
     private final SendDyInfoMapper baseMapper;
     private final WxProperties wxProperties;
     private final YsfConfigService ysfConfigService;
-    private final UserMapper userMapper;
+    private final PlatformChannelMapper platformChannelMapper;
 
     /**
      * 查询用户订阅
@@ -101,6 +105,71 @@ public class SendDyInfoServiceImpl implements ISendDyInfoService {
             if (!CollectionUtils.isEmpty(sendDyInfoVos)) {
                 for (SendDyInfoVo sendDyInfoVo : sendDyInfoVos) {
                     sendWxMsg(sendDyInfoVo);
+                }
+            }
+            int sum = pageIndex * pageSize;
+            if (sum >= total) {
+                break;
+            }
+            pageIndex++;
+        }
+    }
+
+    /**
+     * 微信订阅消息
+     */
+    public void sendWxMsg(String job) {
+        if (StringUtils.isBlank(job)) {
+            return;
+        }
+        WxMsgJobVo wxMsgJobVo = JsonUtils.parseObject(job, WxMsgJobVo.class);
+        if (null == wxMsgJobVo || StringUtils.isBlank(wxMsgJobVo.getTemplateId()) || ObjectUtil.isEmpty(wxMsgJobVo.getMsgMap())) {
+            return;
+        }
+        LambdaQueryWrapper<SendDyInfo> lqw = new LambdaQueryWrapper<>();
+        lqw.eq(SendDyInfo::getTmplId, wxMsgJobVo.getTemplateId());
+        lqw.gt(SendDyInfo::getDyCount, 0);
+        lqw.in(ObjectUtil.isNotEmpty(wxMsgJobVo.getUserIds()), SendDyInfo::getUserId, wxMsgJobVo.getUserIds());
+        long total = baseMapper.selectCount(lqw);
+        if (total < 1) {
+            return;
+        }
+        //分页查询
+        int pageIndex = 1;
+        int pageSize = 100;
+        PageQuery pageQuery = new PageQuery();
+        pageQuery.setPageSize(pageSize);
+        while (true) {
+            pageQuery.setPageNum(pageIndex);
+            Page<SendDyInfoVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+            List<SendDyInfoVo> sendDyInfoVos = result.getRecords();
+            //发送信息
+            if (ObjectUtil.isNotEmpty(sendDyInfoVos)) {
+                for (SendDyInfoVo sendDyInfoVo : sendDyInfoVos) {
+                    try {
+                        PlatformChannelVo platformChannelVo = platformChannelMapper.selectVoOne(new LambdaQueryWrapper<PlatformChannel>().eq(PlatformChannel::getPlatformKey, sendDyInfoVo.getPlatformKey()).eq(PlatformChannel::getChannel, "1"));
+                        if (null == platformChannelVo || StringUtils.isBlank(platformChannelVo.getAppId()) || StringUtils.isBlank(platformChannelVo.getSecret())) {
+                            return;
+                        }
+                        String accessToken = WxUtils.getAccessToken(platformChannelVo.getAppId(), platformChannelVo.getSecret(), wxProperties.getAccessTokenUrl());
+
+                        // 组装消息数据
+                        Map<String, Object> msgData = new HashMap<>();
+                        for (String s : wxMsgJobVo.getMsgMap().keySet()) {
+                            Map<String, String> thingMap = new HashMap<>();
+                            thingMap.put("value", wxMsgJobVo.getMsgMap().get(s));
+                            msgData.put(s, thingMap);
+                        }
+                        // 发送消息
+                        WxUtils.sendTemplateMessage(accessToken, sendDyInfoVo.getOpenId(), sendDyInfoVo.getTmplId(), wxMsgJobVo.getPage(), msgData);
+                        // 扣减订阅次数
+                        SendDyInfo sendDyInfo = new SendDyInfo();
+                        sendDyInfo.setId(sendDyInfoVo.getId());
+                        sendDyInfo.setDyCount(sendDyInfoVo.getDyCount() - 1);
+                        baseMapper.updateById(sendDyInfo);
+                    } catch (Exception e) {
+                        log.error(e.getMessage());
+                    }
                 }
             }
             int sum = pageIndex * pageSize;

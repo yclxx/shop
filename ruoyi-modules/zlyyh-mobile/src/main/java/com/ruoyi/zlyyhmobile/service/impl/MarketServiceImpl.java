@@ -63,7 +63,7 @@ public class MarketServiceImpl implements IMarketService {
     public MarketLog insertUserMarket(MarketBo bo, Long userId) {
         if (ObjectUtil.isEmpty(bo) || ObjectUtil.isEmpty(userId)) throw new ServiceException("奖励领取失败");
         Market market = baseMapper.selectById(bo.getMarketId());
-        if (ObjectUtil.isEmpty(market)) throw new ServiceException("活动已结束");
+        if (ObjectUtil.isEmpty(market)) throw new ServiceException("本期活动已结束,敬请期待下期活动");
 
         // 判断用户是否已经领取奖励
         MarketLog marketLog = this.buildMarketLogQuery(bo, userId);
@@ -75,7 +75,7 @@ public class MarketServiceImpl implements IMarketService {
         Date nowDate = DateUtils.getNowDate();
         // 判断活动时间
         if (DateUtils.compare(nowDate, market.getBeginTime()) < 0) throw new ServiceException("活动未开始");
-        if (DateUtils.compare(nowDate, market.getEndTime()) > 0) throw new ServiceException("活动已结束");
+        if (DateUtils.compare(nowDate, market.getEndTime()) > 0) throw new ServiceException("本期活动已结束,敬请期待下期活动");
 
         UserVo userVo = userService.queryById(userId, bo.getSupportChannel());
         if (ObjectUtil.isEmpty(userVo)) throw new ServiceException("未查到你的用户信息");

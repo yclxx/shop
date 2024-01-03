@@ -15,14 +15,18 @@ import org.springframework.stereotype.Service;
 public class RemoteSendDyInfoServiceImpl implements RemoteSendDyInfoService {
     private final ISendDyInfoService sendDyInfoService;
 
-
     @Async
     @Override
     public void sendHuBeiDyInfo(String job) {
         sendDyInfoService.sendHuBeiDyInfo(job);
     }
 
-
-
-
+    /**
+     * 发送微信订阅信息
+     */
+    @Async
+    @Override
+    public void sendWxMsg(String job) {
+        sendDyInfoService.sendWxMsg(job);
+    }
 }

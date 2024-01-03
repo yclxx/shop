@@ -83,10 +83,10 @@ public class MissionUserServiceImpl implements IMissionUserService {
         // 查询是否在活动城市
         MissionGroupVo missionGroupVo = missionGroupMapper.selectVoById(bo.getMissionGroupId());
         if (null == missionGroupVo || !"0".equals(missionGroupVo.getStatus())) {
-            throw new ServiceException("任务不存在或已结束");
+            throw new ServiceException("本期活动已结束,敬请期待下期活动");
         }
         if (null != missionGroupVo.getEndDate() && DateUtils.compare(missionGroupVo.getEndDate()) < 0) {
-            throw new ServiceException("任务已结束");
+            throw new ServiceException("本期活动已结束,敬请期待下期活动");
         }
         PlatformVo platformVo = platformService.queryById(missionGroupVo.getPlatformKey(), ZlyyhUtils.getPlatformChannel());
         if (null == platformVo) {

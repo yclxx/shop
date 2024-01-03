@@ -209,7 +209,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
             // 查询用户今日是否已达标
             List<ProductVo> productVos = missionGroupService.missionProduct(missionVo.getMissionId(), missionVo.getPlatformKey(), ZlyyhUtils.getCityCodeByAdCode(adCode));
             if (ObjectUtil.isEmpty(productVos)) {
-                throw new ServiceException("感谢您的助力，本次活动已结束");
+                throw new ServiceException("感谢您的助力，本期活动已结束,敬请期待下期活动");
             }
             // 查询用户今日已获奖励次数
             Long userInviteLogCount = getUserInviteLogCount(bo.getUserId(), bo.getMissionId());
@@ -261,13 +261,13 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
     @Override
     public void check(MissionVo missionVo) {
         if (null == missionVo || "1".equals(missionVo.getStatus())) {
-            throw new ServiceException("活动不存在或已结束");
+            throw new ServiceException("本期活动已结束,敬请期待下期活动");
         }
         if (null != missionVo.getStartDate() && DateUtils.compare(missionVo.getStartDate()) > 0) {
             throw new ServiceException("开始时间:" + DateUtils.parseDateToStr("yyyy-MM-dd HH:mm:ss", missionVo.getStartDate()));
         }
         if (null != missionVo.getEndDate() && DateUtils.compare(missionVo.getEndDate()) < 0) {
-            throw new ServiceException("任务已结束");
+            throw new ServiceException("本期活动已结束,敬请期待下期活动");
         }
     }
 
