@@ -54,9 +54,9 @@ public class TemplateSetting extends BaseEntity {
     private Long sort;
 
     /**
-     * 是否分层
+     * 图片宽度
      */
-    private String levelFlag;
+    private Long width;
 
     /**
      * 父级id

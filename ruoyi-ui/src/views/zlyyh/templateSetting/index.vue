@@ -54,7 +54,8 @@
         </template>
       </el-table-column>
       <el-table-column label="排序" align="center" prop="sort" />
-      <el-table-column label="同级标识" align="center" prop="levelFlag" />
+      <el-table-column label="图片宽度" align="center" prop="width" />
+      <el-table-column label="父级id" align="center" prop="parentId" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
@@ -80,7 +81,7 @@
 
     <!-- 添加或修改落地页配置对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+      <el-form ref="form" :model="form" :rules="rules" label-width="90px">
         <el-form-item label="落地页" prop="templateId">
           <el-select style="width: 100%;" v-model="form.templateId" placeholder="请选择落地页">
             <el-option v-for="item in templatePageList" :key="item.id" :label="item.label" :value="item.id">
@@ -133,8 +134,20 @@
         <el-form-item label="排序" prop="sort">
           <el-input v-model="form.sort" placeholder="请输入排序" />
         </el-form-item>
-        <el-form-item label="同级标识" prop="levelFlag">
-          <el-input v-model="form.levelFlag" placeholder="请输入同级标识" />
+        <el-form-item label="图片宽度" prop="width">
+          <span slot="label">
+            图片宽度
+            <el-tooltip placement="top">
+              <div slot="content">图片所占比例</div>
+              <i class="el-icon-question"></i>
+            </el-tooltip>
+          </span>
+          <el-input v-model="form.width" placeholder="请输入图片宽度">
+            <template slot="append">%</template>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="父级id" prop="parentId">
+          <el-input v-model="form.parentId" placeholder="请输入父级id" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -210,11 +223,11 @@
             message: "落地页不能为空",
             trigger: "blur"
           }],
-          img: [{
-            required: true,
-            message: "图片不能为空",
-            trigger: "blur"
-          }],
+          // img: [{
+          //   required: true,
+          //   message: "图片不能为空",
+          //   trigger: "blur"
+          // }],
           toType: [{
             required: true,
             message: "跳转类型不能为空",

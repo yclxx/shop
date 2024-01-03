@@ -6,7 +6,7 @@ import com.ruoyi.common.excel.annotation.ExcelDictFormat;
 import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
 import java.util.Date;
-
+import java.util.List;
 
 
 /**
@@ -84,14 +84,15 @@ public class TemplateSettingVo {
     private Date updateTime;
 
     /**
-     * 是否分层
+     * 图片宽度
      */
-    private String levelFlag;
+    private Long width;
 
     /**
      * 父级id
      */
     private Long parentId;
 
+    private List<TemplateSettingVo> settingVoList;
 
 }
