@@ -2,6 +2,7 @@ package com.ruoyi.job.service;
 
 import com.ruoyi.system.api.RemoteAppOrderService;
 import com.ruoyi.system.api.RemoteOrderService;
+import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
@@ -114,6 +115,7 @@ public class OrderService {
      */
     @XxlJob("autoRefundOrder")
     public void autoRefundOrder() {
-        remoteAppOrderService.autoRefundOrder();
+        String jobParam = XxlJobHelper.getJobParam();
+        remoteAppOrderService.autoRefundOrder(jobParam);
     }
 }
