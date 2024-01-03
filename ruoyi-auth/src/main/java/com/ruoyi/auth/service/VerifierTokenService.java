@@ -198,6 +198,8 @@ public class VerifierTokenService {
     public void logout() {
         try {
             LoginUser loginUser = LoginHelper.getLoginUser();
+            // 清除缓存的token
+            CacheUtils.evict(CacheNames.loginUserTokens, loginUser.getUserId());
             remoteVerifierUserService.logout(loginUser.getUserId());
             StpUtil.logout();
             recordLogininfor(loginUser.getUsername(), Constants.LOGOUT, MessageUtils.message("user.logout.success"));

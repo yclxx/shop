@@ -24,4 +24,10 @@ public class SendDyInfoService {
         String jobParam = XxlJobHelper.getJobParam();
         remoteSendDyInfoService.sendHuBeiDyInfo(jobParam);
     }
+
+    @XxlJob("sendWxMsg")
+    public void sendWxMsg() {
+        String jobParam = XxlJobHelper.getJobParam();
+        remoteSendDyInfoService.sendWxMsg(jobParam);
+    }
 }

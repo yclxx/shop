@@ -15,18 +15,18 @@ import org.springframework.stereotype.Service;
 public class RemoteSendDyInfoServiceImpl implements RemoteSendDyInfoService {
     private final ISendDyInfoService sendDyInfoService;
 
-
     @Async
     @Override
     public void sendHuBeiDyInfo(String job) {
-        if ("123".equals(job)){
-            log.info("订阅定时任务可以正常执行");
-            return;
-        }
-        sendDyInfoService.sendHuBeiDyInfo();
+        sendDyInfoService.sendHuBeiDyInfo(job);
     }
 
-
-
-
+    /**
+     * 发送微信订阅信息
+     */
+    @Async
+    @Override
+    public void sendWxMsg(String job) {
+        sendDyInfoService.sendWxMsg(job);
+    }
 }

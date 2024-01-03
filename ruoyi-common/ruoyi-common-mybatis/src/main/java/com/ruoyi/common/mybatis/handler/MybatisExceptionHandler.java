@@ -25,7 +25,7 @@ public class MybatisExceptionHandler {
     public R<Void> handleDuplicateKeyException(DuplicateKeyException e, HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         log.error("请求地址'{}',数据库中已存在记录'{}'", requestURI, e.getMessage());
-        return R.fail("数据库中已存在该记录，请联系管理员确认");
+        return R.fail("数据已存在，不可重复添加");
     }
 
     /**
