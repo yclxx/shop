@@ -64,5 +64,15 @@ public class TemplateSettingBo extends BaseEntity {
      */
     private Long sort;
 
+    /**
+     * 是否分层
+     */
+    private String levelFlag;
+
+    /**
+     * 父级id
+     */
+    private Long parentId;
+
 
 }

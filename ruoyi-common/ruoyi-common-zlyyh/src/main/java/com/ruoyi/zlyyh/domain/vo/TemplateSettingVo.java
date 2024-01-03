@@ -83,5 +83,15 @@ public class TemplateSettingVo {
     @ExcelProperty(value = "更新时间")
     private Date updateTime;
 
+    /**
+     * 是否分层
+     */
+    private String levelFlag;
+
+    /**
+     * 父级id
+     */
+    private Long parentId;
+
 
 }

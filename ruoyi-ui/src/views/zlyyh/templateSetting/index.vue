@@ -54,6 +54,7 @@
         </template>
       </el-table-column>
       <el-table-column label="排序" align="center" prop="sort" />
+      <el-table-column label="同级标识" align="center" prop="levelFlag" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
@@ -131,6 +132,9 @@
         </div>
         <el-form-item label="排序" prop="sort">
           <el-input v-model="form.sort" placeholder="请输入排序" />
+        </el-form-item>
+        <el-form-item label="同级标识" prop="levelFlag">
+          <el-input v-model="form.levelFlag" placeholder="请输入同级标识" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
