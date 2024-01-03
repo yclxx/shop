@@ -84,5 +84,5 @@ public interface RemoteAppOrderService {
     /**
      * 订单自动退款
      */
-    void autoRefundOrder();
+    void autoRefundOrder(String job);
 }

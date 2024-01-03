@@ -451,7 +451,7 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
      */
     @Async
     @Override
-    public void autoRefundOrder() {
-        orderService.autoRefundOrder();
+    public void autoRefundOrder(String job) {
+        orderService.autoRefundOrder(job);
     }
 }
