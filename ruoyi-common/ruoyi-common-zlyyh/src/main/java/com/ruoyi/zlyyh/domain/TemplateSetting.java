@@ -53,4 +53,14 @@ public class TemplateSetting extends BaseEntity {
      */
     private Long sort;
 
+    /**
+     * 图片宽度
+     */
+    private Long width;
+
+    /**
+     * 父级id
+     */
+    private Long parentId;
+
 }
