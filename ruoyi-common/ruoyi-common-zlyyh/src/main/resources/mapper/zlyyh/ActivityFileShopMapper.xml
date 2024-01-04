@@ -26,6 +26,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <result property="updateBy" column="update_by"/>
     <result property="updateTime" column="update_time"/>
     <result property="sort" column="sort"/>
+    <result property="typeId" column="type_id"/>
     </resultMap>
 
 

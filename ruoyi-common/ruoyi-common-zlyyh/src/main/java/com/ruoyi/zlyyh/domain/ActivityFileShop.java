@@ -94,4 +94,6 @@ public class ActivityFileShop extends BaseEntity {
      */
     private Long sort;
 
+    private Long typeId;
+
 }

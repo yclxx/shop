@@ -125,5 +125,6 @@ public class ActivityFileShopVo {
     @ExcelProperty(value = "排序：从小到大")
     private Long sort;
 
+    private Long typeId;
 
 }

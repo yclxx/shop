@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 查询活动商户列表
 export function listActivityFileShop(query) {
   return request({
-    url: '/zlyyh/activityFileShop/list',
+    url: '/zlyyh-admin/activityFileShop/list',
     method: 'get',
     params: query
   })
@@ -12,7 +12,7 @@ export function listActivityFileShop(query) {
 // 查询活动商户详细
 export function getActivityFileShop(activityShopId) {
   return request({
-    url: '/zlyyh/activityFileShop/' + activityShopId,
+    url: '/zlyyh-admin/activityFileShop/' + activityShopId,
     method: 'get'
   })
 }
@@ -20,7 +20,7 @@ export function getActivityFileShop(activityShopId) {
 // 新增活动商户
 export function addActivityFileShop(data) {
   return request({
-    url: '/zlyyh/activityFileShop',
+    url: '/zlyyh-admin/activityFileShop',
     method: 'post',
     data: data
   })
@@ -29,7 +29,7 @@ export function addActivityFileShop(data) {
 // 修改活动商户
 export function updateActivityFileShop(data) {
   return request({
-    url: '/zlyyh/activityFileShop',
+    url: '/zlyyh-admin/activityFileShop',
     method: 'put',
     data: data
   })
@@ -38,7 +38,7 @@ export function updateActivityFileShop(data) {
 // 删除活动商户
 export function delActivityFileShop(activityShopId) {
   return request({
-    url: '/zlyyh/activityFileShop/' + activityShopId,
+    url: '/zlyyh-admin/activityFileShop/' + activityShopId,
     method: 'delete'
   })
 }

@@ -124,5 +124,6 @@ public class ActivityFileShopBo extends BaseEntity {
     @NotNull(message = "排序：从小到大不能为空", groups = { AddGroup.class, EditGroup.class })
     private Long sort;
 
+    private Long typeId;
 
 }
