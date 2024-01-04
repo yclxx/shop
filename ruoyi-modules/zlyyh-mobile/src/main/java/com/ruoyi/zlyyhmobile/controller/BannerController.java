@@ -38,10 +38,6 @@ import java.util.stream.Collectors;
 @RequestMapping("/banner/ignore")
 public class BannerController extends BaseController {
 
-    public static void main(String[] args) {
-        System.out.println(DateUtil.format(new Date(1695624314862L), "yyyy-MM-dd HH:mm:ss"));
-    }
-
     private final IBannerService iBannerService;
 
     /**

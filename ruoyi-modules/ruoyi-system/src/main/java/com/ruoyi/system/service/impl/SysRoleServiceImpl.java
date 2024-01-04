@@ -188,6 +188,23 @@ public class SysRoleServiceImpl implements ISysRoleService {
         if (ObjectUtil.isNotNull(role.getRoleId()) && role.isAdmin()) {
             throw new ServiceException("不允许操作超级管理员角色");
         }
+        // 新增不允许使用 管理员标识符
+        if (ObjectUtil.isNull(role.getRoleId())
+            && StringUtils.equals(role.getRoleKey(), UserConstants.ADMIN_ROLE_KEY)) {
+            throw new ServiceException("不允许使用系统内置管理员角色标识符!");
+        }
+        // 修改不允许修改 管理员标识符
+        if (ObjectUtil.isNotNull(role.getRoleId())) {
+            SysRole sysRole = baseMapper.selectById(role.getRoleId());
+            // 如果标识符不相等 判断为修改了管理员标识符
+            if (!StringUtils.equals(sysRole.getRoleKey(), role.getRoleKey())) {
+                if (StringUtils.equals(sysRole.getRoleKey(), UserConstants.ADMIN_ROLE_KEY)) {
+                    throw new ServiceException("不允许修改系统内置管理员角色标识符!");
+                } else if (StringUtils.equals(role.getRoleKey(), UserConstants.ADMIN_ROLE_KEY)) {
+                    throw new ServiceException("不允许使用系统内置管理员角色标识符!");
+                }
+            }
+        }
     }
 
     /**
