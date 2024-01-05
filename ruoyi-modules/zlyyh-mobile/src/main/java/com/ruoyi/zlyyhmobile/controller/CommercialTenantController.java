@@ -2,6 +2,7 @@ package com.ruoyi.zlyyhmobile.controller;
 
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.core.validate.AppEditGroup;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.satoken.utils.LoginHelper;
@@ -14,6 +15,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 @Validated
 @RequiredArgsConstructor
 @RestController
@@ -76,8 +78,9 @@ public class CommercialTenantController {
      * 商户端修改商户(商户端)
      */
     @PostMapping("/updateCommercialTenant")
-    public R updateCommercialTenant(@RequestBody CommercialTenantBo bo) {
+    public R<Void> updateCommercialTenant(@Validated(AppEditGroup.class) @RequestBody CommercialTenantBo bo) {
         bo.setVerifierId(LoginHelper.getUserId());
-        return R.ok(commercialTenantService.updateCommercialTenant(bo));
+        commercialTenantService.updateCommercialTenant(bo);
+        return R.ok();
     }
 }

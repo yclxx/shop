@@ -81,7 +81,7 @@ public class CommercialTenant extends BaseEntity {
     /**
      * 是否共享
      */
-    private String is_share;
+    private String isShare;
     /**
      * 供应商
      */
@@ -136,4 +136,9 @@ public class CommercialTenant extends BaseEntity {
      * 用户id
      */
     private Long sysUserId;
+
+    /**
+     * 数据来源：0-系统录入，1-API接口
+     */
+    private String source;
 }

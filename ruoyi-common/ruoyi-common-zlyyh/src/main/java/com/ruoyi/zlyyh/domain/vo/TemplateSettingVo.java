@@ -5,6 +5,8 @@ import com.alibaba.excel.annotation.ExcelProperty;
 import com.ruoyi.common.excel.annotation.ExcelDictFormat;
 import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
+
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -86,7 +88,7 @@ public class TemplateSettingVo {
     /**
      * 图片宽度
      */
-    private Long width;
+    private BigDecimal width;
 
     /**
      * 父级id

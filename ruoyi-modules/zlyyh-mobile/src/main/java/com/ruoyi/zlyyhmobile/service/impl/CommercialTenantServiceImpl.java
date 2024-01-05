@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.constant.CacheNames;
+import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.BeanCopyUtils;
 import com.ruoyi.common.core.utils.JsonUtils;
 import com.ruoyi.common.core.utils.ServletUtils;
@@ -22,7 +23,6 @@ import com.ruoyi.zlyyh.domain.bo.ShopBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
 import com.ruoyi.zlyyh.mapper.VerifierMapper;
-import com.ruoyi.zlyyh.mapper.VerifierShopMapper;
 import com.ruoyi.zlyyh.utils.MapUtils;
 import com.ruoyi.zlyyhmobile.service.*;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +51,6 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
     private final ICategoryService categoryService;
     private final ICategoryProductService categoryProductService;
     private final VerifierMapper verifierMapper;
-    private final VerifierShopMapper verifierShopMapper;
     private final IProductService productService;
     private final IShopService shopService;
 
@@ -97,10 +96,16 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
         CommercialTenant commercialTenant;
         if (ObjectUtil.isNotEmpty(bo.getCommercialTenantId())) {
             commercialTenant = baseMapper.selectById(bo.getCommercialTenantId());
+            if (!bo.getVerifierId().equals(commercialTenant.getVerifierId())) {
+                throw new ServiceException("登录超时，请退出重试");
+            }
             commercialTenant.setIsCache("1");
             baseMapper.updateById(commercialTenant);
         } else {
             commercialTenant = BeanCopyUtils.copy(bo, CommercialTenant.class);
+            if (null == commercialTenant) {
+                throw new ServiceException("操作失败，请退出重试");
+            }
             commercialTenant.setCommercialTenantId(IdUtil.getSnowflakeNextId());
             commercialTenant.setIsCache("1");
             baseMapper.insert(commercialTenant);

@@ -328,6 +328,7 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 CommercialTenantBo bo = new CommercialTenantBo();
                 bo.setCommercialTenantId(IdUtil.getSnowflakeNextId());
                 bo.setCommercialTenantName(brandName);
+                bo.setSource("1");
                 Boolean b = commercialTenantService.insertByBo(bo);
                 if (b) {
                     commercialTenantId = bo.getCommercialTenantId();

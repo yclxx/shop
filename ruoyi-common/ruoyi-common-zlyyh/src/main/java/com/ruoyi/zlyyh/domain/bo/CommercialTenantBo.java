@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyh.domain.bo;
 
 import com.ruoyi.common.core.validate.AddGroup;
+import com.ruoyi.common.core.validate.AppEditGroup;
 import com.ruoyi.common.core.validate.EditGroup;
 import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
@@ -41,6 +42,7 @@ public class CommercialTenantBo extends BaseEntity {
     /**
      * 商户简称
      */
+    @NotBlank(message = "商户名称不能为空", groups = {AppEditGroup.class})
     private String commercialTenantTitle;
     /**
      * 核销员id
@@ -49,6 +51,7 @@ public class CommercialTenantBo extends BaseEntity {
     /**
      * 管理员手机号
      */
+    @NotBlank(message = "管理员手机号不能为空", groups = {AppEditGroup.class})
     private String adminMobile;
 
     private String isCache;
@@ -79,7 +82,7 @@ public class CommercialTenantBo extends BaseEntity {
     /**
      * 是否共享
      */
-    private String is_share;
+    private String isShare;
     /**
      * 供应商
      */
@@ -111,6 +114,7 @@ public class CommercialTenantBo extends BaseEntity {
     /**
      * 第三方品牌ID
      */
+    @NotNull(message = "品牌不能为空", groups = {AppEditGroup.class})
     private Long brandId;
 
     /**
@@ -146,4 +150,9 @@ public class CommercialTenantBo extends BaseEntity {
     private String weekDate;
 
     private Long shopId;
+
+    /**
+     * 数据来源：0-系统录入，1-API接口
+     */
+    private String source;
 }
