@@ -49,6 +49,10 @@ public class MissionGroup extends BaseEntity {
      */
     private String missionImg;
     /**
+     * 默认背景图片
+     */
+    private String missionBgImg;
+    /**
      * 任务组编号
      */
     private String missionGroupUpid;

@@ -61,6 +61,16 @@ public class MissionGroupVo {
     private String missionImg;
 
     /**
+     * 默认背景图片
+     */
+    private String missionBgImg;
+
+    /**
+     * 上传的背景图片
+     */
+    private String realBjImg;
+
+    /**
      * 任务组编号
      */
     @ExcelProperty(value = "任务组编号")

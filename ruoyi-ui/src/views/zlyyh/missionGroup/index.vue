@@ -78,6 +78,11 @@
           <image-preview :src="scope.row.missionImg" :width="50" :height="50" />
         </template>
       </el-table-column>
+      <el-table-column label="背景图片" align="center" prop="missionBgImg" width="100">
+        <template slot-scope="scope">
+          <image-preview :src="scope.row.missionBgImg" :width="50" :height="50" />
+        </template>
+      </el-table-column>
       <el-table-column label="状态" fixed="right" width="68" align="center" prop="status">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status" />
@@ -148,6 +153,11 @@
           <el-col :span="8">
             <el-form-item label="规则图片" prop="missionImg">
               <image-upload :limit="1" :isShowTip="false" v-model="form.missionImg" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="默认背景" prop="missionBgImg">
+              <image-upload :limit="1" :isShowTip="false" v-model="form.missionBgImg" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -336,6 +346,7 @@
           startDate: undefined,
           endDate: undefined,
           missionImg: undefined,
+          missionBgImg: undefined,
           missionGroupUpid: undefined,
           jdConvertRedPacket: '0',
           platformKey: undefined,

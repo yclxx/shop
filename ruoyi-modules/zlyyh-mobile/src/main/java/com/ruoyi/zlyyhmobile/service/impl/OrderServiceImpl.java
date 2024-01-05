@@ -342,22 +342,24 @@ public class OrderServiceImpl implements IOrderService {
                 order = updateOrder(order);
             }
             if (!"16".equals(order.getOrderType())) {
-                if (StringUtils.isBlank(order.getExternalProductId()) || (("3".equals(order.getOrderType()) || "10".equals(order.getOrderType()) || "4".equals(order.getOrderType())) && null == order.getExternalProductSendValue())) {
-                    if (null == productVo || (!"9".equals(productVo.getProductType()) && StringUtils.isBlank(productVo.getExternalProductId()))) {
-                        log.error("订单发券错误，缺少供应商产品ID：{}", number);
-                        // 处理结果
-                        sendResult(R.fail("缺少供应商产品ID"), orderPushInfo, order, cache, false);
-                        return;
+                if (!"21".equals(order.getOrderType())){
+                    if (StringUtils.isBlank(order.getExternalProductId()) || (("3".equals(order.getOrderType()) || "10".equals(order.getOrderType()) || "4".equals(order.getOrderType())) && null == order.getExternalProductSendValue())) {
+                        if (null == productVo || (!"9".equals(productVo.getProductType()) && StringUtils.isBlank(productVo.getExternalProductId()))) {
+                            log.error("订单发券错误，缺少供应商产品ID：{}", number);
+                            // 处理结果
+                            sendResult(R.fail("缺少供应商产品ID"), orderPushInfo, order, cache, false);
+                            return;
+                        }
+                        if (("3".equals(order.getOrderType()) || "10".equals(order.getOrderType()) || "4".equals(order.getOrderType())) && null == order.getExternalProductSendValue() && null == productVo.getExternalProductSendValue()) {
+                            log.error("订单发券错误，缺少发放金额：{}", number);
+                            sendResult(R.fail("缺少发放金额"), orderPushInfo, order, cache, false);
+                            return;
+                        }
+                        order.setExternalProductId(productVo.getExternalProductId());
+                        order.setExternalProductSendValue(productVo.getExternalProductSendValue());
+                        orderPushInfo.setExternalProductId(order.getExternalProductId());
+                        orderPushInfo.setExternalProductSendValue(order.getExternalProductSendValue());
                     }
-                    if (("3".equals(order.getOrderType()) || "10".equals(order.getOrderType()) || "4".equals(order.getOrderType())) && null == order.getExternalProductSendValue() && null == productVo.getExternalProductSendValue()) {
-                        log.error("订单发券错误，缺少发放金额：{}", number);
-                        sendResult(R.fail("缺少发放金额"), orderPushInfo, order, cache, false);
-                        return;
-                    }
-                    order.setExternalProductId(productVo.getExternalProductId());
-                    order.setExternalProductSendValue(productVo.getExternalProductSendValue());
-                    orderPushInfo.setExternalProductId(order.getExternalProductId());
-                    orderPushInfo.setExternalProductSendValue(order.getExternalProductSendValue());
                 }
             }
             // 通过银联分销分账，生成code
@@ -439,6 +441,13 @@ public class OrderServiceImpl implements IOrderService {
                 R<JSONObject> result = YsfUtils.couponAcquire(orderPushInfo.getPushNumber(), order.getExternalProductId(), order.getAccount(), order.getCount().toString(), entityTp, chnlId, appId, rsaPrivateKey, sm4Key);
                 // 处理结果
                 sendResult(result, orderPushInfo, order, cache, true);
+            } else if ("21".equals(order.getOrderType())) {
+                //单纯签到计数类型不走发券
+                try {
+                    sendResult(R.ok("发放成功"), orderPushInfo, order, cache, false);
+                } catch (Exception e) {
+                    sendResult(R.fail(e.getMessage()), orderPushInfo, order, cache, false);
+                }
             } else {
                 sendResult(R.fail("订单类型无处理方式，请联系技术人员"), orderPushInfo, order, cache, false);
             }
