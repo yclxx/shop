@@ -20,6 +20,7 @@ import com.ruoyi.zlyyh.utils.PhoneNumberValidator;
 import com.ruoyi.zlyyh.utils.WxUtils;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.bo.GenWxQrCodeBo;
+import com.ruoyi.zlyyhmobile.domain.vo.ShareUrlVo;
 import com.ruoyi.zlyyhmobile.domain.vo.ShareUserInfoVo;
 import com.ruoyi.zlyyhmobile.service.*;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +48,7 @@ public class ShareUserController extends BaseController {
     private final IUserService userService;
     private final WxProperties wxProperties;
     private final IPlatformService platformService;
+    private final ICategoryService categoryService;
 
     /**
      * 获取分销员详细信息
@@ -126,6 +128,34 @@ public class ShareUserController extends BaseController {
             }
         }
         return shareUserRecordVoTableDataInfo;
+    }
+
+    /**
+     * 生成微信二维码
+     */
+    @GetMapping("/genShareUrl")
+    public R<ShareUrlVo> genShareUrl() {
+        Long userId = LoginHelper.getUserId();
+        if (null == userId) {
+            return R.fail("登录超时，请重新授权登录");
+        }
+        ShareUrlVo shareUrlVo = new ShareUrlVo();
+        // 页面 默认首页
+        String page = "pages/index/index";
+        // 参数
+        String params = "?platformId=" + ZlyyhUtils.getPlatformId() +
+            "&shareUserId=" + userId;
+        ShareUserVo shareUserVo = iShareUserService.queryById(userId);
+        if (null != shareUserVo && StringUtils.isNotBlank(shareUserVo.getBusinessDistrictName())) {
+            CategoryVo categoryVo = categoryService.queryByCategoryName(shareUserVo.getBusinessDistrictName(), shareUserVo.getPlatformKey());
+            if (null != categoryVo) {
+                page = "pages/product/index";
+                params = params + "&categoryId=" + categoryVo.getCategoryId();
+            }
+        }
+        shareUrlVo.setPage(page);
+        shareUrlVo.setParams(params);
+        return R.ok(shareUrlVo);
     }
 
     /**

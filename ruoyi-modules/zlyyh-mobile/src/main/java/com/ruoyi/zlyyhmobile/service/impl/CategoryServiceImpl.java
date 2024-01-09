@@ -46,6 +46,22 @@ public class CategoryServiceImpl implements ICategoryService {
         return baseMapper.selectVoList(lqw);
     }
 
+    /**
+     * 根据名字查询栏目 精确查询
+     *
+     * @param categoryName 栏目名字
+     * @return 栏目
+     */
+    @Override
+    public CategoryVo queryByCategoryName(String categoryName, Long platformKey) {
+        LambdaQueryWrapper<Category> lqw = Wrappers.lambdaQuery();
+        lqw.eq(Category::getCategoryName, categoryName);
+        lqw.eq(Category::getPlatformKey, platformKey);
+        lqw.eq(Category::getStatus, "0");
+        lqw.last("order by parent_id limit 1");
+        return baseMapper.selectVoOne(lqw);
+    }
+
     private LambdaQueryWrapper<Category> buildQueryWrapper(CategoryBo bo) {
         LambdaQueryWrapper<Category> lqw = Wrappers.lambdaQuery();
         lqw.eq(bo.getParentId() != null, Category::getParentId, bo.getParentId());

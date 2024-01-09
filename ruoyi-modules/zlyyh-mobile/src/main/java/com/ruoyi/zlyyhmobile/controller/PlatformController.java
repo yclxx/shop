@@ -16,6 +16,7 @@ import com.ruoyi.zlyyhmobile.service.IPlatformService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -73,6 +74,16 @@ public class PlatformController extends BaseController {
     public R<String> getMissionGroupId() {
         String url = ysfConfigService.queryValueByKey(ZlyyhUtils.getPlatformId(), "MissionGroupId");
         return R.ok(url);
+    }
+
+    /**
+     * 获取平台配置参数
+     *
+     * @return 平台信息
+     */
+    @GetMapping("/ignore/getSettingValue/{key}")
+    public R<String> getSettingValue(@PathVariable String key) {
+        return R.ok(ysfConfigService.queryValueByKey(ZlyyhUtils.getPlatformId(), key));
     }
 
     /**

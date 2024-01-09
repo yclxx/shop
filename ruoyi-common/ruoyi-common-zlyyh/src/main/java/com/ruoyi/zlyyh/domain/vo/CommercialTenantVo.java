@@ -103,7 +103,7 @@ public class CommercialTenantVo implements Serializable {
      * 是否共享
      */
     @ExcelProperty(value = "是否共享")
-    private String is_share;
+    private String isShare;
     /**
      * 供应商
      */
@@ -166,4 +166,14 @@ public class CommercialTenantVo implements Serializable {
      * 距离 千米
      */
     private BigDecimal distance;
+
+    /**
+     * 数据来源：0-系统录入，1-API接口
+     */
+    private String source;
+
+    /**
+     * 门店数量
+     */
+    private Long shopCount;
 }
