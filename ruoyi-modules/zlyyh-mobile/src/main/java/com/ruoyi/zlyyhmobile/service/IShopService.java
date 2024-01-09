@@ -56,4 +56,12 @@ public interface IShopService {
     Boolean updateShopMerchantById(Long shopId, List<ShopMerchant> bos);
 
     boolean addApproval(MerchantApprovalBo bo);
+
+    /**
+     * 查询商户门店数量
+     *
+     * @param commercialTenantId 商户Id
+     * @return 门店数量
+     */
+    Long selectCountByCommercialTenantId(Long commercialTenantId);
 }
