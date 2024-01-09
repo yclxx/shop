@@ -429,7 +429,6 @@
           activityShopId: undefined,
           activityShopName: undefined,
           address: undefined,
-          status: undefined,
           formattedAddress: undefined,
           province: undefined,
           city: undefined,
