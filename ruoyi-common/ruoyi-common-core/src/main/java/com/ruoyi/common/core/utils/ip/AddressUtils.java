@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.JsonUtils;
+import com.ruoyi.common.core.utils.StringUtils;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,7 @@ public class AddressUtils {
      * @param address 需要获取经纬度的地址信息
      * @return 返回结果
      */
-    public static JSONObject getAddressInfo(String address) {
+    public static JSONObject getAddressInfo(String address, String provinceCity) {
         // 地址非法字符处理
         String regEx = "[\t\r\n`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。， 、？]";
         //可以在中括号内加上任何想要替换的字符，实际上是一个正则表达式
@@ -40,12 +41,17 @@ public class AddressUtils {
         Pattern p = Pattern.compile(regEx);
         Matcher m = p.matcher(address);//这里把想要替换的字符串传进来
         address = m.replaceAll(aa).trim();
-        log.info("获取地址经纬度信息接收参数：address={}", address);
+        log.info("获取地址经纬度信息接收参数：address={},provinceCity={}", address,provinceCity);
         // 基于高德地图 地理/逆地理编码接口
         String url = "https://restapi.amap.com/v3/geocode/geo";
         // key 来自个人注册的高德地图开放平台用户创建的，如果有问题，请直接自行去高德地图注册个人用户，或者企业用户
         // 基于企业用户认证信息太多，目前key取自个人用户
-        String params = "?key=" + GAO_DE_MAP_KEY + "&address=" + address;
+        String params;
+        if (StringUtils.isNotEmpty(provinceCity)) {
+            params = "?key=" + GAO_DE_MAP_KEY + "&address=" + address + "&city=" + provinceCity;
+        } else {
+            params = "?key=" + GAO_DE_MAP_KEY + "&address=" + address;
+        }
 
         String s = HttpUtil.get(url + params);
         log.info("调用高德地图获取地址经纬度信息返回结果：{}", s);

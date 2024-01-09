@@ -192,7 +192,7 @@ public class ShopServiceImpl implements IShopService {
         key = "importShop:" + bo.getAddress();
         addressInfo = RedisUtils.getCacheObject(key);
         if (ObjectUtil.isEmpty(addressInfo)) {
-            addressInfo = AddressUtils.getAddressInfo(bo.getAddress());
+            addressInfo = AddressUtils.getAddressInfo(bo.getAddress(),null);
         }
         if (ObjectUtil.isNotEmpty(addressInfo)) {
             bo.setFormattedAddress(addressInfo.getString("formatted_address"));

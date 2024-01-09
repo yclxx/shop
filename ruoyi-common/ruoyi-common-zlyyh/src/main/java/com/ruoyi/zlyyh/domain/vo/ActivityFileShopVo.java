@@ -127,4 +127,9 @@ public class ActivityFileShopVo {
 
     private Long typeId;
 
+    /**
+     * 距离 千米
+     */
+    private BigDecimal distance;
+
 }

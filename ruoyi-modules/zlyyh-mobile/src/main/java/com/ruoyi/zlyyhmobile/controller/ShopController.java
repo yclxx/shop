@@ -82,7 +82,7 @@ public class ShopController {
      */
     @GetMapping("/address/{info}")
     public R address(@PathVariable String info) {
-        JSONObject addressInfo = AddressUtils.getAddressInfo(info);
+        JSONObject addressInfo = AddressUtils.getAddressInfo(info,null);
         return R.ok(addressInfo);
     }
 }

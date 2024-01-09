@@ -1,11 +1,14 @@
 package com.ruoyi.zlyyhadmin.service;
 
 import com.ruoyi.zlyyh.domain.ActivityFileShop;
+import com.ruoyi.zlyyh.domain.bo.FileImportLogBo;
 import com.ruoyi.zlyyh.domain.vo.ActivityFileShopVo;
 import com.ruoyi.zlyyh.domain.bo.ActivityFileShopBo;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -46,4 +49,10 @@ public interface IActivityFileShopService {
      * 校验并批量删除活动商户信息
      */
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
+
+    /**
+     * 导入商户
+     * @param file
+     */
+    void importMerchant(MultipartFile file, FileImportLogBo logBo) throws IOException;
 }
