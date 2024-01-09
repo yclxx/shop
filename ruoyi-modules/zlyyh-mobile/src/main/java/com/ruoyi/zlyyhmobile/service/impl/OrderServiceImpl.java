@@ -778,17 +778,21 @@ public class OrderServiceImpl implements IOrderService {
 
             // 设置领取缓存
             this.setOrderCountCache(platformVo.getPlatformKey(), bo.getUserId(), productVo.getProductId(), productVo.getSellEndDate(), order.getCount());
-            //开启预警判断
-            if (ObjectUtil.isNotEmpty(productVo.getWarnMessage()) && productVo.getWarnMessage().equals("1")){
-                //查询已发送数量
-                long count = RedisUtils.getAtomicValue(countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
-                if (ObjectUtil.isNotEmpty(productVo.getWarnCount()) && ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && count >= productVo.getWarnCount()){
-                    //达成以上条件发送邮件
-                    String title ="商品数量预警";
-                    String text = productVo.getProductName()+":数量不足"+productVo.getWarnCount()+"请及时处理";
-                    sendWarnEmail(productVo.getWarnEmail(),title,text,true);
-                }
+            try{
+                //开启预警判断
+                if (ObjectUtil.isNotEmpty(productVo.getWarnMessage()) && productVo.getWarnMessage().equals("1")){
+                    //查询已发送数量
+                    long count = RedisUtils.getAtomicValue(countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
+                    if (ObjectUtil.isNotEmpty(productVo.getWarnCount()) && ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && count >= productVo.getWarnCount()){
+                        //达成以上条件发送邮件
+                        String title ="商品数量预警";
+                        String text = productVo.getProductName()+":数量不足"+productVo.getWarnCount()+"请及时处理";
+                        sendWarnEmail(productVo.getWarnEmail(),title,text,true);
+                    }
 
+                }
+            }catch (Exception e){
+                log.error("预警邮件发送失败{}",e);
             }
 
             try {
@@ -1221,17 +1225,21 @@ public class OrderServiceImpl implements IOrderService {
             addFoodOrder(productVo, order, userVo, platformVo);
             // 设置领取缓存
             this.setOrderCountCache(platformVo.getPlatformKey(), bo.getUserId(), productVo.getProductId(), productVo.getSellEndDate(), order.getCount());
-            //开启预警判断
-            if (ObjectUtil.isNotEmpty(productVo.getWarnMessage()) && productVo.getWarnMessage().equals("1")){
-                //查询已发送数量
-                long totalCount = RedisUtils.getAtomicValue(countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
-                if (ObjectUtil.isNotEmpty(productVo.getWarnCount()) && ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && totalCount >= productVo.getWarnCount()){
-                    //达成以上条件发送邮件
-                    String title ="商品数量预警";
-                    String text = productVo.getProductName()+":数量不足"+productVo.getWarnCount()+"请及时处理";
-                    sendWarnEmail(productVo.getWarnEmail(),title,text,true);
-                }
+            try{
+                //开启预警判断
+                if (ObjectUtil.isNotEmpty(productVo.getWarnMessage()) && productVo.getWarnMessage().equals("1")){
+                    //查询已发送数量
+                    long totalCount = RedisUtils.getAtomicValue(countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
+                    if (ObjectUtil.isNotEmpty(productVo.getWarnCount()) && ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && totalCount >= productVo.getWarnCount()){
+                        //达成以上条件发送邮件
+                        String title ="商品数量预警";
+                        String text = productVo.getProductName()+":数量不足"+productVo.getWarnCount()+"请及时处理";
+                        sendWarnEmail(productVo.getWarnEmail(),title,text,true);
+                    }
 
+                }
+            }catch (Exception e){
+                log.error("预警邮件发送失败{}",e);
             }
 
             // 小订单金额，单个商品销售价
