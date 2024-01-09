@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyhadmin.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
@@ -10,15 +11,23 @@ import com.ruoyi.common.excel.utils.ExcelUtil;
 import com.ruoyi.common.log.annotation.Log;
 import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
+import com.ruoyi.zlyyh.domain.bo.FileImportLogBo;
+import com.ruoyi.zlyyh.domain.vo.FileImportLogVo;
+import com.ruoyi.zlyyhadmin.domain.bo.MerchantImportBo;
 import com.ruoyi.zlyyhadmin.service.IActivityFileShopService;
+import com.ruoyi.zlyyhadmin.service.IFileImportLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.ruoyi.zlyyh.domain.vo.ActivityFileShopVo;
 import com.ruoyi.zlyyh.domain.bo.ActivityFileShopBo;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.rmi.ServerException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
 import javax.validation.constraints.NotEmpty;
@@ -39,6 +48,7 @@ import javax.servlet.http.HttpServletResponse;
 public class ActivityFileShopController extends BaseController {
 
     private final IActivityFileShopService iActivityFileShopService;
+    private final IFileImportLogService fileImportLogService;
 
     /**
      * 查询活动商户列表
@@ -101,5 +111,30 @@ public class ActivityFileShopController extends BaseController {
     @DeleteMapping("/{activityShopIds}")
     public R<Void> remove(@NotEmpty(message = "主键不能为空") @PathVariable Long[] activityShopIds) {
         return toAjax(iActivityFileShopService.deleteWithValidByIds(Arrays.asList(activityShopIds), true));
+    }
+
+    /**
+     * 获取导入模板
+     */
+    @PostMapping("/importTemplate")
+    public void importTemplate(HttpServletResponse response) {
+        ExcelUtil.exportExcel(new ArrayList<>(), "商户数据", MerchantImportBo.class, response);
+    }
+
+    /**
+     * 导入商户
+     */
+    @PostMapping(value = "/importData", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public R<Void> importData(@RequestPart("file") MultipartFile file, String pageTitle) throws Exception {
+        FileImportLogBo logBo = new FileImportLogBo();
+        logBo.setName(file.getOriginalFilename());
+        List<FileImportLogVo> logVos = fileImportLogService.queryList(logBo);
+        if (ObjectUtils.isNotEmpty(logVos)) {
+            return R.fail("导入失败，该文件名已存在");
+        }
+        logBo.setPageTitle(pageTitle);
+        fileImportLogService.insertByBo(logBo);
+        iActivityFileShopService.importMerchant(file,logBo);
+        return R.ok();
     }
 }

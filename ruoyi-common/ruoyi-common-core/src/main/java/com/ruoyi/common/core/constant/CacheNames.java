@@ -228,4 +228,14 @@ public interface CacheNames {
      * 浏览任务
      */
     String BROWSEVO = "browseVo#120m";
+
+    /**
+     * 活动商户缓存
+     */
+    String ACTIVITY_MERCHANT = "activityMerchant#15d";
+
+    /**
+     * 商户类型缓存
+     */
+    String MERCHANT_TYPE = "merchantType#15d";
 }
