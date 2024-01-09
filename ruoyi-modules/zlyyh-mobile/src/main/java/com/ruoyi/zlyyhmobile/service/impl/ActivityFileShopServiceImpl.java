@@ -64,14 +64,15 @@ public class ActivityFileShopServiceImpl implements IActivityFileShopService {
     @Override
     public List<AreaVo> getCityList(String fileId) {
         List<AreaVo> areaVos = baseMapper.selectCityList(fileId);
+        List<AreaVo> list = new ArrayList<>();
         if (ObjectUtil.isNotEmpty(areaVos)) {
-            for (AreaVo areaVo : areaVos) {
-                if (areaVo.getAdcode() == 0) {
-                    areaVo.setAreaName("全部城市");
-                }
-            }
+            List<AreaVo> result = areaVos.stream().filter(res -> res.getAdcode() != 0).collect(Collectors.toList());
+            AreaVo areaVo = new AreaVo();
+            areaVo.setAreaName("全部城市");
+            list.add(areaVo);
+            list.addAll(result);
         }
-        return areaVos;
+        return list;
     }
 
     /**
