@@ -171,4 +171,9 @@ public class CommercialTenantVo implements Serializable {
      * 数据来源：0-系统录入，1-API接口
      */
     private String source;
+
+    /**
+     * 门店数量
+     */
+    private Long shopCount;
 }

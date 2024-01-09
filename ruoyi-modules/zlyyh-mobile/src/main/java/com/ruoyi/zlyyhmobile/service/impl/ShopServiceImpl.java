@@ -167,7 +167,7 @@ public class ShopServiceImpl implements IShopService {
         if (StringUtils.isEmpty(bo.getBrandMobile())) throw new ServiceException("管理员手机号为空");
         LambdaQueryWrapper<MerchantApproval> lqw = Wrappers.lambdaQuery();
         lqw.eq(MerchantApproval::getBrandMobile, bo.getBrandMobile());
-        lqw.in(MerchantApproval::getApprovalStatus, "0","1");
+        lqw.in(MerchantApproval::getApprovalStatus, "0", "1");
         Long l = merchantApprovalMapper.selectCount(lqw);
         if (l > 0) {
             throw new ServiceException("此管理员手机号已申请商户");
@@ -181,6 +181,16 @@ public class ShopServiceImpl implements IShopService {
         bo.setApprovalStatus("0");
         MerchantApproval merchantApproval = BeanCopyUtils.copy(bo, MerchantApproval.class);
         return merchantApprovalMapper.insert(merchantApproval) > 0;
+    }
+
+    /**
+     * 查询商户门店数量
+     *
+     * @param commercialTenantId 商户Id
+     * @return 门店数量
+     */
+    public Long selectCountByCommercialTenantId(Long commercialTenantId) {
+        return baseMapper.selectCount(new LambdaQueryWrapper<Shop>().eq(Shop::getCommercialTenantId, commercialTenantId));
     }
 
     private void getAddressCode(ShopBo bo) {

@@ -13,9 +13,8 @@ import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.JsonUtils;
 import com.ruoyi.common.core.utils.SpringUtils;
 import com.ruoyi.common.core.utils.StringUtils;
-import com.ruoyi.common.excel.utils.ExcelUtil;
 import com.ruoyi.common.redis.utils.RedisUtils;
-import com.ruoyi.zlyyh.domain.vo.SendDyInfoVo;
+import com.ruoyi.zlyyh.domain.vo.OcrBizLicenseVo;
 import com.wechat.pay.contrib.apache.httpclient.WechatPayHttpClientBuilder;
 import com.wechat.pay.contrib.apache.httpclient.auth.AutoUpdateCertificatesVerifier;
 import com.wechat.pay.contrib.apache.httpclient.auth.PrivateKeySigner;
@@ -38,12 +37,14 @@ import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.Duration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -153,6 +154,17 @@ public class WxUtils {
             lockTemplate.releaseLock(lockInfo);
         }
         //结束
+    }
+
+    /**
+     * 获取微信接口基础访问令牌
+     *
+     * @param appId  AppID
+     * @param secret 密钥
+     * @return 基础访问令牌
+     */
+    public static String getAccessToken(String appId, String secret) {
+        return getAccessToken(appId, secret, "https://api.weixin.qq.com/cgi-bin/token");
     }
 
     /**
@@ -428,37 +440,71 @@ public class WxUtils {
         }
     }
 
+    /**
+     * 营业执照识别
+     *
+     * @param imgUrl      营业执照图片地址
+     * @param accessToken 小程序token
+     * @return 识别结果
+     */
+    public static OcrBizLicenseVo ocrBizLicense(String imgUrl, String accessToken) {
+        String url = "https://api.weixin.qq.com/cv/ocr/bizlicense?access_token=" + accessToken + "&img_url=" + imgUrl;
+        String post = HttpUtil.post(url, "");
+        log.info("微信营业执照识别，请求信息：{}，返回结果：{}", url, post);
+        return JsonUtils.parseObject(post, OcrBizLicenseVo.class);
+    }
+
+    /**
+     * 云闪付商户OCR识别
+     *
+     * @param imgUrl      营业执照图片地址
+     * @param accessToken 小程序token
+     * @return 识别结果
+     */
+    public static OcrBizLicenseVo ocrComm(String imgUrl, String accessToken) {
+        String url = "https://api.weixin.qq.com/cv/ocr/comm?access_token=" + accessToken + "&img_url=" + imgUrl;
+        String post = HttpUtil.post(url, "");
+        log.info("微信ocr识别，请求信息：{}，返回结果：{}", url, post);
+        return JsonUtils.parseObject(post, OcrBizLicenseVo.class);
+    }
+
     public static void main(String[] args) throws Exception {
-        File file = new File("C:\\Users\\25487\\Desktop\\消息推送.xlsx");
-//        File file = new File("");
-        BufferedInputStream in = new BufferedInputStream(new FileInputStream(
-            file));
-        List<SendDyInfoVo> hashMaps = ExcelUtil.importExcel(in, SendDyInfoVo.class);
-//        List<SendDyInfoVo> hashMaps = new ArrayList<>();
-//        SendDyInfoVo sendDyInfoVo = new SendDyInfoVo();
-//        sendDyInfoVo.setOpenId("oKrd35bHD8K40_Jfs1jHARweC7TU");
-//        hashMaps.add(sendDyInfoVo);
-        log.info("用户信息：{}", hashMaps);
-        Map<String, Object> msgData = new HashMap<>();
-        Map<String, String> thing1 = new HashMap<>();
-        thing1.put("value", "嗨购大连恒隆广场");
-        msgData.put("thing6", thing1);
+        String accessToken = "76_IZ94Bsb07pcnyS4vAqSiVCRO9gU4RrPhThvnUW-0F0aGw11BsDvgxd2suWJ93JA44rePtBrBdIDSqahjfbWuaNKeLrqjYXEtGC3JFda21bnohAV3WlbufR30sFgZYXfAGAMLK";
+//        String imgUrl = "https://discounts-onl.oss-cn-hangzhou.aliyuncs.com/2024/01/08/f13b20a140434e1ca1f4cbd563fdbd5c.jpg";
+//        ocrBizLicense(imgUrl, accessToken);
+//        String imgUrl = "https://discounts-onl.oss-cn-hangzhou.aliyuncs.com/2024/01/09/d1ab93adc6734f36a8cd773cc83ce3a5.jpg";
+//        ocrComm(imgUrl, accessToken);
 
-        Map<String, String> thing7 = new HashMap<>();
-        thing7.put("value", "一元购满500减100优惠券");
-        msgData.put("thing7", thing7);
-
-        Map<String, String> thing10 = new HashMap<>();
-        thing10.put("value", "活动期间可购两张， 数量有限，先到先得");
-        msgData.put("thing10", thing10);
-
-        String accessToken = "75_73_tkBbRnCEefKQ87m5xMvnAItUbLA5-48fEEhMHSSZ36thSli6ER-0ONKlkn1N0OH2377m_-KI7i-udGnv7r37KBMzRsBkHS4_lrlxkcIyl_Y4hlzNK-HGovEEJPTgAEANTX";
-        String templateId = "oF-pemb-OKhpiuAME-FdMmPdqr-6CKuUIC2_1I12ZYA";
-//        String page = "pages/index/index";
-        String page = "pages/template/index?templateId=1737396617601662977";
-        for (SendDyInfoVo hashMap : hashMaps) {
-            sendTemplateMessage(accessToken, hashMap.getOpenId(), templateId, page, msgData);
-        }
+//        File file = new File("C:\\Users\\25487\\Desktop\\消息推送.xlsx");
+////        File file = new File("");
+//        BufferedInputStream in = new BufferedInputStream(new FileInputStream(
+//            file));
+//        List<SendDyInfoVo> hashMaps = ExcelUtil.importExcel(in, SendDyInfoVo.class);
+////        List<SendDyInfoVo> hashMaps = new ArrayList<>();
+////        SendDyInfoVo sendDyInfoVo = new SendDyInfoVo();
+////        sendDyInfoVo.setOpenId("oKrd35bHD8K40_Jfs1jHARweC7TU");
+////        hashMaps.add(sendDyInfoVo);
+//        log.info("用户信息：{}", hashMaps);
+//        Map<String, Object> msgData = new HashMap<>();
+//        Map<String, String> thing1 = new HashMap<>();
+//        thing1.put("value", "嗨购大连恒隆广场");
+//        msgData.put("thing6", thing1);
+//
+//        Map<String, String> thing7 = new HashMap<>();
+//        thing7.put("value", "一元购满500减100优惠券");
+//        msgData.put("thing7", thing7);
+//
+//        Map<String, String> thing10 = new HashMap<>();
+//        thing10.put("value", "活动期间可购两张， 数量有限，先到先得");
+//        msgData.put("thing10", thing10);
+//
+//        String accessToken = "75_73_tkBbRnCEefKQ87m5xMvnAItUbLA5-48fEEhMHSSZ36thSli6ER-0ONKlkn1N0OH2377m_-KI7i-udGnv7r37KBMzRsBkHS4_lrlxkcIyl_Y4hlzNK-HGovEEJPTgAEANTX";
+//        String templateId = "oF-pemb-OKhpiuAME-FdMmPdqr-6CKuUIC2_1I12ZYA";
+////        String page = "pages/index/index";
+//        String page = "pages/template/index?templateId=1737396617601662977";
+//        for (SendDyInfoVo hashMap : hashMaps) {
+//            sendTemplateMessage(accessToken, hashMap.getOpenId(), templateId, page, msgData);
+//        }
 
     }
 }

@@ -43,5 +43,5 @@ public interface ICommercialTenantService {
 
     List<CommercialTenantVo> getCommercialTenant(CommercialTenantBo bo);
 
-    Boolean updateCommercialTenant(CommercialTenantBo bo);
+    void updateCommercialTenant(CommercialTenantBo bo);
 }
