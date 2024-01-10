@@ -25,12 +25,14 @@
         <result property="createTime" column="create_time"/>
         <result property="updateBy" column="update_by"/>
         <result property="updateTime" column="update_time"/>
+        <result property="supportChannel" column="support_channel"/>
         <result property="platformKey" column="platform_key"/>
         <result property="showStartDate" column="show_start_date"/>
         <result property="showEndDate" column="show_end_date"/>
         <result property="assignDate" column="assign_date"/>
         <result property="weekDate" column="week_date"/>
         <result property="sellTime" column="sell_time"/>
+        <result property="holiday" column="holiday"/>
         <result property="shopImgs" column="shop_imgs"/>
         <result property="shopLogo" column="shop_logo"/>
         <result property="sort" column="sort"/>
@@ -42,6 +44,18 @@
         <result property="supplierShopId" column="supplier_shop_id"/>
         <result property="sysDeptId" column="sys_dept_id"/>
         <result property="sysUserId" column="sys_user_id"/>
+        <result property="isShare" column="is_share"/>
+        <result property="supplier" column="supplier"/>
+        <result property="license" column="license"/>
+        <result property="nature" column="nature"/>
+        <result property="invoice" column="invoice"/>
+        <result property="account" column="account"/>
+        <result property="accountPayee" column="account_payee"/>
+        <result property="accountBank" column="account_bank"/>
+        <result property="accountPayee" column="account_payee"/>
+        <result property="productType" column="product_type"/>
+        <result property="activity" column="activity"/>
+        <result property="autoBusiness" column="auto_business"/>
     </resultMap>
 
 

@@ -64,4 +64,14 @@ public interface IShopService {
      * @return 门店数量
      */
     Long selectCountByCommercialTenantId(Long commercialTenantId);
+
+    /**
+     * 修改门店
+     */
+    Boolean insertByBo(ShopBo bo);
+
+    /**
+     * 修改门店
+     */
+    Boolean updateByBo(ShopBo bo);
 }

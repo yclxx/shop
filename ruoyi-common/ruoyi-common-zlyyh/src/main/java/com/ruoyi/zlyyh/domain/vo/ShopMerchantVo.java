@@ -84,5 +84,13 @@ public class ShopMerchantVo {
     @ExcelProperty(value = "备注")
     private String remark;
 
+    /**
+     * 商编截图
+     */
+    private String merchantImg;
 
+    /**
+     * 是否邮储商编
+     */
+    private String ycMerchant;
 }
