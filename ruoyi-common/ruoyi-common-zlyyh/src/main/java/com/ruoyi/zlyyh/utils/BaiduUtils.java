@@ -12,6 +12,7 @@ import com.ruoyi.common.redis.utils.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
+import java.util.HashMap;
 
 /**
  * 百度智能云工具类
@@ -22,9 +23,22 @@ public class BaiduUtils {
     public static String ocrComm(String imgUrl, String accessToken) {
         String url = "https://aip.baidubce.com/rest/2.0/ocr/v1/accurate?access_token=" + accessToken;
         url = url + "&url=" + imgUrl;
-        String post = HttpUtil.post(url, "");
+        String result = HttpUtil.post(url, "");
+        log.info("百度ocr识别，请求信息：{}，返回结果：{}", url, result);
+        return result;
+    }
+
+    public static void main(String[] args) {
+        String imgUrl = "https://discounts-onl.oss-cn-hangzhou.aliyuncs.com/merchant/image/%E6%B5%8B%E8%AF%95%E8%AF%86%E5%88%AB%E5%95%86%E6%88%B7%E5%8F%B7.jpg";
+        String accessToken = getAccessToken("yGhveYGMZvY7PbnAbMfph1lC", "nu3o8XzaTjnnr0oM8yBUnLQ5n5msOPP2");
+        System.out.println("token:" + accessToken);
+        String url = "https://aip.baidubce.com/rest/2.0/ocr/v1/accurate?access_token=" + accessToken;
+        url = url + "&url=" + imgUrl;
+        HashMap<String, Object> param = new HashMap<>();
+        param.put("url", imgUrl);
+        String post = HttpUtil.post(url, param);
+        System.out.println(post);
         log.info("百度ocr识别，请求信息：{}，返回结果：{}", url, post);
-        return post;
     }
 
     /**

@@ -4,6 +4,7 @@ import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.CommercialTenantBo;
 import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
+import com.ruoyi.zlyyh.domain.vo.OcrBizLicenseYsfVo;
 
 import java.util.List;
 
@@ -44,4 +45,9 @@ public interface ICommercialTenantService {
     List<CommercialTenantVo> getCommercialTenant(CommercialTenantBo bo);
 
     void updateCommercialTenant(CommercialTenantBo bo);
+
+    /**
+     * 云闪付商户号识别
+     */
+    OcrBizLicenseYsfVo ocrUp(String imgUrl, String accessToken);
 }
