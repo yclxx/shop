@@ -180,7 +180,7 @@ public class ShopBo extends BaseEntity {
     /**
      * 是否共享
      */
-    private String is_share;
+    private String isShare;
     /**
      * 供应商（与supplierShopId无关系）
      */
@@ -252,4 +252,8 @@ public class ShopBo extends BaseEntity {
      */
     private String productType;
 
+    /**
+     * 自动匹配商圈
+     */
+    private String autoBusiness;
 }

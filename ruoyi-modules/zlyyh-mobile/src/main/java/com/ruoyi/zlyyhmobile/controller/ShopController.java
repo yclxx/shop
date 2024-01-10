@@ -3,6 +3,7 @@ package com.ruoyi.zlyyhmobile.controller;
 import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.utils.ServletUtils;
+import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.core.utils.ip.AddressUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
@@ -80,9 +81,12 @@ public class ShopController {
     /**
      * 请求高德地图，获取完整地址信息
      */
-    @GetMapping("/address/{info}")
-    public R address(@PathVariable String info) {
-        JSONObject addressInfo = AddressUtils.getAddressInfo(info,null);
+    @GetMapping("/address")
+    public R<JSONObject> address(ShopBo bo) {
+        if (StringUtils.isBlank(bo.getAddress())) {
+            return R.fail("缺少地址信息");
+        }
+        JSONObject addressInfo = AddressUtils.getAddressInfo(bo.getAddress(), null);
         return R.ok(addressInfo);
     }
 }

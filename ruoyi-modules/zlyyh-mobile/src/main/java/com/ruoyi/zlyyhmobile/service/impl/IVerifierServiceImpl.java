@@ -59,6 +59,11 @@ public class IVerifierServiceImpl implements IVerifierService {
     }
 
     @Override
+    public VerifierVo queryById(Long id) {
+        return baseMapper.selectVoById(id);
+    }
+
+    @Override
     public Boolean updateVerifier(VerifierBo bo) {
         Verifier verifier = BeanCopyUtils.copy(bo, Verifier.class);
         boolean b = baseMapper.updateById(verifier) > 0;
