@@ -59,7 +59,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
     <select id="selectCityList" resultType="com.ruoyi.zlyyh.domain.vo.AreaVo">
         select citycode adcode, city areaName from t_activity_file_shop
-        where file_id = #{fileId} and status = '0'
+        where file_id = #{fileId} and status = '0' and city is not null and city != '' and citycode is not null and citycode != ''
         group by citycode,city
         order by citycode
     </select>

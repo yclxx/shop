@@ -1,33 +1,28 @@
 package com.ruoyi.zlyyhmobile.service.impl;
 
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.constant.CacheNames;
-import com.ruoyi.common.core.exception.ServiceException;
-import com.ruoyi.common.core.utils.BeanCopyUtils;
 import com.ruoyi.common.core.utils.StringUtils;
-import com.ruoyi.common.core.utils.ip.AddressUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
-import com.ruoyi.common.redis.utils.RedisUtils;
-import com.ruoyi.zlyyh.domain.*;
+import com.ruoyi.zlyyh.domain.ActivityFileShop;
+import com.ruoyi.zlyyh.domain.MerchantType;
 import com.ruoyi.zlyyh.domain.bo.ActivityFileShopBo;
-import com.ruoyi.zlyyh.domain.bo.MerchantApprovalBo;
-import com.ruoyi.zlyyh.domain.bo.ShopBo;
-import com.ruoyi.zlyyh.domain.vo.*;
-import com.ruoyi.zlyyh.mapper.*;
+import com.ruoyi.zlyyh.domain.vo.ActivityFileShopVo;
+import com.ruoyi.zlyyh.domain.vo.AreaVo;
+import com.ruoyi.zlyyh.domain.vo.FileImportLogVo;
+import com.ruoyi.zlyyh.domain.vo.MerchantTypeVo;
+import com.ruoyi.zlyyh.mapper.ActivityFileShopMapper;
+import com.ruoyi.zlyyh.mapper.FileImportLogMapper;
+import com.ruoyi.zlyyh.mapper.MerchantTypeMapper;
 import com.ruoyi.zlyyhmobile.service.IActivityFileShopService;
-import com.ruoyi.zlyyhmobile.service.IShopService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -85,12 +80,14 @@ public class ActivityFileShopServiceImpl implements IActivityFileShopService {
         List<MerchantTypeVo> list = new ArrayList<>();
         if (ObjectUtil.isNotEmpty(typeIds)) {
             List<MerchantTypeVo> typeVoList = merchantTypeMapper.selectVoList(new LambdaQueryWrapper<MerchantType>().eq(MerchantType::getStatus, "0").in(MerchantType::getMerchantTypeId, typeIds));
-            MerchantTypeVo merchantTypeVo = new MerchantTypeVo();
-            merchantTypeVo.setTypeName("全部");
-            merchantTypeVo.setStatus("0");
-            list.add(merchantTypeVo);
-            if (ObjectUtil.isNotEmpty(typeVoList)) {
-                list.addAll(typeVoList);
+            if(ObjectUtil.isNotEmpty(typeVoList)){
+                MerchantTypeVo merchantTypeVo = new MerchantTypeVo();
+                merchantTypeVo.setTypeName("全部");
+                merchantTypeVo.setStatus("0");
+                list.add(merchantTypeVo);
+                if (ObjectUtil.isNotEmpty(typeVoList)) {
+                    list.addAll(typeVoList);
+                }
             }
         }
         return list;
