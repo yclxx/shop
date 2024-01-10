@@ -9,6 +9,7 @@ import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.zlyyh.domain.bo.CommercialTenantBo;
 import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
 import com.ruoyi.zlyyh.domain.vo.OcrBizLicenseVo;
+import com.ruoyi.zlyyh.domain.vo.OcrBizLicenseYsfVo;
 import com.ruoyi.zlyyh.domain.vo.PlatformVo;
 import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.service.YsfConfigService;
@@ -114,12 +115,11 @@ public class CommercialTenantController {
     /**
      * 云闪付商户号识别
      */
-    @PostMapping("/ocrUp")
-    public R<OcrBizLicenseVo> ocrUp(@Validated(AppEditGroup.class) @RequestBody OcrBizLicenseBo bo) {
+    @PostMapping("/ignore/ocrUp")
+    public R<OcrBizLicenseYsfVo> ocrUp(@Validated(AppEditGroup.class) @RequestBody OcrBizLicenseBo bo) {
         Long platformId = ZlyyhUtils.getPlatformId();
         String ocrApiKey = ysfConfigService.queryValueByKey(platformId, "baidu.ocrApiKey");
         String ocrSecretKey = ysfConfigService.queryValueByKey(platformId, "baidu.ocrSecretKey");
-        BaiduUtils.ocrComm(bo.getImgUrl(),BaiduUtils.getAccessToken(ocrApiKey,ocrSecretKey));
-        return R.ok();
+        return R.ok(commercialTenantService.ocrUp(bo.getImgUrl(),BaiduUtils.getAccessToken(ocrApiKey,ocrSecretKey)));
     }
 }

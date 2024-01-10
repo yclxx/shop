@@ -4,6 +4,8 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.crypto.digest.MD5;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -23,6 +25,7 @@ import com.ruoyi.zlyyh.domain.bo.ShopBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
 import com.ruoyi.zlyyh.mapper.VerifierMapper;
+import com.ruoyi.zlyyh.utils.BaiduUtils;
 import com.ruoyi.zlyyh.utils.MapUtils;
 import com.ruoyi.zlyyhmobile.service.*;
 import lombok.RequiredArgsConstructor;
@@ -119,6 +122,48 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
             newVerifier.setIsAdmin(true);
             verifierMapper.insert(newVerifier);
         }
+    }
+
+    /**
+     * 云闪付商户号识别
+     */
+    @Override
+    public OcrBizLicenseYsfVo ocrUp(String imgUrl, String accessToken) {
+        OcrBizLicenseYsfVo licenseYsfVo = new OcrBizLicenseYsfVo();
+        String result = BaiduUtils.ocrComm(imgUrl, accessToken);
+        if (ObjectUtil.isNotEmpty(result)) {
+            JSONObject resultJson = JSONObject.parseObject(result);
+            JSONArray wordsResult = resultJson.getJSONArray("words_result");
+            if (ObjectUtil.isNotEmpty(wordsResult)) {
+                for (int i = 0; i < wordsResult.size(); i++) {
+                    JSONObject jsonObject = wordsResult.getJSONObject(i);
+                    String words = jsonObject.getString("words");
+                    JSONObject location = jsonObject.getJSONObject("location");
+                    String top = location.getString("top");
+                    if (i + 1 == wordsResult.size()) {
+                        break;
+                    }
+                    JSONObject nextJson = wordsResult.getJSONObject(i + 1);
+                    String wordsValue = nextJson.getString("words");
+                    JSONObject nextLocation = nextJson.getJSONObject("location");
+                    String nextTop = nextLocation.getString("top");
+                    if (words.equals("商户编号")) {
+                        if (Long.parseLong(nextTop) - Long.parseLong(top) < 30) {
+                            licenseYsfVo.setMerchantNo(wordsValue);
+                        }
+                    } else if (words.equals("终端编号")) {
+                        if (Long.parseLong(nextTop) - Long.parseLong(top) < 30) {
+                            licenseYsfVo.setTerminalNo(wordsValue);
+                        }
+                    } else if (words.equals("收单机构")) {
+                        if (Long.parseLong(nextTop) - Long.parseLong(top) < 30) {
+                            licenseYsfVo.setCollectCompany(wordsValue);
+                        }
+                    }
+                }
+            }
+        }
+        return licenseYsfVo;
     }
 
     /**
