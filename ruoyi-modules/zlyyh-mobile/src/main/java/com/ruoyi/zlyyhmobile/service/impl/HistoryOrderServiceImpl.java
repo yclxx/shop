@@ -400,9 +400,10 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
             //如果历史大订单为空 说明没添加过 进行添加
             CollectiveOrder collectiveOrder = collectiveOrderMapper.selectById(order.getCollectiveNumber());
             if (ObjectUtil.isNotEmpty(collectiveOrder)) {
-                BeanUtil.copyProperties(collectiveOrder, historyCollectiveOrder);
+                HistoryCollectiveOrder historyCollectiveOrder1 = new HistoryCollectiveOrder();
+                BeanUtil.copyProperties(collectiveOrder, historyCollectiveOrder1);
                 //保存
-                int insert = historyCollectiveOrderMapper.insert(historyCollectiveOrder);
+                int insert = historyCollectiveOrderMapper.insert(historyCollectiveOrder1);
                 //删除原先订单详情
                 if (insert < 1) {
                     throw new ServiceException("新增大订单失败");

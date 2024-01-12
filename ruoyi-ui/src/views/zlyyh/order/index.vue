@@ -50,6 +50,12 @@
             :value="dict.value" />
         </el-select>
       </el-form-item>
+      <el-form-item label="核销状态" prop="verificationStatus">
+        <el-select v-model="queryParams.verificationStatus" placeholder="请选择核销状态" clearable>
+          <el-option v-for="dict in dict.type.t_order_verification_status" :key="dict.value" :label="dict.label"
+                     :value="dict.value" />
+        </el-select>
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -496,7 +502,8 @@
           orderCityName: undefined,
           orderCityCode: undefined,
           platformKey: undefined,
-          orderType: undefined
+          orderType: undefined,
+          verificationStatus: undefined
         },
         // 表单参数
         form: {},

@@ -276,4 +276,6 @@ public class HistoryOrderVo {
      */
     private String supportChannel;
 
+    private String autoRefund;
+
 }

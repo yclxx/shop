@@ -2,7 +2,6 @@ package com.ruoyi.common.core.utils;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.StrUtil;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -55,7 +54,7 @@ public class StreamUtils {
      */
     public static <E> String join(Collection<E> collection, Function<E, String> function, CharSequence delimiter) {
         if (CollUtil.isEmpty(collection)) {
-            return StrUtil.EMPTY;
+            return StringUtils.EMPTY;
         }
         return collection.stream().map(function).filter(Objects::nonNull).collect(Collectors.joining(delimiter));
     }
@@ -71,7 +70,7 @@ public class StreamUtils {
         if (CollUtil.isEmpty(collection)) {
             return CollUtil.newArrayList();
         }
-        return collection.stream().sorted(comparing).collect(Collectors.toList());
+        return collection.stream().filter(Objects::nonNull).sorted(comparing).collect(Collectors.toList());
     }
 
     /**
@@ -88,7 +87,7 @@ public class StreamUtils {
         if (CollUtil.isEmpty(collection)) {
             return MapUtil.newHashMap();
         }
-        return collection.stream().collect(Collectors.toMap(key, Function.identity(), (l, r) -> l));
+        return collection.stream().filter(Objects::nonNull).collect(Collectors.toMap(key, Function.identity(), (l, r) -> l));
     }
 
     /**
@@ -125,7 +124,7 @@ public class StreamUtils {
             return MapUtil.newHashMap();
         }
         return collection
-            .stream()
+            .stream().filter(Objects::nonNull)
             .collect(Collectors.groupingBy(key, LinkedHashMap::new, Collectors.toList()));
     }
 
@@ -146,7 +145,7 @@ public class StreamUtils {
             return MapUtil.newHashMap();
         }
         return collection
-            .stream()
+            .stream().filter(Objects::nonNull)
             .collect(Collectors.groupingBy(key1, LinkedHashMap::new, Collectors.groupingBy(key2, LinkedHashMap::new, Collectors.toList())));
     }
 

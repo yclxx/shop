@@ -1,16 +1,20 @@
 package com.ruoyi.zlyyhmobile.controller;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.utils.ServletUtils;
 import com.ruoyi.common.core.web.controller.BaseController;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.bo.MissionBo;
+import com.ruoyi.zlyyh.domain.bo.MissionGroupBgImgBo;
+import com.ruoyi.zlyyh.domain.vo.MissionGroupBgImgVo;
 import com.ruoyi.zlyyh.domain.vo.MissionGroupVo;
 import com.ruoyi.zlyyh.domain.vo.MissionVo;
 import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyh.enumd.DateType;
 import com.ruoyi.zlyyh.utils.DrawRedisCacheUtils;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
+import com.ruoyi.zlyyhmobile.service.IMissionGroupBgImgService;
 import com.ruoyi.zlyyhmobile.service.IMissionGroupService;
 import com.ruoyi.zlyyhmobile.service.IMissionService;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +42,7 @@ public class MissionController extends BaseController {
 
     private final IMissionService iMissionService;
     private final IMissionGroupService missionGroupService;
+    private final IMissionGroupBgImgService missionGroupBgImgService;
 
     /**
      * 查询任务配置列表
@@ -55,7 +60,20 @@ public class MissionController extends BaseController {
      */
     @GetMapping("/missionGroupInfo/{missionGroupId}")
     public R<MissionGroupVo> missionGroupInfo(@NotNull(message = "缺少任务组编号") @PathVariable Long missionGroupId) {
-        return R.ok(missionGroupService.queryById(missionGroupId));
+        MissionGroupVo missionGroupVo = missionGroupService.queryById(missionGroupId);
+        //查询背景
+        String realBjImg = "";
+        MissionGroupBgImgBo missionGroupBgImgBo = new MissionGroupBgImgBo();
+        missionGroupBgImgBo.setMissionGroupId(missionGroupVo.getMissionGroupId());
+        missionGroupBgImgBo.setPlatformKey(missionGroupVo.getPlatformKey());
+        MissionGroupBgImgVo missionGroupBgImgVo = missionGroupBgImgService.queryListOne(missionGroupBgImgBo);
+        if (ObjectUtil.isNotEmpty(missionGroupBgImgVo) && ObjectUtil.isNotEmpty(missionGroupBgImgVo.getMissionBgImg())){
+            realBjImg = "url("+missionGroupBgImgVo.getMissionBgImg()+")";
+        }else {
+            realBjImg = "url("+missionGroupVo.getMissionBgImg()+")";
+        }
+        missionGroupVo.setRealBjImg(realBjImg);
+        return R.ok(missionGroupVo);
     }
 
     /**

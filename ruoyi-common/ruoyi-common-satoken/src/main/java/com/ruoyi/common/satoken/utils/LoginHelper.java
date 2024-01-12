@@ -5,8 +5,6 @@ import cn.dev33.satoken.context.model.SaStorage;
 import cn.dev33.satoken.stp.SaLoginModel;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.convert.Convert;
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.date.TimeInterval;
 import cn.hutool.core.util.ObjectUtil;
 import com.ruoyi.common.core.constant.UserConstants;
 import com.ruoyi.common.core.enums.DeviceType;
@@ -49,7 +47,6 @@ public class LoginHelper {
      * @param loginUser 登录用户信息
      */
     public static void loginByDevice(LoginUser loginUser, DeviceType deviceType) {
-        TimeInterval timer = DateUtil.timer();
         SaStorage storage = SaHolder.getStorage();
         storage.set(LOGIN_USER_KEY, loginUser);
         storage.set(USER_KEY, loginUser.getUserId());
@@ -57,6 +54,14 @@ public class LoginHelper {
         if (ObjectUtil.isNotNull(deviceType)) {
             model.setDevice(deviceType.getDevice());
         }
+        // 自定义分配 不同用户体系 不同 token 授权时间 不设置默认走全局 yml 配置
+        // 例如: 后台用户30分钟过期 app用户1天过期
+//        UserType userType = UserType.getUserType(loginUser.getUserType());
+//        if (userType == UserType.SYS_USER) {
+//            model.setTimeout(86400).setActiveTimeout(1800);
+//        } else if (userType == UserType.APP_USER) {
+//            model.setTimeout(86400).setActiveTimeout(1800);
+//        }
         StpUtil.login(loginUser.getLoginId(), model.setExtra(USER_KEY, loginUser.getUserId()));
         StpUtil.getTokenSession().set(LOGIN_USER_KEY, loginUser);
     }

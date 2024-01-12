@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyhmobile.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.ruoyi.common.core.constant.CacheNames;
 import com.ruoyi.zlyyh.domain.TemplateSetting;
@@ -33,7 +34,15 @@ public class TemplateSettingServiceImpl implements ITemplateSettingService {
     public List<TemplateSettingVo> queryListByTemplateId(Long templateId) {
         LambdaQueryWrapper<TemplateSetting> lqw = Wrappers.lambdaQuery();
         lqw.eq(TemplateSetting::getTemplateId, templateId);
+        lqw.eq(TemplateSetting::getParentId, 0);
         lqw.last("order by sort asc");
-        return baseMapper.selectVoList(lqw);
+        List<TemplateSettingVo> templateSettingVos = baseMapper.selectVoList(lqw);
+        if (ObjectUtils.isNotEmpty(templateSettingVos)) {
+            for (TemplateSettingVo templateSettingVo : templateSettingVos) {
+                List<TemplateSettingVo> settingVos = baseMapper.selectVoList(new LambdaQueryWrapper<TemplateSetting>().eq(TemplateSetting::getParentId, templateSettingVo.getId()).last("order by sort asc"));
+                templateSettingVo.setSettingVoList(settingVos);
+            }
+        }
+        return templateSettingVos;
     }
 }

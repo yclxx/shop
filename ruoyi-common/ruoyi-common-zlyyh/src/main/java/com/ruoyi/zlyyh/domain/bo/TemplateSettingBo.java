@@ -35,7 +35,7 @@ public class TemplateSettingBo extends BaseEntity {
     /**
      * 图片
      */
-    @NotBlank(message = "图片不能为空", groups = { AddGroup.class, EditGroup.class })
+    //@NotBlank(message = "图片不能为空", groups = { AddGroup.class, EditGroup.class })
     private String img;
 
     /**
@@ -63,6 +63,16 @@ public class TemplateSettingBo extends BaseEntity {
      * 排序
      */
     private Long sort;
+
+    /**
+     * 图片宽度
+     */
+    private Long width;
+
+    /**
+     * 父级id
+     */
+    private Long parentId;
 
 
 }

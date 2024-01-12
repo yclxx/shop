@@ -91,7 +91,7 @@ public interface IOrderService {
     /**
      * 过期自动退款
      */
-    void autoRefundOrder();
+    void autoRefundOrder(String job);
 
     /**
      * 手机端订单退款

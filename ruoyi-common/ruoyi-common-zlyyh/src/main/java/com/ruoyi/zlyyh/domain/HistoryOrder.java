@@ -221,4 +221,6 @@ public class HistoryOrder extends BaseEntity {
      * 支持端
      */
     private String supportChannel;
+
+    private String autoRefund;
 }

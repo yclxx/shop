@@ -78,6 +78,16 @@
           <image-preview :src="scope.row.missionImg" :width="50" :height="50" />
         </template>
       </el-table-column>
+      <el-table-column label="背景图片" align="center" prop="missionBgImg" width="100">
+        <template slot-scope="scope">
+          <image-preview :src="scope.row.missionBgImg" :width="50" :height="50" />
+        </template>
+      </el-table-column>
+      <el-table-column label="按钮按钮" align="center" prop="regulationButton" width="100">
+        <template slot-scope="scope">
+          <image-preview :src="scope.row.regulationButton" :width="50" :height="50" />
+        </template>
+      </el-table-column>
       <el-table-column label="状态" fixed="right" width="68" align="center" prop="status">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status" />
@@ -151,6 +161,12 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
+            <el-form-item label="默认背景" prop="missionBgImg">
+              <image-upload :limit="1" :isShowTip="false" v-model="form.missionBgImg" />
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="8">
             <el-form-item label="积点兑商品" prop="jdConvertRedPacket">
               <span slot="label">
                 积点兑商品
@@ -175,6 +191,11 @@
                 <el-radio v-for="dict in dict.type.sys_normal_disable" :key="dict.value"
                   :label="dict.value">{{dict.label}}</el-radio>
               </el-radio-group>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="规则按钮" prop="regulationButton">
+              <image-upload :limit="1" :isShowTip="false" v-model="form.regulationButton" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -336,6 +357,8 @@
           startDate: undefined,
           endDate: undefined,
           missionImg: undefined,
+          missionBgImg: undefined,
+          regulationButton: undefined,
           missionGroupUpid: undefined,
           jdConvertRedPacket: '0',
           platformKey: undefined,

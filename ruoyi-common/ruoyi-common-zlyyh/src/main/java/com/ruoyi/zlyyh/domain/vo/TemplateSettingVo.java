@@ -6,7 +6,7 @@ import com.ruoyi.common.excel.annotation.ExcelDictFormat;
 import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
 import java.util.Date;
-
+import java.util.List;
 
 
 /**
@@ -83,5 +83,16 @@ public class TemplateSettingVo {
     @ExcelProperty(value = "更新时间")
     private Date updateTime;
 
+    /**
+     * 图片宽度
+     */
+    private Long width;
+
+    /**
+     * 父级id
+     */
+    private Long parentId;
+
+    private List<TemplateSettingVo> settingVoList;
 
 }

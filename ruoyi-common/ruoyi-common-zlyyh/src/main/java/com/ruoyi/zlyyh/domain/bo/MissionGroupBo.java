@@ -54,6 +54,14 @@ public class MissionGroupBo extends BaseEntity {
      * 规则图片
      */
     private String missionImg;
+    /**
+     * 默认背景图片
+     */
+    private String missionBgImg;
+    /**
+     * 规则按钮图片
+     */
+    private String regulationButton;
 
     /**
      * 任务组编号

@@ -238,4 +238,6 @@ public class HistoryOrderBo extends BaseEntity {
      */
     private String supportChannel;
 
+    private String autoRefund;
+
 }
