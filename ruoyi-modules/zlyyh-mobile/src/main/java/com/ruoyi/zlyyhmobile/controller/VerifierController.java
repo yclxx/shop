@@ -15,6 +15,7 @@ import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.bo.ShopAndMerchantBo;
 import com.ruoyi.zlyyhmobile.domain.bo.VerifierShopBo;
+import com.ruoyi.zlyyhmobile.service.IBusinessDistrictService;
 import com.ruoyi.zlyyhmobile.service.ICommercialTenantService;
 import com.ruoyi.zlyyhmobile.service.IShopService;
 import com.ruoyi.zlyyhmobile.service.IVerifierService;
@@ -40,6 +41,7 @@ public class VerifierController extends BaseController {
     private final IVerifierService verifierService;
     private final IShopService shopService;
     private final ICommercialTenantService commercialTenantService;
+    private final IBusinessDistrictService iBusinessDistrictService;
 
     /**
      * 查询个人信息
@@ -116,7 +118,6 @@ public class VerifierController extends BaseController {
      */
     @GetMapping("/shopPage")
     public TableDataInfo<ShopVo> shopPage(VerifierBo bo, PageQuery pageQuery) {
-        //bo.setPlatformKey(ZlyyhUtils.getPlatformId());
         bo.setId(LoginHelper.getUserId());
         return verifierService.queryShopPageList(bo, pageQuery);
     }
@@ -244,6 +245,10 @@ public class VerifierController extends BaseController {
         if (ObjectUtil.isNotEmpty(bo.getShopMerchantBos())) {
             List<ShopMerchant> shopMerchants = BeanCopyUtils.copyList(bo.getShopMerchantBos(), ShopMerchant.class);
             shopService.updateShopMerchantById(shopBo.getShopId(), shopMerchants);
+        }
+        // 门店商圈
+        if (ObjectUtil.isNotEmpty(bo.getBusinessDistrictIds()) && !"0".equals(bo.getAutoBusiness())) {
+            iBusinessDistrictService.insertShopBusinessDistrict(bo.getBusinessDistrictIds(), shopBo.getShopId());
         }
         return R.ok();
     }

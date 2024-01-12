@@ -115,7 +115,7 @@ public class CommercialTenantController {
     /**
      * 云闪付商户号识别
      */
-    @PostMapping("/ignore/ocrUp")
+    @PostMapping("/ocrUp")
     public R<OcrBizLicenseYsfVo> ocrUp(@Validated(AppEditGroup.class) @RequestBody OcrBizLicenseBo bo) {
         Long platformId = ZlyyhUtils.getPlatformId();
         String ocrApiKey = ysfConfigService.queryValueByKey(platformId, "baidu.ocrApiKey");
