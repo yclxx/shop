@@ -13,14 +13,12 @@ import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.zlyyh.domain.CategoryProduct;
 import com.ruoyi.zlyyh.domain.CommercialTenant;
 import com.ruoyi.zlyyh.domain.CommercialTenantProduct;
-import com.ruoyi.zlyyh.domain.Product;
 import com.ruoyi.zlyyh.domain.bo.CategoryProductBo;
 import com.ruoyi.zlyyh.domain.bo.CommercialTenantBo;
 import com.ruoyi.zlyyh.domain.bo.CommercialTenantProductBo;
 import com.ruoyi.zlyyh.domain.vo.CategoryProductVo;
 import com.ruoyi.zlyyh.domain.vo.CommercialTenantProductVo;
 import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
-import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.ICategoryProductService;
@@ -91,7 +89,8 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
     @Override
     public CommercialTenantVo queryByCommercialTenantName(String tenantName) {
         LambdaQueryWrapper<CommercialTenant> lqw = Wrappers.lambdaQuery();
-        lqw.eq(CommercialTenant::getCommercialTenantName,tenantName);
+        lqw.eq(CommercialTenant::getCommercialTenantName, tenantName);
+        lqw.last("Limit 1");
         return baseMapper.selectVoOne(lqw);
     }
 
@@ -231,7 +230,6 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
 
         Page<CommercialTenantVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
         return TableDataInfo.build(result);
-
 
     }
 }

@@ -28,6 +28,46 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <result property="sort" column="sort"/>
     <result property="typeId" column="type_id"/>
     </resultMap>
+    <select id="selectFileShopList" resultType="com.ruoyi.zlyyh.domain.vo.ActivityFileShopVo">
+        select *,
+               ACOS(
+                    COS(RADIANS(#{bo.latitude})) *
+                    COS(RADIANS(latitude)) *
+                    COS(RADIANS(longitude) - RADIANS(#{bo.longitude})) +
+                    SIN(RADIANS(#{bo.latitude})) *
+                    SIN(RADIANS(latitude))
+                ) * 6378 AS distance
+        from t_activity_file_shop
+        <where>
+            status = 0
+            <if test="bo.fileId != null and bo.fileId != ''">
+                AND file_id = #{bo.fileId}
+            </if>
+            <if test="bo.citycode != null and bo.citycode != ''">
+                AND citycode = #{bo.citycode}
+            </if>
+            <if test="bo.typeId != null and bo.typeId != ''">
+                AND type_id = #{bo.typeId}
+            </if>
+            <if test="bo.activityShopName != null and bo.activityShopName != ''">
+                AND (activity_shop_name like concat('%', #{bo.activityShopName}, '%')
+                or address like concat('%', #{bo.activityShopName}, '%')
+                or formatted_address like concat('%', #{bo.activityShopName}, '%'))
+            </if>
+        </where>
+        ORDER BY sort asc,distance asc
+    </select>
+    <select id="selectCityList" resultType="com.ruoyi.zlyyh.domain.vo.AreaVo">
+        select citycode adcode, city areaName from t_activity_file_shop
+        where file_id = #{fileId} and status = '0' and city is not null and city != '' and citycode is not null and citycode != ''
+        group by citycode,city
+        order by citycode
+    </select>
+    <select id="selectTypeByFileId" resultType="java.lang.Long">
+        select type_id from t_activity_file_shop
+        where file_id = #{fileId} and status = '0'
+        group by type_id
+    </select>
 
 
 </mapper>

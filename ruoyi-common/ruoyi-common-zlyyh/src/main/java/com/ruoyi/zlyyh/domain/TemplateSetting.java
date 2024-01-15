@@ -6,6 +6,8 @@ import com.ruoyi.common.core.web.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.math.BigDecimal;
+
 /**
  * 落地页配置对象 t_template_setting
  *
@@ -56,7 +58,7 @@ public class TemplateSetting extends BaseEntity {
     /**
      * 图片宽度
      */
-    private Long width;
+    private BigDecimal width;
 
     /**
      * 父级id

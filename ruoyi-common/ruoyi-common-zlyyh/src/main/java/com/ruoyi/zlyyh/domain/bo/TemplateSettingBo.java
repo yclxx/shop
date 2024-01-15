@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 
 /**
  * 落地页配置业务对象
@@ -67,7 +68,7 @@ public class TemplateSettingBo extends BaseEntity {
     /**
      * 图片宽度
      */
-    private Long width;
+    private BigDecimal width;
 
     /**
      * 父级id

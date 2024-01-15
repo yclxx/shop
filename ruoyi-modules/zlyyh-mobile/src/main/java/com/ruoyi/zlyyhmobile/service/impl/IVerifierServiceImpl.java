@@ -46,6 +46,7 @@ public class IVerifierServiceImpl implements IVerifierService {
     private final CommercialTenantMapper commercialTenantMapper;
     private final IProductService productService;
     private final IShopService shopService;
+    private final BusinessDistrictShopMapper businessDistrictShopMapper;
 
     @Cacheable(cacheNames = CacheNames.M_VERIFIER, key = "#bo.getId()")
     @Override
@@ -56,6 +57,11 @@ public class IVerifierServiceImpl implements IVerifierService {
             verifierVo.setMobile(DesensitizedUtil.mobilePhone(verifierVo.getMobile()));
         }
         return verifierVo;
+    }
+
+    @Override
+    public VerifierVo queryById(Long id) {
+        return baseMapper.selectVoById(id);
     }
 
     @Override
@@ -75,13 +81,15 @@ public class IVerifierServiceImpl implements IVerifierService {
         LambdaQueryWrapper<Shop> lqw = Wrappers.lambdaQuery();
         lqw.orderByDesc(Shop::getCreateTime);
         lqw.inSql(Shop::getShopId, "SELECT shop_id FROM t_verifier_shop WHERE verifier_id = " + bo.getId());
-        List<ShopVo> result = shopMapper.selectVoList(lqw);
-        return result;
+        return shopMapper.selectVoList(lqw);
     }
 
     @Override
     public Map<String, Object> getShopId(Long shopId) {
         Shop shop = shopMapper.selectById(shopId);
+        if (null == shop) {
+            return new HashMap<>();
+        }
         CommercialTenantVo commercialTenantVo = commercialTenantMapper.selectVoById(shop.getCommercialTenantId());
         LambdaQueryWrapper<ShopMerchant> lqw = Wrappers.lambdaQuery();
         lqw.eq(ShopMerchant::getShopId, shopId);
@@ -101,6 +109,10 @@ public class IVerifierServiceImpl implements IVerifierService {
         map.put("ysfMerchant", ysfMerchant);
         map.put("wxMerchant", wxMerchant);
         map.put("payMerchant", payMerchant);
+        // 商圈
+        List<BusinessDistrictShopVo> businessDistrictShopVos = businessDistrictShopMapper.selectVoList(new LambdaQueryWrapper<BusinessDistrictShop>().eq(BusinessDistrictShop::getShopId, shop.getShopId()).select(BusinessDistrictShop::getBusinessDistrictId));
+        List<Long> businessDistrictIds = businessDistrictShopVos.stream().map(BusinessDistrictShopVo::getBusinessDistrictId).collect(Collectors.toList());
+        map.put("businessDistrictIds", businessDistrictIds);
         return map;
     }
 

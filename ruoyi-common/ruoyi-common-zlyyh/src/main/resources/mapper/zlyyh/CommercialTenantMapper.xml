@@ -7,7 +7,10 @@
     <resultMap type="com.ruoyi.zlyyh.domain.CommercialTenant" id="CommercialTenantResult">
         <result property="commercialTenantId" column="commercial_tenant_id"/>
         <result property="commercialTenantName" column="commercial_tenant_name"/>
+        <result property="commercialTenantTitle" column="commercial_tenant_title"/>
         <result property="commercialTenantImg" column="commercial_tenant_img"/>
+        <result property="verifierId" column="verifier_id"/>
+        <result property="adminMobile" column="admin_mobile"/>
         <result property="tags" column="tags"/>
         <result property="startTime" column="start_time"/>
         <result property="endTime" column="end_time"/>
@@ -23,6 +26,19 @@
         <result property="ylBrandId" column="yl_brand_id"/>
         <result property="sysDeptId" column="sys_dept_id"/>
         <result property="sysUserId" column="sys_user_id"/>
+        <result property="isShare" column="is_share"/>
+        <result property="supplier" column="supplier"/>
+        <result property="license" column="license"/>
+        <result property="nature" column="nature"/>
+        <result property="invoice" column="invoice"/>
+        <result property="account" column="account"/>
+        <result property="invoice" column="invoice"/>
+        <result property="activity" column="activity"/>
+        <result property="activityNature" column="activity_nature"/>
+        <result property="isCache" column="is_cache"/>
+        <result property="city" column="city"/>
+        <result property="citycode" column="citycode"/>
+        <result property="source" column="source"/>
     </resultMap>
 
 
