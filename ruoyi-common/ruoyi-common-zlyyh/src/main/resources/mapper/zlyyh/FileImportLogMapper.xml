@@ -11,6 +11,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <result property="pageTitle" column="page_title"/>
     <result property="count" column="count"/>
     <result property="importCount" column="import_count"/>
+    <result property="pageUrl" column="page_url"/>
     <result property="delFlag" column="del_flag"/>
     <result property="createBy" column="create_by"/>
     <result property="createTime" column="create_time"/>

@@ -55,4 +55,6 @@ public class FileImportLog extends BaseEntity {
      */
     private String pageTitle;
 
+    private String pageUrl;
+
 }

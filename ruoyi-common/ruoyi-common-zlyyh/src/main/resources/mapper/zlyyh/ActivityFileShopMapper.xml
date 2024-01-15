@@ -46,6 +46,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="bo.citycode != null and bo.citycode != ''">
                 AND citycode = #{bo.citycode}
             </if>
+            <if test="bo.adcode != null and bo.adcode != ''">
+                AND adcode = #{bo.adcode}
+            </if>
             <if test="bo.typeId != null and bo.typeId != ''">
                 AND type_id = #{bo.typeId}
             </if>

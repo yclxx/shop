@@ -238,4 +238,9 @@ public interface CacheNames {
      * 商户类型缓存
      */
     String MERCHANT_TYPE = "merchantType#15d";
+
+    /**
+     * 省市区列表缓存
+     */
+    String CITY_AREA_LIST = "cityAreaList#30d";
 }
