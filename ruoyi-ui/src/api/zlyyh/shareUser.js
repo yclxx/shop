@@ -1,18 +1,18 @@
 import request from '@/utils/request'
 
 // 查询分销员列表
-export function listShareUser(query) {
+export function pageListShareUser(query) {
   return request({
-    url: '/zlyyh-admin/shareUser/list',
+    url: '/zlyyh-admin/shareUser/pageList',
     method: 'get',
     params: query
   })
 }
 
 // 查询分销员列表
-export function pageListShareUser(query) {
+export function listShareUser(query) {
   return request({
-    url: '/zlyyh-admin/shareUser/pageList',
+    url: '/zlyyh-admin/shareUser/list',
     method: 'get',
     params: query
   })
