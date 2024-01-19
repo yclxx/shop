@@ -83,7 +83,7 @@
         </template>
       </el-table-column>
       <el-table-column label="类别" align="center" prop="typeId" :formatter="typeIdFormatter" />
-      <el-table-column label="返回h5链接" align="center" prop="indexUrl" />
+      <!-- <el-table-column label="返回h5链接" align="center" prop="indexUrl" /> -->
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status" />
@@ -132,9 +132,9 @@
             <el-option v-for="item in fileList" :key="item.id" :label="item.label" :value="item.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="返回h5链接" prop="indexUrl">
+        <!-- <el-form-item label="返回h5链接" prop="indexUrl">
           <el-input v-model="form.indexUrl" placeholder="请输入返回h5链接" />
-        </el-form-item>
+        </el-form-item> -->
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
             <el-radio v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.value">
@@ -537,6 +537,7 @@
       },
       //商户导入操作
       handleMerchantImport() {
+        this.resetForm("importForm");
         this.upload.open = true;
       },
       // 提交上传文件

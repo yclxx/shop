@@ -29,5 +29,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <result property="ageType" column="age_type"/>
     </resultMap>
 
-
+    <select id="selectListIncludeMobile" resultMap="ShareUserResult">
+        SELECT * FROM t_share_user ${ew.customSqlSegment}
+        <if test="user != null and user.mobile != null and user.mobile != ''">
+            and up_mobile = #{user.upMobile}
+        </if>
+    </select>
 </mapper>

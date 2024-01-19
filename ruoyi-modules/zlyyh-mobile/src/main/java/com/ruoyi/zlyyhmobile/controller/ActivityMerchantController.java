@@ -1,14 +1,18 @@
 package com.ruoyi.zlyyhmobile.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.hutool.core.lang.tree.Tree;
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.utils.ServletUtils;
+import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.core.utils.ip.AddressUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.ActivityFileShop;
+import com.ruoyi.zlyyh.domain.Area;
 import com.ruoyi.zlyyh.domain.MerchantType;
 import com.ruoyi.zlyyh.domain.bo.ActivityFileShopBo;
 import com.ruoyi.zlyyh.domain.bo.MerchantApprovalBo;
@@ -66,6 +70,11 @@ public class ActivityMerchantController {
     @GetMapping("/getLocationCity")
     public R<Map<String, String>> getLocationCity(String location) {
         Map<String, String> locationCity = LocationUtils.getLocationCity(location);
+        if (ObjectUtil.isNotEmpty(locationCity)) {
+            if (StringUtils.isEmpty(locationCity.get("city"))) {
+                locationCity.put("city",locationCity.get("province"));
+            }
+        }
         return R.ok(locationCity);
     }
 
@@ -83,5 +92,25 @@ public class ActivityMerchantController {
     @GetMapping("/getMerTypeList")
     public R<List<MerchantTypeVo>> getMerTypeList(String fileId) {
         return R.ok(iActivityFileShopService.getMerTypeList(fileId));
+    }
+
+    /**
+     * 获取省市区列表
+     */
+    @GetMapping("/getCityDistrictList")
+    public R<List<Tree<Long>>> getCityDistrictList() {
+        List<Tree<Long>> cityDistrictList = iActivityFileShopService.getCityDistrictList();
+        return R.ok(cityDistrictList);
+    }
+
+    /**
+     * 查询高德省市区
+     * @param adcode
+     * @return
+     */
+    @GetMapping("/getDistrict")
+    public R<Void> getDistrict(String adcode) {
+        iActivityFileShopService.getDistrict(adcode);
+        return R.ok();
     }
 }

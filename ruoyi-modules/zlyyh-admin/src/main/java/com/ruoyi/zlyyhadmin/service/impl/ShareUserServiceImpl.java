@@ -9,6 +9,7 @@ import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.system.api.domain.User;
 import com.ruoyi.zlyyh.domain.ShareUser;
 import com.ruoyi.zlyyh.domain.ShareUserAccount;
 import com.ruoyi.zlyyh.domain.bo.ShareUserBo;
@@ -24,10 +25,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -61,14 +59,15 @@ public class ShareUserServiceImpl implements IShareUserService {
             return TableDataInfo.build(new ArrayList<>());
         }
         Page<ShareUserVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
-        TableDataInfo<ShareUserVo> build = TableDataInfo.build(result);
-        for (ShareUserVo shareUserVo : build.getRows()) {
-            UserVo userVo = userService.queryById(shareUserVo.getUserId());
-            if (null != userVo) {
-                shareUserVo.setUserMobile(userVo.getMobile());
-            }
-        }
-        return build;
+        return TableDataInfo.build(result);
+//        TableDataInfo<ShareUserVo> build = TableDataInfo.build(result);
+//        for (ShareUserVo shareUserVo : build.getRows()) {
+//            UserVo userVo = userService.queryById(shareUserVo.getUserId());
+//            if (null != userVo) {
+//                shareUserVo.setUserMobile(userVo.getMobile());
+//            }
+//        }
+//        return build;
     }
 
     /**
@@ -80,14 +79,14 @@ public class ShareUserServiceImpl implements IShareUserService {
         if (null == lqw) {
             return new ArrayList<>();
         }
-        List<ShareUserVo> shareUserVos = baseMapper.selectVoList(lqw);
-        for (ShareUserVo shareUserVo : shareUserVos) {
-            UserVo userVo = userService.queryById(shareUserVo.getUserId());
-            if (null != userVo) {
-                shareUserVo.setUserMobile(userVo.getMobile());
-            }
-        }
-        return shareUserVos;
+//        List<ShareUserVo> shareUserVos = baseMapper.selectVoList(lqw);
+//        for (ShareUserVo shareUserVo : shareUserVos) {
+//            UserVo userVo = userService.queryById(shareUserVo.getUserId());
+//            if (null != userVo) {
+//                shareUserVo.setUserMobile(userVo.getMobile());
+//            }
+//        }
+        return baseMapper.selectVoList(lqw);
     }
 
     private LambdaQueryWrapper<ShareUser> buildQueryWrapper(ShareUserBo bo) {
@@ -98,10 +97,20 @@ public class ShareUserServiceImpl implements IShareUserService {
                 UserBo userBo = new UserBo();
                 userBo.setMobile(bo.getUserId().toString());
                 List<UserVo> userVos = userService.queryList(userBo);
+                Set<Long> userIds;
                 if (ObjectUtil.isEmpty(userVos)) {
-                    return null;
+                    LambdaQueryWrapper<ShareUser> upMobileLqw = Wrappers.lambdaQuery();
+                    ShareUser shareUser = new ShareUser();
+                    shareUser.setUpMobile(bo.getUserId().toString());
+                    List<User> users = baseMapper.selectListIncludeMobile(upMobileLqw, shareUser);
+                    if (ObjectUtil.isEmpty(users)) {
+                        return null;
+                    }
+                    userIds = users.stream().map(User::getUserId).collect(Collectors.toSet());
+                } else {
+                    userIds = userVos.stream().map(UserVo::getUserId).collect(Collectors.toSet());
                 }
-                lqw.in(ShareUser::getUserId, userVos.stream().map(UserVo::getUserId).collect(Collectors.toSet()));
+                lqw.in(ShareUser::getUserId, userIds);
             } else {
                 lqw.eq(ShareUser::getUserId, bo.getUserId());
             }
@@ -109,13 +118,12 @@ public class ShareUserServiceImpl implements IShareUserService {
         lqw.like(StringUtils.isNotBlank(bo.getBusinessDistrictName()), ShareUser::getBusinessDistrictName, bo.getBusinessDistrictName());
         lqw.like(StringUtils.isNotBlank(bo.getCommercialTenantName()), ShareUser::getCommercialTenantName, bo.getCommercialTenantName());
         lqw.like(StringUtils.isNotBlank(bo.getShopName()), ShareUser::getShopName, bo.getShopName());
-        lqw.eq(StringUtils.isNotBlank(bo.getUpMobile()), ShareUser::getUpMobile, bo.getUpMobile());
+        lqw.eq(StringUtils.isNotBlank(bo.getUserName()), ShareUser::getUserName, bo.getUserName());
         lqw.eq(StringUtils.isNotBlank(bo.getStatus()), ShareUser::getStatus, bo.getStatus());
         lqw.eq(StringUtils.isNotBlank(bo.getAuditStatus()), ShareUser::getAuditStatus, bo.getAuditStatus());
         lqw.eq(bo.getParentId() != null, ShareUser::getParentId, bo.getParentId());
         lqw.eq(bo.getPlatformKey() != null, ShareUser::getPlatformKey, bo.getPlatformKey());
-        lqw.between(params.get("beginCreateTime") != null && params.get("endCreateTime") != null,
-            ShareUser::getCreateTime, params.get("beginCreateTime"), params.get("endCreateTime"));
+        lqw.between(params.get("beginCreateTime") != null && params.get("endCreateTime") != null, ShareUser::getCreateTime, params.get("beginCreateTime"), params.get("endCreateTime"));
         return lqw;
     }
 

@@ -1,5 +1,6 @@
 package com.ruoyi.zlyyhmobile.service;
 
+import cn.hutool.core.lang.tree.Tree;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.ActivityFileShopBo;
@@ -35,4 +36,12 @@ public interface IActivityFileShopService {
      * 获取导入文件信息
      */
     FileImportLogVo getFileInfo(String fileId);
+
+    void getDistrict(String adcode);
+
+    /**
+     * 获取省市区列表
+     * @return
+     */
+    List<Tree<Long>> getCityDistrictList();
 }
