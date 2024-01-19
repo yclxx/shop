@@ -119,4 +119,9 @@ public class ActionVo {
      */
     @ExcelProperty(value = "平台标识")
     private Long platformKey;
+
+    /**
+     * 是否自动支付
+     */
+    private String autoPay;
 }

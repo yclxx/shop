@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyh.utils.redis;
 
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.BeanCopyUtils;
@@ -8,6 +9,8 @@ import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.zlyyh.domain.Order;
+import com.ruoyi.zlyyh.domain.ProductGroup;
+import com.ruoyi.zlyyh.domain.vo.ProductGroupVo;
 import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyh.enumd.DateType;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
@@ -55,6 +58,56 @@ public class ProductUtils {
             }
         }
     }
+
+    /**
+     * 校验商品组商品 用户今日是否可以购买
+     */
+    public static void checkProductGroupUserCount(ProductGroupVo productGroup, Long platformId , Long userId) {
+        // 校验用户商品组选择是否达到参与上限
+        String msgTip = productGroup.getProductGroupTip();
+        if (productGroup.getDayUserCount() > 0) {
+            long count = RedisUtils.getAtomicValue(countByUserIdAndProductGroupIdRedisKey(platformId, userId, productGroup.getProductGroupId(), DateType.DAY));
+            if (count >= productGroup.getDayUserCount()) {
+                if (ObjectUtil.isNotEmpty(msgTip)){
+                    throw new ServiceException("今日"+msgTip);
+                }else {
+                    throw new ServiceException("今日已达参与上限");
+                }
+
+            }
+        }
+        if (productGroup.getWeekUserCount() > 0) {
+            long count = RedisUtils.getAtomicValue(countByUserIdAndProductGroupIdRedisKey(platformId, userId, productGroup.getProductGroupId(), DateType.WEEK));
+            if (count >= productGroup.getWeekUserCount()) {
+                if (ObjectUtil.isNotEmpty(msgTip)){
+                    throw new ServiceException("本周"+msgTip);
+                }else {
+                    throw new ServiceException("本周已达参与上限");
+                }
+            }
+        }
+        if (productGroup.getMonthUserCount() > 0) {
+            long count = RedisUtils.getAtomicValue(countByUserIdAndProductGroupIdRedisKey(platformId, userId, productGroup.getProductGroupId(), DateType.MONTH));
+            if (count >= productGroup.getMonthUserCount()) {
+                if (ObjectUtil.isNotEmpty(msgTip)){
+                    throw new ServiceException("本月"+msgTip);
+                }else {
+                    throw new ServiceException("本月已达参与上限");
+                }
+            }
+        }
+        if (productGroup.getTotalUserCount() > 0) {
+            long count = RedisUtils.getAtomicValue(countByUserIdAndProductGroupIdRedisKey(platformId, userId, productGroup.getProductGroupId(), DateType.TOTAL));
+            if (count >= productGroup.getTotalUserCount()) {
+                if (ObjectUtil.isNotEmpty(msgTip)){
+                    throw new ServiceException(msgTip);
+                }else {
+                    throw new ServiceException("已达参与上限");
+                }
+            }
+        }
+    }
+
 
     /**
      * 校验用户今日是否可购买
@@ -265,6 +318,21 @@ public class ProductUtils {
      */
     public static String countByUserIdAndProductIdRedisKey(Long platformKey, Long userId, Long productId, DateType dateType) {
         return "orderLimitCache:user:" + platformKey + ":" + productId + ":" + ZlyyhUtils.getDateCacheKey(dateType) + ":" + userId;
+    }
+
+
+
+    /**
+     * 获取用户商品组购买次数缓存key
+     *
+     * @param platformKey 平台标识
+     * @param userId      用户ID
+     * @param productGroupId   产品组ID
+     * @param dateType    时间类型
+     * @return redis缓存key
+     */
+    public static String countByUserIdAndProductGroupIdRedisKey(Long platformKey, Long userId, Long productGroupId, DateType dateType) {
+        return "orderProductGroupLimitCache:user:" + platformKey + ":" + productGroupId + ":" + ZlyyhUtils.getDateCacheKey(dateType) + ":" + userId;
     }
 
     public static String sendWeek(String type) {

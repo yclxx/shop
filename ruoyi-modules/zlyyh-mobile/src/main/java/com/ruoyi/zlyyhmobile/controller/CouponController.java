@@ -78,7 +78,7 @@ public class CouponController extends BaseController {
      */
     @Log(title = "优惠券", businessType = BusinessType.UPDATE)
     @PostMapping("/conversion")
-    public R<Boolean> conversion(@RequestBody Coupon coupon) {
+    public R<String> conversion(@RequestBody Coupon coupon) {
         // 获取用户信息
         coupon.setUserId(LoginHelper.getUserId());
         coupon.setPlatformKey(ZlyyhUtils.getPlatformId());

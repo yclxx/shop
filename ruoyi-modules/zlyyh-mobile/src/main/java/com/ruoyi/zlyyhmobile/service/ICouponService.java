@@ -42,7 +42,7 @@ public interface ICouponService {
      * @param coupon 优惠券
      * @return 结果
      */
-    boolean conversion(Coupon coupon);
+    String conversion(Coupon coupon);
 
 
 

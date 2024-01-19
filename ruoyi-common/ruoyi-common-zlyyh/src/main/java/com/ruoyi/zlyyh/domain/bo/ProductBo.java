@@ -386,4 +386,5 @@ public class ProductBo extends BaseEntity {
     private String warnEmail;
     private Long warnCount;
     private String autoRefund;
+    private Long productGroupId;
 }

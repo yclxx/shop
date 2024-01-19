@@ -133,4 +133,9 @@ public class CouponBo extends BaseEntity {
      * 商品id(购物车进入可能为多个商品id)
      */
     private List<Long> productIds;
+
+    /**
+     * 是否自动支付
+     */
+    private String autoPay;
 }

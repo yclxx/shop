@@ -27,6 +27,16 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item label="自动下单" prop="autoPay">
+        <el-select v-model="queryParams.autoPay" placeholder="请选择是否自动支付" clearable>
+          <el-option
+            v-for="dict in dict.type.t_right_not"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="平台标识" prop="platformKey">
         <el-select v-model="queryParams.platformKey" placeholder="请选择平台标识" clearable>
           <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id"/>
@@ -94,8 +104,8 @@
       <el-table-column label="批次号" align="center" prop="actionNo"/>
       <el-table-column label="名称" align="center" prop="couponName" width="100px"/>
       <el-table-column label="优惠金额" align="center" prop="couponAmount"/>
-      <el-table-column label="最低消费金额" align="center" prop="minAmount"/>
-      <el-table-column label="类型" align="center" prop="couponType">
+      <el-table-column label="最低消费金额" align="center" prop="minAmount" width="100px"/>
+      <el-table-column label="类型" align="center" prop="couponType" width="100px">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.t_coupon_type" :value="scope.row.couponType"/>
         </template>
@@ -105,7 +115,12 @@
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
         </template>
       </el-table-column>
-      <el-table-column label="优惠券数量" align="center" prop="couponCount"/>
+      <el-table-column label="自动下单" align="center" prop="autoPay">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.t_right_not" :value="scope.row.autoPay"/>
+        </template>
+      </el-table-column>
+      <el-table-column label="优惠券数量" align="center" prop="couponCount" width="100"/>
       <el-table-column label="使用起始日期" align="center" prop="periodOfStart" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.periodOfStart, '{y}-{m}-{d}') }}</span>
@@ -174,7 +189,7 @@
 
     <!-- 添加或修改优惠券批次对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="50%" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+      <el-form ref="form" :model="form" :rules="rules" label-width="110px">
         <el-row>
           <el-col :span="12">
             <el-form-item label="批次号" prop="actionNo">
@@ -216,6 +231,18 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
+            <el-form-item label="自动下单" prop="autoPay">
+              <el-radio-group v-model="form.autoPay">
+                <el-radio
+                  v-for="dict in dict.type.t_right_not"
+                  :key="dict.value"
+                  :label="dict.value"
+                >{{ dict.label }}
+                </el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
             <el-form-item label="优惠券数量" prop="couponCount">
               <el-input v-model="form.couponCount" placeholder="请输入优惠券数量"/>
             </el-form-item>
@@ -252,7 +279,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="使用有效截止日期" prop="periodOfValidity">
+            <el-form-item label="使用截止日期" prop="periodOfValidity">
               <el-date-picker clearable
                               v-model="form.periodOfValidity"
                               type="datetime"
@@ -335,7 +362,7 @@ import ProductAction from "@/views/zlyyh/product/ProductAction.vue";
 
 export default {
   name: "Action",
-  dicts: ['sys_normal_disable', 't_coupon_type'],
+  dicts: ['sys_normal_disable', 't_coupon_type','t_right_not'],
   components: {
     ProductAction
   },
@@ -382,7 +409,8 @@ export default {
         status: undefined,
         conversionStartDate: undefined,
         conversionEndDate: undefined,
-        platformKey: undefined
+        platformKey: undefined,
+        autoPay: undefined
       },
       // 表单参数
       form: {},
@@ -396,6 +424,9 @@ export default {
         ],
         platformKey: [
           {required: true, message: "平台标识不能为空", trigger: "blur"}
+        ],
+        periodOfValidity: [
+          {required: true, message: "使用截至日期不能为空", trigger: "blur"}
         ],
         couponName: [
           {required: true, message: "优惠券名称不能为空", trigger: "blur"}
@@ -461,7 +492,8 @@ export default {
         updateTime: undefined,
         conversionStartDate: undefined,
         conversionEndDate: undefined,
-        platformKey: undefined
+        platformKey: undefined,
+        autoPay: '0'
       };
       this.resetForm("form");
     },

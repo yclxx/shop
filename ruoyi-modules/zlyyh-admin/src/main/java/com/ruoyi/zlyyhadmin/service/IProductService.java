@@ -37,6 +37,8 @@ public interface IProductService {
 
     TableDataInfo<ProductVo> queryPagecategoryProductList(ProductBo bo, PageQuery pageQuery);
 
+    TableDataInfo<ProductVo> queryPageGroupProductList(ProductBo bo, PageQuery pageQuery);
+
     /**
      * 查询商品列表
      */
@@ -93,4 +95,6 @@ public interface IProductService {
      * @param productVo 产品
      */
     void queryProductCount(ProductVo productVo);
+
+
 }
