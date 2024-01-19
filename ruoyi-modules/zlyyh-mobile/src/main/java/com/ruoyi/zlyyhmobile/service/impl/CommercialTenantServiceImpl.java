@@ -1,13 +1,16 @@
 package com.ruoyi.zlyyhmobile.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.crypto.digest.MD5;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.constant.CacheNames;
-import com.ruoyi.common.core.utils.BeanCopyUtils;
+import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.JsonUtils;
 import com.ruoyi.common.core.utils.ServletUtils;
 import com.ruoyi.common.core.utils.StringUtils;
@@ -22,7 +25,7 @@ import com.ruoyi.zlyyh.domain.bo.ShopBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
 import com.ruoyi.zlyyh.mapper.VerifierMapper;
-import com.ruoyi.zlyyh.mapper.VerifierShopMapper;
+import com.ruoyi.zlyyh.utils.BaiduUtils;
 import com.ruoyi.zlyyh.utils.MapUtils;
 import com.ruoyi.zlyyhmobile.service.*;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +54,6 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
     private final ICategoryService categoryService;
     private final ICategoryProductService categoryProductService;
     private final VerifierMapper verifierMapper;
-    private final VerifierShopMapper verifierShopMapper;
     private final IProductService productService;
     private final IShopService shopService;
 
@@ -68,14 +70,14 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
     @Override
     public TableDataInfo<CommercialTenantVo> getPage(CommercialTenantBo bo, PageQuery pageQuery) {
         LambdaQueryWrapper<CommercialTenant> lqw = Wrappers.lambdaQuery();
-        lqw.orderByDesc(CommercialTenant::getCreateTime);
         lqw.eq(CommercialTenant::getVerifierId, bo.getVerifierId());
         if (StringUtils.isNotEmpty(bo.getCity())) {
-            lqw.likeRight(CommercialTenant::getCity, bo.getCity());
+            lqw.like(CommercialTenant::getCity, bo.getCity());
         }
         if (StringUtils.isNotEmpty(bo.getCommercialTenantName())) {
-            lqw.likeRight(CommercialTenant::getCommercialTenantName, bo.getCommercialTenantName());
+            lqw.like(CommercialTenant::getCommercialTenantName, bo.getCommercialTenantName());
         }
+        lqw.orderByDesc(CommercialTenant::getCreateTime);
         Page<CommercialTenantVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
         return TableDataInfo.build(result);
     }
@@ -93,14 +95,18 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
     }
 
     @Override
-    public Boolean updateCommercialTenant(CommercialTenantBo bo) {
+    public void updateCommercialTenant(CommercialTenantBo bo) {
         CommercialTenant commercialTenant;
         if (ObjectUtil.isNotEmpty(bo.getCommercialTenantId())) {
             commercialTenant = baseMapper.selectById(bo.getCommercialTenantId());
-            commercialTenant.setIsCache("1");
+            if (!bo.getVerifierId().equals(commercialTenant.getVerifierId())) {
+                throw new ServiceException("登录超时，请退出重试");
+            }
+            bo.setIsCache("1");
+            commercialTenant = BeanUtil.toBean(bo, CommercialTenant.class);
             baseMapper.updateById(commercialTenant);
         } else {
-            commercialTenant = BeanCopyUtils.copy(bo, CommercialTenant.class);
+            commercialTenant = BeanUtil.toBean(bo, CommercialTenant.class);
             commercialTenant.setCommercialTenantId(IdUtil.getSnowflakeNextId());
             commercialTenant.setIsCache("1");
             baseMapper.insert(commercialTenant);
@@ -116,8 +122,48 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
             newVerifier.setIsAdmin(true);
             verifierMapper.insert(newVerifier);
         }
-        // 修改手机号与原手机号不同时处理
-        return true;
+    }
+
+    /**
+     * 云闪付商户号识别
+     */
+    @Override
+    public OcrBizLicenseYsfVo ocrUp(String imgUrl, String accessToken) {
+        OcrBizLicenseYsfVo licenseYsfVo = new OcrBizLicenseYsfVo();
+        String result = BaiduUtils.ocrComm(imgUrl, accessToken);
+        if (ObjectUtil.isNotEmpty(result)) {
+            JSONObject resultJson = JSONObject.parseObject(result);
+            JSONArray wordsResult = resultJson.getJSONArray("words_result");
+            if (ObjectUtil.isNotEmpty(wordsResult)) {
+                for (int i = 0; i < wordsResult.size(); i++) {
+                    JSONObject jsonObject = wordsResult.getJSONObject(i);
+                    String words = jsonObject.getString("words");
+                    JSONObject location = jsonObject.getJSONObject("location");
+                    String top = location.getString("top");
+                    if (i + 1 == wordsResult.size()) {
+                        break;
+                    }
+                    JSONObject nextJson = wordsResult.getJSONObject(i + 1);
+                    String wordsValue = nextJson.getString("words");
+                    JSONObject nextLocation = nextJson.getJSONObject("location");
+                    String nextTop = nextLocation.getString("top");
+                    if (words.equals("商户编号")) {
+                        if (Long.parseLong(nextTop) - Long.parseLong(top) < 30) {
+                            licenseYsfVo.setMerchantNo(wordsValue);
+                        }
+                    } else if (words.equals("终端编号")) {
+                        if (Long.parseLong(nextTop) - Long.parseLong(top) < 30) {
+                            licenseYsfVo.setTerminalNo(wordsValue);
+                        }
+                    } else if (words.equals("收单机构")) {
+                        if (Long.parseLong(nextTop) - Long.parseLong(top) < 30) {
+                            licenseYsfVo.setCollectCompany(wordsValue);
+                        }
+                    }
+                }
+            }
+        }
+        return licenseYsfVo;
     }
 
     /**

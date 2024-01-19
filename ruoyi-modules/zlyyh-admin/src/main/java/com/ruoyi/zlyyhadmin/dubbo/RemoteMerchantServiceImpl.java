@@ -6,19 +6,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.constant.Constants;
 import com.ruoyi.common.core.utils.SpringUtils;
 import com.ruoyi.common.redis.utils.RedisUtils;
-import com.ruoyi.system.api.RemoteFoodService;
 import com.ruoyi.system.api.RemoteMerchantService;
 import com.ruoyi.zlyyh.domain.bo.CommercialTenantBo;
-import com.ruoyi.zlyyh.domain.bo.ProductBo;
-import com.ruoyi.zlyyh.domain.bo.ProductInfoBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
 import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
-import com.ruoyi.zlyyh.domain.vo.ProductInfoVo;
-import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
-import com.ruoyi.zlyyh.properties.YsfFoodProperties;
 import com.ruoyi.zlyyh.properties.YsfMerchantProperties;
-import com.ruoyi.zlyyh.utils.YsfFoodUtils;
 import com.ruoyi.zlyyh.utils.sdk.UnionPayMerchantUtil;
 import com.ruoyi.zlyyhadmin.service.ICommercialTenantService;
 import com.ruoyi.zlyyhadmin.service.IShopService;
@@ -48,7 +41,6 @@ public class RemoteMerchantServiceImpl implements RemoteMerchantService {
     private ICommercialTenantService commercialTenantService;
     @Autowired
     private IShopService shopService;
-
 
     @Async
     @Override
@@ -93,11 +85,11 @@ public class RemoteMerchantServiceImpl implements RemoteMerchantService {
                 continue;
             }
             JSONObject data = brandResult.getJSONObject("data");
-            if (ObjectUtil.isEmpty(data)){
+            if (ObjectUtil.isEmpty(data)) {
                 break;
             }
             JSONObject data1 = data.getJSONObject("data");
-            if (ObjectUtil.isEmpty(data1)){
+            if (ObjectUtil.isEmpty(data1)) {
                 break;
             }
             Integer total = data1.getInteger("count");
@@ -123,10 +115,10 @@ public class RemoteMerchantServiceImpl implements RemoteMerchantService {
                     //商户不存在 - 新增
                     commercialTenantBo.setPlatformKey(platformKey);
                     setCommercialTenant(brand, commercialTenantBo);
+                    commercialTenantBo.setSource("1");
                     commercialTenantService.insertByBo(commercialTenantBo);
                 }
                 getShopSave(ylBrandId, platformKey);
-
 
             }
             if (pageIndex * pageSize >= total) {
@@ -161,7 +153,7 @@ public class RemoteMerchantServiceImpl implements RemoteMerchantService {
             if (errorCount > 20) {
                 break;
             }
-            String shopList = UnionPayMerchantUtil.getShopList(pageSize, pageIndexShop, brandId, appId,chnnlId,signId,token,storeMethod,openInsId,certPath,certPwd,url );
+            String shopList = UnionPayMerchantUtil.getShopList(pageSize, pageIndexShop, brandId, appId, chnnlId, signId, token, storeMethod, openInsId, certPath, certPwd, url);
             if (ObjectUtil.isEmpty(shopList)) {
                 break;
             }
@@ -174,11 +166,11 @@ public class RemoteMerchantServiceImpl implements RemoteMerchantService {
                 continue;
             }
             JSONObject data = jsonObjectShop.getJSONObject("data");
-            if (ObjectUtil.isEmpty(data)){
+            if (ObjectUtil.isEmpty(data)) {
                 break;
             }
             JSONObject data1 = data.getJSONObject("data");
-            if (ObjectUtil.isEmpty(data1)){
+            if (ObjectUtil.isEmpty(data1)) {
                 break;
             }
             Integer totalShop = data1.getInteger("count");
@@ -200,7 +192,6 @@ public class RemoteMerchantServiceImpl implements RemoteMerchantService {
             pageIndexShop++;
         }
     }
-
 
     /**
      * 商户赋值
@@ -226,7 +217,7 @@ public class RemoteMerchantServiceImpl implements RemoteMerchantService {
         String storeAreaDivisNm = data.getString("storeAreaDivisNm");
         String storeCityDivisNm = data.getString("storeCityDivisNm");
         //组合一下
-        address = storeProvDivisNm + storeCityDivisNm + storeAreaDivisNm +address;
+        address = storeProvDivisNm + storeCityDivisNm + storeAreaDivisNm + address;
         String storeProvDivisCd = data.getString("storeProvDivisCd");
         String procode = storeProvDivisCd.substring(0, 2) + "0000";
         String citycode = storeProvDivisCd.substring(0, 4) + "00";

@@ -21,7 +21,11 @@ import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyh.mapper.CouponMapper;
 import com.ruoyi.zlyyh.mapper.ProductCouponMapper;
 import com.ruoyi.zlyyh.mapper.ProductMapper;
+import com.ruoyi.zlyyh.utils.ZlyyhUtils;
+import com.ruoyi.zlyyhmobile.domain.bo.CreateOrderBo;
+import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
 import com.ruoyi.zlyyhmobile.service.ICouponService;
+import com.ruoyi.zlyyhmobile.service.IOrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -44,6 +48,7 @@ public class CouponServiceImpl implements ICouponService {
     private final CouponMapper baseMapper;
     private final ProductCouponMapper productCouponMapper;
     private final ProductMapper productMapper;
+    private final IOrderService orderService;
 
     /**
      * 查询优惠券
@@ -81,7 +86,7 @@ public class CouponServiceImpl implements ICouponService {
     }
 
     @Override
-    public boolean conversion(Coupon coupon) {
+    public String conversion(Coupon coupon) {
         // 查询兑换码
         LambdaQueryWrapper<Coupon> lqw = Wrappers.lambdaQuery();
         lqw.eq(Coupon::getRedeemCode, coupon.getRedeemCode());
@@ -104,7 +109,31 @@ public class CouponServiceImpl implements ICouponService {
         code.setUserId(coupon.getUserId());
         code.setUserAddTime(new Date());
         code.setUseStatus("1");
-        return baseMapper.updateById(code) > 0;
+        baseMapper.updateById(code);
+        //此处判断该优惠券是否为自动下单的优惠券
+        if (ObjectUtil.isNotEmpty(code.getAutoPay()) && "1".equals(code.getAutoPay()) && "1".equals(code.getCouponType())){
+            //自动下单操作
+            CreateOrderBo createOrderBo = new CreateOrderBo();
+            createOrderBo.setCouponId(code.getCouponId());
+            createOrderBo.setPayCount(1L);
+            createOrderBo.setUserId(coupon.getUserId());
+            createOrderBo.setAdcode(ZlyyhUtils.getAdCode());
+            createOrderBo.setCityName(ZlyyhUtils.getCityName());
+            createOrderBo.setPlatformKey(coupon.getPlatformKey());
+            createOrderBo.setChannel(ZlyyhUtils.getPlatformChannel());
+            //商品兑换券查询商品
+            ProductCoupon productCoupon = productCouponMapper.selectOne(new LambdaQueryWrapper<ProductCoupon>().eq(ProductCoupon::getCouponId, code.getCouponId()));
+            if (ObjectUtil.isEmpty(productCoupon)){
+                throw new ServiceException("优惠券发放异常");
+            }
+            createOrderBo.setProductId(productCoupon.getProductId());
+            CreateOrderResult order = orderService.createOrder(createOrderBo, true);
+            return order.getNumber().toString();
+
+        }else {
+            return "true";
+        }
+
     }
 
 

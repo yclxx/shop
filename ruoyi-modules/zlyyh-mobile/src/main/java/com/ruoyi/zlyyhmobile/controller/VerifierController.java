@@ -1,25 +1,33 @@
 package com.ruoyi.zlyyhmobile.controller;
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.http.HttpStatus;
 import com.ruoyi.common.core.domain.R;
+import com.ruoyi.common.core.utils.BeanCopyUtils;
+import com.ruoyi.common.core.validate.AppEditGroup;
 import com.ruoyi.common.core.web.controller.BaseController;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.satoken.utils.LoginHelper;
+import com.ruoyi.zlyyh.domain.ShopMerchant;
 import com.ruoyi.zlyyh.domain.bo.*;
-import com.ruoyi.zlyyh.domain.vo.ProductVo;
-import com.ruoyi.zlyyh.domain.vo.ShopMerchantVo;
-import com.ruoyi.zlyyh.domain.vo.ShopVo;
-import com.ruoyi.zlyyh.domain.vo.VerifierVo;
+import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.bo.ShopAndMerchantBo;
+import com.ruoyi.zlyyhmobile.domain.bo.VerifierShopBo;
+import com.ruoyi.zlyyhmobile.service.IBusinessDistrictService;
+import com.ruoyi.zlyyhmobile.service.ICommercialTenantService;
+import com.ruoyi.zlyyhmobile.service.IShopService;
 import com.ruoyi.zlyyhmobile.service.IVerifierService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 商户端信息处理
@@ -31,6 +39,9 @@ import java.util.Map;
 @RequestMapping("/verifier")
 public class VerifierController extends BaseController {
     private final IVerifierService verifierService;
+    private final IShopService shopService;
+    private final ICommercialTenantService commercialTenantService;
+    private final IBusinessDistrictService iBusinessDistrictService;
 
     /**
      * 查询个人信息
@@ -51,7 +62,6 @@ public class VerifierController extends BaseController {
         bo.setId(LoginHelper.getUserId());
         return R.ok(verifierService.updateVerifier(bo));
     }
-
 
     /**
      * 根据门店查询核销人员
@@ -108,7 +118,6 @@ public class VerifierController extends BaseController {
      */
     @GetMapping("/shopPage")
     public TableDataInfo<ShopVo> shopPage(VerifierBo bo, PageQuery pageQuery) {
-        //bo.setPlatformKey(ZlyyhUtils.getPlatformId());
         bo.setId(LoginHelper.getUserId());
         return verifierService.queryShopPageList(bo, pageQuery);
     }
@@ -188,16 +197,59 @@ public class VerifierController extends BaseController {
      * 门店商户表修改或新增
      */
     @PostMapping("/insertShopMerchant")
-    public R insertShopMerchant(@RequestBody ShopAndMerchantBo bo) {
-        return R.ok(verifierService.insertShopMerchant(bo));
+    public R<Void> insertShopMerchant(@RequestBody ShopAndMerchantBo bo) {
+        verifierService.insertShopMerchant(bo);
+        return R.ok();
     }
 
     /**
      * 新增商户门店和门店商编(商户端)
      */
     @PostMapping("/insertTenantShopMerchant")
-    public R insertTenantShopMerchant(@RequestBody ShopAndMerchantBo bo) {
+    public R<Void> insertTenantShopMerchant(@RequestBody ShopAndMerchantBo bo) {
         bo.getCommercialTenant().setVerifierId(LoginHelper.getUserId());
-        return R.ok(verifierService.insertTenantShopMerchant(bo));
+        verifierService.insertTenantShopMerchant(bo);
+        return R.ok();
+    }
+
+    /**
+     * 新增商户门店和门店商编(商户端)
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @PostMapping("/editShop")
+    public R<Void> editShop(@Validated(AppEditGroup.class) @RequestBody VerifierShopBo bo) {
+        VerifierVo info = verifierService.queryById(LoginHelper.getUserId());
+        if (null == info) {
+            return R.fail(HttpStatus.HTTP_UNAUTHORIZED, "登录超时，请退出重试");
+        }
+        if (!info.getIsBd() && !info.getIsAdmin()) {
+            return R.fail("无权操作");
+        }
+        CommercialTenantVo commercialTenantVo = commercialTenantService.getDetails(bo.getCommercialTenantId());
+        if (null == commercialTenantVo) {
+            return R.fail("商户不存在");
+        }
+        if (!Objects.equals(info.getId(), commercialTenantVo.getVerifierId()) && !Objects.equals(info.getMobile(), commercialTenantVo.getAdminMobile())) {
+            return R.fail("请求错误，无权操作");
+        }
+        ShopBo shopBo = BeanCopyUtils.copy(bo, ShopBo.class);
+        if (null == shopBo) {
+            return R.fail("系统繁忙，请稍后重试");
+        }
+        if (null == shopBo.getShopId()) {
+            shopService.insertByBo(shopBo);
+        } else {
+            shopService.updateByBo(shopBo);
+        }
+        // 门店商户号
+        if (ObjectUtil.isNotEmpty(bo.getShopMerchantBos())) {
+            List<ShopMerchant> shopMerchants = BeanCopyUtils.copyList(bo.getShopMerchantBos(), ShopMerchant.class);
+            shopService.updateShopMerchantById(shopBo.getShopId(), shopMerchants);
+        }
+        // 门店商圈
+        if (ObjectUtil.isNotEmpty(bo.getBusinessDistrictIds()) && !"0".equals(bo.getAutoBusiness())) {
+            iBusinessDistrictService.insertShopBusinessDistrict(bo.getBusinessDistrictIds(), shopBo.getShopId());
+        }
+        return R.ok();
     }
 }

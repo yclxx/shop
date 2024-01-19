@@ -99,6 +99,7 @@ public class RemoteFoodServicelmpl implements RemoteFoodService {
                 } else {
                     //商户不存在 - 新增
                     setCommercialTenant(brand, commercialTenantBo);
+                    commercialTenantBo.setSource("1");
                     commercialTenantService.insertByBo(commercialTenantBo);
                 }
                 getShopSave(brandId, platformKey);

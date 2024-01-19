@@ -112,4 +112,9 @@ public class ActionBo extends BaseEntity {
     private Long platformKey;
 
     private List<Long> productIds;
+
+    /**
+     * 是否自动支付
+     */
+    private String autoPay;
 }

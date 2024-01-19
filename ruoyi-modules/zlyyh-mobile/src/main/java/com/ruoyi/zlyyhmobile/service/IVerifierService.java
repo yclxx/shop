@@ -18,6 +18,8 @@ import java.util.Map;
 public interface IVerifierService {
     VerifierVo info(VerifierBo bo);
 
+    VerifierVo queryById(Long id);
+
     Boolean updateVerifier(VerifierBo bo);
 
     List<ShopVo> queryShopList(VerifierBo bo);

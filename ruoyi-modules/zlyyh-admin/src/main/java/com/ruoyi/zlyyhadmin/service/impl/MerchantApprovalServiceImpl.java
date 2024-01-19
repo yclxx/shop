@@ -217,7 +217,7 @@ public class MerchantApprovalServiceImpl implements IMerchantApprovalService {
         // 通过高德API获取地址相关信息
         if (ObjectUtil.isNotEmpty(vo.getShopAddressInfo())) {
             // 查询地址信息
-            JSONObject addressInfo = AddressUtils.getAddressInfo(vo.getShopAddressInfo());
+            JSONObject addressInfo = AddressUtils.getAddressInfo(vo.getShopAddressInfo(),null);
             shop.setFormattedAddress(addressInfo.getString("formatted_address"));
             shop.setProvince(addressInfo.getString("province"));
             shop.setCity(addressInfo.getString("city"));

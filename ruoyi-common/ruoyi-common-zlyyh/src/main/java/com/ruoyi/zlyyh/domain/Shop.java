@@ -142,7 +142,7 @@ public class Shop extends BaseEntity {
     /**
      * 是否共享
      */
-    private String is_share;
+    private String isShare;
     /**
      * 供应商（与supplierShopId无关系）
      */
@@ -201,5 +201,10 @@ public class Shop extends BaseEntity {
      * 商品类型
      */
     private String productType;
+
+    /**
+     * 自动匹配商圈
+     */
+    private String autoBusiness;
 
 }

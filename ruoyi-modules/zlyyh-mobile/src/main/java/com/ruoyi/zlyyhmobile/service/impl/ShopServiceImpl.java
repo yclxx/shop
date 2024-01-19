@@ -1,5 +1,6 @@
 package com.ruoyi.zlyyhmobile.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -25,8 +26,10 @@ import com.ruoyi.zlyyh.mapper.ExtensionServiceProviderMapper;
 import com.ruoyi.zlyyh.mapper.MerchantApprovalMapper;
 import com.ruoyi.zlyyh.mapper.ShopMapper;
 import com.ruoyi.zlyyh.mapper.ShopMerchantMapper;
+import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhmobile.service.IShopService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -72,35 +75,27 @@ public class ShopServiceImpl implements IShopService {
     }
 
     public Boolean updateShopMerchantById(Long shopId, List<ShopMerchant> bos) {
-        Shop shop = baseMapper.selectById(shopId);
         if (ObjectUtil.isNotEmpty(bos)) {
             List<ShopMerchant> insert = new ArrayList<>();
             List<ShopMerchant> update = new ArrayList<>();
             bos.forEach(o -> {
                 if (ObjectUtil.isNotEmpty(o.getId())) {
-                    if (ObjectUtil.isNotEmpty(shop)) {
-                        o.setShopId(shop.getShopId());
-                    } else {
-                        o.setShopId(shopId);
-                    }
+                    o.setShopId(shopId);
                     update.add(o);
                 } else {
                     o.setId(IdUtil.getSnowflakeNextId());
-                    o.setStatus("0");
-                    if (ObjectUtil.isNotEmpty(shop)) {
-                        o.setShopId(shop.getShopId());
-                    } else {
-                        o.setShopId(shopId);
-                    }
+                    o.setShopId(shopId);
                     insert.add(o);
                 }
             });
             if (ObjectUtil.isNotEmpty(update)) {
                 List<Long> updateIds = update.stream().map(ShopMerchant::getId).collect(Collectors.toList());
-                shopMerchantMapper.delete(new LambdaQueryWrapper<ShopMerchant>().notIn(ShopMerchant::getId, updateIds).eq(ShopMerchant::getMerchantType, bos.get(0).getMerchantType()));
+                shopMerchantMapper.delete(new LambdaQueryWrapper<ShopMerchant>().notIn(ShopMerchant::getId, updateIds).eq(ShopMerchant::getShopId, shopId));
                 shopMerchantMapper.updateBatchById(update);
             }
-            if (ObjectUtil.isNotEmpty(insert)) shopMerchantMapper.insertBatch(insert);
+            if (ObjectUtil.isNotEmpty(insert)) {
+                shopMerchantMapper.insertBatch(insert);
+            }
             return true;
         } else {
             throw new ServiceException("门店商编异常");
@@ -167,7 +162,7 @@ public class ShopServiceImpl implements IShopService {
         if (StringUtils.isEmpty(bo.getBrandMobile())) throw new ServiceException("管理员手机号为空");
         LambdaQueryWrapper<MerchantApproval> lqw = Wrappers.lambdaQuery();
         lqw.eq(MerchantApproval::getBrandMobile, bo.getBrandMobile());
-        lqw.in(MerchantApproval::getApprovalStatus, "0","1");
+        lqw.in(MerchantApproval::getApprovalStatus, "0", "1");
         Long l = merchantApprovalMapper.selectCount(lqw);
         if (l > 0) {
             throw new ServiceException("此管理员手机号已申请商户");
@@ -183,6 +178,42 @@ public class ShopServiceImpl implements IShopService {
         return merchantApprovalMapper.insert(merchantApproval) > 0;
     }
 
+    /**
+     * 查询商户门店数量
+     *
+     * @param commercialTenantId 商户Id
+     * @return 门店数量
+     */
+    public Long selectCountByCommercialTenantId(Long commercialTenantId) {
+        return baseMapper.selectCount(new LambdaQueryWrapper<Shop>().eq(Shop::getCommercialTenantId, commercialTenantId));
+    }
+
+    /**
+     * 新增门店
+     */
+    @Override
+    public Boolean insertByBo(ShopBo bo) {
+        getAddressCode(bo);
+        Shop add = BeanUtil.toBean(bo, Shop.class);
+        PermissionUtils.setShopDeptIdAndUserId(add);
+        boolean flag = baseMapper.insert(add) > 0;
+        if (flag) {
+            bo.setShopId(add.getShopId());
+        }
+        return flag;
+    }
+
+    /**
+     * 修改门店
+     */
+    @CacheEvict(cacheNames = CacheNames.SHOP, key = "#bo.getShopId()")
+    @Override
+    public Boolean updateByBo(ShopBo bo) {
+        getAddressCode(bo);
+        Shop update = BeanUtil.toBean(bo, Shop.class);
+        return baseMapper.updateById(update) > 0;
+    }
+
     private void getAddressCode(ShopBo bo) {
         JSONObject addressInfo;
         String key;
@@ -192,7 +223,7 @@ public class ShopServiceImpl implements IShopService {
         key = "importShop:" + bo.getAddress();
         addressInfo = RedisUtils.getCacheObject(key);
         if (ObjectUtil.isEmpty(addressInfo)) {
-            addressInfo = AddressUtils.getAddressInfo(bo.getAddress());
+            addressInfo = AddressUtils.getAddressInfo(bo.getAddress(), null);
         }
         if (ObjectUtil.isNotEmpty(addressInfo)) {
             bo.setFormattedAddress(addressInfo.getString("formatted_address"));
