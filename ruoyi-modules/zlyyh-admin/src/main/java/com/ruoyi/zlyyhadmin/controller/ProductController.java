@@ -65,6 +65,15 @@ public class ProductController extends BaseController {
     public TableDataInfo<ProductVo> categoryProductList(ProductBo bo, PageQuery pageQuery) {
         return iProductService.queryPagecategoryProductList(bo, pageQuery);
     }
+
+    /**
+     * 查询商品列表
+     */
+    @SaCheckPermission("zlyyh:product:list")
+    @GetMapping("/groupProductList")
+    public TableDataInfo<ProductVo> groupProductList(ProductBo bo, PageQuery pageQuery) {
+        return iProductService.queryPageGroupProductList(bo, pageQuery);
+    }
     /**
      * 查询商品列表
      */

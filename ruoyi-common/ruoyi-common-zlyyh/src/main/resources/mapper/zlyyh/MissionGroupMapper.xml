@@ -11,6 +11,8 @@
         <result property="startDate" column="start_date"/>
         <result property="endDate" column="end_date"/>
         <result property="missionImg" column="mission_img"/>
+        <result property="missionBgImg" column="mission_bg_img"/>
+        <result property="regulationButton" column="regulation_button"/>
         <result property="missionGroupUpid" column="mission_group_upid"/>
         <result property="jdConvertRedPacket" column="jd_convert_red_packet"/>
         <result property="platformKey" column="platform_key"/>

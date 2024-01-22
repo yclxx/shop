@@ -136,6 +136,8 @@ public class OrderServiceImpl implements IOrderService {
     private final WxProperties wxProperties;
     private final ICartService cartService;
     private final IMissionUserDrawService missionUserDrawService;
+    private final ProductGroupConnectMapper productGroupConnectMapper;
+    private final ProductGroupMapper productGroupMapper;
     @DubboReference(retries = 0, timeout = 5000)
     private RemoteOrderService remoteOrderService;
     @Autowired
@@ -342,22 +344,24 @@ public class OrderServiceImpl implements IOrderService {
                 order = updateOrder(order);
             }
             if (!"16".equals(order.getOrderType())) {
-                if (StringUtils.isBlank(order.getExternalProductId()) || (("3".equals(order.getOrderType()) || "10".equals(order.getOrderType()) || "4".equals(order.getOrderType())) && null == order.getExternalProductSendValue())) {
-                    if (null == productVo || (!"9".equals(productVo.getProductType()) && StringUtils.isBlank(productVo.getExternalProductId()))) {
-                        log.error("订单发券错误，缺少供应商产品ID：{}", number);
-                        // 处理结果
-                        sendResult(R.fail("缺少供应商产品ID"), orderPushInfo, order, cache, false);
-                        return;
+                if (!"21".equals(order.getOrderType())){
+                    if (StringUtils.isBlank(order.getExternalProductId()) || (("3".equals(order.getOrderType()) || "10".equals(order.getOrderType()) || "4".equals(order.getOrderType())) && null == order.getExternalProductSendValue())) {
+                        if (null == productVo || (!"9".equals(productVo.getProductType()) && StringUtils.isBlank(productVo.getExternalProductId()))) {
+                            log.error("订单发券错误，缺少供应商产品ID：{}", number);
+                            // 处理结果
+                            sendResult(R.fail("缺少供应商产品ID"), orderPushInfo, order, cache, false);
+                            return;
+                        }
+                        if (("3".equals(order.getOrderType()) || "10".equals(order.getOrderType()) || "4".equals(order.getOrderType())) && null == order.getExternalProductSendValue() && null == productVo.getExternalProductSendValue()) {
+                            log.error("订单发券错误，缺少发放金额：{}", number);
+                            sendResult(R.fail("缺少发放金额"), orderPushInfo, order, cache, false);
+                            return;
+                        }
+                        order.setExternalProductId(productVo.getExternalProductId());
+                        order.setExternalProductSendValue(productVo.getExternalProductSendValue());
+                        orderPushInfo.setExternalProductId(order.getExternalProductId());
+                        orderPushInfo.setExternalProductSendValue(order.getExternalProductSendValue());
                     }
-                    if (("3".equals(order.getOrderType()) || "10".equals(order.getOrderType()) || "4".equals(order.getOrderType())) && null == order.getExternalProductSendValue() && null == productVo.getExternalProductSendValue()) {
-                        log.error("订单发券错误，缺少发放金额：{}", number);
-                        sendResult(R.fail("缺少发放金额"), orderPushInfo, order, cache, false);
-                        return;
-                    }
-                    order.setExternalProductId(productVo.getExternalProductId());
-                    order.setExternalProductSendValue(productVo.getExternalProductSendValue());
-                    orderPushInfo.setExternalProductId(order.getExternalProductId());
-                    orderPushInfo.setExternalProductSendValue(order.getExternalProductSendValue());
                 }
             }
             // 通过银联分销分账，生成code
@@ -439,6 +443,13 @@ public class OrderServiceImpl implements IOrderService {
                 R<JSONObject> result = YsfUtils.couponAcquire(orderPushInfo.getPushNumber(), order.getExternalProductId(), order.getAccount(), order.getCount().toString(), entityTp, chnlId, appId, rsaPrivateKey, sm4Key);
                 // 处理结果
                 sendResult(result, orderPushInfo, order, cache, true);
+            } else if ("21".equals(order.getOrderType())) {
+                //单纯签到计数类型不走发券
+                try {
+                    sendResult(R.ok("发放成功"), orderPushInfo, order, cache, false);
+                } catch (Exception e) {
+                    sendResult(R.fail(e.getMessage()), orderPushInfo, order, cache, false);
+                }
             } else {
                 sendResult(R.fail("订单类型无处理方式，请联系技术人员"), orderPushInfo, order, cache, false);
             }
@@ -675,6 +686,16 @@ public class OrderServiceImpl implements IOrderService {
             if (!system && !"0".equals(productVo.getSearch())) {
                 throw new ServiceException("商品不可购买[请求校验不通过]");
             }
+            ProductGroupVo productGroupVo = null;
+            //查询商品是否存在商品组
+            ProductGroupConnectVo productGroupConnectVo = productGroupConnectMapper.selectVoOne(new LambdaQueryWrapper<ProductGroupConnect>().eq(ProductGroupConnect::getProductId, productVo.getProductId()));
+            if (ObjectUtil.isNotEmpty(productGroupConnectVo)){
+                //如果商品存在商品组 校验商品组名额
+                productGroupVo = productGroupMapper.selectVoById(productGroupConnectVo.getProductGroupId());
+                ProductUtils.checkProductGroupUserCount(productGroupVo,platformVo.getPlatformKey(),userVo.getUserId());
+            }
+
+
             // 校验产品状态 名额
             R<ProductVo> checkProductCountResult = ProductUtils.checkProduct(productVo, bo.getCityCode());
             if (R.isError(checkProductCountResult)) {
@@ -767,19 +788,27 @@ public class OrderServiceImpl implements IOrderService {
             //如果是供应商美食订单走这里
             addFoodOrder(productVo, order, userVo, platformVo);
 
+            //如果商品组规则存在设置商品组缓存
+            if (null != productGroupVo){
+                this.setProductGroupOrderCountCache(platformVo.getPlatformKey(),userVo.getUserId(),productGroupVo.getProductGroupId(),productVo.getSellEndDate(),order.getCount());
+            }
             // 设置领取缓存
             this.setOrderCountCache(platformVo.getPlatformKey(), bo.getUserId(), productVo.getProductId(), productVo.getSellEndDate(), order.getCount());
-            //开启预警判断
-            if (ObjectUtil.isNotEmpty(productVo.getWarnMessage()) && productVo.getWarnMessage().equals("1")){
-                //查询已发送数量
-                long count = RedisUtils.getAtomicValue(countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
-                if (ObjectUtil.isNotEmpty(productVo.getWarnCount()) && ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && count >= productVo.getWarnCount()){
-                    //达成以上条件发送邮件
-                    String title ="商品数量预警";
-                    String text = productVo.getProductName()+":数量不足"+productVo.getWarnCount()+"请及时处理";
-                    sendWarnEmail(productVo.getWarnEmail(),title,text,true);
-                }
+            try{
+                //开启预警判断
+                if (ObjectUtil.isNotEmpty(productVo.getWarnMessage()) && productVo.getWarnMessage().equals("1")){
+                    //查询已发送数量
+                    long count = RedisUtils.getAtomicValue(countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
+                    if (ObjectUtil.isNotEmpty(productVo.getWarnCount()) && ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && count >= productVo.getWarnCount()){
+                        //达成以上条件发送邮件
+                        String title ="商品数量预警";
+                        String text = productVo.getProductName()+":数量不足"+productVo.getWarnCount()+"请及时处理";
+                        sendWarnEmail(productVo.getWarnEmail(),title,text,true);
+                    }
 
+                }
+            }catch (Exception e){
+                log.error("预警邮件发送失败{}",e);
             }
 
             try {
@@ -1039,6 +1068,15 @@ public class OrderServiceImpl implements IOrderService {
                     throw new ServiceException(productVo.getProductName() + "单次购买数量不能超过" + productVo.getLineUpperLimit() + "次");
                 }
             }
+
+            ProductGroupVo productGroupVo = null;
+            //查询商品是否存在商品组
+            ProductGroupConnectVo productGroupConnectVo = productGroupConnectMapper.selectVoOne(new LambdaQueryWrapper<ProductGroupConnect>().eq(ProductGroupConnect::getProductId, productVo.getProductId()));
+            if (ObjectUtil.isNotEmpty(productGroupConnectVo)){
+                //如果商品存在商品组 校验商品组名额
+                productGroupVo = productGroupMapper.selectVoById(productGroupConnectVo.getProductGroupId());
+                ProductUtils.checkProductGroupUserCount(productGroupVo,platformVo.getPlatformKey(),userVo.getUserId());
+            }
             // 校验产品状态 名额
             R<ProductVo> checkProductCountResult = ProductUtils.checkProduct(productVo, bo.getCityCode());
             if (R.isError(checkProductCountResult)) {
@@ -1210,19 +1248,35 @@ public class OrderServiceImpl implements IOrderService {
             }
             //如果是供应商美食订单走这里
             addFoodOrder(productVo, order, userVo, platformVo);
+            //如果商品组规则存在设置商品组缓存
+            ProductGroupVo productGroupVo = null;
+            //查询商品是否存在商品组
+            ProductGroupConnectVo productGroupConnectVo = productGroupConnectMapper.selectVoOne(new LambdaQueryWrapper<ProductGroupConnect>().eq(ProductGroupConnect::getProductId, productVo.getProductId()));
+            if (ObjectUtil.isNotEmpty(productGroupConnectVo)){
+                //如果商品存在商品组 校验商品组名额
+                productGroupVo = productGroupMapper.selectVoById(productGroupConnectVo.getProductGroupId());
+                ProductUtils.checkProductGroupUserCount(productGroupVo,platformVo.getPlatformKey(),userVo.getUserId());
+            }
+            if (null != productGroupVo){
+                this.setProductGroupOrderCountCache(platformVo.getPlatformKey(),userVo.getUserId(),productGroupVo.getProductGroupId(),productVo.getSellEndDate(),order.getCount());
+            }
             // 设置领取缓存
             this.setOrderCountCache(platformVo.getPlatformKey(), bo.getUserId(), productVo.getProductId(), productVo.getSellEndDate(), order.getCount());
-            //开启预警判断
-            if (ObjectUtil.isNotEmpty(productVo.getWarnMessage()) && productVo.getWarnMessage().equals("1")){
-                //查询已发送数量
-                long totalCount = RedisUtils.getAtomicValue(countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
-                if (ObjectUtil.isNotEmpty(productVo.getWarnCount()) && ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && totalCount >= productVo.getWarnCount()){
-                    //达成以上条件发送邮件
-                    String title ="商品数量预警";
-                    String text = productVo.getProductName()+":数量不足"+productVo.getWarnCount()+"请及时处理";
-                    sendWarnEmail(productVo.getWarnEmail(),title,text,true);
-                }
+            try{
+                //开启预警判断
+                if (ObjectUtil.isNotEmpty(productVo.getWarnMessage()) && productVo.getWarnMessage().equals("1")){
+                    //查询已发送数量
+                    long totalCount = RedisUtils.getAtomicValue(countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
+                    if (ObjectUtil.isNotEmpty(productVo.getWarnCount()) && ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && totalCount >= productVo.getWarnCount()){
+                        //达成以上条件发送邮件
+                        String title ="商品数量预警";
+                        String text = productVo.getProductName()+":数量不足"+productVo.getWarnCount()+"请及时处理";
+                        sendWarnEmail(productVo.getWarnEmail(),title,text,true);
+                    }
 
+                }
+            }catch (Exception e){
+                log.error("预警邮件发送失败{}",e);
             }
 
             // 小订单金额，单个商品销售价
@@ -1849,6 +1903,39 @@ public class OrderServiceImpl implements IOrderService {
         }
     }
 
+
+    /**
+     * 设置商品组购买数量缓存
+     *
+     * @param platformKey 平台标识
+     * @param userId      用户ID
+     * @param productGroupId   产品ID
+     */
+    private void setProductGroupOrderCountCache(Long platformKey, Long userId, Long productGroupId, Date cacheTime, Long count) {
+        if (null == count || count < 1) {
+            count = 1L;
+        }
+        Duration duration = null;
+        if (null != cacheTime) {
+            long datePoorHour = DateUtils.getDatePoorDay(cacheTime, new Date());
+            if (datePoorHour > 0) {
+                duration = Duration.ofDays(datePoorHour + 7);
+            }
+        }
+        DateType[] values = DateType.values();
+        for (DateType value : values) {
+
+            String userCacheKey = ProductUtils.countByUserIdAndProductGroupIdRedisKey(platformKey, userId, productGroupId, value);
+            for (int i = 0; i < count; i++) {
+                // 循环递增
+                RedisUtils.incrAtomicValue(userCacheKey);
+            }
+            duration = ZlyyhUtils.getDurationByDateTypeAndDefault(value, duration);
+            // 设置失效时间
+            RedisUtils.expire(userCacheKey, duration);
+        }
+    }
+
     /**
      * 订单取消 回退用户购买名额
      *
@@ -1897,10 +1984,26 @@ public class OrderServiceImpl implements IOrderService {
                     }
                 }
             }
+            //判断是否存在商品组 如果商品组存在的话也要删除组的缓存
+            ProductGroupVo productGroupVo = null;
+            String userProductGroupCacheKey = "";
+            //查询商品是否存在商品组
+            ProductGroupConnectVo productGroupConnectVo = productGroupConnectMapper.selectVoOne(new LambdaQueryWrapper<ProductGroupConnect>().eq(ProductGroupConnect::getProductId, productId));
+            if (ObjectUtil.isNotEmpty(productGroupConnectVo)){
+                //如果商品存在商品组 校验商品组名额
+                productGroupVo = productGroupMapper.selectVoById(productGroupConnectVo.getProductGroupId());
+                if (null != productGroupVo){
+                    userProductGroupCacheKey = ProductUtils.countByUserIdAndProductGroupIdRedisKey(platformKey,userId,productGroupVo.getProductGroupId(),value);
+                }
+            }
+
             String userCacheKey = ProductUtils.countByUserIdAndProductIdRedisKey(platformKey, userId, productId, value);
             for (int i = 0; i < count; i++) {
                 RedisUtils.decrAtomicValue(productCacheKey);
                 RedisUtils.decrAtomicValue(userCacheKey);
+                if (ObjectUtil.isNotEmpty(userProductGroupCacheKey)){
+                    RedisUtils.decrAtomicValue(userProductGroupCacheKey);
+                }
             }
         }
         log.info("用户：{}，回退名额耗时：{}毫秒", userId, timer.interval());

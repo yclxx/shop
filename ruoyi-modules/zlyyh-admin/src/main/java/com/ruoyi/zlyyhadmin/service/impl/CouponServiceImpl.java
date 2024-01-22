@@ -98,10 +98,14 @@ public class CouponServiceImpl implements ICouponService {
             coupon.setUseStatus("0");
             coupon.setGenTime(DateUtils.getNowDate());
             coupon.setActionNo(action.getActionNo());
-            if (ObjectUtil.isNotEmpty(action.getCouponAmount())) coupon.setCouponAmount(action.getCouponAmount());
-            if (ObjectUtil.isNotEmpty(action.getMinAmount())) coupon.setMinAmount(action.getMinAmount());
-            if (StringUtils.isNotEmpty(action.getCouponType())) coupon.setCouponType(action.getCouponType());
-            if (ObjectUtil.isNotEmpty(action.getPeriodOfStart())) coupon.setPeriodOfStart(action.getPeriodOfStart());
+            if (ObjectUtil.isNotEmpty(action.getCouponAmount()))
+                coupon.setCouponAmount(action.getCouponAmount());
+            if (ObjectUtil.isNotEmpty(action.getMinAmount()))
+                coupon.setMinAmount(action.getMinAmount());
+            if (StringUtils.isNotEmpty(action.getCouponType()))
+                coupon.setCouponType(action.getCouponType());
+            if (ObjectUtil.isNotEmpty(action.getPeriodOfStart()))
+                coupon.setPeriodOfStart(action.getPeriodOfStart());
             if (ObjectUtil.isNotEmpty(action.getPeriodOfValidity()))
                 coupon.setPeriodOfValidity(action.getPeriodOfValidity());
             if (StringUtils.isNotEmpty(action.getCouponDescription()))
@@ -111,6 +115,8 @@ public class CouponServiceImpl implements ICouponService {
                 coupon.setConversionStartDate(action.getConversionStartDate());
             if (ObjectUtil.isNotEmpty(action.getConversionEndDate()))
                 coupon.setConversionEndDate(action.getConversionEndDate());
+            if (ObjectUtil.isNotEmpty(action.getAutoPay()))
+                coupon.setAutoPay(action.getAutoPay());
             addList.add(coupon);
             if (ObjectUtil.isNotEmpty(productActions)) {
                 for (ProductAction productAction : productActions) {
@@ -146,6 +152,7 @@ public class CouponServiceImpl implements ICouponService {
         lqw.eq(StringUtils.isNotBlank(bo.getCouponImage()), Coupon::getCouponImage, bo.getCouponImage());
         lqw.eq(bo.getUserId() != null, Coupon::getUserId, bo.getUserId());
         lqw.eq(bo.getPlatformKey() != null, Coupon::getPlatformKey, bo.getPlatformKey());
+        lqw.eq(bo.getAutoPay() != null, Coupon::getAutoPay, bo.getAutoPay());
         lqw.orderByDesc(Coupon::getCreateTime);
         return lqw;
     }
