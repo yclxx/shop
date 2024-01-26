@@ -87,5 +87,9 @@ public class Action extends BaseEntity {
      * 平台标识
      */
     private Long platformKey;
+    /**
+     * 是否自动支付
+     */
+    private String autoPay;
 
 }

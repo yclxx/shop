@@ -39,16 +39,15 @@ public class MissionUserDrawServiceImpl implements IMissionUserDrawService {
     @Override
     public String sendDrawCount(Long userId, Long productId,String exProductId) {
         MissionVo missionVo = null;
-        List<MissionGroupProductVo> missionGroupProductVos = missionGroupProductMapper.selectVoList(new LambdaQueryWrapper<MissionGroupProduct>().eq(MissionGroupProduct::getProductId, productId));
-        if (ObjectUtil.isEmpty(missionGroupProductVos)) {
-            if(NumberUtil.isLong(exProductId)){
-                missionVo = missionMapper.selectVoById(Long.valueOf(exProductId));
-            }
-            if(null == missionVo){
+        if(NumberUtil.isLong(exProductId)){
+            missionVo = missionMapper.selectVoById(Long.valueOf(exProductId));
+        }
+
+        if(null == missionVo){
+            List<MissionGroupProductVo> missionGroupProductVos = missionGroupProductMapper.selectVoList(new LambdaQueryWrapper<MissionGroupProduct>().eq(MissionGroupProduct::getProductId, productId));
+            if (ObjectUtil.isEmpty(missionGroupProductVos)) {
                 throw new ServiceException("未找到产品对应任务信息");
             }
-        }
-        if(null == missionVo){
             MissionGroupProductVo missionGroupProductVo = missionGroupProductVos.get(missionGroupProductVos.size() - 1);
             if (null != missionGroupProductVo.getMissionId()) {
                 missionVo = missionMapper.selectVoById(missionGroupProductVo.getMissionId());

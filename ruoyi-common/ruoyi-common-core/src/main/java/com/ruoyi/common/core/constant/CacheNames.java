@@ -137,6 +137,10 @@ public interface CacheNames {
      */
     String MISSION_GROUP_DRAW = "missionGroupDraw#250m";
     /**
+     * 任务背景图片缓存
+     */
+    String MISSION_BJ_IMG = "missionBjImg#5m";
+    /**
      * 抽奖奖池缓存
      */
     String DRAW_LIST = "drawList#300m";

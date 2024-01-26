@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="110px">
       <el-form-item label="优惠券名称" prop="couponName">
         <el-input
           v-model="queryParams.couponName"
@@ -65,6 +65,16 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
+      <el-form-item label="自动下单" prop="autoPay">
+        <el-select v-model="queryParams.autoPay" placeholder="请选择是否自动支付" clearable>
+          <el-option
+            v-for="dict in dict.type.t_right_not"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="用户ID" prop="userId">
         <el-input
           v-model="queryParams.userId"
@@ -124,7 +134,7 @@
 
     <el-table v-loading="loading" :data="couponList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" align="center"/>
-      <el-table-column fixed="left" label="优惠券兑换码" align="center" prop="redeemCode"/>
+      <el-table-column fixed="left" label="优惠券兑换码" align="center" prop="redeemCode" width="100" />
       <el-table-column label="优惠券信息" align="center" prop="couponName" width="180">
         <template slot-scope="scope">
           <div v-show="scope.row.couponName">
@@ -138,9 +148,14 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="优惠券类型" align="center" prop="couponType">
+      <el-table-column label="优惠券类型" align="center" prop="couponType" width="100">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.t_coupon_type" :value="scope.row.couponType"/>
+        </template>
+      </el-table-column>
+      <el-table-column label="自动下单" align="center" prop="autoPay">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.t_right_not" :value="scope.row.autoPay"/>
         </template>
       </el-table-column>
       <el-table-column label="批次号" align="center" prop="actionNo"/>
@@ -149,7 +164,7 @@
           <span>{{ parseTime(scope.row.periodOfStart, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="使用有效截止日期" align="center" prop="periodOfValidity" width="100">
+      <el-table-column label="使用截止日期" align="center" prop="periodOfValidity" width="100">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.periodOfValidity, '{y}-{m}-{d}') }}</span>
         </template>
@@ -235,7 +250,7 @@ import {selectListPlatform} from "@/api/zlyyh/platform";
 
 export default {
   name: "Coupon",
-  dicts: ['coupon_status', 't_coupon_type'],
+  dicts: ['coupon_status', 't_coupon_type','t_right_not'],
   components: {
     Treeselect
   },
@@ -287,6 +302,7 @@ export default {
         couponImage: undefined,
         userId: undefined,
         platformKey: undefined,
+        autoPay: undefined
       },
       // 表单参数
       form: {},

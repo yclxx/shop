@@ -4,12 +4,15 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.zlyyh.domain.BusinessDistrict;
+import com.ruoyi.zlyyh.domain.BusinessDistrictShop;
 import com.ruoyi.zlyyh.domain.bo.BusinessDistrictBo;
 import com.ruoyi.zlyyh.domain.vo.BusinessDistrictVo;
 import com.ruoyi.zlyyh.mapper.BusinessDistrictMapper;
+import com.ruoyi.zlyyh.mapper.BusinessDistrictShopMapper;
 import com.ruoyi.zlyyhmobile.service.IBusinessDistrictService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -25,6 +28,7 @@ import java.util.Map;
 public class BusinessDistrictServiceImpl implements IBusinessDistrictService {
 
     private final BusinessDistrictMapper baseMapper;
+    private final BusinessDistrictShopMapper businessDistrictShopMapper;
 
     /**
      * 查询商圈列表
@@ -33,6 +37,20 @@ public class BusinessDistrictServiceImpl implements IBusinessDistrictService {
     public List<BusinessDistrictVo> queryList(BusinessDistrictBo bo) {
         LambdaQueryWrapper<BusinessDistrict> lqw = buildQueryWrapper(bo);
         return baseMapper.selectVoList(lqw);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void insertShopBusinessDistrict(List<Long> businessDistrictIds, Long shopId) {
+        // 删除原因门店商圈关联关系
+        businessDistrictShopMapper.delete(Wrappers.<BusinessDistrictShop>lambdaQuery().eq(BusinessDistrictShop::getShopId, shopId));
+        // 新增新的门店商圈关联关系
+        for (Long businessDistrictId : businessDistrictIds) {
+            BusinessDistrictShop businessDistrictShop = new BusinessDistrictShop();
+            businessDistrictShop.setBusinessDistrictId(businessDistrictId);
+            businessDistrictShop.setShopId(shopId);
+            businessDistrictShopMapper.insert(businessDistrictShop);
+        }
     }
 
     private LambdaQueryWrapper<BusinessDistrict> buildQueryWrapper(BusinessDistrictBo bo) {

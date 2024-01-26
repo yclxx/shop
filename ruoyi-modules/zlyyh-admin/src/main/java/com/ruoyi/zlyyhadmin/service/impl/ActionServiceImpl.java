@@ -78,6 +78,7 @@ public class ActionServiceImpl implements IActionService {
         lqw.eq(bo.getConversionStartDate() != null, Action::getConversionStartDate, bo.getConversionStartDate());
         lqw.eq(bo.getConversionEndDate() != null, Action::getConversionEndDate, bo.getConversionEndDate());
         lqw.eq(bo.getPlatformKey() != null, Action::getPlatformKey, bo.getPlatformKey());
+        lqw.eq(bo.getAutoPay() != null, Action::getAutoPay, bo.getAutoPay());
         return lqw;
     }
 

@@ -17,4 +17,6 @@ public interface IBusinessDistrictService {
      * 查询商圈列表
      */
     List<BusinessDistrictVo> queryList(BusinessDistrictBo bo);
+
+    void insertShopBusinessDistrict(List<Long> businessDistrictIds, Long shopId);
 }

@@ -141,4 +141,9 @@ public class CouponVo {
     private Long platformKey;
 
     private List<ProductVo> productVoList;
+
+    /**
+     * 是否自动支付
+     */
+    private String autoPay;
 }

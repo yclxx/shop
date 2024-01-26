@@ -1,20 +1,28 @@
 package com.ruoyi.zlyyhmobile.controller;
 
+import cn.hutool.core.util.DesensitizedUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.http.HttpStatus;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.utils.BeanCopyUtils;
+import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.core.validate.AppEditGroup;
 import com.ruoyi.common.core.web.controller.BaseController;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.satoken.utils.LoginHelper;
+import com.ruoyi.zlyyh.domain.CommercialTenant;
 import com.ruoyi.zlyyh.domain.ShopMerchant;
+import com.ruoyi.zlyyh.domain.Verifier;
 import com.ruoyi.zlyyh.domain.bo.*;
 import com.ruoyi.zlyyh.domain.vo.*;
+import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
+import com.ruoyi.zlyyh.mapper.VerifierMapper;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.bo.ShopAndMerchantBo;
 import com.ruoyi.zlyyhmobile.domain.bo.VerifierShopBo;
+import com.ruoyi.zlyyhmobile.service.IBusinessDistrictService;
 import com.ruoyi.zlyyhmobile.service.ICommercialTenantService;
 import com.ruoyi.zlyyhmobile.service.IShopService;
 import com.ruoyi.zlyyhmobile.service.IVerifierService;
@@ -40,6 +48,9 @@ public class VerifierController extends BaseController {
     private final IVerifierService verifierService;
     private final IShopService shopService;
     private final ICommercialTenantService commercialTenantService;
+    private final IBusinessDistrictService iBusinessDistrictService;
+    private final CommercialTenantMapper commercialTenantMapper;
+    private final VerifierMapper verifierMapper;
 
     /**
      * 查询个人信息
@@ -48,7 +59,16 @@ public class VerifierController extends BaseController {
     public R<VerifierVo> info(VerifierBo bo) {
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
         bo.setId(LoginHelper.getUserId());
-        VerifierVo info = verifierService.info(bo);
+        VerifierVo info =verifierMapper.selectVoOne(new LambdaQueryWrapper<Verifier>().eq(Verifier::getId, bo.getId()).eq(Verifier::getPlatformKey, bo.getPlatformKey()));
+        CommercialTenantVo commercialTenantVo = commercialTenantMapper.selectVoOne(new LambdaQueryWrapper<CommercialTenant>().eq(CommercialTenant::getAdminMobile, info.getMobile()).eq(CommercialTenant::getStatus, "0"));
+        if (ObjectUtil.isEmpty(commercialTenantVo)){
+            info.setIsAdmin(false);
+            info.setIsVerifier(false);
+        }
+        //手机号脱敏
+        if (StringUtils.isNotEmpty(info.getMobile())) {
+            info.setMobile(DesensitizedUtil.mobilePhone(info.getMobile()));
+        }
         return R.ok(info);
     }
 
@@ -116,7 +136,6 @@ public class VerifierController extends BaseController {
      */
     @GetMapping("/shopPage")
     public TableDataInfo<ShopVo> shopPage(VerifierBo bo, PageQuery pageQuery) {
-        //bo.setPlatformKey(ZlyyhUtils.getPlatformId());
         bo.setId(LoginHelper.getUserId());
         return verifierService.queryShopPageList(bo, pageQuery);
     }
@@ -244,6 +263,10 @@ public class VerifierController extends BaseController {
         if (ObjectUtil.isNotEmpty(bo.getShopMerchantBos())) {
             List<ShopMerchant> shopMerchants = BeanCopyUtils.copyList(bo.getShopMerchantBos(), ShopMerchant.class);
             shopService.updateShopMerchantById(shopBo.getShopId(), shopMerchants);
+        }
+        // 门店商圈
+        if (ObjectUtil.isNotEmpty(bo.getBusinessDistrictIds()) && !"0".equals(bo.getAutoBusiness())) {
+            iBusinessDistrictService.insertShopBusinessDistrict(bo.getBusinessDistrictIds(), shopBo.getShopId());
         }
         return R.ok();
     }

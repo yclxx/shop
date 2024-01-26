@@ -47,8 +47,11 @@ public class BaiduUtils {
      * @return 鉴权签名（Access Token）
      */
     public static String getAccessToken(String apiKey, String secretKey) {
+        if (StringUtils.isBlank(apiKey) || StringUtils.isBlank(secretKey)) {
+            return null;
+        }
         // 获取基础访问令牌
-        String accessTokenRedisKey = "accessToken:" + apiKey;
+        String accessTokenRedisKey = "bdAccessToken:" + apiKey;
         String accessToken = RedisUtils.getCacheObject(accessTokenRedisKey);
         if (StringUtils.isNotEmpty(accessToken)) {
             return accessToken;
