@@ -1,5 +1,6 @@
 package com.ruoyi.zlyyhadmin.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.zlyyh.domain.ProductGroupConnect;
 import com.ruoyi.zlyyh.domain.vo.ProductGroupConnectVo;
 import com.ruoyi.zlyyh.domain.bo.ProductGroupConnectBo;
@@ -46,4 +47,6 @@ public interface IProductGroupConnectService {
      * 校验并批量删除商品商品组关联信息
      */
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
+
+    Boolean remove(LambdaQueryWrapper<ProductGroupConnect> queryWrapper);
 }

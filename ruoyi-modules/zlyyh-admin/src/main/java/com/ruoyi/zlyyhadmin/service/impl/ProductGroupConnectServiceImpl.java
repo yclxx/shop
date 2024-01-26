@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyhadmin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
@@ -107,5 +108,10 @@ public class ProductGroupConnectServiceImpl implements IProductGroupConnectServi
             //TODO 做一些业务上的校验,判断是否需要校验
         }
         return baseMapper.deleteBatchIds(ids) > 0;
+    }
+
+    @Override
+    public Boolean remove(LambdaQueryWrapper<ProductGroupConnect> queryWrapper) {
+        return SqlHelper.retBool(baseMapper.delete(queryWrapper));
     }
 }

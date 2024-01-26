@@ -121,6 +121,12 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
             newVerifier.setIsVerifier(true);
             newVerifier.setIsAdmin(true);
             verifierMapper.insert(newVerifier);
+        } else {
+            if (!verifier.getIsAdmin()){
+                //如果此账号没有设置成商户管理员 修改成为商户管理员
+                verifier.setIsVerifier(true);
+                verifierMapper.updateById(verifier);
+            }
         }
     }
 

@@ -294,4 +294,9 @@ public class ShopVo implements Serializable {
      * 自动匹配商圈
      */
     private String autoBusiness;
+
+    /**
+     * 商户是否审核
+     */
+    private String examineVerifier;
 }

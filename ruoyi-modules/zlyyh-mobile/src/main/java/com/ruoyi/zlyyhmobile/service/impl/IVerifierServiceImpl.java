@@ -50,7 +50,7 @@ public class IVerifierServiceImpl implements IVerifierService {
 
     @Cacheable(cacheNames = CacheNames.M_VERIFIER, key = "#bo.getId()")
     @Override
-    public VerifierVo info(VerifierBo bo) {
+    public VerifierVo info(VerifierBo bo,Boolean isTm) {
         VerifierVo verifierVo = baseMapper.selectVoOne(new LambdaQueryWrapper<Verifier>().eq(Verifier::getId, bo.getId()).eq(Verifier::getPlatformKey, bo.getPlatformKey()));
         // 手机号脱敏
         if (StringUtils.isNotEmpty(verifierVo.getMobile())) {

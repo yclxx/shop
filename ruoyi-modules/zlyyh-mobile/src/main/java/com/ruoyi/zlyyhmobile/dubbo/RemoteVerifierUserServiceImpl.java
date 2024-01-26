@@ -25,11 +25,14 @@ import com.ruoyi.system.api.model.LoginEntity;
 import com.ruoyi.system.api.model.WxEntity;
 import com.ruoyi.system.api.model.XcxLoginUser;
 import com.ruoyi.system.api.model.YsfEntity;
+import com.ruoyi.zlyyh.domain.CommercialTenant;
 import com.ruoyi.zlyyh.domain.Verifier;
 import com.ruoyi.zlyyh.domain.vo.BackendTokenEntity;
+import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
 import com.ruoyi.zlyyh.domain.vo.PlatformVo;
 import com.ruoyi.zlyyh.domain.vo.VerifierVo;
 import com.ruoyi.zlyyh.enumd.PlatformEnumd;
+import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
 import com.ruoyi.zlyyh.mapper.VerifierMapper;
 import com.ruoyi.zlyyh.properties.WxProperties;
 import com.ruoyi.zlyyh.properties.utils.YsfPropertiesUtils;
@@ -62,6 +65,7 @@ public class RemoteVerifierUserServiceImpl implements RemoteVerifierUserService 
     private final VerifierMapper verifierMapper;
     private final IPlatformService platformService;
     private final WxProperties wxProperties;
+    private final CommercialTenantMapper commercialTenantMapper;
     @Autowired
     private LockTemplate lockTemplate;
 
@@ -178,6 +182,16 @@ public class RemoteVerifierUserServiceImpl implements RemoteVerifierUserService 
         if (UserStatus.DISABLE.getCode().equals(userVo.getStatus())) {
             throw new UserException("user.blocked", mobile);
         }
+
+        if (userVo.getIsAdmin() && !userVo.getIsBd()){
+            CommercialTenantVo commercialTenantVo = commercialTenantMapper.selectVoOne(new LambdaQueryWrapper<CommercialTenant>().eq(CommercialTenant::getAdminMobile, userVo.getMobile()).eq(CommercialTenant::getStatus, "0"));
+            //如果是商户登录查询是否已经创建商户如果没有联系bd或者管理员添加
+            if (ObjectUtil.isEmpty(commercialTenantVo)){
+                return null;
+//                throw new ServiceException("请联系BD或管理员添加商户");
+            }
+        }
+
         // 此处可根据登录用户的数据不同 自行创建 loginUser
         return buildLoginUser(userVo);
     }
@@ -191,6 +205,14 @@ public class RemoteVerifierUserServiceImpl implements RemoteVerifierUserService 
         if (UserStatus.DISABLE.getCode().equals(userVo.getStatus())) {
             // 用户已被停用
             throw new UserException("user.blocked", userVo.getMobile());
+        }
+        if (userVo.getIsAdmin() && !userVo.getIsBd()){
+            CommercialTenantVo commercialTenantVo = commercialTenantMapper.selectVoOne(new LambdaQueryWrapper<CommercialTenant>().eq(CommercialTenant::getAdminMobile, userVo.getMobile()).eq(CommercialTenant::getStatus, "0"));
+            //如果是商户登录查询是否已经创建商户如果没有联系bd或者管理员添加
+            if (ObjectUtil.isEmpty(commercialTenantVo)){
+                return null;
+//                throw new ServiceException("请联系BD或管理员添加商户");
+            }
         }
         // 此处可根据登录用户的数据不同 自行创建 loginUser
         return buildLoginUser(userVo);

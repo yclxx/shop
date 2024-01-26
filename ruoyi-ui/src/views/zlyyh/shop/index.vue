@@ -18,6 +18,12 @@
             :value="dict.value" />
         </el-select>
       </el-form-item>
+      <el-form-item label="商户审核" prop="examineVerifier">
+        <el-select v-model="queryParams.examineVerifier" placeholder="请选择商户审核状态" clearable>
+          <el-option v-for="dict in dict.type.t_examine_verifier" :key="dict.value" :label="dict.label"
+                     :value="dict.value" />
+        </el-select>
+      </el-form-item>
       <el-form-item label="平台" prop="platformKey">
         <el-select v-model="queryParams.platformKey" placeholder="请选择平台" clearable>
           <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id" />
@@ -91,6 +97,11 @@
       <el-table-column label="状态" align="center" prop="status" fixed="right">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.t_shop_status" :value="scope.row.status" />
+        </template>
+      </el-table-column>
+      <el-table-column label="商户审核" align="center" prop="examineVerifier" fixed="right">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.t_examine_verifier" :value="scope.row.examineVerifier" />
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right">
@@ -179,6 +190,15 @@
             <el-form-item label="状态" prop="status">
               <el-radio-group v-model="form.status">
                 <el-radio v-for="dict in dict.type.t_shop_status" :key="dict.value" :label="dict.value">
+                  {{dict.label}}
+                </el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="商户审核" prop="examineVerifier">
+              <el-radio-group v-model="form.examineVerifier">
+                <el-radio v-for="dict in dict.type.t_examine_verifier" :key="dict.value" :label="dict.value">
                   {{dict.label}}
                 </el-radio>
               </el-radio-group>
@@ -467,7 +487,8 @@
   export default {
     name: "Shop",
     dicts: ['t_shop_status', 't_shop_merchant_type', 't_shop_merchant_status', 't_product_assign_date',
-      't_grad_period_date_list', 'nature_type', 'invoice_type', 'activity_type', 'sys_yes_no','channel_type'
+      't_grad_period_date_list', 'nature_type', 'invoice_type', 'activity_type', 'sys_yes_no','channel_type',
+      't_examine_verifier'
     ],
     components: {
       Treeselect,
@@ -600,7 +621,8 @@
           adcode: undefined,
           longitude: undefined,
           latitude: undefined,
-          platformKey: undefined
+          platformKey: undefined,
+          examineVerifier: undefined
         },
         // 表单参数
         form: {},

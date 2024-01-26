@@ -16,7 +16,7 @@ import java.util.Map;
  * 商户端接口
  */
 public interface IVerifierService {
-    VerifierVo info(VerifierBo bo);
+    VerifierVo info(VerifierBo bo,Boolean isTm);
 
     VerifierVo queryById(Long id);
 
