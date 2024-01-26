@@ -63,6 +63,9 @@ public class ProductUtils {
      * 校验商品组商品 用户今日是否可以购买
      */
     public static void checkProductGroupUserCount(ProductGroupVo productGroup, Long platformId , Long userId) {
+        if (ObjectUtil.isEmpty(productGroup)){
+            return;
+        }
         // 校验用户商品组选择是否达到参与上限
         String msgTip = productGroup.getProductGroupTip();
         if (productGroup.getDayUserCount() > 0) {

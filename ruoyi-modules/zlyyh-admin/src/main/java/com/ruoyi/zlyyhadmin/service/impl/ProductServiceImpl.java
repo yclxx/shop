@@ -67,6 +67,7 @@ public class ProductServiceImpl implements IProductService {
     private final IProductInfoService productInfoService;
     private final YsfConfigService ysfConfigService;
     private final TagsProductMapper tagsProductMapper;
+    private final IProductGroupConnectService productGroupConnectService;
     @DubboReference
     private RemoteFileService remoteFileService;
 
@@ -514,6 +515,7 @@ public class ProductServiceImpl implements IProductService {
         CacheUtils.clear(CacheNames.COMMERCIAL_PRODUCT_IDS);
         categoryProductService.remove(new LambdaQueryWrapper<CategoryProduct>().in(CategoryProduct::getProductId, ids));
         commercialTenantProductService.remove(new LambdaQueryWrapper<CommercialTenantProduct>().in(CommercialTenantProduct::getProductId, ids));
+        productGroupConnectService.remove(new LambdaQueryWrapper<ProductGroupConnect>().in(ProductGroupConnect::getProductId,ids));
         return baseMapper.deleteBatchIds(ids) > 0;
     }
 

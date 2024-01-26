@@ -8,7 +8,6 @@
         <result property="platformKey" column="platform_key"/>
         <result property="mobile" column="mobile"/>
         <result property="status" column="status"/>
-        <result property="verifierType" column="verifier_type"/>
         <result property="openId" column="open_id"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
@@ -20,6 +19,12 @@
         <result property="reloadUser" column="reload_user"/>
         <result property="sysDeptId" column="sys_dept_id"/>
         <result property="sysUserId" column="sys_user_id"/>
+        <result property="isBd" column="is_bd"/>
+        <result property="isAdmin" column="is_admin"/>
+        <result property="isVerifier" column="is_verifier"/>
+        <result property="cityCode" column="city_code"/>
+        <result property="org" column="org"/>
+        <result property="contract" column="contract"/>
     </resultMap>
 
     <select id="selectOneIncludeMobile" resultMap="VerifierResult">

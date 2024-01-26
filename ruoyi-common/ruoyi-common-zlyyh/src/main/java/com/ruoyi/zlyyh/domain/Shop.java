@@ -207,4 +207,9 @@ public class Shop extends BaseEntity {
      */
     private String autoBusiness;
 
+    /**
+     * 商户是否审核
+     */
+    private String examineVerifier;
+
 }

@@ -56,6 +56,7 @@
         <result property="productType" column="product_type"/>
         <result property="activity" column="activity"/>
         <result property="autoBusiness" column="auto_business"/>
+        <result property="examineVerifier" column="examine_verifier"/>
     </resultMap>
 
 
