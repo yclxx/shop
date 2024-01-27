@@ -12,10 +12,6 @@
       <el-form-item label="姓名" prop="userName">
         <el-input v-model="queryParams.userName" placeholder="请输入姓名" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="商圈" prop="businessDistrictName">
-        <el-input v-model="queryParams.businessDistrictName" placeholder="请输入商圈名称" clearable
-          @keyup.enter.native="handleQuery" />
-      </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
           <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
@@ -111,9 +107,6 @@
       </el-table-column>
     </el-table>
 
-    <pagination v-show="total>0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
-      @pagination="getList" />
-
     <!-- 添加或修改分销员对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
@@ -140,6 +133,8 @@
           </el-select>
         </el-form-item>
         <el-form-item label="所属商圈" prop="parentId" v-if="form.userId">
+          <!-- <treeselect v-model="form.parentId" :options="shareUserOptions" :normalizer="normalizer"
+            placeholder="请选择所属商圈" /> -->
           <el-select v-model="form.parentId" placeholder="请选择所属商圈" style="width: 100%;">
             <el-option v-for="item in selectUserList" :key="item.userId" :label="item.businessDistrictName"
               :value="item.userId"></el-option>
@@ -190,7 +185,6 @@
 
 <script>
   import {
-    pageListShareUser,
     listShareUser,
     getShareUser,
     delShareUser,
@@ -219,7 +213,6 @@
         showSearch: true,
         // 分销员表格数据
         shareUserList: [],
-        total: 0,
         // 分销员树选项
         shareUserOptions: [],
         // 弹出层标题
@@ -235,12 +228,7 @@
         platformList: [],
         // 查询参数
         queryParams: {
-          pageNum: 1,
-          pageSize: 10,
-          orderByColumn: 'createTime',
-          isAsc: 'desc',
           userId: undefined,
-          businessDistrictName: undefined,
           userName: undefined,
           status: undefined,
           auditStatus: undefined,
@@ -290,9 +278,8 @@
           this.queryParams.params["beginCreateTime"] = this.daterangeCreateTime[0];
           this.queryParams.params["endCreateTime"] = this.daterangeCreateTime[1];
         }
-        pageListShareUser(this.queryParams).then(response => {
-          this.shareUserList = response.rows;
-          this.total = response.total;
+        listShareUser(this.queryParams).then(response => {
+          this.shareUserList = this.handleTree(response.data, "userId", "parentId");
           this.loading = false;
         });
       },
@@ -360,7 +347,6 @@
       },
       /** 搜索按钮操作 */
       handleQuery() {
-        this.queryParams.pageNum = 1;
         this.getList();
       },
       /** 重置按钮操作 */
