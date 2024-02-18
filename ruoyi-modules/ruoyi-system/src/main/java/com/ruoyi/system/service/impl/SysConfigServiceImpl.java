@@ -10,7 +10,7 @@ import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.CacheUtils;
-import com.ruoyi.system.domain.SysConfig;
+import com.ruoyi.system.api.domain.SysConfig;
 import com.ruoyi.system.mapper.SysConfigMapper;
 import com.ruoyi.system.service.ISysConfigService;
 import lombok.RequiredArgsConstructor;

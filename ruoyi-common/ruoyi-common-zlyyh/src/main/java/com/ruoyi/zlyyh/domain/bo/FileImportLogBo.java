@@ -55,5 +55,6 @@ public class FileImportLogBo extends BaseEntity {
      */
     private String pageTitle;
 
+    private String pageUrl;
 
 }

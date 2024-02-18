@@ -44,6 +44,7 @@
       <el-table-column label="页面标题" align="center" prop="pageTitle" />
       <el-table-column label="数据数量" align="center" prop="count" />
       <el-table-column label="导入数量" align="center" prop="importCount" />
+      <el-table-column label="页面链接" align="center" prop="pageUrl" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"

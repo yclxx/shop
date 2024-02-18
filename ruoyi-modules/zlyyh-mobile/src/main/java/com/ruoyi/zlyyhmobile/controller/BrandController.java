@@ -39,8 +39,8 @@ public class BrandController extends BaseController {
     @GetMapping("/list")
     public TableDataInfo<BrandVo> list(BrandBo bo, PageQuery pageQuery) {
         bo.setStatus("0");
-        pageQuery.setIsAsc("asc");
-        pageQuery.setOrderByColumn("sort");
+        pageQuery.setIsAsc("desc");
+        pageQuery.setOrderByColumn("brand_id");
         return iBrandService.queryPageList(bo, pageQuery);
     }
 

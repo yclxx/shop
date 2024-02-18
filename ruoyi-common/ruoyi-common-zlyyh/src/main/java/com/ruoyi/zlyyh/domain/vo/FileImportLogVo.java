@@ -55,5 +55,6 @@ public class FileImportLogVo {
      */
     private String pageTitle;
 
+    private String pageUrl;
 
 }

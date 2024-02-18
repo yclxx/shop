@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.zlyyh.mapper.CityMapper">
+
+    <resultMap type="com.ruoyi.zlyyh.domain.City" id="CityResult">
+    <result property="adcode" column="adcode"/>
+    <result property="citycode" column="citycode"/>
+    <result property="areaName" column="area_name"/>
+    <result property="level" column="level"/>
+    <result property="parentCode" column="parent_code"/>
+    <result property="firstLetter" column="first_letter"/>
+    <result property="delFlag" column="del_flag"/>
+    <result property="createBy" column="create_by"/>
+    <result property="createTime" column="create_time"/>
+    <result property="updateBy" column="update_by"/>
+    <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+
+</mapper>

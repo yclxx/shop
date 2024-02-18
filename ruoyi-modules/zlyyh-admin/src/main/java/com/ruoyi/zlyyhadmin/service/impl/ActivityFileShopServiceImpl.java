@@ -2,7 +2,10 @@ package com.ruoyi.zlyyhadmin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.cloud.nacos.NacosServiceManager;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.nacos.api.annotation.NacosInjected;
+import com.alibaba.nacos.api.config.ConfigService;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.core.utils.ip.AddressUtils;
 import com.ruoyi.common.excel.utils.ExcelUtil;
@@ -12,6 +15,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.ruoyi.common.redis.utils.RedisUtils;
+import com.ruoyi.system.api.RemoteSysConfigService;
 import com.ruoyi.zlyyh.domain.MerchantType;
 import com.ruoyi.zlyyh.domain.Shop;
 import com.ruoyi.zlyyh.domain.bo.FileImportLogBo;
@@ -21,6 +25,7 @@ import com.ruoyi.zlyyhadmin.domain.bo.MerchantImportBo;
 import com.ruoyi.zlyyhadmin.service.IActivityFileShopService;
 import com.ruoyi.zlyyhadmin.service.IFileImportLogService;
 import lombok.RequiredArgsConstructor;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import com.ruoyi.zlyyh.domain.bo.ActivityFileShopBo;
@@ -50,6 +55,8 @@ public class ActivityFileShopServiceImpl implements IActivityFileShopService {
     private final ActivityFileShopMapper baseMapper;
     private final MerchantTypeMapper merchantTypeMapper;
     private final IFileImportLogService fileImportLogService;
+    @DubboReference
+    private final RemoteSysConfigService remoteSysConfigService;
 
     /**
      * 查询活动商户
@@ -215,6 +222,8 @@ public class ActivityFileShopServiceImpl implements IActivityFileShopService {
     public void importMerchant(MultipartFile file, FileImportLogBo logBo) throws IOException {
         List<MerchantImportBo> merchantImportBos = ExcelUtil.importExcel(file.getInputStream(), MerchantImportBo.class);
         if (ObjectUtil.isNotEmpty(merchantImportBos)) {
+            String pageUrl = remoteSysConfigService.selectConfigByKey("merchant_H5_url");
+            logBo.setPageUrl(pageUrl + logBo.getImportLogId().toString());
             logBo.setCount((long) merchantImportBos.size());
             Long importCount = 0L;
             for (MerchantImportBo merchantImportBo : merchantImportBos) {

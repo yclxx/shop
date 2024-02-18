@@ -58,6 +58,7 @@ public class LocationUtils {
                     result.put("districtAdcode", adcode);
                     result.put("city", addressComponent.getStr("city"));
                     result.put("district", addressComponent.getStr("district"));
+                    result.put("province", addressComponent.getStr("province"));
                     // 缓存
                     try {
                         RedisUtils.setCacheObject(key, result, Duration.ofMinutes(RandomUtil.randomInt(600, 1800)));
