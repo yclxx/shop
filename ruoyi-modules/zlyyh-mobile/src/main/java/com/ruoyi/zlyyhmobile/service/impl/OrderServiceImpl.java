@@ -691,7 +691,7 @@ public class OrderServiceImpl implements IOrderService {
             ProductGroupConnectVo productGroupConnectVo = productGroupConnectMapper.selectVoOne(new LambdaQueryWrapper<ProductGroupConnect>().eq(ProductGroupConnect::getProductId, productVo.getProductId()));
             if (ObjectUtil.isNotEmpty(productGroupConnectVo)){
                 //如果商品存在商品组 校验商品组名额
-                productGroupVo = productGroupMapper.selectVoById(productGroupConnectVo.getProductGroupId());
+                productGroupVo = productGroupMapper.selectVoOne(new LambdaQueryWrapper<ProductGroup>().eq(ProductGroup::getProductGroupId,productGroupConnectVo.getProductGroupId()).eq(ProductGroup::getStatus,"0"));
                 ProductUtils.checkProductGroupUserCount(productGroupVo,platformVo.getPlatformKey(),userVo.getUserId());
             }
 
@@ -1074,7 +1074,7 @@ public class OrderServiceImpl implements IOrderService {
             ProductGroupConnectVo productGroupConnectVo = productGroupConnectMapper.selectVoOne(new LambdaQueryWrapper<ProductGroupConnect>().eq(ProductGroupConnect::getProductId, productVo.getProductId()));
             if (ObjectUtil.isNotEmpty(productGroupConnectVo)){
                 //如果商品存在商品组 校验商品组名额
-                productGroupVo = productGroupMapper.selectVoById(productGroupConnectVo.getProductGroupId());
+                productGroupVo = productGroupMapper.selectVoOne(new LambdaQueryWrapper<ProductGroup>().eq(ProductGroup::getProductGroupId,productGroupConnectVo.getProductGroupId()).eq(ProductGroup::getStatus,"0"));
                 ProductUtils.checkProductGroupUserCount(productGroupVo,platformVo.getPlatformKey(),userVo.getUserId());
             }
             // 校验产品状态 名额
@@ -1254,7 +1254,7 @@ public class OrderServiceImpl implements IOrderService {
             ProductGroupConnectVo productGroupConnectVo = productGroupConnectMapper.selectVoOne(new LambdaQueryWrapper<ProductGroupConnect>().eq(ProductGroupConnect::getProductId, productVo.getProductId()));
             if (ObjectUtil.isNotEmpty(productGroupConnectVo)){
                 //如果商品存在商品组 校验商品组名额
-                productGroupVo = productGroupMapper.selectVoById(productGroupConnectVo.getProductGroupId());
+                productGroupVo = productGroupMapper.selectVoOne(new LambdaQueryWrapper<ProductGroup>().eq(ProductGroup::getProductGroupId,productGroupConnectVo.getProductGroupId()).eq(ProductGroup::getStatus,"0"));
                 ProductUtils.checkProductGroupUserCount(productGroupVo,platformVo.getPlatformKey(),userVo.getUserId());
             }
             if (null != productGroupVo){
@@ -1991,7 +1991,7 @@ public class OrderServiceImpl implements IOrderService {
             ProductGroupConnectVo productGroupConnectVo = productGroupConnectMapper.selectVoOne(new LambdaQueryWrapper<ProductGroupConnect>().eq(ProductGroupConnect::getProductId, productId));
             if (ObjectUtil.isNotEmpty(productGroupConnectVo)){
                 //如果商品存在商品组 校验商品组名额
-                productGroupVo = productGroupMapper.selectVoById(productGroupConnectVo.getProductGroupId());
+                productGroupVo = productGroupMapper.selectVoOne(new LambdaQueryWrapper<ProductGroup>().eq(ProductGroup::getProductGroupId,productGroupConnectVo.getProductGroupId()).eq(ProductGroup::getStatus,"0"));
                 if (null != productGroupVo){
                     userProductGroupCacheKey = ProductUtils.countByUserIdAndProductGroupIdRedisKey(platformKey,userId,productGroupVo.getProductGroupId(),value);
                 }

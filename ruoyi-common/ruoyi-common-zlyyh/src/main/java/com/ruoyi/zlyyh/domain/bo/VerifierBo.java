@@ -119,4 +119,8 @@ public class VerifierBo extends BaseEntity {
      * 门店id
      */
     private Long shopId;
+    /**
+     * 是否查询未审核门店
+     */
+    private String unVerifierShop;
 }

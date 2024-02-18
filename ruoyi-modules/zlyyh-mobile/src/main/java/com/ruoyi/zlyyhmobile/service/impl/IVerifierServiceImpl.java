@@ -301,6 +301,10 @@ public class IVerifierServiceImpl implements IVerifierService {
                 lqw.inSql(Shop::getShopId, "SELECT shop_id FROM t_verifier_shop WHERE verifier_id = " + bo.getId());
             }
         }
+        if (ObjectUtil.isNotEmpty(bo.getUnVerifierShop())){
+            lqw.eq(Shop::getExamineVerifier,bo.getUnVerifierShop());
+        }
+
         Page<ShopVo> result = shopMapper.selectVoPage(pageQuery.build(), lqw);
         return TableDataInfo.build(result);
     }

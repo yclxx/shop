@@ -189,6 +189,16 @@ public class ShopServiceImpl implements IShopService {
     }
 
     /**
+     * 查询商户门店数量
+     *
+     * @param commercialTenantId 商户Id
+     * @return 门店数量
+     */
+    public Long selectUnExamineCountByCommercialTenantId(Long commercialTenantId) {
+        return baseMapper.selectCount(new LambdaQueryWrapper<Shop>().eq(Shop::getCommercialTenantId, commercialTenantId).eq(Shop::getExamineVerifier,"0"));
+    }
+
+    /**
      * 新增门店
      */
     @Override

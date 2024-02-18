@@ -149,9 +149,12 @@ public class ProductGroupServiceImpl implements IProductGroupService {
      */
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
-        if(isValid){
-            //TODO 做一些业务上的校验,判断是否需要校验
+        if (ObjectUtil.isEmpty(ids)) {
+            return false;
         }
+        // 删除对应的关联信息
+        productGroupConnectMapper.delete(new LambdaQueryWrapper<ProductGroupConnect>().in(ProductGroupConnect::getProductGroupId, ids));
         return baseMapper.deleteBatchIds(ids) > 0;
     }
+
 }

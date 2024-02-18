@@ -176,4 +176,8 @@ public class CommercialTenantVo implements Serializable {
      * 门店数量
      */
     private Long shopCount;
+    /**
+     * 未审核门店数量
+     */
+    private Long unExamineShopCount;
 }
