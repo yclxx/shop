@@ -57,6 +57,7 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
     private final IOrderService orderService;
     private final IMissionService missionService;
     private final IMissionGroupService missionGroupService;
+    private final IHistoryOrderService historyOrderService;
     private final String inviteBind = "inviteBind:";
     @Autowired
     private LockTemplate lockTemplate;
@@ -322,7 +323,18 @@ public class InviteUserLogServiceImpl implements IInviteUserLogService {
             UserVo userVo = userService.queryById(record.getInviteUserId(), ZlyyhUtils.getPlatformChannel());
             if (null != userVo) {
                 copy.setInviteUserMobile(userVo.getMobile());
-                copy.setOrderVo(orderService.queryById(record.getNumber()));
+                OrderVo orderVo = orderService.queryById(record.getNumber());
+                if (null != orderVo){
+                    copy.setOrderVo(orderVo);
+                } else {
+                    //订单迁移至历史订单
+                    HistoryOrderVo historyOrderVo = historyOrderService.queryById(record.getNumber());
+                    if (null != historyOrderVo){
+                        OrderVo copy1 = BeanCopyUtils.copy(historyOrderVo, OrderVo.class);
+                        copy.setOrderVo(copy1);
+                    }
+                }
+
             }
             resultList.add(copy);
         }

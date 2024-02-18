@@ -65,6 +65,8 @@ public interface IShopService {
      */
     Long selectCountByCommercialTenantId(Long commercialTenantId);
 
+    Long selectUnExamineCountByCommercialTenantId(Long commercialTenantId);
+
     /**
      * 修改门店
      */

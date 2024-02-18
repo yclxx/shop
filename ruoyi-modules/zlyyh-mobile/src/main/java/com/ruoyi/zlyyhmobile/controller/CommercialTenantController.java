@@ -70,6 +70,7 @@ public class CommercialTenantController {
         TableDataInfo<CommercialTenantVo> page = commercialTenantService.getPage(bo, pageQuery);
         for (CommercialTenantVo row : page.getRows()) {
             row.setShopCount(shopService.selectCountByCommercialTenantId(row.getCommercialTenantId()));
+            row.setUnExamineShopCount(shopService.selectUnExamineCountByCommercialTenantId(row.getCommercialTenantId()));
         }
         return page;
     }
