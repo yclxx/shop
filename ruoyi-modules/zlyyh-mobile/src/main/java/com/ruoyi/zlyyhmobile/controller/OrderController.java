@@ -79,7 +79,9 @@ public class OrderController {
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
         bo.setChannel(ZlyyhUtils.getPlatformChannel());
         bo.setShareUserId(ZlyyhUtils.getShareUserId());
-        return R.ok(orderService.createOrder(bo, false));
+        CreateOrderResult order = orderService.createOrder(bo, false);
+        log.info("创建订单：{}，返回结果：{}", bo, order);
+        return R.ok(order);
     }
 
     /**
@@ -274,7 +276,6 @@ public class OrderController {
         //bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         return orderService.queryPageList(bo, pageQuery);
     }
-
 
     /**
      * 获取未使用订单列表 5，12，13，14，15，18
