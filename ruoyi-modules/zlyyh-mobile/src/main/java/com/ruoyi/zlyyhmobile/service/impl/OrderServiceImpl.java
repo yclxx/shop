@@ -10,6 +10,8 @@ import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
+
+import cn.hutool.extra.mail.MailUtil;
 import cn.hutool.http.HttpStatus;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONArray;
@@ -26,6 +28,7 @@ import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.exception.user.UserException;
 import com.ruoyi.common.core.utils.*;
+import com.ruoyi.common.core.utils.reflect.ReflectUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.RedisUtils;
@@ -35,6 +38,7 @@ import com.ruoyi.zlyyh.constant.YsfUpConstants;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.AppWxPayCallbackParams;
+import com.ruoyi.zlyyh.domain.bo.OrderBackTransBo;
 import com.ruoyi.zlyyh.domain.bo.OrderBo;
 import com.ruoyi.zlyyh.domain.bo.ProductAmountBo;
 import com.ruoyi.zlyyh.domain.vo.*;
@@ -63,10 +67,13 @@ import com.ruoyi.zlyyhmobile.event.SendCouponEvent;
 import com.ruoyi.zlyyhmobile.event.ShareOrderEvent;
 import com.ruoyi.zlyyhmobile.service.*;
 import com.ruoyi.zlyyhmobile.utils.AliasMethod;
+import com.ruoyi.zlyyh.utils.redis.ProductUtils;
+import com.ruoyi.zlyyh.utils.redis.OrderCacheUtils;
 import com.wechat.pay.contrib.apache.httpclient.auth.AutoUpdateCertificatesVerifier;
 import com.wechat.pay.contrib.apache.httpclient.auth.PrivateKeySigner;
 import com.wechat.pay.contrib.apache.httpclient.auth.WechatPay2Credentials;
 import com.wechat.pay.contrib.apache.httpclient.util.PemUtil;
+import jodd.util.CollectionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -78,6 +85,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.Email;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -87,6 +95,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -794,12 +803,20 @@ public class OrderServiceImpl implements IOrderService {
                 if (ObjectUtil.isNotEmpty(productVo.getWarnMessage()) && productVo.getWarnMessage().equals("1")) {
                     //查询已发送数量
                     long count = RedisUtils.getAtomicValue(countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
-                    if (ObjectUtil.isNotEmpty(productVo.getWarnCount()) && ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && count >= productVo.getWarnCount()) {
-                        //达成以上条件发送邮件
-                        String title = "商品数量预警";
-                        String text = productVo.getProductName() + ":数量不足" + productVo.getWarnCount() + "请及时处理";
-                        sendWarnEmail(productVo.getWarnEmail(), title, text, true);
+                    Long totalCount = productVo.getTotalCount();
+                    Long warnCount = productVo.getWarnCount();
+                    if (ObjectUtil.isNotEmpty(warnCount) && ObjectUtil.isNotEmpty(totalCount) && totalCount>warnCount){
+                        long twCount = totalCount - warnCount;
+                        if (ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && count >= twCount){
+                            //达成以上条件发送邮件
+                            String title = "商品数量预警";
+                            String text = productVo.getProductName() + ":数量不足" + productVo.getWarnCount() + "请及时处理";
+                            sendWarnEmail(productVo.getWarnEmail(), title, text, true);
+                        }
+
                     }
+
+
 
                 }
             } catch (Exception e) {
@@ -972,7 +989,6 @@ public class OrderServiceImpl implements IOrderService {
             lockTemplate.releaseLock(lockInfo);
         }
     }
-
     public static String countByProductIdRedisKey(Long platformKey, Long productId, DateType dateType) {
         return "orderLimitCache:product:" + platformKey + ":" + productId + ":" + ZlyyhUtils.getDateCacheKey(dateType);
     }
@@ -999,7 +1015,11 @@ public class OrderServiceImpl implements IOrderService {
         } catch (Exception e) {
             log.error("邮件发送异常", e);
         }
+        MailUtil.sendText(emails,title,text);
+
     }
+
+
 
     /**
      * 购物车创建订单
@@ -1265,12 +1285,19 @@ public class OrderServiceImpl implements IOrderService {
                 if (ObjectUtil.isNotEmpty(productVo.getWarnMessage()) && productVo.getWarnMessage().equals("1")) {
                     //查询已发送数量
                     long totalCount = RedisUtils.getAtomicValue(countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
-                    if (ObjectUtil.isNotEmpty(productVo.getWarnCount()) && ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && totalCount >= productVo.getWarnCount()) {
-                        //达成以上条件发送邮件
-                        String title = "商品数量预警";
-                        String text = productVo.getProductName() + ":数量不足" + productVo.getWarnCount() + "请及时处理";
-                        sendWarnEmail(productVo.getWarnEmail(), title, text, true);
+                    Long productVoTotalCount = productVo.getTotalCount();
+                    Long warnCount = productVo.getWarnCount();
+                    if (ObjectUtil.isNotEmpty(warnCount) && ObjectUtil.isNotEmpty(productVoTotalCount) && productVoTotalCount>warnCount){
+                        long twCount = productVoTotalCount - warnCount;
+                        if (ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && totalCount >= twCount){
+                            //达成以上条件发送邮件
+                            String title = "商品数量预警";
+                            String text = productVo.getProductName() + ":数量不足" + productVo.getWarnCount() + "请及时处理";
+                            sendWarnEmail(productVo.getWarnEmail(), title, text, true);
+                        }
+
                     }
+
 
                 }
             } catch (Exception e) {
@@ -1904,6 +1931,7 @@ public class OrderServiceImpl implements IOrderService {
         log.info("结束设置商品购买数量缓存，流水号：{}", snowflakeNextIdStr);
     }
 
+
     /**
      * 设置商品组购买数量缓存
      *
@@ -2263,6 +2291,7 @@ public class OrderServiceImpl implements IOrderService {
         orderBackTransMapper.insert(orderBackTrans);
 
     }
+
 
     /**
      * 校验订单退款状态
