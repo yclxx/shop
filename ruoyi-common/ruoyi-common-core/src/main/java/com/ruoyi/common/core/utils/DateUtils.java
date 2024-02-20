@@ -1,5 +1,6 @@
 package com.ruoyi.common.core.utils;
 
+import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
@@ -204,11 +205,8 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
 
     public static void main(String[] args) {
         Date nowDate = getNowDate();
-//        DateTime yesterday = DateUtil.tomorrow();
-        DateTime yesterday = DateUtil.endOfDay(nowDate);
-        System.out.println(nowDate);
-        System.out.println(yesterday);
-        System.out.println(getDatePoorMinutes(yesterday, nowDate));
+        Date secondEndTime = getSecondEndTime(nowDate);
+        System.out.println(secondEndTime);
 //        System.out.println(DateUtils.compare(nowDate,yesterday));
     }
 
@@ -389,5 +387,19 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * 获取第二天结束时间
+     * @param date
+     * @return
+     */
+    public static Date getSecondEndTime(Date date) {
+        LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDateTime dateTime = LocalDateTime.of(localDate, LocalTime.MAX);
+        LocalDateTime localDateTime = dateTime.plusDays(1).withHour(23).withMinute(59).withSecond(59);
+        Date secondTime = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+        Date secondEndTime = DateUtil.endOfDay(secondTime).offset(DateField.MILLISECOND, -999);
+        return secondEndTime;
     }
 }

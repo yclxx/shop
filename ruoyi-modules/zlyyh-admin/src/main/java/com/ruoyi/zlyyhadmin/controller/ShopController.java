@@ -16,6 +16,8 @@ import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
 import com.ruoyi.zlyyh.domain.bo.ShopImportBo;
+import com.ruoyi.zlyyh.domain.bo.ShopTourBo;
+import com.ruoyi.zlyyh.domain.vo.ShopTourVo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
 import com.ruoyi.zlyyhadmin.domain.bo.ShopImportDataBo;
 import com.ruoyi.zlyyhadmin.service.IShopService;
@@ -62,6 +64,14 @@ public class ShopController extends BaseController {
     @GetMapping("/list")
     public TableDataInfo<ShopVo> list(ShopBo bo, PageQuery pageQuery) {
         return iShopService.queryPageList(bo, pageQuery);
+    }
+
+    /**
+     * 查询门店列表
+     */
+    @GetMapping("/getPageList")
+    public TableDataInfo<ShopVo> getPageList(ShopBo bo, PageQuery pageQuery) {
+        return iShopService.getPageList(bo, pageQuery);
     }
 
     /**

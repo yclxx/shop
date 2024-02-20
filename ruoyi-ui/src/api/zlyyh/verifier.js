@@ -42,3 +42,12 @@ export function delVerifier(id) {
     method: 'delete'
   })
 }
+
+//查询核销人员下拉列表
+export function selectListVerifier(query) {
+  return request({
+    url: '/zlyyh-admin/verifier/selectListVerifier',
+    method: 'get',
+    params: query
+  })
+}
