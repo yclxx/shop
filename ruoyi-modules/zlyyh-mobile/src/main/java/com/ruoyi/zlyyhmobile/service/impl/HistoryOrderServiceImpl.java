@@ -71,7 +71,9 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
     @Override
     public HistoryOrderVo queryById(Long number) {
         HistoryOrderVo orderVo = baseMapper.selectVoById(number);
-
+        if (null == orderVo) {
+            return null;
+        }
         //订单为美食订单加上info
         if ("1".equals(orderVo.getOrderType()) || "5".equals(orderVo.getOrderType())) {
             //调用接口查询美食订单
@@ -396,7 +398,7 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
         }
         //存入大订单
         HistoryCollectiveOrder historyCollectiveOrder = historyCollectiveOrderMapper.selectById(order.getCollectiveNumber());
-        if (ObjectUtil.isEmpty(historyCollectiveOrder)){
+        if (ObjectUtil.isEmpty(historyCollectiveOrder)) {
             //如果历史大订单为空 说明没添加过 进行添加
             CollectiveOrder collectiveOrder = collectiveOrderMapper.selectById(order.getCollectiveNumber());
             if (ObjectUtil.isNotEmpty(collectiveOrder)) {
