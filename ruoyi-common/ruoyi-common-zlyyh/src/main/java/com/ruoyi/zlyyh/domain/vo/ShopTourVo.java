@@ -152,4 +152,8 @@ public class ShopTourVo {
 
     private String verifierMobile;
 
+    private BigDecimal longitude;
+
+    private BigDecimal latitude;
+
 }
