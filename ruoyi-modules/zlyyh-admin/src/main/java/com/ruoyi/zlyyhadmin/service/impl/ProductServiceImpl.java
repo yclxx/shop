@@ -515,7 +515,7 @@ public class ProductServiceImpl implements IProductService {
         CacheUtils.clear(CacheNames.COMMERCIAL_PRODUCT_IDS);
         categoryProductService.remove(new LambdaQueryWrapper<CategoryProduct>().in(CategoryProduct::getProductId, ids));
         commercialTenantProductService.remove(new LambdaQueryWrapper<CommercialTenantProduct>().in(CommercialTenantProduct::getProductId, ids));
-        productGroupConnectService.remove(new LambdaQueryWrapper<ProductGroupConnect>().in(ProductGroupConnect::getProductId,ids));
+        productGroupConnectService.remove(new LambdaQueryWrapper<ProductGroupConnect>().in(ProductGroupConnect::getProductId, ids));
         return baseMapper.deleteBatchIds(ids) > 0;
     }
 
@@ -717,6 +717,7 @@ public class ProductServiceImpl implements IProductService {
         if (null != allRemainCount) {
             // 剩余数量
             long count = RedisUtils.getAtomicValue(ProductUtils.countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
+            log.info("产品：{}，已发数量：{}，银联查询剩余数量：{}", productVo.getProductId(), count, allRemainCount);
             if (count > 0) {
                 allRemainCount = allRemainCount + count;
             }
@@ -726,6 +727,7 @@ public class ProductServiceImpl implements IProductService {
                 product.setTotalCount(allRemainCount);
 
                 baseMapper.updateById(product);
+                log.info("产品：{}，同步数量后总数量：{}", productVo.getProductId(), allRemainCount);
 
                 CacheUtils.evict(CacheNames.PRODUCT, productVo.getProductId());
                 CacheUtils.clear(CacheNames.COMMERCIAL_PRODUCT);
