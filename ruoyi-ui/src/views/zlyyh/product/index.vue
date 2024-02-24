@@ -458,6 +458,28 @@
                 </el-form-item>
               </el-col>
               <el-col :span="8">
+                <el-form-item label="机构账户代码" prop="institutionAccountId">
+                  <span slot="label">
+                    机构账户代码
+                    <el-tooltip content="接入方机构账户代码" placement="top">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input v-model="form.institutionAccountId" placeholder="请输入机构账户代码" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="机构产品编号" prop="institutionProductId">
+                  <span slot="label">
+                    机构产品编号
+                    <el-tooltip content="第三方产品编号,云闪付红包则填写云闪付红包编号" placement="top">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input v-model="form.institutionProductId" placeholder="请输入机构产品编号" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
                 <el-form-item label="显示首页" prop="showIndex">
                   <el-radio-group v-model="form.showIndex">
                     <el-radio v-for="dict in dict.type.t_show_index" :key="dict.value" :label="dict.value">
@@ -819,16 +841,16 @@
               <el-col :span="8">
                 <el-form-item label="是否自动退款" prop="autoRefund">
                   <el-select v-model="form.autoRefund" style="width: 100%;" placeholder="请选择是否自动退款">
-                    <el-option v-for="dict in dict.type.t_right_not" :key="dict.value"
-                               :label="dict.label" :value="dict.value"></el-option>
+                    <el-option v-for="dict in dict.type.t_right_not" :key="dict.value" :label="dict.label"
+                      :value="dict.value"></el-option>
                   </el-select>
                 </el-form-item>
               </el-col>
               <el-col :span="8">
                 <el-form-item label="是否预警" prop="warnMessage">
                   <el-select v-model="form.warnMessage" style="width: 100%;" placeholder="请选择是否预警">
-                    <el-option v-for="dict in dict.type.t_right_not" :key="dict.value"
-                               :label="dict.label" :value="dict.value"></el-option>
+                    <el-option v-for="dict in dict.type.t_right_not" :key="dict.value" :label="dict.label"
+                      :value="dict.value"></el-option>
                   </el-select>
                 </el-form-item>
               </el-col>
@@ -974,7 +996,7 @@
       't_product_show_original_amount', 't_product_pickup_method', 't_grad_period_date_list', 't_product_search',
       't_search_status', 't_product_pay_user', 't_show_index', 't_product_send_account_type', 't_cus_refund',
       'sys_normal_disable', 't_product_check_pay_city', 't_product_union_pay', 'sys_yes_no', 'channel_type',
-      't_platform_share_permission', 'share_amount_type','t_right_not'
+      't_platform_share_permission', 'share_amount_type', 't_right_not'
     ],
     data() {
       return {

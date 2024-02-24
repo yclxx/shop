@@ -88,6 +88,8 @@
         <result property="warnMessage" column="warn_message"/>
         <result property="warnEmail" column="warn_email"/>
         <result property="warnCount" column="warn_count"/>
+        <result property="institutionAccountId" column="institution_account_id"/>
+        <result property="institutionProductId" column="institution_product_id"/>
     </resultMap>
 
     <select id="selectPageByShopId" resultType="com.ruoyi.zlyyh.domain.vo.ProductVo">
