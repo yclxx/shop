@@ -75,4 +75,6 @@ public interface IShopService {
     ShopVo queryByNameAndCommercialTenantId(String name,Long commercialTenantId);
 
     ShopVo queryByNameAndSupplierId(String name,String supplierShopId);
+
+    TableDataInfo<ShopVo> getPageList(ShopBo bo, PageQuery pageQuery);
 }

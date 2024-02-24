@@ -148,4 +148,36 @@
         </if>
         ORDER BY distance
     </select>
+    <select id="queryPageList" resultType="com.ruoyi.zlyyh.domain.vo.ShopVo">
+        select a.*
+        from t_shop a left join t_business_district_shop bds on a.shop_id = bds.shop_id
+        <where>
+            <if test="bo.commercialTenantId != null and bo.commercialTenantId != ''">
+                and a.commercial_tenant_id = #{bo.commercialTenantId}
+            </if>
+            <if test="bo.status != null and bo.status != ''">
+                and a.status = #{bo.status}
+            </if>
+            <if test="bo.examineVerifier != null and bo.examineVerifier != ''">
+                and a.examine_verifier = #{bo.examineVerifier}
+            </if>
+            <if test="bo.platformKey != null and bo.platformKey != ''">
+                and a.platform_key = #{bo.platformKey}
+            </if>
+            <if test="bo.businessDistrictId != null and bo.businessDistrictId != ''">
+                and bds.business_district_id = #{bo.businessDistrictId}
+            </if>
+            <if test="bo.shopName != null and bo.shopName != ''">
+                and (a.shop_name like concat('%', #{bo.shopName}, '%')
+                or a.address like concat('%', #{bo.shopName}, '%')
+                or a.formatted_address like concat('%', #{bo.shopName}, '%'))
+            </if>
+            <if test="bo.province != null and bo.province != ''">
+                and (a.province like concat('%', #{bo.province}, '%')
+                or a.city like concat('%', #{bo.province}, '%')
+                or a.district like concat('%', #{bo.province}, '%'))
+            </if>
+        </where>
+        order by a.create_time desc
+    </select>
 </mapper>

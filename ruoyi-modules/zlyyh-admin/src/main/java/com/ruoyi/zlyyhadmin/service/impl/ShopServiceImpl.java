@@ -19,10 +19,7 @@ import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.*;
-import com.ruoyi.zlyyh.domain.vo.BusinessDistrictShopVo;
-import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
-import com.ruoyi.zlyyh.domain.vo.ShopMerchantVo;
-import com.ruoyi.zlyyh.domain.vo.ShopVo;
+import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
 import com.ruoyi.zlyyh.mapper.CommercialTenantProductMapper;
 import com.ruoyi.zlyyh.mapper.ShopMapper;
@@ -552,6 +549,12 @@ public class ShopServiceImpl implements IShopService {
         queryWrapper.eq(Shop::getSupplierShopId, supplierShopId);
         queryWrapper.last("limit 1");
         return baseMapper.selectVoOne(queryWrapper);
+    }
+
+    @Override
+    public TableDataInfo<ShopVo> getPageList(ShopBo bo, PageQuery pageQuery) {
+        Page<ShopVo> shopVoPage = baseMapper.queryPageList(bo, pageQuery.build());
+        return TableDataInfo.build(shopVoPage);
     }
 
 

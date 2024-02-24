@@ -2,15 +2,20 @@ package com.ruoyi.zlyyhadmin.controller;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.ruoyi.common.core.domain.R;
+import com.ruoyi.common.core.utils.BeanCopyUtils;
+import com.ruoyi.common.core.utils.ColumnUtil;
 import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
 import com.ruoyi.common.core.web.controller.BaseController;
+import com.ruoyi.common.core.web.domain.SelectListEntity;
 import com.ruoyi.common.excel.utils.ExcelUtil;
 import com.ruoyi.common.log.annotation.Log;
 import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.zlyyh.domain.bo.CommercialTenantBo;
 import com.ruoyi.zlyyh.domain.bo.VerifierBo;
+import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
 import com.ruoyi.zlyyh.domain.vo.VerifierVo;
 import com.ruoyi.zlyyhadmin.service.IVerifierService;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +50,15 @@ public class VerifierController extends BaseController {
     @GetMapping("/list")
     public TableDataInfo<VerifierVo> list(VerifierBo bo, PageQuery pageQuery) {
         return iVerifierService.queryPageList(bo, pageQuery);
+    }
+
+    /**
+     * 查询核销员下拉列表
+     */
+    @GetMapping("/selectListVerifier")
+    public R<List<SelectListEntity>> selectListVerifier(VerifierBo bo){
+        List<VerifierVo> verifierVos = iVerifierService.queryList(bo);
+        return R.ok(BeanCopyUtils.copyListToSelectListVo(verifierVos, ColumnUtil.getFieldName(VerifierVo::getId),ColumnUtil.getFieldName(VerifierVo::getMobile),ColumnUtil.getFieldName(VerifierVo::getUsername)));
     }
 
     /**
