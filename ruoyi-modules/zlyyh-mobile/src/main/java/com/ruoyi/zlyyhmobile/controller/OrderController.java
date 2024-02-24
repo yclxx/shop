@@ -19,6 +19,8 @@ import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.zlyyh.constant.YsfUpConstants;
 import com.ruoyi.zlyyh.domain.bo.OrderBo;
 import com.ruoyi.zlyyh.domain.vo.OrderVo;
+import com.ruoyi.zlyyh.domain.vo.UserVo;
+import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.service.YsfConfigService;
 import com.ruoyi.zlyyh.utils.CloudRechargeEntity;
 import com.ruoyi.zlyyh.utils.YsfUtils;
@@ -29,9 +31,7 @@ import com.ruoyi.zlyyh.utils.sdk.SDKConstants;
 import com.ruoyi.zlyyhmobile.domain.bo.CreateOrderBo;
 import com.ruoyi.zlyyhmobile.domain.vo.CreateOrderResult;
 import com.ruoyi.zlyyhmobile.domain.vo.PayResultVo;
-import com.ruoyi.zlyyhmobile.service.IHistoryOrderService;
-import com.ruoyi.zlyyhmobile.service.IOrderBackTransService;
-import com.ruoyi.zlyyhmobile.service.IOrderService;
+import com.ruoyi.zlyyhmobile.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -43,6 +43,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -63,6 +64,9 @@ public class OrderController {
     private final IOrderBackTransService orderBackTransService;
     private final IHistoryOrderService historyOrderService;
     private final YsfConfigService ysfConfigService;
+    private final IUserService userService;
+    private final IUserChannelService userChannelService;
+    private final IUnionpayMissionService unionpayMissionService;
 
     /**
      * 创建订单
@@ -448,5 +452,14 @@ public class OrderController {
             return R.fail(e.getMessage());
         }
         return R.ok();
+    }
+
+    /**
+     * 银联任务通知
+     */
+    @RequestMapping("/ignore/missionCallback")
+    public void missionCallback(@RequestBody JSONObject param) throws Exception {
+        log.info("银联任务完成结果返回：{}", param);
+        unionpayMissionService.missionCallback(param);
     }
 }

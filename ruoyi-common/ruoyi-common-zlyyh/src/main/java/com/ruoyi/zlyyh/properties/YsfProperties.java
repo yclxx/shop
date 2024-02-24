@@ -115,4 +115,12 @@ public class YsfProperties {
      * 初始化upsdk
      */
     private String getFrontToken;
+    /**
+     * 银联获取用户报名url
+     */
+    private String getUserSingUpUrl;
+    /**
+     * 银联获取查询任务进度url
+     */
+    private String getSearchProgressUrl;
 }

@@ -1044,6 +1044,81 @@ public class YsfUtils {
         return R.ok(result);
     }
 
+    /**
+     * 用户报名接口
+     *
+     * @param activityId 活动id
+     * @param logId      日志追踪id
+     */
+    public static JSONObject userSingUp(String appId, String secret, String openId, String activityId, String logId, Long platformKey) {
+        HashMap<String, String> param = new HashMap<>();
+        param.put("appId", appId);
+        //param.put("appId", "79936cca634f43559813b8231b4424dc");
+        param.put("backendToken", getBackendToken(appId, secret, false, platformKey));
+        //param.put("backendToken", "09f9d868200400591a9Cmqm5");
+        param.put("openId", openId);
+        //param.put("openId", "2OwCzpQVCBWvLhEwokQPootQhRDsGuFemj0YqqRFW1Lyp1penGkL7O5nQMPT47Dc");
+        param.put("activityId", activityId);
+        // 活动渠道 00：云闪付APP 01：手机闪付 02：银行APP（云网）03：银行APP（非云网）
+        param.put("activityChannel", "00");
+        param.put("signUpStatus", "0");
+        param.put("logId", logId);
+
+        String result;
+        try {
+            result = HttpUtil.post(YsfPropertiesUtils.getUserSingUpUrl(platformKey), JSONObject.toJSONString(param));
+        } catch (Exception e) {
+            log.info("请求用户报名异常，异常信息：{}", e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+        log.info("用户报名返回结果：{}", result);
+        if (StringUtils.isEmpty(result)) {
+            log.info("用户报名失败");
+            return null;
+        }
+        JSONObject jsonObject = JSONObject.parseObject(result);
+        if (null == jsonObject || !"00".equals(jsonObject.getString("resp"))) {
+            return null;
+        }
+        return jsonObject.getJSONObject("params");
+    }
+
+    /**
+     * 用户任务进度查询
+     */
+    public static JSONObject searchProgress(String appId, String secret, String openId, String activityId, List<String> missionIdList, String logId, Long platformKey) {
+        HashMap<String, Object> param = new HashMap<>();
+        param.put("appId", appId);
+        //param.put("appId", "79936cca634f43559813b8231b4424dc");
+        param.put("backendToken", getBackendToken(appId, secret, false, platformKey));
+        //param.put("backendToken", "09f7a3ec200600711ESucnFQ");
+        //param.put("openId", "2OwCzpQVCBWvLhEwokQPootQhRDsGuFemj0YqqRFW1Lyp1penGkL7O5nQMPT47Dc");
+        //param.put("openId", "dioDx19v0FE71iWHhe2H/p+z+MolujCNPsH41y9AtDsrKqO+Ig5/KaLreg2EgNjh");
+        param.put("openId", openId);
+        param.put("activityId", activityId);
+        param.put("missionIdList", missionIdList);
+        param.put("logId", logId);
+        String result;
+        try {
+            result = HttpUtil.post(YsfPropertiesUtils.getSearchProgressUrl(platformKey), JSONObject.toJSONString(param));
+        } catch (Exception e) {
+            log.info("请求用户任务进度查询异常，异常信息：{}", e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+        log.info("用户任务进度查询返回结果：{}", result);
+        if (StringUtils.isEmpty(result)) {
+            log.info("用户任务进度查询失败");
+            return null;
+        }
+        JSONObject jsonObject = JSONObject.parseObject(result);
+        if (null == jsonObject || !"00".equals(jsonObject.getString("resp"))) {
+            return null;
+        }
+        return jsonObject.getJSONObject("params");
+    }
+
     public static void main(String[] args) {
 //        KeyPair rsa = SecureUtil.generateKeyPair("RSA", 2048);
 //        System.out.println("================公钥================");

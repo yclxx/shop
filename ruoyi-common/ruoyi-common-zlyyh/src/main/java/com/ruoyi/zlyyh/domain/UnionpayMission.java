@@ -1,0 +1,86 @@
+package com.ruoyi.zlyyh.domain;
+
+import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import java.io.Serializable;
+import java.util.Date;
+import java.math.BigDecimal;
+
+import java.util.Date;
+import com.ruoyi.common.core.web.domain.BaseEntity;
+
+/**
+ * 银联任务配置对象 t_unionpay_mission
+ *
+ * @author yzg
+ * @date 2024-02-21
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@TableName("t_unionpay_mission")
+public class UnionpayMission extends BaseEntity {
+
+    private static final long serialVersionUID=1L;
+
+    /**
+     * 银联任务ID
+     */
+    @TableId(value = "up_mission_id")
+    private Long upMissionId;
+    /**
+     * 银联任务组ID
+     */
+    private Long upMissionGroupId;
+    /**
+     * 银联任务名称
+     */
+    private String upMissionName;
+    /**
+     * 银联任务id
+     */
+    private String upMissionUpid;
+    /**
+     * 发放奖励产品id
+     */
+    private Long productId;
+    /**
+     * 状态  0-正常  1-停用
+     */
+    private String status;
+    /**
+     * 开始时间
+     */
+    private Date startDate;
+    /**
+     * 结束时间
+     */
+    private Date endDate;
+    /**
+     * 平台标识
+     */
+    private Long platformKey;
+    /**
+     * 用户每日限参与次数
+     */
+    private Long userCountDay;
+    /**
+     * 用户每周限参与次数
+     */
+    private Long userCountWeek;
+    /**
+     * 用户每月限参与次数
+     */
+    private Long userCountMonth;
+    /**
+     * 用户活动期间限参与次数
+     */
+    private Long userCountActivity;
+    /**
+     * 删除标志  0-存在  2-删除
+     */
+    @TableLogic
+    private String delFlag;
+
+}
