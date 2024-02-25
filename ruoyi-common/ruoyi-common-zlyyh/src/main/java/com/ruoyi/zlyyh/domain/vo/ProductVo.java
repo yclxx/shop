@@ -436,4 +436,14 @@ public class ProductVo implements Serializable {
     private String warnEmail;
     private Long warnCount;
     private String autoRefund;
+
+    /**
+     * 机构账户代码
+     */
+    private String institutionAccountId;
+
+    /**
+     * 第三方机构产品编号
+     */
+    private String institutionProductId;
 }

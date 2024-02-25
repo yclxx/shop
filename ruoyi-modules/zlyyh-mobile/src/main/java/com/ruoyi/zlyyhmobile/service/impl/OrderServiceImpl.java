@@ -456,13 +456,10 @@ public class OrderServiceImpl implements IOrderService {
                     sendResult(R.fail(e.getMessage()), orderPushInfo, order, cache, false);
                 }
             } else if ("22".equals(order.getOrderType())) {
-                PlatformVo platformVo = platformService.queryById(order.getPlatformKey(), PlatformEnumd.MP_YSF.getChannel());
-                if (ObjectUtil.isNotEmpty(platformVo)) {
-                    // 银联开放平台发券
-                    R<JSONObject> result = YsfUtils.pntAcquire(orderPushInfo.getPushNumber(),order.getAccount(),order.getExternalProductSendValue().multiply(new BigDecimal(100L)).toString(),"银联红包发放",platformVo.getShareAwardInsAcctId(), platformVo.getShareAwardProductId(), platformVo.getPlatformKey());
-                    // 处理结果
-                    sendResult(result, orderPushInfo, order, cache, true);
-                }
+                // 银联开放平台发券
+                R<JSONObject> result = YsfUtils.pntAcquire(orderPushInfo.getPushNumber(),order.getAccount(),order.getExternalProductSendValue().multiply(new BigDecimal(100)).setScale(0,BigDecimal.ROUND_DOWN).toString(),"银联红包发放",productVo.getInstitutionAccountId(), productVo.getInstitutionProductId(), order.getPlatformKey());
+                // 处理结果
+                sendResult(result, orderPushInfo, order, cache, true);
             } else {
                 sendResult(R.fail("订单类型无处理方式，请联系技术人员"), orderPushInfo, order, cache, false);
             }
