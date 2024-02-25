@@ -17,6 +17,11 @@ public interface RemoteAppUserService {
     String getWxMobile(String code, Long platformKey);
 
     /**
+     * 获取accessToken
+     */
+    String getAccessToken(String appId,String secret);
+
+    /**
      * 获取用户授权信息
      *
      * @param code        授权code
