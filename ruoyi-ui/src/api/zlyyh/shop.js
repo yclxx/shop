@@ -77,3 +77,12 @@ export function selectShopListById(query) {
     params: query
   })
 }
+
+// 查询门店列表
+export function getPageList(query) {
+  return request({
+    url: '/zlyyh-admin/shop/getPageList',
+    method: 'get',
+    params: query
+  })
+}

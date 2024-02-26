@@ -33,4 +33,6 @@ public interface ShopMapper extends BaseMapperPlus<ShopMapper, Shop, ShopVo> {
      * 查询列表（按照地址排序）
      */
     Page<ShopVo> selectShopListByProductId(Page page, @Param("bo") ShopBo bo);
+
+    Page<ShopVo> queryPageList(@Param("bo")ShopBo bo, Page page);
 }

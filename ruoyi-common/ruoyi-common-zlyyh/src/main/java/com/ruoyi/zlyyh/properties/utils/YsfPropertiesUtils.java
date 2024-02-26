@@ -224,4 +224,20 @@ public class YsfPropertiesUtils {
         }
         return YSF_PROPERTIES.getGetFrontToken();
     }
+
+    public static String getUserSingUpUrl(Long platformKey) {
+        String value = configService.queryValueByKey(platformKey, "ysf.userSingUpUrl");
+        if (StringUtils.isNotBlank(value)) {
+            return value;
+        }
+        return YSF_PROPERTIES.getGetUserSingUpUrl();
+    }
+
+    public static String getSearchProgressUrl(Long platformKey) {
+        String value = configService.queryValueByKey(platformKey, "ysf.searchProgressUrl");
+        if (StringUtils.isNotBlank(value)) {
+            return value;
+        }
+        return YSF_PROPERTIES.getGetSearchProgressUrl();
+    }
 }

@@ -1,5 +1,6 @@
 package com.ruoyi.common.core.utils;
 
+import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
@@ -12,6 +13,8 @@ import java.lang.management.ManagementFactory;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -204,12 +207,17 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
 
     public static void main(String[] args) {
         Date nowDate = getNowDate();
-//        DateTime yesterday = DateUtil.tomorrow();
-        DateTime yesterday = DateUtil.endOfDay(nowDate);
-        System.out.println(nowDate);
-        System.out.println(yesterday);
-        System.out.println(getDatePoorMinutes(yesterday, nowDate));
+        Date secondEndTime = getSecondEndTime(nowDate);
+        //System.out.println(getDate());
 //        System.out.println(DateUtils.compare(nowDate,yesterday));
+        System.out.println(getThisWeekDate(getDate()));
+        System.out.println(getThisWeekEnd());
+        String weekEnd = getThisWeekEnd();
+        String s = DateFormatUtils.format(parseDate(getThisWeekDate(getDate())), "yyyyMMdd");
+        String s1 = DateFormatUtils.format(parseDate(getThisWeekEnd()), "yyyyMMdd");
+        System.out.println(s);
+        System.out.println(s1);
+        System.out.println(s + "_" + s1);
     }
 
     /**
@@ -331,6 +339,23 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
     }
 
     /**
+     * 获取本周的结束时间
+     */
+    public static String getThisWeekEnd() {
+        // 获取当天日期
+        LocalDate now = LocalDate.now();
+        // 周一
+        LocalDate monday = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        // 周日
+        LocalDate sunday = now.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+        // 本周开始时间
+        LocalDateTime weekStart = monday.atStartOfDay();
+        // 本周结束时间
+        LocalDateTime weekEnd = LocalDateTime.of(sunday, LocalTime.MAX);
+        return weekEnd.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    }
+
+    /**
      * 时间戳转时间
      *
      * @param times 时间戳
@@ -389,5 +414,19 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * 获取第二天结束时间
+     * @param date
+     * @return
+     */
+    public static Date getSecondEndTime(Date date) {
+        LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDateTime dateTime = LocalDateTime.of(localDate, LocalTime.MAX);
+        LocalDateTime localDateTime = dateTime.plusDays(1).withHour(23).withMinute(59).withSecond(59);
+        Date secondTime = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+        Date secondEndTime = DateUtil.endOfDay(secondTime).offset(DateField.MILLISECOND, -999);
+        return secondEndTime;
     }
 }
