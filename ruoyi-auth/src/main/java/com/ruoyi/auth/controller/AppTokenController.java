@@ -53,6 +53,15 @@ public class AppTokenController {
     }
 
     /**
+     * 跳转
+     * @return
+     */
+    @PostMapping("/jumpWxGroup")
+    public R<String> jumpWxGroup(String pages){
+        return R.ok(appLoginService.jumpWxGroup(pages));
+    }
+
+    /**
      * 云闪付小程序 测试登录
      *
      * @param mobile 登录信息
