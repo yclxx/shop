@@ -83,4 +83,6 @@ public class UnionpayMission extends BaseEntity {
     @TableLogic
     private String delFlag;
 
+    private String remark;
+
 }

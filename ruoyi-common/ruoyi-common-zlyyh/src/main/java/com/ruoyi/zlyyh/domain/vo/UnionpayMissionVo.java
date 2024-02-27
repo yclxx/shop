@@ -101,4 +101,6 @@ public class UnionpayMissionVo {
     private Long userCountActivity;
 
 
+    private String remark;
+
 }
