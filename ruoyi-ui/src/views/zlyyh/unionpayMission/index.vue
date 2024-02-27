@@ -1,15 +1,17 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="银联任务组ID" prop="upMissionGroupId">
-        <el-input v-model="queryParams.upMissionGroupId" placeholder="请输入银联任务组ID" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item label="任务组" prop="upMissionGroupId">
+        <el-select v-model="queryParams.upMissionGroupId" placeholder="请选择任务组" filterable clearable
+          style="width: 100%;">
+          <el-option v-for="item in missionGroupList" :key="item.id" :value="item.id" :label="item.label"></el-option>
+        </el-select>
       </el-form-item>
-      <el-form-item label="银联任务名称" prop="upMissionName">
+      <el-form-item label="任务名称" prop="upMissionName">
         <el-input v-model="queryParams.upMissionName" placeholder="请输入银联任务名称" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="发放奖励产品id" prop="productId">
+      <el-form-item label="奖励产品id" prop="productId">
         <el-input v-model="queryParams.productId" placeholder="请输入发放奖励产品id" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
@@ -29,8 +31,10 @@
           placeholder="请选择结束时间">
         </el-date-picker>
       </el-form-item> -->
-      <el-form-item label="平台标识" prop="platformKey">
-        <el-input v-model="queryParams.platformKey" placeholder="请输入平台标识" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="平台" prop="platformKey">
+        <el-select v-model="queryParams.platformKey" placeholder="请选择平台" filterable clearable style="width: 100%;">
+          <el-option v-for="item in platformList" :key="item.id" :value="item.id" :label="item.label"></el-option>
+        </el-select>
       </el-form-item>
       <!-- <el-form-item label="用户每日限参与次数" prop="userCountDay">
         <el-input v-model="queryParams.userCountDay" placeholder="请输入用户每日限参与次数" clearable
@@ -76,32 +80,37 @@
 
     <el-table v-loading="loading" :data="unionpayMissionList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="银联任务ID" align="center" prop="upMissionId" v-if="true" />
-      <el-table-column label="银联任务组ID" align="center" prop="upMissionGroupId" />
-      <el-table-column label="银联任务名称" align="center" prop="upMissionName" />
-      <el-table-column label="银联任务编号" align="center" prop="upMissionUpid" />
-      <el-table-column label="发放奖励产品id" align="center" prop="productId" />
+      <!-- <el-table-column label="ID" align="center" prop="upMissionId" v-if="true" /> -->
+      <el-table-column label="任务组" align="center" prop="upMissionGroupId" width="100" :formatter="changeMissionGroup" />
+      <el-table-column label="任务名称" align="center" prop="upMissionName" width="100" />
+      <el-table-column label="任务编号" align="center" prop="upMissionUpid" width="130" />
+      <el-table-column label="发放奖励" align="center" prop="productVo.productName" width="125" />
+      <el-table-column label="开始时间" align="center" prop="startDate" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.startDate, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="结束时间" align="center" prop="endDate" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.endDate, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="平台" align="center" prop="platformKey" :formatter="changePlatform" />
+      <el-table-column label="每日限参与次数" align="center" prop="userCountDay" />
+      <el-table-column label="每周限参与次数" align="center" prop="userCountWeek" />
+      <el-table-column label="每月限参与次数" align="center" prop="userCountMonth" />
+      <el-table-column label="限总参与次数" align="center" prop="userCountActivity" />
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status" />
         </template>
       </el-table-column>
-      <el-table-column label="开始时间" align="center" prop="startDate" width="180">
+      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.startDate, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="结束时间" align="center" prop="endDate" width="180">
-        <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.endDate, '{y}-{m}-{d}') }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="平台标识" align="center" prop="platformKey" />
-      <el-table-column label="用户每日限参与次数" align="center" prop="userCountDay" />
-      <el-table-column label="用户每周限参与次数" align="center" prop="userCountWeek" />
-      <el-table-column label="用户每月限参与次数" align="center" prop="userCountMonth" />
-      <el-table-column label="用户活动期间限参与次数" align="center" prop="userCountActivity" />
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['zlyyh:unionpayMission:edit']">修改</el-button>
@@ -115,51 +124,112 @@
       @pagination="getList" />
 
     <!-- 添加或修改银联任务配置对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="银联任务组ID" prop="upMissionGroupId">
-          <el-input v-model="form.upMissionGroupId" placeholder="请输入银联任务组ID" />
-        </el-form-item>
-        <el-form-item label="银联任务名称" prop="upMissionName">
-          <el-input v-model="form.upMissionName" placeholder="请输入银联任务名称" />
-        </el-form-item>
-        <el-form-item label="银联任务编号" prop="upMissionUpid">
-          <el-input v-model="form.upMissionUpid" placeholder="请输入银联任务编号" />
-        </el-form-item>
-        <el-form-item label="发放奖励产品id" prop="productId">
-          <el-input v-model="form.productId" placeholder="请输入发放奖励产品id" />
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="form.status" placeholder="请选择状态">
-            <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label"
-              :value="dict.value"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="开始时间" prop="startDate">
-          <el-date-picker clearable v-model="form.startDate" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-            placeholder="请选择开始时间">
-          </el-date-picker>
-        </el-form-item>
-        <el-form-item label="结束时间" prop="endDate">
-          <el-date-picker clearable v-model="form.endDate" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
-            placeholder="请选择结束时间">
-          </el-date-picker>
-        </el-form-item>
-        <el-form-item label="平台标识" prop="platformKey">
-          <el-input v-model="form.platformKey" placeholder="请输入平台标识" />
-        </el-form-item>
-        <el-form-item label="用户每日限参与次数" prop="userCountDay">
-          <el-input v-model="form.userCountDay" placeholder="请输入用户每日限参与次数" />
-        </el-form-item>
-        <el-form-item label="用户每周限参与次数" prop="userCountWeek">
-          <el-input v-model="form.userCountWeek" placeholder="请输入用户每周限参与次数" />
-        </el-form-item>
-        <el-form-item label="用户每月限参与次数" prop="userCountMonth">
-          <el-input v-model="form.userCountMonth" placeholder="请输入用户每月限参与次数" />
-        </el-form-item>
-        <el-form-item label="用户活动期间限参与次数" prop="userCountActivity">
-          <el-input v-model="form.userCountActivity" placeholder="请输入用户活动期间限参与次数" />
-        </el-form-item>
+    <el-dialog :title="title" :visible.sync="open" width="950px" append-to-body>
+      <el-form ref="form" :model="form" :rules="rules" label-width="115px">
+        <el-row>
+          <el-col :span="8">
+            <el-form-item label="任务组" prop="upMissionGroupId">
+              <el-select v-model="form.upMissionGroupId" placeholder="请选择任务组" filterable clearable style="width: 100%;">
+                <el-option v-for="item in missionGroupList" :key="item.id" :value="item.id"
+                  :label="item.label"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="任务名称" prop="upMissionName">
+              <el-input v-model="form.upMissionName" placeholder="请输入银联任务名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="平台" prop="platformKey">
+              <el-select v-model="form.platformKey" placeholder="请选择平台" filterable clearable style="width: 100%;">
+                <el-option v-for="item in platformList" :key="item.id" :value="item.id" :label="item.label"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="任务编号" prop="upMissionUpid">
+              <span slot="label">
+                任务编号
+                <el-tooltip content="银联任务编号" placement="top">
+                  <i class="el-icon-question"></i>
+                </el-tooltip>
+              </span>
+              <el-input v-model="form.upMissionUpid" placeholder="请输入银联任务编号" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="发放奖励" prop="productId">
+              <el-input v-model="form.productId" placeholder="请输入发放奖励产品id" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="状态" prop="status">
+              <el-radio-group v-model="form.status">
+                <el-radio v-for="dict in dict.type.sys_normal_disable" :key="dict.value"
+                  :label="dict.value">{{dict.label}}</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="开始时间" prop="startDate">
+              <el-date-picker clearable v-model="form.startDate" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
+                placeholder="请选择开始时间" style="width: 100%;">
+              </el-date-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="结束时间" prop="endDate">
+              <el-date-picker clearable v-model="form.endDate" type="datetime" value-format="yyyy-MM-dd HH:mm:ss"
+                placeholder="请选择结束时间" style="width: 100%;">
+              </el-date-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="每日参与次数" prop="userCountDay">
+              <span slot="label">
+                每日参与次数
+                <el-tooltip content="'0'为不限" placement="top">
+                  <i class="el-icon-question"></i>
+                </el-tooltip>
+              </span>
+              <el-input v-model="form.userCountDay" placeholder="请输入用户每日限参与次数" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="每周参与次数" prop="userCountWeek">
+              <span slot="label">
+                每周参与次数
+                <el-tooltip content="'0'为不限" placement="top">
+                  <i class="el-icon-question"></i>
+                </el-tooltip>
+              </span>
+              <el-input v-model="form.userCountWeek" placeholder="请输入用户每周限参与次数" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="每月参与次数" prop="userCountMonth">
+              <span slot="label">
+                每月参与次数
+                <el-tooltip content="'0'为不限" placement="top">
+                  <i class="el-icon-question"></i>
+                </el-tooltip>
+              </span>
+              <el-input v-model="form.userCountMonth" placeholder="请输入用户每月限参与次数" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="总参与次数" prop="userCountActivity">
+              <span slot="label">
+                总参与次数
+                <el-tooltip content="'0'为不限" placement="top">
+                  <i class="el-icon-question"></i>
+                </el-tooltip>
+              </span>
+              <el-input v-model="form.userCountActivity" placeholder="请输入用户活动期间限参与次数" />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
@@ -177,6 +247,12 @@
     addUnionpayMission,
     updateUnionpayMission
   } from "@/api/zlyyh/unionpayMission";
+  import {
+    selectListMissionGroup
+  } from "@/api/zlyyh/unionpayMissionGroup";
+  import {
+    selectListPlatform
+  } from "@/api/zlyyh/platform"
 
   export default {
     name: "UnionpayMission",
@@ -218,6 +294,8 @@
           userCountWeek: undefined,
           userCountMonth: undefined,
           userCountActivity: undefined,
+          orderByColumn: 'create_time',
+          isAsc: 'desc',
         },
         // 表单参数
         form: {},
@@ -230,23 +308,23 @@
           }],
           upMissionGroupId: [{
             required: true,
-            message: "银联任务组ID不能为空",
+            message: "任务组不能为空",
             trigger: "blur"
           }],
           upMissionName: [{
             required: true,
-            message: "银联任务名称不能为空",
+            message: "任务名称不能为空",
+            trigger: "blur"
+          }],
+          upMissionUpid: [{
+            required: true,
+            message: "任务编号不能为空",
             trigger: "blur"
           }],
           productId: [{
             required: true,
             message: "发放奖励产品id不能为空",
             trigger: "blur"
-          }],
-          status: [{
-            required: true,
-            message: "状态",
-            trigger: "change"
           }],
           startDate: [{
             required: true,
@@ -260,34 +338,38 @@
           }],
           platformKey: [{
             required: true,
-            message: "平台标识不能为空",
+            message: "平台不能为空",
             trigger: "blur"
           }],
-          userCountDay: [{
-            required: true,
-            message: "用户每日限参与次数不能为空",
-            trigger: "blur"
-          }],
-          userCountWeek: [{
-            required: true,
-            message: "用户每周限参与次数不能为空",
-            trigger: "blur"
-          }],
-          userCountMonth: [{
-            required: true,
-            message: "用户每月限参与次数不能为空",
-            trigger: "blur"
-          }],
-          userCountActivity: [{
-            required: true,
-            message: "用户活动期间限参与次数不能为空",
-            trigger: "blur"
-          }],
-        }
+          // userCountDay: [{
+          //   required: true,
+          //   message: "用户每日限参与次数不能为空",
+          //   trigger: "blur"
+          // }],
+          // userCountWeek: [{
+          //   required: true,
+          //   message: "用户每周限参与次数不能为空",
+          //   trigger: "blur"
+          // }],
+          // userCountMonth: [{
+          //   required: true,
+          //   message: "用户每月限参与次数不能为空",
+          //   trigger: "blur"
+          // }],
+          // userCountActivity: [{
+          //   required: true,
+          //   message: "用户活动期间限参与次数不能为空",
+          //   trigger: "blur"
+          // }],
+        },
+        platformList: [],
+        missionGroupList: [],
       };
     },
     created() {
       this.getList();
+      this.getMissionGroupList();
+      this.getPlatFormList();
     },
     methods: {
       /** 查询银联任务配置列表 */
@@ -298,6 +380,18 @@
           this.total = response.total;
           this.loading = false;
         });
+      },
+      //平台下拉列表查询
+      getPlatFormList() {
+        selectListPlatform({}).then(res => {
+          this.platformList = res.data;
+        })
+      },
+      //任务组下拉列表查询
+      getMissionGroupList() {
+        selectListMissionGroup({}).then(res => {
+          this.missionGroupList = res.data;
+        })
       },
       // 取消按钮
       cancel() {
@@ -311,7 +405,7 @@
           upMissionGroupId: undefined,
           upMissionName: undefined,
           productId: undefined,
-          status: undefined,
+          status: '0',
           startDate: undefined,
           endDate: undefined,
           platformKey: undefined,
@@ -405,7 +499,39 @@
         this.download('zlyyh/unionpayMission/export', {
           ...this.queryParams
         }, `unionpayMission_${new Date().getTime()}.xlsx`)
-      }
+      },
+      changePlatform(row) {
+        let platformName = ''
+        this.platformList.forEach(item => {
+          if (row.platformKey == item.id) {
+            platformName = item.label;
+          }
+        })
+        if (platformName && platformName.length > 0) {
+          row.platformName = platformName;
+          return platformName;
+        }
+        return row.platformKey;
+      },
+      changeMissionGroup(row) {
+        let groupName = ''
+        this.missionGroupList.forEach(item => {
+          if (row.upMissionGroupId == item.id) {
+            groupName = item.label;
+          }
+        })
+        if (groupName && groupName.length > 0) {
+          row.groupName = groupName;
+          return groupName;
+        }
+        return row.upMissionGroupId;
+      },
     }
   };
 </script>
+<style scoped>
+  ::v-deep .el-form-item--small .el-form-item__label {
+    white-space: nowrap;
+    width: auto !important;
+  }
+</style>

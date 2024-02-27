@@ -100,5 +100,8 @@ public class UnionpayMissionVo {
     @ExcelProperty(value = "用户活动期间限参与次数")
     private Long userCountActivity;
 
+    private Date createTime;
+
+    private ProductVo productVo;
 
 }

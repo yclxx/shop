@@ -52,5 +52,8 @@ public class UnionpayMissionUserVo {
     @ExcelDictFormat(dictType = "sys_normal_disable")
     private String status;
 
+    private Date createTime;
+
+    private UserVo userVo;
 
 }

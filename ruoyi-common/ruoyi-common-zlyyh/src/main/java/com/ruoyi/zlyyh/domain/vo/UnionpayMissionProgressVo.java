@@ -71,5 +71,7 @@ public class UnionpayMissionProgressVo {
 
     private UnionpayMissionVo unionpayMissionVo;
 
+    private Date createTime;
 
+    private UserVo userVo;
 }

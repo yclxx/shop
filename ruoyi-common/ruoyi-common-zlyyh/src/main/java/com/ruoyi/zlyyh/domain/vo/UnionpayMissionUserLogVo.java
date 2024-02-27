@@ -99,4 +99,8 @@ public class UnionpayMissionUserLogVo {
 
     private ProductVo productVo;
 
+    private Date createTime;
+
+    private UserVo userVo;
+
 }

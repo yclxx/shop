@@ -193,14 +193,13 @@ public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
         if (ObjectUtil.isNotEmpty(unionpayMissionUserVo)) {
             return R.ok("1");
         } else {
-            //UserVo userVo = userService.queryById(LoginHelper.getUserId(), PlatformEnumd.MP_YSF.getChannel());
-            //UserChannelVo userChannelVo = userChannelService.queryByUserId(PlatformEnumd.MP_YSF.getChannel(), userVo.getUserId(), userVo.getPlatformKey());
-            //if (ObjectUtil.isEmpty(userChannelVo)) {
-            //    PlatformVo platformVo = platformService.queryById(userVo.getPlatformKey(), PlatformEnumd.MP_YSF.getChannel());
-            //    return R.ok("2",platformVo.getEncryptAppId());
-            //} else {
-            //}
-            return R.ok("0");
+            UserChannelVo userChannelVo = userChannelService.queryByUserId(PlatformEnumd.MP_YSF.getChannel(), bo.getUserId(), bo.getPlatformKey());
+            if (ObjectUtil.isEmpty(userChannelVo)) {
+                PlatformVo platformVo = platformService.queryById(bo.getPlatformKey(), PlatformEnumd.MP_YSF.getChannel());
+                return R.ok("2",platformVo);
+            } else {
+                return R.ok("0");
+            }
         }
     }
 
