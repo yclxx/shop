@@ -178,6 +178,20 @@ public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
             JSONObject r = YsfUtils.userSingUp(platformVo.getAppId(), platformVo.getSecret(), userVo.getOpenId(), missionGroupVo.getUpMissionGroupUpid(), IdUtil.createSnowflake(2, 2).nextIdStr(), platformVo.getPlatformKey());
             if (ObjectUtil.isEmpty(r)) {
                 throw new ServiceException("报名失败");
+            } else {
+                List<UnionpayMissionVo> missionVos = unionpayMissionMapper.selectVoList(new LambdaQueryWrapper<UnionpayMission>().eq(UnionpayMission::getUpMissionGroupId, bo.getUpMissionGroupId()).eq(UnionpayMission::getStatus,"0"));
+                if (ObjectUtil.isNotEmpty(missionVos)) {
+                    for (UnionpayMissionVo missionVo : missionVos) {
+                        List<UnionpayMissionProgressVo> progressVoList = unionpayMissionProgressMapper.selectVoList(new LambdaQueryWrapper<UnionpayMissionProgress>().eq(UnionpayMissionProgress::getUpMissionId, missionVo.getUpMissionId()).eq(UnionpayMissionProgress::getUpMissionGroupId, bo.getUpMissionGroupId()).eq(UnionpayMissionProgress::getUpMissionUserId, bo.getUpMissionUserId()));
+                        if (ObjectUtil.isEmpty(progressVoList)) {
+                            UnionpayMissionProgress missionProgress = new UnionpayMissionProgress();
+                            missionProgress.setUpMissionId(missionVo.getUpMissionId());
+                            missionProgress.setUpMissionGroupId(bo.getUpMissionGroupId());
+                            missionProgress.setUpMissionUserId(bo.getUpMissionUserId());
+                            unionpayMissionProgressMapper.insert(missionProgress);
+                        }
+                    }
+                }
             }
         }
     }

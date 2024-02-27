@@ -99,5 +99,6 @@ public class UnionpayMissionBo extends BaseEntity {
     //@NotNull(message = "用户活动期间限参与次数不能为空", groups = { AddGroup.class, EditGroup.class })
     private Long userCountActivity;
 
+    private String remark;
 
 }

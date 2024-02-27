@@ -100,6 +100,7 @@
       <el-table-column label="每周限参与次数" align="center" prop="userCountWeek" />
       <el-table-column label="每月限参与次数" align="center" prop="userCountMonth" />
       <el-table-column label="限总参与次数" align="center" prop="userCountActivity" />
+      <el-table-column label="规则说明" align="center" prop="remark" />
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status" />
@@ -227,6 +228,11 @@
                 </el-tooltip>
               </span>
               <el-input v-model="form.userCountActivity" placeholder="请输入用户活动期间限参与次数" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="规则说明" prop="remark">
+              <el-input v-model="form.remark" placeholder="请输入规则说明" />
             </el-form-item>
           </el-col>
         </el-row>

@@ -104,4 +104,6 @@ public class UnionpayMissionVo {
 
     private ProductVo productVo;
 
+    private String remark;
+
 }
