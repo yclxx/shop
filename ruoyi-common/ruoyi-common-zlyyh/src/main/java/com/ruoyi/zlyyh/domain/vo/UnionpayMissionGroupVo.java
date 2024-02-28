@@ -65,5 +65,10 @@ public class UnionpayMissionGroupVo {
     @ExcelProperty(value = "平台标识")
     private Long platformKey;
 
+    /**
+     * 创建时间
+     */
+    private Date createTime;
+
 
 }

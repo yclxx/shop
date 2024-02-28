@@ -7,6 +7,7 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.ruoyi.zlyyh.mapper.ProductMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.ruoyi.zlyyh.domain.bo.UnionpayMissionBo;
@@ -30,6 +31,7 @@ import java.util.Collection;
 public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
 
     private final UnionpayMissionMapper baseMapper;
+    private final ProductMapper productMapper;
 
     /**
      * 查询银联任务配置
@@ -46,7 +48,12 @@ public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
     public TableDataInfo<UnionpayMissionVo> queryPageList(UnionpayMissionBo bo, PageQuery pageQuery) {
         LambdaQueryWrapper<UnionpayMission> lqw = buildQueryWrapper(bo);
         Page<UnionpayMissionVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
-        return TableDataInfo.build(result);
+        TableDataInfo<UnionpayMissionVo> dataInfo = TableDataInfo.build(result);
+        for (UnionpayMissionVo row : dataInfo.getRows()) {
+            //查询发放奖励产品
+            row.setProductVo(productMapper.selectVoById(row.getProductId()));
+        }
+        return dataInfo;
     }
 
     /**

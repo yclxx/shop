@@ -1,15 +1,19 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="银联任务组ID" prop="upMissionGroupId">
-        <el-input v-model="queryParams.upMissionGroupId" placeholder="请输入银联任务组ID" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item label="任务组" prop="upMissionGroupId">
+        <el-select v-model="queryParams.upMissionGroupId" placeholder="请选择任务组" filterable clearable
+          style="width: 100%;">
+          <el-option v-for="item in missionGroupList" :key="item.id" :value="item.id" :label="item.label"></el-option>
+        </el-select>
       </el-form-item>
-      <el-form-item label="用户Id" prop="userId">
-        <el-input v-model="queryParams.userId" placeholder="请输入用户Id" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="用户电话" prop="userId">
+        <el-input v-model="queryParams.userId" placeholder="请输入用户电话" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="平台标识" prop="platformKey">
-        <el-input v-model="queryParams.platformKey" placeholder="请输入平台标识" clearable @keyup.enter.native="handleQuery" />
+      <el-form-item label="平台" prop="platformKey">
+        <el-select v-model="queryParams.platformKey" placeholder="请选择平台" filterable clearable style="width: 100%;">
+          <el-option v-for="item in platformList" :key="item.id" :value="item.id" :label="item.label"></el-option>
+        </el-select>
       </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择状态" clearable>
@@ -45,13 +49,18 @@
 
     <el-table v-loading="loading" :data="unionpayMissionUserList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="银联任务用户ID" align="center" prop="upMissionUserId" v-if="true" />
-      <el-table-column label="银联任务组ID" align="center" prop="upMissionGroupId" />
-      <el-table-column label="用户Id" align="center" prop="userId" />
-      <el-table-column label="平台标识" align="center" prop="platformKey" />
+      <!-- <el-table-column label="银联任务用户ID" align="center" prop="upMissionUserId" v-if="true" /> -->
+      <el-table-column label="任务组" align="center" prop="upMissionGroupId" :formatter="changeMissionGroup" />
+      <el-table-column label="用户" align="center" prop="userVo.mobile" />
+      <el-table-column label="平台" align="center" prop="platformKey" :formatter="changePlatform" />
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status" />
+        </template>
+      </el-table-column>
+      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
@@ -102,6 +111,12 @@
     addUnionpayMissionUser,
     updateUnionpayMissionUser
   } from "@/api/zlyyh/unionpayMissionUser";
+  import {
+    selectListMissionGroup
+  } from "@/api/zlyyh/unionpayMissionGroup";
+  import {
+    selectListPlatform
+  } from "@/api/zlyyh/platform"
 
   export default {
     name: "UnionpayMissionUser",
@@ -136,6 +151,8 @@
           userId: undefined,
           platformKey: undefined,
           status: undefined,
+          orderByColumn: 'create_time',
+          isAsc: 'desc',
         },
         // 表单参数
         form: {},
@@ -166,11 +183,15 @@
             message: "状态  0-正常  1-停用不能为空",
             trigger: "change"
           }],
-        }
+        },
+        platformList: [],
+        missionGroupList: [],
       };
     },
     created() {
       this.getList();
+      this.getMissionGroupList();
+      this.getPlatFormList();
     },
     methods: {
       /** 查询银联任务用户列表 */
@@ -181,6 +202,18 @@
           this.total = response.total;
           this.loading = false;
         });
+      },
+      //平台下拉列表查询
+      getPlatFormList() {
+        selectListPlatform({}).then(res => {
+          this.platformList = res.data;
+        })
+      },
+      //平台下拉列表查询
+      getMissionGroupList() {
+        selectListMissionGroup({}).then(res => {
+          this.missionGroupList = res.data;
+        })
       },
       // 取消按钮
       cancel() {
@@ -281,7 +314,35 @@
         this.download('zlyyh/unionpayMissionUser/export', {
           ...this.queryParams
         }, `unionpayMissionUser_${new Date().getTime()}.xlsx`)
-      }
+      },
+      //平台转换
+      changePlatform(row) {
+        let platformName = ''
+        this.platformList.forEach(item => {
+          if (row.platformKey == item.id) {
+            platformName = item.label;
+          }
+        })
+        if (platformName && platformName.length > 0) {
+          row.platformName = platformName;
+          return platformName;
+        }
+        return row.platformKey;
+      },
+      //任务组转换
+      changeMissionGroup(row) {
+        let groupName = ''
+        this.missionGroupList.forEach(item => {
+          if (row.upMissionGroupId == item.id) {
+            groupName = item.label;
+          }
+        })
+        if (groupName && groupName.length > 0) {
+          row.groupName = groupName;
+          return groupName;
+        }
+        return row.upMissionGroupId;
+      },
     }
   };
 </script>

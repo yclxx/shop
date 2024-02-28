@@ -55,7 +55,7 @@ public class UnionpayMissionController extends BaseController {
     }
 
     /**
-     * 查询下拉列表  银联任务
+     * 查询下拉列表  (银联任务)
      */
     @GetMapping("/selectMissionList")
     public R<List<SelectListEntity>> selectMissionList(UnionpayMissionBo bo){
