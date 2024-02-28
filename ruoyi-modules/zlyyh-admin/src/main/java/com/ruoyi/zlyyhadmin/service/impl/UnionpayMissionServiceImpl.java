@@ -50,6 +50,7 @@ public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
         Page<UnionpayMissionVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
         TableDataInfo<UnionpayMissionVo> dataInfo = TableDataInfo.build(result);
         for (UnionpayMissionVo row : dataInfo.getRows()) {
+            //查询发放奖励产品
             row.setProductVo(productMapper.selectVoById(row.getProductId()));
         }
         return dataInfo;

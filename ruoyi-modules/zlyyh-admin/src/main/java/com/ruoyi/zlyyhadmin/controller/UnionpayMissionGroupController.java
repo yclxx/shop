@@ -56,7 +56,7 @@ public class UnionpayMissionGroupController extends BaseController {
 
 
     /**
-     * 查询下拉列表  任务组
+     * 查询下拉列表  (任务组)
      */
     @GetMapping("/selectMissionGroupList")
     public R<List<SelectListEntity>> selectMissionGroupList(UnionpayMissionGroupBo bo){

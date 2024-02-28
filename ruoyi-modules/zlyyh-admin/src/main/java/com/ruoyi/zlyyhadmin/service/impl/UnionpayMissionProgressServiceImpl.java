@@ -76,6 +76,7 @@ public class UnionpayMissionProgressServiceImpl implements IUnionpayMissionProgr
         for (UnionpayMissionProgressVo row : dataInfo.getRows()) {
             UnionpayMissionUserVo missionUserVo = unionpayMissionUserMapper.selectVoById(row.getUpMissionUserId());
             if (ObjectUtil.isNotEmpty(missionUserVo)) {
+                //查询用户
                 row.setUserVo(userService.queryById(missionUserVo.getUserId()));
             }
         }

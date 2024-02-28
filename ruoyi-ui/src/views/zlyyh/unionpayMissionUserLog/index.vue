@@ -450,6 +450,7 @@
           ...this.queryParams
         }, `unionpayMissionUserLog_${new Date().getTime()}.xlsx`)
       },
+      //任务组转换
       changeMissionGroup(row) {
         let groupName = ''
         this.missionGroupList.forEach(item => {
@@ -463,6 +464,7 @@
         }
         return row.upMissionGroupId;
       },
+      //任务转换
       changeMission(row) {
         let missiomName = ''
         this.missionList.forEach(item => {

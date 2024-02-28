@@ -356,6 +356,7 @@
           ...this.queryParams
         }, `unionpayMissionGroup_${new Date().getTime()}.xlsx`)
       },
+      //平台转换
       changePlatform(row) {
         let platformName = ''
         this.platformList.forEach(item => {

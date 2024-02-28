@@ -65,6 +65,7 @@ public class UnionpayMissionUserServiceImpl implements IUnionpayMissionUserServi
         Page<UnionpayMissionUserVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
         TableDataInfo<UnionpayMissionUserVo> dataInfo = TableDataInfo.build(result);
         for (UnionpayMissionUserVo row : dataInfo.getRows()) {
+            //查询用户
             row.setUserVo(userService.queryById(row.getUserId()));
         }
         return dataInfo;

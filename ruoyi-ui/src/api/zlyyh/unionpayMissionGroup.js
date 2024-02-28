@@ -43,7 +43,7 @@ export function delUnionpayMissionGroup(upMissionGroupId) {
   })
 }
 
-// 查询任务组下拉信息列表
+// 查询任务组下拉列表
 export function selectListMissionGroup(query) {
   return request({
     url: '/zlyyh-admin/unionpayMissionGroup/selectMissionGroupList',

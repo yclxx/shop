@@ -11,8 +11,8 @@
         <el-input v-model="queryParams.upMissionName" placeholder="请输入银联任务名称" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="奖励产品id" prop="productId">
-        <el-input v-model="queryParams.productId" placeholder="请输入发放奖励产品id" clearable
+      <el-form-item label="奖励产品ID" prop="productId">
+        <el-input v-model="queryParams.productId" placeholder="请输入发放奖励产品Id" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="状态" prop="status">

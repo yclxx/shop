@@ -315,6 +315,7 @@
           ...this.queryParams
         }, `unionpayMissionUser_${new Date().getTime()}.xlsx`)
       },
+      //平台转换
       changePlatform(row) {
         let platformName = ''
         this.platformList.forEach(item => {
@@ -328,6 +329,7 @@
         }
         return row.platformKey;
       },
+      //任务组转换
       changeMissionGroup(row) {
         let groupName = ''
         this.missionGroupList.forEach(item => {
