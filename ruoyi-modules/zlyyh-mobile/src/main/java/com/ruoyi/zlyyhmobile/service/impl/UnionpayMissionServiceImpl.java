@@ -197,9 +197,7 @@ public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
     }
 
     /**
-     * 用户报名校验
-     * @param bo
-     * @return
+     * 用户报名校验  银联任务
      */
     @Override
     public R<Object> signUpVerify(UnionpayMissionUserBo bo) {
@@ -209,6 +207,7 @@ public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
         } else {
             UserChannelVo userChannelVo = userChannelService.queryByUserId(PlatformEnumd.MP_YSF.getChannel(), bo.getUserId(), bo.getPlatformKey());
             if (ObjectUtil.isEmpty(userChannelVo)) {
+                //查询平台
                 PlatformVo platformVo = platformService.queryById(bo.getPlatformKey(), PlatformEnumd.MP_YSF.getChannel());
                 return R.ok("2",platformVo);
             } else {

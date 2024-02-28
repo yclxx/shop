@@ -56,12 +56,12 @@ public class UnionpayMissionGroupController extends BaseController {
 
 
     /**
-     * 查询任务组下拉列表
+     * 查询下拉列表  任务组
      */
     @GetMapping("/selectMissionGroupList")
     public R<List<SelectListEntity>> selectMissionGroupList(UnionpayMissionGroupBo bo){
-        List<UnionpayMissionGroupVo> groupVoList = iUnionpayMissionGroupService.queryList(bo);
-        return R.ok(BeanCopyUtils.copyListToSelectListVo(groupVoList, ColumnUtil.getFieldName(UnionpayMissionGroupVo::getUpMissionGroupId),ColumnUtil.getFieldName(UnionpayMissionGroupVo::getUpMissionGroupName),null));
+        List<UnionpayMissionGroupVo> missionGroupVoList = iUnionpayMissionGroupService.queryList(bo);
+        return R.ok(BeanCopyUtils.copyListToSelectListVo(missionGroupVoList, ColumnUtil.getFieldName(UnionpayMissionGroupVo::getUpMissionGroupId),ColumnUtil.getFieldName(UnionpayMissionGroupVo::getUpMissionGroupName),null));
     }
 
     /**

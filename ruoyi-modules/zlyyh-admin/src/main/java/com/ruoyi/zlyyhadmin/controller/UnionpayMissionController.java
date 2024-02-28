@@ -55,12 +55,12 @@ public class UnionpayMissionController extends BaseController {
     }
 
     /**
-     * 查询任务下拉列表
+     * 查询下拉列表  银联任务
      */
     @GetMapping("/selectMissionList")
     public R<List<SelectListEntity>> selectMissionList(UnionpayMissionBo bo){
-        List<UnionpayMissionVo> missionVoList = iUnionpayMissionService.queryList(bo);
-        return R.ok(BeanCopyUtils.copyListToSelectListVo(missionVoList, ColumnUtil.getFieldName(UnionpayMissionVo::getUpMissionId),ColumnUtil.getFieldName(UnionpayMissionVo::getUpMissionName),null));
+        List<UnionpayMissionVo> unionpayMissionVoList = iUnionpayMissionService.queryList(bo);
+        return R.ok(BeanCopyUtils.copyListToSelectListVo(unionpayMissionVoList, ColumnUtil.getFieldName(UnionpayMissionVo::getUpMissionId),ColumnUtil.getFieldName(UnionpayMissionVo::getUpMissionName),null));
     }
 
     /**
