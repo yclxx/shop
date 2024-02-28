@@ -54,6 +54,7 @@ public class UnionpayMissionGroupController extends BaseController {
         return iUnionpayMissionGroupService.queryPageList(bo, pageQuery);
     }
 
+
     /**
      * 查询任务组下拉列表
      */
