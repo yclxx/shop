@@ -341,6 +341,9 @@ public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
                     continue;
                 }
                 String userProcessStr = resJson.getString("userProcessStr");
+
+                //String userProcessStr = "1/2次,1/2元,2/3次";
+
                 String[] userProcess = userProcessStr.split(",");
                 String tranProgress = getTranProgress(missionVo, resJson, userProcess);
                 UnionpayMissionProgressVo missionProgressVo = unionpayMissionProgressMapper.selectVoOne(new LambdaQueryWrapper<UnionpayMissionProgress>().eq(UnionpayMissionProgress::getUpMissionId, missionVo.getUpMissionId()).eq(UnionpayMissionProgress::getUpMissionUserId, missionUserVo.getUpMissionUserId()).last("limit 1"));
@@ -398,50 +401,34 @@ public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
      * 发放奖励
      */
     private void sendReward(UnionpayMissionVo missionVo,String[] userProcess,UnionpayMissionUserVo missionUserVo) {
-        Long count = unionpayMissionUserLogMapper.selectCount(new LambdaQueryWrapper<UnionpayMissionUserLog>().eq(UnionpayMissionUserLog::getUpMissionUserId, missionUserVo.getUpMissionUserId()).eq(UnionpayMissionUserLog::getUpMissionId, missionVo.getUpMissionId()).eq(UnionpayMissionUserLog::getStatus,"2"));
+        Long count = unionpayMissionUserLogMapper.selectCount(new LambdaQueryWrapper<UnionpayMissionUserLog>().eq(UnionpayMissionUserLog::getUpMissionUserId, missionUserVo.getUpMissionUserId()).eq(UnionpayMissionUserLog::getUpMissionId, missionVo.getUpMissionId()));
         if (count >= missionVo.getUserCountActivity()) {
             return;
         }
-        if (Long.valueOf(userProcess[0].substring(0,1)) <= 0) {
+        String canSendCount = userProcess[userProcess.length - 1].split("/")[0];
+        if (Long.valueOf(canSendCount) <= 0) {
             return;
         }
-        long syCount = missionVo.getUserCountActivity() - count;
-        Long sendCount = Long.valueOf(userProcess[0].substring(0, 1)) - syCount;
-        if (sendCount >= 0) {
-            for (long l = 0; l < syCount; l++) {
-                UnionpayMissionUserLog missionUserLog = new UnionpayMissionUserLog();
-                missionUserLog.setUpMissionUserId(missionUserVo.getUpMissionUserId());
-                missionUserLog.setUpMissionGroupId(missionVo.getUpMissionGroupId());
-                missionUserLog.setUpMissionId(missionVo.getUpMissionId());
-                // 生成订单发放奖励
-                CreateOrderBo createOrderBo = new CreateOrderBo();
-                createOrderBo.setProductId(missionVo.getProductId());
-                createOrderBo.setUserId(missionUserVo.getUserId());
-                createOrderBo.setPlatformKey(missionVo.getPlatformKey());
-                createOrderBo.setChannel(PlatformEnumd.MP_YSF.getChannel());
-                CreateOrderResult order = orderService.createOrder(createOrderBo, true);
+        long sendCount = Long.valueOf(canSendCount) - count;
+        if (sendCount <= 0) {
+            return;
+        }
+        for (long l = 0; l < sendCount; l++) {
+            UnionpayMissionUserLog missionUserLog = new UnionpayMissionUserLog();
+            missionUserLog.setUpMissionUserId(missionUserVo.getUpMissionUserId());
+            missionUserLog.setUpMissionGroupId(missionVo.getUpMissionGroupId());
+            missionUserLog.setUpMissionId(missionVo.getUpMissionId());
+            // 生成订单发放奖励
+            CreateOrderBo createOrderBo = new CreateOrderBo();
+            createOrderBo.setProductId(missionVo.getProductId());
+            //createOrderBo.setProductId(1760905911856824320L);
+            createOrderBo.setUserId(missionUserVo.getUserId());
+            createOrderBo.setPlatformKey(missionVo.getPlatformKey());
+            createOrderBo.setChannel(PlatformEnumd.MP_YSF.getChannel());
+            CreateOrderResult order = orderService.createOrder(createOrderBo, true);
 
-                missionUserLog.setNumber(order.getNumber());
-                unionpayMissionUserLogMapper.insert(missionUserLog);
-            }
-        } else {
-            for (long l = 0; l < Long.valueOf(userProcess[0].substring(0, 1)); l++) {
-                UnionpayMissionUserLog missionUserLog = new UnionpayMissionUserLog();
-                missionUserLog.setUpMissionUserId(missionUserVo.getUpMissionUserId());
-                missionUserLog.setUpMissionGroupId(missionVo.getUpMissionGroupId());
-                missionUserLog.setUpMissionId(missionVo.getUpMissionId());
-                // 生成订单发放奖励
-                CreateOrderBo createOrderBo = new CreateOrderBo();
-                createOrderBo.setProductId(missionVo.getProductId());
-                //createOrderBo.setProductId(1760905911856824320L);
-                createOrderBo.setUserId(missionUserVo.getUserId());
-                createOrderBo.setPlatformKey(missionVo.getPlatformKey());
-                createOrderBo.setChannel(PlatformEnumd.MP_YSF.getChannel());
-                CreateOrderResult order = orderService.createOrder(createOrderBo, true);
-
-                missionUserLog.setNumber(order.getNumber());
-                unionpayMissionUserLogMapper.insert(missionUserLog);
-            }
+            missionUserLog.setNumber(order.getNumber());
+            unionpayMissionUserLogMapper.insert(missionUserLog);
         }
     }
 
