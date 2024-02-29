@@ -104,4 +104,19 @@ public class UnionpayMissionBo extends BaseEntity {
      */
     private String remark;
 
+    /**
+     * 交易类型
+     */
+    private String tranType;
+
+    /**
+     * 限制交易数量
+     */
+    private Long tranCount;
+
+    /**
+     * 单笔支付金额
+     */
+    private Long payAmount;
+
 }
