@@ -100,6 +100,15 @@
       <el-table-column label="每周限参与次数" align="center" prop="userCountWeek" />
       <el-table-column label="每月限参与次数" align="center" prop="userCountMonth" />
       <el-table-column label="限总参与次数" align="center" prop="userCountActivity" />
+      <el-table-column label="交易规则" align="left" prop="tranType" width="130">
+        <template slot-scope="scope">
+          <div style="display: flex;">类型：<dict-tag :options="dict.type.t_upmission_tran_type"
+              :value="scope.row.tranType" /></div>
+          <div v-if="scope.row.tranType == 1">限制笔数：{{scope.row.tranCount}}</div>
+          <div v-if="scope.row.tranType == 2">限制金额：{{(scope.row.tranCount / 100).toFixed(2)}}</div>
+          <div>单笔金额：{{(scope.row.payAmount / 100).toFixed(2)}}</div>
+        </template>
+      </el-table-column>
       <el-table-column label="规则说明" align="center" prop="remark" />
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
@@ -231,6 +240,24 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
+            <el-form-item label="交易类型" prop="tranType">
+              <el-radio-group v-model="form.tranType">
+                <el-radio v-for="dict in dict.type.t_upmission_tran_type" :key="dict.value"
+                  :label="dict.value">{{dict.label}}</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="交易限制" prop="tranCount">
+              <el-input v-model="form.tranCount" placeholder="请输入交易限制" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="单笔限制金额" prop="payAmount">
+              <el-input v-model="form.payAmount" placeholder="请输入单笔限制金额" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
             <el-form-item label="规则说明" prop="remark">
               <el-input v-model="form.remark" placeholder="请输入规则说明" />
             </el-form-item>
@@ -262,7 +289,7 @@
 
   export default {
     name: "UnionpayMission",
-    dicts: ['sys_normal_disable'],
+    dicts: ['sys_normal_disable', 't_upmission_tran_type'],
     data() {
       return {
         // 按钮loading
@@ -412,6 +439,7 @@
           upMissionName: undefined,
           productId: undefined,
           status: '0',
+          tranType: '1',
           startDate: undefined,
           endDate: undefined,
           platformKey: undefined,
@@ -457,6 +485,10 @@
         getUnionpayMission(upMissionId).then(response => {
           this.loading = false;
           this.form = response.data;
+          if (this.form.tranType == 2) {
+            this.form.tranCount = Number(this.form.tranCount / 100).toFixed(2);
+          }
+          this.form.payAmount = (this.form.payAmount / 100).toFixed(2);
           this.open = true;
           this.title = "修改银联任务配置";
         });
@@ -466,6 +498,12 @@
         this.$refs["form"].validate(valid => {
           if (valid) {
             this.buttonLoading = true;
+            if (this.form.tranType == 2) {
+              this.form.tranCount = (this.form.tranCount * 100).toFixed(0);
+            }
+            if (this.form.payAmount) {
+              this.form.payAmount = (this.form.payAmount * 100).toFixed(0);
+            }
             if (this.form.upMissionId != null) {
               updateUnionpayMission(this.form).then(response => {
                 this.$modal.msgSuccess("修改成功");

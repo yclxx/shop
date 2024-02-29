@@ -77,4 +77,9 @@ public class UnionpayMissionProgressVo {
     private Date createTime;
 
     private UserVo userVo;
+
+    /**
+     * 交易进度
+     */
+    private String tranProgress;
 }

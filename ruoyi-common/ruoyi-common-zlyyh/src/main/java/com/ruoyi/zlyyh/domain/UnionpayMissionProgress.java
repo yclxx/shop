@@ -62,4 +62,9 @@ public class UnionpayMissionProgress extends BaseEntity {
     @TableLogic
     private String delFlag;
 
+    /**
+     * 交易进度
+     */
+    private String tranProgress;
+
 }

@@ -63,6 +63,7 @@
       <el-table-column label="任务" align="center" prop="upMissionId" :formatter="changeMission" />
       <el-table-column label="任务组" align="center" prop="upMissionGroupId" :formatter="changeMissionGroup" />
       <el-table-column label="任务用户" align="center" prop="userVo.mobile" />
+      <el-table-column label="任务进度" align="center" prop="tranProgress" />
       <el-table-column label="当日进度" align="center" prop="dayProgress" />
       <el-table-column label="本周进度" align="center" prop="weekProgress" />
       <el-table-column label="本月进度" align="center" prop="monthProgress" />
