@@ -138,20 +138,15 @@
 
     <pagination v-show="total>0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
                 @pagination="getList"/>
-
-
-
-
   </div>
 </template>
 
 <script>
 import {
-  categoryProductList,
+  categoryPlatformProductList,
 
 } from "@/api/zlyyh/product";
 import {
-
   selectCityList
 } from "@/api/zlyyh/area"
 import {selectListPlatform} from "@/api/zlyyh/platform"
@@ -163,11 +158,9 @@ import item from "@/layout/components/Sidebar/Item.vue";
 import {
   addProductByCategory,
   delProductByCategory
-} from "@/api/zlyyh/categoryProduct";
-
-
+} from "@/api/zlyyh/categoryPlatformProduct";
 export default {
-  name: "categoryProductPoup",
+  name: "categoryProductPlatform",
   components: {},
   computed: {
     item() {
@@ -175,13 +168,13 @@ export default {
     }
   },
   props: {
-    categoryId: {
+    categoryPlatformId: {
       type: String,
       default: undefined
     }
   },
   watch: {
-    categoryId: {
+    categoryPlatformId: {
       deep: true,
       handler() {
         this.isProduct = true
@@ -319,7 +312,7 @@ export default {
         sort: undefined,
         orderByColumn: "product_id",
         isAsc: 'desc',
-        categoryId: undefined,
+        categoryPlatformId: undefined,
       },
       // 表单参数
       form: {},
@@ -397,7 +390,6 @@ export default {
     },
 
 
-
     /** 查询商品列表 */
     getList() {
       this.loading = true;
@@ -410,13 +402,13 @@ export default {
         this.queryParams.params["beginEndDate"] = this.showEndDate[0];
         this.queryParams.params["endEndDate"] = this.showEndDate[1];
       }
-      this.queryParams.categoryId = this.categoryId;
+      this.queryParams.categoryPlatformId = this.categoryPlatformId;
       if (this.isProduct) {
         this.queryParams.sort = 0;
       } else {
         this.queryParams.sort = 1;
       }
-      categoryProductList(this.queryParams).then(response => {
+      categoryPlatformProductList(this.queryParams).then(response => {
         this.productList = response.rows;
         this.total = response.total;
         this.loading = false;
@@ -430,7 +422,6 @@ export default {
       this.isProduct = index !== 0;
       this.handleQuery();
     },
-
 
 
     /** 搜索按钮操作 */
@@ -451,7 +442,7 @@ export default {
         this.loading = true;
         const param = {
           'productIds': productIds,
-          'categoryId': this.categoryId
+          'categoryPlatformId': this.categoryPlatformId
         }
         delProductByCategory(param).then(response => {
           this.loading = false;
@@ -475,7 +466,7 @@ export default {
         this.loading = true;
         const param = {
           'productIds': productIds,
-          'categoryId': this.categoryId
+          'categoryPlatformId': this.categoryPlatformId
         }
         addProductByCategory(param).then(response => {
           this.loading = false;
@@ -490,9 +481,12 @@ export default {
       }).finally(() => {
       });
     },
-
-
   }
-};
+
+
+}
 </script>
 
+<style scoped>
+
+</style>
