@@ -59,4 +59,6 @@ public interface IVerifierService {
      * 新增商户门店门店编号(商户端)
      */
     Boolean insertTenantShopMerchant(ShopAndMerchantBo bo);
+
+    long queryUnExShopCount(VerifierBo bo);
 }

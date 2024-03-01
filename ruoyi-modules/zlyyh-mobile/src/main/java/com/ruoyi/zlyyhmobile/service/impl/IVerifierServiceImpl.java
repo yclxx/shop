@@ -310,6 +310,41 @@ public class IVerifierServiceImpl implements IVerifierService {
     }
 
     @Override
+    public long queryUnExShopCount(VerifierBo bo) {
+        LambdaQueryWrapper<Shop> lqw = Wrappers.lambdaQuery();
+        if (StringUtils.isNotEmpty(bo.getUsername())) {
+            lqw.likeLeft(Shop::getShopName, bo.getUsername());
+        }
+        if (StringUtils.isNotEmpty(bo.getCityCode())) {
+            lqw.likeLeft(Shop::getDistrict, bo.getCityCode());
+        }
+        lqw.orderByDesc(Shop::getCreateTime);
+        if (StringUtils.isNotEmpty(bo.getContract()) && bo.getContract().equals("5")) {
+            String sql = "SELECT commercial_tenant_id FROM t_commercial_tenant WHERE verifier_id =" + bo.getId();
+            if (StringUtils.isNotEmpty(bo.getOrg())) {
+                sql = sql + " AND commercial_tenant_name LIKE '" + bo.getOrg() + "%'";
+            }
+            lqw.inSql(Shop::getCommercialTenantId, sql);
+        } else {
+            if (ObjectUtil.isNotEmpty(bo.getCommercialTenantId())) {
+                lqw.eq(Shop::getCommercialTenantId, bo.getCommercialTenantId());
+            } else {
+                lqw.inSql(Shop::getShopId, "SELECT shop_id FROM t_verifier_shop WHERE verifier_id = " + bo.getId());
+            }
+        }
+        if (ObjectUtil.isNotEmpty(bo.getUnVerifierShop())){
+            lqw.eq(Shop::getExamineVerifier,bo.getUnVerifierShop());
+        }
+        lqw.eq(Shop::getExamineVerifier,"0");
+        Long aLong = shopMapper.selectCount(lqw);
+        if (ObjectUtil.isEmpty(aLong)){
+            aLong = 0L;
+        }
+        return aLong;
+    }
+
+
+    @Override
     public Boolean updateShopById(ShopBo bo) {
         return shopService.updateShopById(bo);
     }
@@ -567,4 +602,5 @@ public class IVerifierServiceImpl implements IVerifierService {
         }
         return true;
     }
+
 }
