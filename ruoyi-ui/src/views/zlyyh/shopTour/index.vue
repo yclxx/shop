@@ -1,6 +1,11 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+      <el-form-item label="巡检活动" prop="tourActivityId">
+        <el-select v-model="queryParams.tourActivityId" placeholder="请选择巡检活动" clearable>
+          <el-option v-for="item in tourActivityList" :key="item.id" :label="item.label" :value="item.id" />
+        </el-select>
+      </el-form-item>
       <el-form-item label="门店" prop="shopId">
         <el-select v-model="queryParams.shopId" placeholder="请选择门店" clearable>
           <el-option v-for="item in shopSelectList" :key="item.id" :label="item.label" :value="item.id" />
@@ -80,6 +85,8 @@
       <!-- <el-table-column label="id" align="center" prop="id" v-if="true" /> -->
       <!-- <el-table-column label="门店id" align="center" prop="shopId" /> -->
       <el-table-column label="巡检门店" align="center" width="130" prop="shopId" :formatter="shopIdFormatter" />
+      <el-table-column label="巡检活动" align="center" width="130" prop="tourActivityId"
+        :formatter="tourActivityFormatter" />
       <el-table-column label="巡检人员" align="center" width="106" prop="verifierId" :formatter="verifierIdFormatter" />
       <el-table-column label="奖励金额(元)" align="center" width="100" prop="rewardAmount" />
       <el-table-column label="预约信息" align="left" width="210" prop="isReserve">
@@ -161,6 +168,11 @@
         <el-form-item label="巡检人员id" prop="verifierId">
           <el-input v-model="form.verifierId" placeholder="请输入巡检人员id" />
         </el-form-item> -->
+        <el-form-item label="巡检活动" prop="tourActivityId">
+          <el-select v-model="form.tourActivityId" placeholder="请选择巡检活动" clearable>
+            <el-option v-for="item in tourActivityList" :key="item.id" :label="item.label" :value="item.id" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="奖励金额" prop="rewardAmount">
           <el-input v-model="form.rewardAmount" placeholder="请输入奖励金额">
             <template slot="append">元</template>
@@ -313,9 +325,14 @@
       </div>
     </el-dialog>
 
-    <!-- 审核失败对话框 -->
+    <!-- 添加巡检商户确认框 -->
     <el-dialog title="巡检奖励" :visible.sync="rewardOpen" width="500px" append-to-body>
       <el-form ref="rewardForm" :model="rewardForm" :rules="rewardRules" label-width="80px">
+        <el-form-item label="巡检活动" prop="tourActivityId">
+          <el-select v-model="form.tourActivityId" placeholder="请选择巡检活动" clearable>
+            <el-option v-for="item in tourActivityList" :key="item.id" :label="item.label" :value="item.id" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="巡检奖励" prop="rewardAmount">
           <el-input v-model="rewardForm.rewardAmount" placeholder="请输入奖励金额">
             <template slot="append">元</template>
@@ -353,6 +370,9 @@
   import {
     selectListBusinessDistrict
   } from "@/api/zlyyh/businessDistrict";
+  import {
+    selectListTourActivity
+  } from "@/api/zlyyh/shopTourActivity";
 
 
   export default {
@@ -483,11 +503,11 @@
           //   message: "是否继续参与活动  0-不参与  1-参与不能为空",
           //   trigger: "change"
           // }],
-          // isClose: [{
-          //   required: true,
-          //   message: "门店是否关闭  0-关闭  1-不关闭不能为空",
-          //   trigger: "change"
-          // }],
+          tourActivityId: [{
+            required: true,
+            message: "巡检活动不能为空",
+            trigger: "change"
+          }],
         },
         tourOpen: false,
         tourShop: {
@@ -527,12 +547,18 @@
         rewardOpen: false,
         rewardForm: {},
         rewardRules: {
+          tourActivityId: [{
+            required: true,
+            message: "巡检活动不能为空",
+            trigger: "change"
+          }],
           // rewardAmount: [{
           //   required: true,
           //   message: "巡检奖励不能为空",
           //   trigger: "blur"
           // }],
-        }
+        },
+        tourActivityList: [],
       };
     },
     created() {
@@ -541,6 +567,7 @@
       this.getVerifiereSelectList();
       this.getShopSelectList();
       this.getBusinessDistrictSelectList();
+      this.getTourActivityList();
     },
     methods: {
       /** 查询巡检商户列表 */
@@ -554,6 +581,12 @@
           this.total = response.total;
           this.loading = false;
         });
+      },
+      //巡检活动下拉列表查询
+      getTourActivityList() {
+        selectListTourActivity({}).then(res => {
+          this.tourActivityList = res.data;
+        })
       },
       //商圈下拉列表
       getBusinessDistrictSelectList() {
@@ -769,6 +802,19 @@
           return name;
         }
         return row.commercialTenantId;
+      },
+      tourActivityFormatter(row) {
+        let name = '';
+        this.tourActivityList.forEach(item => {
+          if (item.id == row.tourActivityId) {
+            name = item.label;
+          }
+        })
+        if (name && name.length > 0) {
+          row.tourActivityName = name;
+          return name;
+        }
+        return row.tourActivityId;
       },
       submitShopForm() {
         console.log(this.tourShop.ids)

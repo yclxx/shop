@@ -156,4 +156,9 @@ public class ShopTourVo {
 
     private BigDecimal latitude;
 
+    /**
+     * 巡检活动id
+     */
+    private Long tourActivityId;
+
 }

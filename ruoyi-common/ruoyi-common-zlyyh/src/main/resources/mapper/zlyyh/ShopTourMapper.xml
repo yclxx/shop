@@ -29,6 +29,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <result property="reserveDate" column="reserve_date"/>
     <result property="noActivityRemark" column="no_activity_remark"/>
     <result property="closeRemark" column="close_remark"/>
+    <result property="tourActivityId" column="tour_activity_id"/>
     </resultMap>
     <select id="queryPageTourList" resultType="com.ruoyi.zlyyh.domain.vo.ShopTourVo">
         select s.shop_name shopName,s.address address,tour.*
