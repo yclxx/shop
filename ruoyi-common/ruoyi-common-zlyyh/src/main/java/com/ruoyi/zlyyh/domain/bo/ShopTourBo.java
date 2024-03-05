@@ -156,4 +156,9 @@ public class ShopTourBo extends BaseEntity {
     private String adminMobile;
 
     private Long[] shopIds;
+
+    /**
+     * 巡检活动id
+     */
+    private Long tourActivityId;
 }

@@ -178,14 +178,51 @@ public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
             JSONObject r = YsfUtils.userSingUp(platformVo.getAppId(), platformVo.getSecret(), userVo.getOpenId(), missionGroupVo.getUpMissionGroupUpid(), IdUtil.createSnowflake(2, 2).nextIdStr(), platformVo.getPlatformKey());
             if (ObjectUtil.isEmpty(r)) {
                 throw new ServiceException("报名失败");
+            } else {
+                List<UnionpayMissionVo> missionVos = unionpayMissionMapper.selectVoList(new LambdaQueryWrapper<UnionpayMission>().eq(UnionpayMission::getUpMissionGroupId, bo.getUpMissionGroupId()).eq(UnionpayMission::getStatus,"0"));
+                if (ObjectUtil.isNotEmpty(missionVos)) {
+                    for (UnionpayMissionVo missionVo : missionVos) {
+                        List<UnionpayMissionProgressVo> progressVoList = unionpayMissionProgressMapper.selectVoList(new LambdaQueryWrapper<UnionpayMissionProgress>().eq(UnionpayMissionProgress::getUpMissionId, missionVo.getUpMissionId()).eq(UnionpayMissionProgress::getUpMissionGroupId, bo.getUpMissionGroupId()).eq(UnionpayMissionProgress::getUpMissionUserId, bo.getUpMissionUserId()));
+                        if (ObjectUtil.isEmpty(progressVoList)) {
+                            UnionpayMissionProgress missionProgress = new UnionpayMissionProgress();
+                            missionProgress.setUpMissionId(missionVo.getUpMissionId());
+                            missionProgress.setUpMissionGroupId(bo.getUpMissionGroupId());
+                            missionProgress.setUpMissionUserId(bo.getUpMissionUserId());
+                            if (missionVo.getTranType().equals("1")) {
+                                //笔数交易
+                                missionProgress.setTranProgress("0/" + missionVo.getTranCount());
+                            } else if (missionVo.getTranType().equals("2")) {
+                                //金额交易
+                                BigDecimal bigDecimal = new BigDecimal(missionVo.getTranCount()).divide(new BigDecimal(100L)).setScale(2, BigDecimal.ROUND_DOWN);
+                                String s = bigDecimal.toString().split("\\.")[1];
+                                if (s.equals("00")) {
+                                    missionProgress.setTranProgress("0/" + bigDecimal.toString().split("\\.")[0]);
+                                } else {
+                                    missionProgress.setTranProgress("0/" + bigDecimal.toString());
+                                }
+                            }
+                            unionpayMissionProgressMapper.insert(missionProgress);
+                        }
+                    }
+                }
             }
         }
     }
 
+    public static void main(String[] args) {
+        BigDecimal bigDecimal = new BigDecimal("2.00");
+        String[] split = bigDecimal.toString().split("\\.");
+        //for (String s : split) {
+        //    System.out.println(s);
+        //}
+        String s1= bigDecimal.toString().split("\\.")[0];
+        String s2 = bigDecimal.toString().split("\\.")[1];
+        System.out.println(s1);
+        System.out.println(s2);
+    }
+
     /**
-     * 用户报名校验
-     * @param bo
-     * @return
+     * 用户报名校验  银联任务
      */
     @Override
     public R<Object> signUpVerify(UnionpayMissionUserBo bo) {
@@ -193,14 +230,14 @@ public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
         if (ObjectUtil.isNotEmpty(unionpayMissionUserVo)) {
             return R.ok("1");
         } else {
-            //UserVo userVo = userService.queryById(LoginHelper.getUserId(), PlatformEnumd.MP_YSF.getChannel());
-            //UserChannelVo userChannelVo = userChannelService.queryByUserId(PlatformEnumd.MP_YSF.getChannel(), userVo.getUserId(), userVo.getPlatformKey());
-            //if (ObjectUtil.isEmpty(userChannelVo)) {
-            //    PlatformVo platformVo = platformService.queryById(userVo.getPlatformKey(), PlatformEnumd.MP_YSF.getChannel());
-            //    return R.ok("2",platformVo.getEncryptAppId());
-            //} else {
-            //}
-            return R.ok("0");
+            UserChannelVo userChannelVo = userChannelService.queryByUserId(PlatformEnumd.MP_YSF.getChannel(), bo.getUserId(), bo.getPlatformKey());
+            if (ObjectUtil.isEmpty(userChannelVo)) {
+                //查询平台参数
+                PlatformVo platformVo = platformService.queryById(bo.getPlatformKey(), PlatformEnumd.MP_YSF.getChannel());
+                return R.ok("2",platformVo);
+            } else {
+                return R.ok("0");
+            }
         }
     }
 
@@ -277,22 +314,22 @@ public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
                     continue;
                 }
                 String userProcessStr = resJson.getString("userProcessStr");
-                if (ObjectUtil.isEmpty(userProcessStr)) {
-                    continue;
-                }
                 String[] userProcess = userProcessStr.split(",");
+                String tranProgress = getTranProgress(missionVo, resJson, userProcess);
                 UnionpayMissionProgressVo missionProgressVo = unionpayMissionProgressMapper.selectVoOne(new LambdaQueryWrapper<UnionpayMissionProgress>().eq(UnionpayMissionProgress::getUpMissionId, missionVo.getUpMissionId()).eq(UnionpayMissionProgress::getUpMissionUserId, missionUserVo.getUpMissionUserId()).last("limit 1"));
                 if (ObjectUtil.isNotEmpty(missionProgressVo)) {
-                    missionProgressVo.setDayProgress(Long.valueOf(userProcess[0].substring(0,1)));
-                    missionProgressVo.setActivityProgress(Long.valueOf(userProcess[userProcess.length - 1].substring(0,1)));
+                    missionProgressVo.setTranProgress(tranProgress);
+                    missionProgressVo.setDayProgress(Long.valueOf(userProcess[0].split("/")[0]));
+                    missionProgressVo.setActivityProgress(Long.valueOf(userProcess[userProcess.length - 1].split("/")[0]));
                     unionpayMissionProgressMapper.updateById(BeanUtil.toBean(missionProgressVo, UnionpayMissionProgress.class));
                 } else {
                     UnionpayMissionProgress missionProgress = new UnionpayMissionProgress();
                     missionProgress.setUpMissionId(missionVo.getUpMissionId());
                     missionProgress.setUpMissionGroupId(missionGroupVo.getUpMissionGroupId());
                     missionProgress.setUpMissionUserId(missionUserVo.getUpMissionUserId());
-                    missionProgress.setDayProgress(Long.valueOf(userProcess[0].substring(0,1)));
-                    missionProgress.setActivityProgress(Long.valueOf(userProcess[userProcess.length - 1].substring(0,1)));
+                    missionProgress.setTranProgress(tranProgress);
+                    missionProgress.setDayProgress(Long.valueOf(userProcess[0].split("/")[0]));
+                    missionProgress.setActivityProgress(Long.valueOf(userProcess[userProcess.length - 1].split("/")[0]));
                     unionpayMissionProgressMapper.insert(missionProgress);
                 }
                 sendReward(missionVo,userProcess,missionUserVo);
@@ -304,22 +341,25 @@ public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
                     continue;
                 }
                 String userProcessStr = resJson.getString("userProcessStr");
-                if (ObjectUtil.isEmpty(userProcessStr)) {
-                    continue;
-                }
+
+                //String userProcessStr = "1/2次,1/2元,2/3次";
+
                 String[] userProcess = userProcessStr.split(",");
+                String tranProgress = getTranProgress(missionVo, resJson, userProcess);
                 UnionpayMissionProgressVo missionProgressVo = unionpayMissionProgressMapper.selectVoOne(new LambdaQueryWrapper<UnionpayMissionProgress>().eq(UnionpayMissionProgress::getUpMissionId, missionVo.getUpMissionId()).eq(UnionpayMissionProgress::getUpMissionUserId, missionUserVo.getUpMissionUserId()).last("limit 1"));
                 if (ObjectUtil.isNotEmpty(missionProgressVo)) {
-                    missionProgressVo.setWeekProgress(Long.valueOf(userProcess[0].substring(0,1)));
-                    missionProgressVo.setActivityProgress(Long.valueOf(userProcess[userProcess.length - 1].substring(0,1)));
+                    missionProgressVo.setTranProgress(tranProgress);
+                    missionProgressVo.setWeekProgress(Long.valueOf(userProcess[0].split("/")[0]));
+                    missionProgressVo.setActivityProgress(Long.valueOf(userProcess[userProcess.length - 1].split("/")[0]));
                     unionpayMissionProgressMapper.updateById(BeanUtil.toBean(missionProgressVo,UnionpayMissionProgress.class));
                 } else {
                     UnionpayMissionProgress missionProgress = new UnionpayMissionProgress();
                     missionProgress.setUpMissionId(missionVo.getUpMissionId());
                     missionProgress.setUpMissionGroupId(missionGroupVo.getUpMissionGroupId());
                     missionProgress.setUpMissionUserId(missionUserVo.getUpMissionUserId());
-                    missionProgress.setWeekProgress(Long.valueOf(userProcess[0].substring(0,1)));
-                    missionProgress.setActivityProgress(Long.valueOf(userProcess[userProcess.length - 1].substring(0,1)));
+                    missionProgress.setTranProgress(tranProgress);
+                    missionProgress.setWeekProgress(Long.valueOf(userProcess[0].split("/")[0]));
+                    missionProgress.setActivityProgress(Long.valueOf(userProcess[userProcess.length - 1].split("/")[0]));
                     unionpayMissionProgressMapper.insert(missionProgress);
                 }
                 sendReward(missionVo,userProcess,missionUserVo);
@@ -328,53 +368,67 @@ public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
     }
 
     /**
+     * 获取交易进度
+     */
+    private String getTranProgress(UnionpayMissionVo missionVo, JSONObject resJson, String[] userProcess) {
+        String tranProgress = "";
+        if (missionVo.getTranType().equals("1")) {
+            //笔数交易规则
+            JSONArray missionProcessDetailVOList = resJson.getJSONArray("missionProcessDetailVOList");
+            Long payCount = 0L;
+            for (int i = 0; i < missionProcessDetailVOList.size(); i++) {
+                JSONObject payDetail = missionProcessDetailVOList.getJSONObject(i);
+                Long transAt = payDetail.getLong("transAt");
+                if (transAt >= missionVo.getPayAmount()) {
+                    payCount++;
+                }
+            }
+            long l = payCount % missionVo.getTranCount();
+            if (Long.valueOf(userProcess[0].split("/")[0]) >= missionVo.getUserCountDay()) {
+                tranProgress = missionVo.getTranCount() + "/" + missionVo.getTranCount();
+            } else {
+                tranProgress = l + "/" + missionVo.getTranCount();
+            }
+        } else if (missionVo.getTranType().equals("2")) {
+            //累计金额交易规则
+            int length = userProcess[1].length();
+            tranProgress = userProcess[1].substring(0, length - 1);
+        }
+        return tranProgress;
+    }
+
+    /**
      * 发放奖励
      */
     private void sendReward(UnionpayMissionVo missionVo,String[] userProcess,UnionpayMissionUserVo missionUserVo) {
-        Long count = unionpayMissionUserLogMapper.selectCount(new LambdaQueryWrapper<UnionpayMissionUserLog>().eq(UnionpayMissionUserLog::getUpMissionUserId, missionUserVo.getUpMissionUserId()).eq(UnionpayMissionUserLog::getUpMissionId, missionVo.getUpMissionId()).eq(UnionpayMissionUserLog::getStatus,"2"));
+        Long count = unionpayMissionUserLogMapper.selectCount(new LambdaQueryWrapper<UnionpayMissionUserLog>().eq(UnionpayMissionUserLog::getUpMissionUserId, missionUserVo.getUpMissionUserId()).eq(UnionpayMissionUserLog::getUpMissionId, missionVo.getUpMissionId()));
         if (count >= missionVo.getUserCountActivity()) {
             return;
         }
-        if (Long.valueOf(userProcess[0].substring(0,1)) <= 0) {
+        String canSendCount = userProcess[userProcess.length - 1].split("/")[0];
+        if (Long.valueOf(canSendCount) <= 0) {
             return;
         }
-        long syCount = missionVo.getUserCountActivity() - count;
-        Long sendCount = Long.valueOf(userProcess[0].substring(0, 1)) - syCount;
-        if (sendCount >= 0) {
-            for (long l = 0; l < syCount; l++) {
-                UnionpayMissionUserLog missionUserLog = new UnionpayMissionUserLog();
-                missionUserLog.setUpMissionUserId(missionUserVo.getUpMissionUserId());
-                missionUserLog.setUpMissionGroupId(missionVo.getUpMissionGroupId());
-                missionUserLog.setUpMissionId(missionVo.getUpMissionId());
-                // 生成订单发放奖励
-                CreateOrderBo createOrderBo = new CreateOrderBo();
-                createOrderBo.setProductId(missionVo.getProductId());
-                createOrderBo.setUserId(missionUserVo.getUserId());
-                createOrderBo.setPlatformKey(missionVo.getPlatformKey());
-                createOrderBo.setChannel(PlatformEnumd.MP_YSF.getChannel());
-                CreateOrderResult order = orderService.createOrder(createOrderBo, true);
+        long sendCount = Long.valueOf(canSendCount) - count;
+        if (sendCount <= 0) {
+            return;
+        }
+        for (long l = 0; l < sendCount; l++) {
+            UnionpayMissionUserLog missionUserLog = new UnionpayMissionUserLog();
+            missionUserLog.setUpMissionUserId(missionUserVo.getUpMissionUserId());
+            missionUserLog.setUpMissionGroupId(missionVo.getUpMissionGroupId());
+            missionUserLog.setUpMissionId(missionVo.getUpMissionId());
+            // 生成订单发放奖励
+            CreateOrderBo createOrderBo = new CreateOrderBo();
+            createOrderBo.setProductId(missionVo.getProductId());
+            //createOrderBo.setProductId(1760905911856824320L);
+            createOrderBo.setUserId(missionUserVo.getUserId());
+            createOrderBo.setPlatformKey(missionVo.getPlatformKey());
+            createOrderBo.setChannel(PlatformEnumd.MP_YSF.getChannel());
+            CreateOrderResult order = orderService.createOrder(createOrderBo, true);
 
-                missionUserLog.setNumber(order.getNumber());
-                unionpayMissionUserLogMapper.insert(missionUserLog);
-            }
-        } else {
-            for (long l = 0; l < Long.valueOf(userProcess[0].substring(0, 1)); l++) {
-                UnionpayMissionUserLog missionUserLog = new UnionpayMissionUserLog();
-                missionUserLog.setUpMissionUserId(missionUserVo.getUpMissionUserId());
-                missionUserLog.setUpMissionGroupId(missionVo.getUpMissionGroupId());
-                missionUserLog.setUpMissionId(missionVo.getUpMissionId());
-                // 生成订单发放奖励
-                CreateOrderBo createOrderBo = new CreateOrderBo();
-                createOrderBo.setProductId(missionVo.getProductId());
-                //createOrderBo.setProductId(1760905911856824320L);
-                createOrderBo.setUserId(missionUserVo.getUserId());
-                createOrderBo.setPlatformKey(missionVo.getPlatformKey());
-                createOrderBo.setChannel(PlatformEnumd.MP_YSF.getChannel());
-                CreateOrderResult order = orderService.createOrder(createOrderBo, true);
-
-                missionUserLog.setNumber(order.getNumber());
-                unionpayMissionUserLogMapper.insert(missionUserLog);
-            }
+            missionUserLog.setNumber(order.getNumber());
+            unionpayMissionUserLogMapper.insert(missionUserLog);
         }
     }
 

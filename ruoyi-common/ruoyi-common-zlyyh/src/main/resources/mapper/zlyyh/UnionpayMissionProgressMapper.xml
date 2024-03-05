@@ -13,6 +13,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <result property="weekProgress" column="week_progress"/>
     <result property="monthProgress" column="month_progress"/>
     <result property="activityProgress" column="activity_progress"/>
+    <result property="tranProgress" column="tran_progress"/>
     <result property="delFlag" column="del_flag"/>
     <result property="createBy" column="create_by"/>
     <result property="createTime" column="create_time"/>

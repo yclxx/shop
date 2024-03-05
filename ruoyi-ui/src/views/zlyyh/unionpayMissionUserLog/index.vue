@@ -1,17 +1,20 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="银联任务用户ID" prop="upMissionUserId">
-        <el-input v-model="queryParams.upMissionUserId" placeholder="请输入银联任务用户ID" clearable
+      <el-form-item label="用户电话" prop="upMissionUserId">
+        <el-input v-model="queryParams.upMissionUserId" placeholder="请输入任务用户电话" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
-      <el-form-item label="银联任务组ID" prop="upMissionGroupId">
-        <el-input v-model="queryParams.upMissionGroupId" placeholder="请输入银联任务组ID" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item label="任务组" prop="upMissionGroupId">
+        <el-select v-model="queryParams.upMissionGroupId" placeholder="请选择任务组" filterable clearable
+          style="width: 100%;">
+          <el-option v-for="item in missionGroupList" :key="item.id" :value="item.id" :label="item.label"></el-option>
+        </el-select>
       </el-form-item>
-      <el-form-item label="银联任务ID" prop="upMissionId">
-        <el-input v-model="queryParams.upMissionId" placeholder="请输入银联任务ID" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item label="任务" prop="upMissionId">
+        <el-select v-model="queryParams.upMissionId" placeholder="请选择任务" filterable clearable style="width: 100%;">
+          <el-option v-for="item in missionList" :key="item.id" :value="item.id" :label="item.label"></el-option>
+        </el-select>
       </el-form-item>
       <!-- <el-form-item label="奖励产品ID" prop="productId">
         <el-input
@@ -99,10 +102,10 @@
 
     <el-table v-loading="loading" :data="unionpayMissionUserLogList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="奖励记录ID" align="center" prop="upMissionUserLog" v-if="true" />
-      <el-table-column label="银联任务用户ID" align="center" prop="upMissionUserId" />
-      <el-table-column label="银联任务组ID" align="center" prop="upMissionGroupId" />
-      <el-table-column label="银联任务ID" align="center" prop="upMissionId" />
+      <!-- <el-table-column label="奖励记录ID" align="center" prop="upMissionUserLog" v-if="true" /> -->
+      <el-table-column label="用户" align="center" prop="userVo.mobile" />
+      <el-table-column label="任务组" align="center" prop="upMissionGroupId" :formatter="changeMissionGroup" />
+      <el-table-column label="任务" align="center" prop="upMissionId" :formatter="changeMission" />
       <!-- <el-table-column label="奖励产品ID" align="center" prop="productId" /> -->
       <el-table-column label="订单号" align="center" prop="number" />
       <!-- <el-table-column label="状态  0-未发放  1-发放中  2-发放成功  3-发放失败" align="center" prop="status">
@@ -119,14 +122,19 @@
       <el-table-column label="金额" align="center" prop="amount" />
       <el-table-column label="发放数量" align="center" prop="sendCount" />
       <el-table-column label="失败原因" align="center" prop="failReason" /> -->
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="创建时间" align="center" prop="createTime">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
+        </template>
+      </el-table-column>
+      <!-- <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['zlyyh:unionpayMissionUserLog:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
             v-hasPermi="['zlyyh:unionpayMissionUserLog:remove']">删除</el-button>
         </template>
-      </el-table-column>
+      </el-table-column> -->
     </el-table>
 
     <pagination v-show="total>0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize"
@@ -196,6 +204,12 @@
     addUnionpayMissionUserLog,
     updateUnionpayMissionUserLog
   } from "@/api/zlyyh/unionpayMissionUserLog";
+  import {
+    selectListMissionGroup
+  } from "@/api/zlyyh/unionpayMissionGroup";
+  import {
+    selectMissionList
+  } from "@/api/zlyyh/unionpayMission";
 
   export default {
     name: "UnionpayMissionUserLog",
@@ -236,6 +250,8 @@
           amount: undefined,
           sendCount: undefined,
           failReason: undefined,
+          orderByColumn: 'create_time',
+          isAsc: 'desc',
         },
         // 表单参数
         form: {},
@@ -296,11 +312,15 @@
             message: "失败原因不能为空",
             trigger: "blur"
           }],
-        }
+        },
+        missionGroupList: [],
+        missionList: [],
       };
     },
     created() {
       this.getList();
+      this.getMissionGroupList();
+      this.getMissionList();
     },
     methods: {
       /** 查询银联任务奖励发放记录列表 */
@@ -311,6 +331,18 @@
           this.total = response.total;
           this.loading = false;
         });
+      },
+      //任务组下拉列表查询
+      getMissionGroupList() {
+        selectListMissionGroup({}).then(res => {
+          this.missionGroupList = res.data;
+        })
+      },
+      //任务下拉列表查询
+      getMissionList() {
+        selectMissionList({}).then(res => {
+          this.missionList = res.data;
+        })
       },
       // 取消按钮
       cancel() {
@@ -417,7 +449,35 @@
         this.download('zlyyh/unionpayMissionUserLog/export', {
           ...this.queryParams
         }, `unionpayMissionUserLog_${new Date().getTime()}.xlsx`)
-      }
+      },
+      //任务组转换
+      changeMissionGroup(row) {
+        let groupName = ''
+        this.missionGroupList.forEach(item => {
+          if (row.upMissionGroupId == item.id) {
+            groupName = item.label;
+          }
+        })
+        if (groupName && groupName.length > 0) {
+          row.groupName = groupName;
+          return groupName;
+        }
+        return row.upMissionGroupId;
+      },
+      //任务转换
+      changeMission(row) {
+        let missiomName = ''
+        this.missionList.forEach(item => {
+          if (row.upMissionId == item.id) {
+            missiomName = item.label;
+          }
+        })
+        if (missiomName && missiomName.length > 0) {
+          row.missiomName = missiomName;
+          return missiomName;
+        }
+        return row.upMissionId;
+      },
     }
   };
 </script>

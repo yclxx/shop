@@ -69,5 +69,9 @@ public class UnionpayMissionProgressBo extends BaseEntity {
     //@NotNull(message = "活动总进度不能为空", groups = { AddGroup.class, EditGroup.class })
     private Long activityProgress;
 
+    /**
+     * 交易进度
+     */
+    private String tranProgress;
 
 }

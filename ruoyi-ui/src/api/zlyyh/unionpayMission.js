@@ -42,3 +42,12 @@ export function delUnionpayMission(upMissionId) {
     method: 'delete'
   })
 }
+
+// 查询任务下拉列表
+export function selectMissionList(query) {
+  return request({
+    url: '/zlyyh-admin/unionpayMission/selectMissionList',
+    method: 'get',
+    params: query
+  })
+}

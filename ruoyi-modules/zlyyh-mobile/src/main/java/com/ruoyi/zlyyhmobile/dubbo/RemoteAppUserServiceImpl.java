@@ -137,6 +137,14 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
     }
 
     /**
+     * 获取accessToken
+     */
+    @Override
+    public String getAccessToken(String appId, String secret) {
+        return WxUtils.getAccessToken(appId,secret);
+    }
+
+    /**
      * 获取用户授权信息
      *
      * @return openId，令牌等相关信息

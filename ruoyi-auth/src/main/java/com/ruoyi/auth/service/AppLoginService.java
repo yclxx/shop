@@ -4,6 +4,8 @@ import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.NumberUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.auth.form.AppLoginBody;
 import com.ruoyi.auth.form.WxMobileLoginBody;
 import com.ruoyi.common.core.constant.CacheNames;
@@ -20,9 +22,16 @@ import com.ruoyi.system.api.model.WxEntity;
 import com.ruoyi.system.api.model.XcxLoginUser;
 import com.ruoyi.system.api.model.YsfEntity;
 import org.apache.dubbo.config.annotation.DubboReference;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -71,6 +80,40 @@ public class AppLoginService {
         // 缓存基本信息
         CacheUtils.put(CacheNames.WX_ENTITY, wxEntity.getOpenid(), wxEntity);
         return loginByOpenId(wxEntity.getOpenid(), platformKey, loginBody.getCityName(), loginBody.getCityCode(), channel);
+    }
+
+    /**
+     * 跳转小程序页面
+     */
+    public String jumpWxGroup(String pages){
+        String accessToken = remoteAppUserService.getAccessToken("wxe7c323382a74e41d", "40eb4ef26612ddae48b98081fcd5d55b");
+        if(StringUtils.isEmpty(accessToken)){
+            return null;
+        }
+        try{
+            String url = "https://api.weixin.qq.com/wxa/generatescheme?access_token=" + accessToken ;
+            HttpPost httpPost = new HttpPost(url);
+            Map<String,Object> map = new HashMap<>();
+            map.put("path",pages);
+            Map<String,Object> map1 = new HashMap<>();
+            map1.put("jump_wxa",map);
+            JSONObject jsonObjects = new JSONObject(map1);
+            StringEntity entities = new StringEntity(jsonObjects.toJSONString(), "UTF-8");
+            httpPost.setEntity(entities);
+            DefaultHttpClient client = new DefaultHttpClient();
+            HttpResponse response = client.execute(httpPost);
+            HttpEntity entity = response.getEntity();
+            JSONObject jsonObject = null;
+            if (entity != null) {
+                //{"errcode":0,"openlink":"weixin://dl/business/?t=BBh8j0jvFLa","errmsg":"ok"}
+                String result = EntityUtils.toString(entity, "UTF-8");
+                jsonObject = JSON.parseObject(result);
+                return jsonObject.getString("openlink");
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**
