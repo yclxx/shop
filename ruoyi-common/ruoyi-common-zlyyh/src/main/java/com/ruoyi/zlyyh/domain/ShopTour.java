@@ -115,4 +115,8 @@ public class ShopTour extends BaseEntity {
      */
     private Long tourActivityId;
 
+    private String oldMerchantNo;
+
+    private String merchantType;
+
 }

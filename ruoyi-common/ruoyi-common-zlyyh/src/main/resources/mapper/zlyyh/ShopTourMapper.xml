@@ -17,6 +17,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <result property="goodsImage" column="goods_image"/>
     <result property="shopImage" column="shop_image"/>
     <result property="tourRemark" column="tour_remark"/>
+    <result property="oldMerchantNo" column="old_merchant_no"/>
+    <result property="merchantType" column="merchant_type"/>
     <result property="merchantNo" column="merchant_no"/>
     <result property="isActivity" column="is_activity"/>
     <result property="isClose" column="is_close"/>
@@ -32,10 +34,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <result property="tourActivityId" column="tour_activity_id"/>
     </resultMap>
     <select id="queryPageTourList" resultType="com.ruoyi.zlyyh.domain.vo.ShopTourVo">
-        select s.shop_name shopName,s.address address,tour.*
+        select s.shop_name shopName,s.address address,ta.tour_activity_name tourActivityName,tour.*
         from t_shop_tour tour left join t_shop s on tour.shop_id = s.shop_id
         left join t_business_district_shop bds on tour.shop_id = bds.shop_id
         left join t_business_district bd on bd.business_district_id = bds.business_district_id
+        left join t_shop_tour_activity ta on ta.tour_activity_id = tour.tour_activity_id
         <where>
             tour.del_flag = '0'
             and tour.is_reserve = #{bo.isReserve}
@@ -48,11 +51,17 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="bo.businessDistrictId != null and bo.businessDistrictId != ''">
                 and bds.business_district_id = #{bo.businessDistrictId}
             </if>
+            <if test="bo.activityIds != null and bo.activityIds.size > 0">
+                AND tour.tour_activity_id in
+                <foreach item="item" collection="bo.activityIds" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
         </where>
         order by tour.create_time desc
     </select>
     <select id="queryPageNearTourList" resultType="com.ruoyi.zlyyh.domain.vo.ShopTourVo">
-        select s.shop_name shopName,s.address address,tour.*,
+        select s.shop_name shopName,s.address address,ta.tour_activity_name tourActivityName,tour.*,
             ACOS(
                 COS(RADIANS(#{bo.latitude})) *
                 COS(RADIANS(s.latitude)) *
@@ -61,13 +70,24 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 SIN(RADIANS(s.latitude))
             ) * 6378 AS distance
         from t_shop_tour tour left join t_shop s on tour.shop_id = s.shop_id
-        where tour.del_flag = '0'
+        left join t_shop_tour_activity ta on ta.tour_activity_id = tour.tour_activity_id
+        <where>
+            tour.del_flag = '0'
             and tour.is_reserve = '0'
-        ORDER BY sort asc,distance asc
+            <if test="bo.activityIds != null and bo.activityIds.size > 0">
+                AND tour.tour_activity_id in
+                <foreach item="item" collection="bo.activityIds" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY distance asc
     </select>
     <select id="queryReserveShopList" resultType="com.ruoyi.zlyyh.domain.vo.ShopTourVo">
-        select s.shop_name shopName,s.address address,s.longitude longitude,s.latitude latitude,tour.*
+        select s.shop_name shopName,s.address address,s.longitude longitude,s.latitude latitude,
+               ta.tour_activity_name tourActivityName,tour.*
         from t_shop_tour tour left join t_shop s on tour.shop_id = s.shop_id
+        left join t_shop_tour_activity ta on ta.tour_activity_id = tour.tour_activity_id
         <where>
             tour.del_flag = '0'
             <if test="bo.isReserve != null and bo.isReserve != ''">
