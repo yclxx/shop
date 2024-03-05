@@ -61,13 +61,29 @@
     <el-table v-loading="loading" :data="commercialTenantList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="商户ID" align="center" prop="commercialTenantId" v-if="true" />
-      <el-table-column label="商户名称" align="center" prop="commercialTenantName" />
+      <el-table-column label="品牌名称" align="center" prop="commercialTenantName">
+        <template slot-scope="scope">
+          <span v-if="scope.row.source == 0 && scope.row.brandId">
+            {{scope.row.commercialTenantName}}
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column label="商户名称" align="center" prop="commercialTenantTitle">
+        <template slot-scope="scope">
+          <span v-if="scope.row.source == 0 && scope.row.brandId">
+            {{scope.row.commercialTenantTitle}}
+          </span>
+          <span v-else>
+            {{scope.row.commercialTenantName}}
+          </span>
+        </template>
+      </el-table-column>
       <el-table-column label="logo" align="center" prop="commercialTenantImg">
         <template slot-scope="scope">
           <image-preview :src="scope.row.commercialTenantImg" :width="50" :height="50" />
         </template>
       </el-table-column>
-      <el-table-column label="标签" align="center" prop="tags" show-overflow-tooltip />
+      <!-- <el-table-column label="标签" align="center" prop="tags" show-overflow-tooltip /> -->
       <el-table-column label="生效时间" align="center" prop="startTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.startTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
@@ -85,7 +101,7 @@
       </el-table-column>
       <el-table-column label="排序" align="center" prop="sort" />
       <el-table-column label="平台" align="center" prop="platformKey" :formatter="platformFormatter" />
-      <el-table-column label="状态" align="center" prop="status">
+      <el-table-column label="状态" align="center" prop="status" width="78">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.t_commercial_tenant_status" :value="scope.row.status" />
         </template>
