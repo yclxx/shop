@@ -106,4 +106,8 @@ public class UnionpayMissionUserLogVo {
 
     private UserVo userVo;
 
+    private String productName;
+
+    private String sendStatus;
+
 }

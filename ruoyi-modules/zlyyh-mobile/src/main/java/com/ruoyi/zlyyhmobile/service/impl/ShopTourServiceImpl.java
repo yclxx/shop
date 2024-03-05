@@ -13,10 +13,7 @@ import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.common.satoken.utils.LoginHelper;
-import com.ruoyi.zlyyh.domain.BusinessDistrict;
-import com.ruoyi.zlyyh.domain.City;
-import com.ruoyi.zlyyh.domain.ShopTour;
-import com.ruoyi.zlyyh.domain.ShopTourReward;
+import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.ShopTourBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.*;
@@ -29,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 巡检商户Service业务层处理
@@ -46,6 +44,8 @@ public class ShopTourServiceImpl implements IShopTourService {
     private final BusinessDistrictMapper businessDistrictMapper;
     private final CommercialTenantMapper commercialTenantMapper;
     private final ShopTourRewardMapper shopTourRewardMapper;
+    private final ShopTourActivityMapper shopTourActivityMapper;
+    private final ShopMerchantMapper shopMerchantMapper;
 
     /**
      * 查询巡检商户
@@ -191,14 +191,40 @@ public class ShopTourServiceImpl implements IShopTourService {
 
     @Override
     public TableDataInfo<ShopTourVo> queryPageTourList(ShopTourBo bo, PageQuery pageQuery) {
-        Page<ShopTourVo> result = baseMapper.queryPageTourList(bo, pageQuery.build());
-        return TableDataInfo.build(result);
+        LambdaQueryWrapper<ShopTourActivity> wrapper = new LambdaQueryWrapper<>();
+        String nowDate = DateUtils.getDate("yyyy-MM-dd HH:mm:ss");
+        wrapper.eq(ShopTourActivity::getStatus,"0");
+        wrapper.le(ShopTourActivity::getStartDate, nowDate);
+        wrapper.gt(ShopTourActivity::getEndDate,nowDate);
+        List<ShopTourActivityVo> tourActivityVos = shopTourActivityMapper.selectVoList(wrapper);
+        List<Long> activityIds = null;
+        if (ObjectUtil.isNotEmpty(tourActivityVos)) {
+            activityIds = tourActivityVos.stream().map(ShopTourActivityVo::getTourActivityId).collect(Collectors.toList());
+            bo.setActivityIds(activityIds);
+            Page<ShopTourVo> result = baseMapper.queryPageTourList(bo, pageQuery.build());
+            return TableDataInfo.build(result);
+        } else {
+            return TableDataInfo.build(new ArrayList<>());
+        }
     }
 
     @Override
     public TableDataInfo<ShopTourVo> queryPageNearTourList(ShopTourBo bo, PageQuery pageQuery) {
-        Page<ShopTourVo> result = baseMapper.queryPageNearTourList(bo, pageQuery.build());
-        return TableDataInfo.build(result);
+        LambdaQueryWrapper<ShopTourActivity> wrapper = new LambdaQueryWrapper<>();
+        String nowDate = DateUtils.getDate("yyyy-MM-dd HH:mm:ss");
+        wrapper.eq(ShopTourActivity::getStatus,"0");
+        wrapper.le(ShopTourActivity::getStartDate, nowDate);
+        wrapper.gt(ShopTourActivity::getEndDate,nowDate);
+        List<ShopTourActivityVo> tourActivityVos = shopTourActivityMapper.selectVoList(wrapper);
+        List<Long> activityIds = null;
+        if (ObjectUtil.isNotEmpty(tourActivityVos)) {
+            activityIds = tourActivityVos.stream().map(ShopTourActivityVo::getTourActivityId).collect(Collectors.toList());
+            bo.setActivityIds(activityIds);
+            Page<ShopTourVo> result = baseMapper.queryPageNearTourList(bo, pageQuery.build());
+            return TableDataInfo.build(result);
+        } else {
+            return TableDataInfo.build(new ArrayList<>());
+        }
     }
 
     /**
@@ -241,6 +267,8 @@ public class ShopTourServiceImpl implements IShopTourService {
         shopTour.setShopImage(null);
         shopTour.setTourRemark(null);
         shopTour.setMerchantNo(null);
+        shopTour.setOldMerchantNo(null);
+        shopTour.setMerchantType(null);
         shopTour.setIsActivity("1");
         shopTour.setNoActivityRemark(null);
         shopTour.setIsClose("1");
@@ -256,6 +284,8 @@ public class ShopTourServiceImpl implements IShopTourService {
         wrapper.set(ShopTour::getShopImage,null);
         wrapper.set(ShopTour::getTourRemark,null);
         wrapper.set(ShopTour::getMerchantNo,null);
+        wrapper.set(ShopTour::getOldMerchantNo,null);
+        wrapper.set(ShopTour::getMerchantType,null);
         wrapper.set(ShopTour::getNoActivityRemark,null);
         wrapper.set(ShopTour::getCloseRemark,null);
         baseMapper.update(shopTour,wrapper);
@@ -350,5 +380,13 @@ public class ShopTourServiceImpl implements IShopTourService {
             }
         }
         return "";
+    }
+
+    /**
+     * 获取商户号
+     */
+    @Override
+    public List<ShopMerchantVo> getShopMerchantNoList(Long shopId) {
+        return shopMerchantMapper.selectVoList(new LambdaQueryWrapper<ShopMerchant>().eq(ShopMerchant::getShopId, shopId));
     }
 }

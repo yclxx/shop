@@ -1,9 +1,10 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="巡检人员id" prop="verifierId">
-        <el-input v-model="queryParams.verifierId" placeholder="请输入巡检人员id" clearable
-          @keyup.enter.native="handleQuery" />
+      <el-form-item label="巡检人员" prop="verifierId">
+        <el-select v-model="queryParams.verifierId" placeholder="请选择巡检人员" clearable>
+          <el-option v-for="item in verifierList" :key="item.id" :label="item.label" :value="item.id" />
+        </el-select>
       </el-form-item>
       <el-form-item label="巡检次数" prop="count">
         <el-input v-model="queryParams.count" placeholder="请输入巡检次数" clearable @keyup.enter.native="handleQuery" />
@@ -45,8 +46,8 @@
 
     <el-table v-loading="loading" :data="shopTourRewardList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="巡检奖励id" align="center" prop="tourRewardId" v-if="true" />
-      <el-table-column label="巡检人员id" align="center" prop="verifierId" />
+      <el-table-column label="ID" align="center" prop="tourRewardId" v-if="true" />
+      <el-table-column label="巡检人员" align="center" prop="verifierId" :formatter="verifierIdFormatter" />
       <el-table-column label="巡检次数" align="center" prop="count" />
       <el-table-column label="巡检奖励(元)" align="center" prop="amount" />
       <el-table-column label="发放状态" align="center" prop="status">
@@ -102,12 +103,17 @@
     addShopTourReward,
     updateShopTourReward
   } from "@/api/zlyyh/shopTourReward";
+  import {
+    selectListVerifier
+  } from "@/api/zlyyh/verifier";
 
   export default {
     name: "ShopTourReward",
     dicts: ['t_reward_status'],
     data() {
       return {
+        //核销人员下拉列表
+        verifierList: [],
         // 按钮loading
         buttonLoading: false,
         // 遮罩层
@@ -136,6 +142,8 @@
           count: undefined,
           amount: undefined,
           status: undefined,
+          orderByColumn: 'create_time',
+          isAsc: 'desc',
         },
         // 表单参数
         form: {},
@@ -171,6 +179,7 @@
     },
     created() {
       this.getList();
+      this.getVerifiereSelectList();
     },
     methods: {
       /** 查询巡检奖励列表 */
@@ -184,6 +193,25 @@
           this.total = response.total;
           this.loading = false;
         });
+      },
+      //核销人员下拉列表
+      getVerifiereSelectList() {
+        selectListVerifier({}).then(response => {
+          this.verifierList = response.data;
+        });
+      },
+      verifierIdFormatter(row) {
+        let name = '';
+        this.verifierList.forEach(item => {
+          if (item.id == row.verifierId) {
+            name = item.label;
+          }
+        })
+        if (name && name.length > 0) {
+          row.verifierMobile = name;
+          return name;
+        }
+        return row.verifierId;
       },
       // 取消按钮
       cancel() {

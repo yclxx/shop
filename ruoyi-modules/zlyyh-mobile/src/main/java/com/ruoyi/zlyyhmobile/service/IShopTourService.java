@@ -3,10 +3,7 @@ package com.ruoyi.zlyyhmobile.service;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.ShopTourBo;
-import com.ruoyi.zlyyh.domain.vo.BusinessDistrictVo;
-import com.ruoyi.zlyyh.domain.vo.CityVo;
-import com.ruoyi.zlyyh.domain.vo.ShopTourRewardVo;
-import com.ruoyi.zlyyh.domain.vo.ShopTourVo;
+import com.ruoyi.zlyyh.domain.vo.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -128,4 +125,9 @@ public interface IShopTourService {
      * @return
      */
     String verifyDate(Long tourShopId);
+
+    /**
+     * 获取商户号
+     */
+    List<ShopMerchantVo> getShopMerchantNoList(Long shopId);
 }

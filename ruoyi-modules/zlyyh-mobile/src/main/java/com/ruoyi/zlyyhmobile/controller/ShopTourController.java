@@ -150,63 +150,11 @@ public class ShopTourController {
         return R.ok(shopTourService.getTourReward(userId));
     }
 
-
-
-
-
     /**
-     * 获取门店列表
-     *
-     * @return 门店列表
+     * 获取商户号
      */
-    @GetMapping("/getShopList")
-    public TableDataInfo<ShopVo> getShopList(ShopBo bo, PageQuery pageQuery) {
-        bo.setCitycode(ServletUtils.getHeader(ZlyyhConstants.CITY_CODE));
-        return shopService.queryPageList(bo, pageQuery);
-    }
-
-    /**
-     * 获取商品门店列表
-     *
-     * @return 门店列表
-     */
-    @GetMapping("/getShopListByProductId")
-    public TableDataInfo<ShopVo> getShopListByProductId(ShopBo bo, PageQuery pageQuery) {
-        if (null == bo.getProductId() || bo.getProductId() < 1) {
-            return TableDataInfo.build(new ArrayList<>());
-        }
-        bo.setCitycode(ServletUtils.getHeader(ZlyyhConstants.CITY_CODE));
-        return shopService.getShopListByProductId(bo, pageQuery);
-    }
-
-    /**
-     * 获取商品门店信息
-     *
-     * @return 门店列表
-     */
-    @GetMapping("/{shopId}")
-    public R<ShopVo> getShopListByProductId(@NotNull(message = "主键不能为空") @PathVariable Long shopId) {
-        return R.ok(shopService.queryById(shopId));
-    }
-
-    /**
-     * 商户申请
-     */
-    @PostMapping("/addApproval")
-    public R addApproval(@RequestBody MerchantApprovalBo bo) {
-        bo.setPlatformKey(ZlyyhUtils.getPlatformId());
-        return R.ok(shopService.addApproval(bo));
-    }
-
-    /**
-     * 请求高德地图，获取完整地址信息
-     */
-    @GetMapping("/address")
-    public R<JSONObject> address(ShopBo bo) {
-        if (StringUtils.isBlank(bo.getAddress())) {
-            return R.fail("缺少地址信息");
-        }
-        JSONObject addressInfo = AddressUtils.getAddressInfo(bo.getAddress(), null);
-        return R.ok(addressInfo);
+    @GetMapping("/getShopMerchantNoList/{shopId}")
+    public R<List<ShopMerchantVo>> getShopMerchantNoList(@PathVariable("shopId") Long shopId) {
+        return R.ok(shopTourService.getShopMerchantNoList(shopId));
     }
 }
