@@ -161,4 +161,12 @@ public class ShopTourBo extends BaseEntity {
      * 巡检活动id
      */
     private Long tourActivityId;
+
+    private List<Long> shopsIds;
+
+    private List<Long> activityIds;
+
+    private String oldMerchantNo;
+
+    private String merchantType;
 }

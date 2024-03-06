@@ -28,6 +28,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <result property="updateBy" column="update_by"/>
     <result property="updateTime" column="update_time"/>
     </resultMap>
+    <select id="queryPageRewardList" resultType="com.ruoyi.zlyyh.domain.vo.UnionpayMissionUserLogVo">
+        select o.product_name productName,o.send_status sendStatus,o.send_Time sendTime,log.*
+        from t_unionpay_mission_user_log log left join t_order o on log.number = o.number
+        <where>
+            log.del_flag = '0'
+            <if test="bo.upMissionUserId != null and bo.upMissionUserId != ''">
+                and log.up_mission_user_id = #{bo.upMissionUserId}
+            </if>
+            <if test="bo.upMissionGroupId != null and bo.upMissionGroupId != ''">
+                and log.up_mission_group_id = #{bo.upMissionGroupId}
+            </if>
+        </where>
+        order by log.create_time desc
+    </select>
 
 
 </mapper>
