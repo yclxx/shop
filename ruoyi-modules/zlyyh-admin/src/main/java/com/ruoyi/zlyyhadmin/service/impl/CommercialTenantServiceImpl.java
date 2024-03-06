@@ -1,6 +1,7 @@
 package com.ruoyi.zlyyhadmin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -13,13 +14,17 @@ import com.ruoyi.common.redis.utils.CacheUtils;
 import com.ruoyi.zlyyh.domain.CategoryProduct;
 import com.ruoyi.zlyyh.domain.CommercialTenant;
 import com.ruoyi.zlyyh.domain.CommercialTenantProduct;
+import com.ruoyi.zlyyh.domain.Verifier;
 import com.ruoyi.zlyyh.domain.bo.CategoryProductBo;
 import com.ruoyi.zlyyh.domain.bo.CommercialTenantBo;
 import com.ruoyi.zlyyh.domain.bo.CommercialTenantProductBo;
+import com.ruoyi.zlyyh.domain.vo.BrandVo;
 import com.ruoyi.zlyyh.domain.vo.CategoryProductVo;
 import com.ruoyi.zlyyh.domain.vo.CommercialTenantProductVo;
 import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
+import com.ruoyi.zlyyh.mapper.BrandMapper;
 import com.ruoyi.zlyyh.mapper.CommercialTenantMapper;
+import com.ruoyi.zlyyh.mapper.VerifierMapper;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyhadmin.service.ICategoryProductService;
 import com.ruoyi.zlyyhadmin.service.ICommercialTenantProductService;
@@ -45,6 +50,8 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
     private final CommercialTenantMapper baseMapper;
     private final ICommercialTenantProductService commercialTenantProductService;
     private final ICategoryProductService categoryProductService;
+    private final VerifierMapper verifierMapper;
+    private final BrandMapper brandMapper;
 
     /**
      * 查询商户
@@ -116,8 +123,10 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
     private LambdaQueryWrapper<CommercialTenant> buildQueryWrapper(CommercialTenantBo bo) {
         Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<CommercialTenant> lqw = Wrappers.lambdaQuery();
-        lqw.like(StringUtils.isNotBlank(bo.getCommercialTenantName()), CommercialTenant::getCommercialTenantName, bo.getCommercialTenantName());
-        lqw.eq(StringUtils.isNotBlank(bo.getCommercialTenantImg()), CommercialTenant::getCommercialTenantImg, bo.getCommercialTenantImg());
+        if (StringUtils.isNotBlank(bo.getCommercialTenantName())) {
+            lqw.like(CommercialTenant::getCommercialTenantName, bo.getCommercialTenantName()).or().like(CommercialTenant::getCommercialTenantTitle, bo.getCommercialTenantName());
+        }
+        lqw.eq(StringUtils.isNotBlank(bo.getAdminMobile()), CommercialTenant::getAdminMobile, bo.getAdminMobile());
         lqw.eq(StringUtils.isNotBlank(bo.getTags()), CommercialTenant::getTags, bo.getTags());
         lqw.eq(bo.getStartTime() != null, CommercialTenant::getStartTime, bo.getStartTime());
         lqw.eq(bo.getEndTime() != null, CommercialTenant::getEndTime, bo.getEndTime());
@@ -138,11 +147,13 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
     @Override
     public Boolean insertByBo(CommercialTenantBo bo) {
         CommercialTenant add = BeanUtil.toBean(bo, CommercialTenant.class);
+        validEntityBeforeSave(add);
         PermissionUtils.setPlatformDeptIdAndUserId(add, add.getPlatformKey(), true, true);
         boolean flag = baseMapper.insert(add) > 0;
         if (flag) {
             bo.setCommercialTenantId(add.getCommercialTenantId());
             processCategory(bo, false);
+            addVerifier(bo.getAdminMobile());
         }
         return flag;
     }
@@ -180,12 +191,49 @@ public class CommercialTenantServiceImpl implements ICommercialTenantService {
     @Override
     public Boolean updateByBo(CommercialTenantBo bo) {
         CommercialTenant update = BeanUtil.toBean(bo, CommercialTenant.class);
+        validEntityBeforeSave(update);
         PermissionUtils.setPlatformDeptIdAndUserId(update, update.getPlatformKey(), false, true);
         boolean flag = baseMapper.updateById(update) > 0;
         if (flag) {
             processCategory(bo, true);
+            addVerifier(bo.getAdminMobile());
         }
         return flag;
+    }
+
+    /**
+     * 保存前的数据校验
+     */
+    private void validEntityBeforeSave(CommercialTenant entity) {
+        if (null != entity.getBrandId()) {
+            BrandVo brandVo = brandMapper.selectVoById(entity.getBrandId());
+            if (null != brandVo) {
+                if (StringUtils.isBlank(entity.getCommercialTenantImg())) {
+                    entity.setCommercialTenantImg(brandVo.getBrandImg());
+                }
+                entity.setCommercialTenantName(brandVo.getBrandName());
+            } else {
+                if (StringUtils.isNotBlank(entity.getCommercialTenantTitle())) {
+                    entity.setCommercialTenantName(entity.getCommercialTenantTitle());
+                }
+            }
+        }
+    }
+
+    private void addVerifier(String adminMobile) {
+        if (StringUtils.isNotBlank(adminMobile)) {
+            Verifier verifier = verifierMapper.selectByMobile(adminMobile);
+            if (ObjectUtil.isEmpty(verifier)) {
+                Verifier newVerifier = new Verifier();
+                newVerifier.setId(IdUtil.getSnowflakeNextId());
+                newVerifier.setMobile(adminMobile);
+                newVerifier.setReloadUser("0");
+                newVerifier.setStatus("0");
+                newVerifier.setIsVerifier(true);
+                newVerifier.setIsAdmin(true);
+                verifierMapper.insert(newVerifier);
+            }
+        }
     }
 
     /**

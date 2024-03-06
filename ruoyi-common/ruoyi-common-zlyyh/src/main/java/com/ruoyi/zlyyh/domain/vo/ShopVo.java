@@ -8,13 +8,11 @@ import com.ruoyi.common.excel.annotation.ExcelDictFormat;
 import com.ruoyi.common.excel.convert.ExcelDictConvert;
 import lombok.Data;
 
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 
 import java.util.Date;
 import java.util.List;
-
 
 /**
  * 门店视图对象
@@ -39,6 +37,12 @@ public class ShopVo implements Serializable {
      */
     @ExcelProperty(value = "商户ID")
     private Long commercialTenantId;
+
+    /**
+     * 商户名称
+     */
+    @ExcelProperty(value = "商户名称")
+    private String commercialTenantName;
 
     /**
      * 门店名称
@@ -208,7 +212,6 @@ public class ShopVo implements Serializable {
      * 距离 千米
      */
     private BigDecimal distance;
-
 
     /**
      * 距离 千米

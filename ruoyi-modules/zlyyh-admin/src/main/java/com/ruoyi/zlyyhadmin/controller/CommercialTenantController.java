@@ -14,9 +14,7 @@ import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.CommercialTenantBo;
-import com.ruoyi.zlyyh.domain.bo.ProductBo;
 import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
-import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyhadmin.service.ICommercialTenantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -52,8 +50,6 @@ public class CommercialTenantController extends BaseController {
         return iCommercialTenantService.queryPageList(bo, pageQuery);
     }
 
-
-
     /**
      * 查询商品列表
      */
@@ -67,9 +63,10 @@ public class CommercialTenantController extends BaseController {
      * 查询商户下拉列表
      */
     @GetMapping("/selectListMerchant")
-    public R<List<SelectListEntity>> selectListMerchant(CommercialTenantBo bo){
-        List<CommercialTenantVo> commercialTenantVos = iCommercialTenantService.queryList(bo);
-        return R.ok(BeanCopyUtils.copyListToSelectListVo(commercialTenantVos, ColumnUtil.getFieldName(CommercialTenantVo::getCommercialTenantId),ColumnUtil.getFieldName(CommercialTenantVo::getCommercialTenantName),null));
+    public R<List<SelectListEntity>> selectListMerchant(CommercialTenantBo bo, PageQuery pageQuery) {
+        TableDataInfo<CommercialTenantVo> commercialTenantVoTableDataInfo = iCommercialTenantService.queryPageList(bo, pageQuery);
+        List<CommercialTenantVo> commercialTenantVos = commercialTenantVoTableDataInfo.getRows();
+        return R.ok(BeanCopyUtils.copyListToSelectListVo(commercialTenantVos, ColumnUtil.getFieldName(CommercialTenantVo::getCommercialTenantId), ColumnUtil.getFieldName(CommercialTenantVo::getCommercialTenantTitle), ColumnUtil.getFieldName(CommercialTenantVo::getCommercialTenantName)));
     }
 
     /**
