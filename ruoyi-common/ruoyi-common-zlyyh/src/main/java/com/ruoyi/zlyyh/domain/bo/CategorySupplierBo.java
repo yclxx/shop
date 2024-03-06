@@ -47,7 +47,6 @@ public class CategorySupplierBo extends BaseEntity {
     /**
      * 分类Id(多个分类名称以英文逗号隔开)
      */
-    @NotBlank(message = "分类Id(多个分类名称以英文逗号隔开)不能为空", groups = { AddGroup.class, EditGroup.class })
     private String categoryId;
 
 

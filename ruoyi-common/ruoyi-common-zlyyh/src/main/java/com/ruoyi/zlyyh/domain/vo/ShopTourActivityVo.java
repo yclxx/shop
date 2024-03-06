@@ -1,5 +1,6 @@
 package com.ruoyi.zlyyh.domain.vo;
 
+import java.util.Date;
 import com.alibaba.excel.annotation.ExcelIgnoreUnannotated;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.ruoyi.common.excel.annotation.ExcelDictFormat;
@@ -10,40 +11,40 @@ import java.util.Date;
 
 
 /**
- * 银联任务用户视图对象
+ * 巡检活动视图对象
  *
  * @author yzg
- * @date 2024-02-21
+ * @date 2024-03-01
  */
 @Data
 @ExcelIgnoreUnannotated
-public class UnionpayMissionUserVo {
+public class ShopTourActivityVo {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * 银联任务用户ID
+     * 巡检活动id
      */
-    @ExcelProperty(value = "银联任务用户ID")
-    private Long upMissionUserId;
+    @ExcelProperty(value = "巡检活动id")
+    private Long tourActivityId;
 
     /**
-     * 银联任务组ID
+     * 巡检活动名称
      */
-    @ExcelProperty(value = "银联任务组ID")
-    private Long upMissionGroupId;
+    @ExcelProperty(value = "巡检活动名称")
+    private String tourActivityName;
 
     /**
-     * 用户Id
+     * 开始时间
      */
-    @ExcelProperty(value = "用户Id")
-    private Long userId;
+    @ExcelProperty(value = "开始时间")
+    private Date startDate;
 
     /**
-     * 平台标识
+     * 结束时间
      */
-    @ExcelProperty(value = "平台标识")
-    private Long platformKey;
+    @ExcelProperty(value = "结束时间")
+    private Date endDate;
 
     /**
      * 状态  0-正常  1-停用
@@ -52,11 +53,6 @@ public class UnionpayMissionUserVo {
     @ExcelDictFormat(dictType = "sys_normal_disable")
     private String status;
 
-    /**
-     * 创建时间
-     */
     private Date createTime;
-
-    private UserVo userVo;
 
 }

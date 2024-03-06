@@ -1055,7 +1055,7 @@ public class YsfUtils {
         param.put("appId", appId);
         //param.put("appId", "79936cca634f43559813b8231b4424dc");
         param.put("backendToken", getBackendToken(appId, secret, false, platformKey));
-        //param.put("backendToken", "09f9d868200400591a9Cmqm5");
+        //param.put("backendToken", "0a06fa442002008f1NtYVBU6");
         param.put("openId", openId);
         //param.put("openId", "2OwCzpQVCBWvLhEwokQPootQhRDsGuFemj0YqqRFW1Lyp1penGkL7O5nQMPT47Dc");
         param.put("activityId", activityId);
@@ -1092,7 +1092,7 @@ public class YsfUtils {
         param.put("appId", appId);
         //param.put("appId", "79936cca634f43559813b8231b4424dc");
         param.put("backendToken", getBackendToken(appId, secret, false, platformKey));
-        //param.put("backendToken", "09f7a3ec200600711ESucnFQ");
+        //param.put("backendToken", "0a07989a200000851HYSUqUO");
         //param.put("openId", "2OwCzpQVCBWvLhEwokQPootQhRDsGuFemj0YqqRFW1Lyp1penGkL7O5nQMPT47Dc");
         //param.put("openId", "dioDx19v0FE71iWHhe2H/p+z+MolujCNPsH41y9AtDsrKqO+Ig5/KaLreg2EgNjh");
         param.put("openId", openId);

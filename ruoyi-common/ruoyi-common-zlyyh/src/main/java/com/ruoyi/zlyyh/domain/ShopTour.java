@@ -110,4 +110,9 @@ public class ShopTour extends BaseEntity {
      */
     private String closeRemark;
 
+    /**
+     * 巡检活动id
+     */
+    private Long tourActivityId;
+
 }

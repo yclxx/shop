@@ -1,12 +1,17 @@
 package com.ruoyi.zlyyhadmin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.ruoyi.zlyyh.domain.bo.UserBo;
+import com.ruoyi.zlyyh.domain.vo.UserVo;
+import com.ruoyi.zlyyh.mapper.UserMapper;
+import com.ruoyi.zlyyhadmin.service.IUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.ruoyi.zlyyh.domain.bo.UnionpayMissionUserBo;
@@ -15,6 +20,7 @@ import com.ruoyi.zlyyh.domain.UnionpayMissionUser;
 import com.ruoyi.zlyyh.mapper.UnionpayMissionUserMapper;
 import com.ruoyi.zlyyhadmin.service.IUnionpayMissionUserService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Collection;
@@ -30,6 +36,7 @@ import java.util.Collection;
 public class UnionpayMissionUserServiceImpl implements IUnionpayMissionUserService {
 
     private final UnionpayMissionUserMapper baseMapper;
+    private final IUserService userService;
 
     /**
      * 查询银联任务用户
@@ -44,9 +51,24 @@ public class UnionpayMissionUserServiceImpl implements IUnionpayMissionUserServi
      */
     @Override
     public TableDataInfo<UnionpayMissionUserVo> queryPageList(UnionpayMissionUserBo bo, PageQuery pageQuery) {
+        if (ObjectUtil.isNotEmpty(bo.getUserId())) {
+            UserBo userBo = new UserBo();
+            userBo.setMobile(bo.getUserId().toString());
+            List<UserVo> userVos = userService.queryList(userBo);
+            if (ObjectUtil.isNotEmpty(userVos)) {
+                bo.setUserId(userVos.get(0).getUserId());
+            } else {
+                return TableDataInfo.build(new ArrayList<>());
+            }
+        }
         LambdaQueryWrapper<UnionpayMissionUser> lqw = buildQueryWrapper(bo);
         Page<UnionpayMissionUserVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
-        return TableDataInfo.build(result);
+        TableDataInfo<UnionpayMissionUserVo> dataInfo = TableDataInfo.build(result);
+        for (UnionpayMissionUserVo row : dataInfo.getRows()) {
+            //查询用户
+            row.setUserVo(userService.queryById(row.getUserId()));
+        }
+        return dataInfo;
     }
 
     /**

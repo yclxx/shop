@@ -140,6 +140,16 @@ public class VerifierController extends BaseController {
         return verifierService.queryShopPageList(bo, pageQuery);
     }
 
+
+    /**
+     * 查询商户下门店未审核数量
+     */
+    @GetMapping("/unExShopCount")
+    public R<Long> unExShopCount(VerifierBo bo) {
+        bo.setId(LoginHelper.getUserId());
+        return R.ok(verifierService.queryUnExShopCount(bo));
+    }
+
     /**
      * 查询未审核门店数量以及信息
      */
@@ -263,6 +273,11 @@ public class VerifierController extends BaseController {
         if (null == shopBo) {
             return R.fail("系统繁忙，请稍后重试");
         }
+        if (bo.getIdType().equals("0")){
+            //商户进入审核页面修改 把核销状态修改为已审核
+            shopBo.setExamineVerifier("1");
+        }
+
         if (null == shopBo.getShopId()) {
             shopService.insertByBo(shopBo);
         } else {

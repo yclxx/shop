@@ -274,6 +274,8 @@ public class ProductBo extends BaseEntity {
 
     private String categoryId;
 
+    private String categoryPlatformId;
+
     private String commercialTenantId;
 
     /**
