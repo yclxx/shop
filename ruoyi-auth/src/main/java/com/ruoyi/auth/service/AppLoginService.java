@@ -85,7 +85,7 @@ public class AppLoginService {
     /**
      * 跳转小程序页面
      */
-    public String jumpWxGroup(String pages){
+    public String jumpWxGroup(String pages,String type,String parameter){
         String accessToken = remoteAppUserService.getAccessToken("wxe7c323382a74e41d", "40eb4ef26612ddae48b98081fcd5d55b");
         if(StringUtils.isEmpty(accessToken)){
             return null;
@@ -95,6 +95,11 @@ public class AppLoginService {
             HttpPost httpPost = new HttpPost(url);
             Map<String,Object> map = new HashMap<>();
             map.put("path",pages);
+            if(StringUtils.isNotEmpty(type)){
+                if("1".equals(type)){
+                    map.put("query","parameter=" + parameter);
+                }
+            }
             Map<String,Object> map1 = new HashMap<>();
             map1.put("jump_wxa",map);
             JSONObject jsonObjects = new JSONObject(map1);
