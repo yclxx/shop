@@ -169,4 +169,6 @@ public class ShopTourBo extends BaseEntity {
     private String oldMerchantNo;
 
     private String merchantType;
+
+    private String tourType;
 }

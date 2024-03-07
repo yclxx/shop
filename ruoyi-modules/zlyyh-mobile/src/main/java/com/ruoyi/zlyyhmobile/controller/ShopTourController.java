@@ -98,8 +98,8 @@ public class ShopTourController {
      * 取消预约巡检商户门店
      */
     @GetMapping("/cancelReserveTourShop")
-    public R<Void> cancelReserveTourShop(Long tourShopId){
-        shopTourService.cancelReserveTourShop(tourShopId);
+    public R<Void> cancelReserveTourShop(Long tourShopId, String tourType){
+        shopTourService.cancelReserveTourShop(tourShopId,tourType);
         return R.ok();
     }
 
@@ -115,8 +115,8 @@ public class ShopTourController {
      * 获取巡检商户门店信息
      */
     @GetMapping("/getTourShopInfo")
-    public R<ShopTourVo> getTourShopInfo(Long tourId) {
-        return R.ok(shopTourService.getTourShopInfo(tourId));
+    public R<ShopTourVo> getTourShopInfo(Long tourId,String type) {
+        return R.ok(shopTourService.getTourShopInfo(tourId,type));
     }
 
     /**
@@ -156,5 +156,13 @@ public class ShopTourController {
     @GetMapping("/getShopMerchantNoList/{shopId}")
     public R<List<ShopMerchantVo>> getShopMerchantNoList(@PathVariable("shopId") Long shopId) {
         return R.ok(shopTourService.getShopMerchantNoList(shopId));
+    }
+
+    /**
+     * 获取商户号信息
+     */
+    @GetMapping("/getShopMerchantNoInfo")
+    public R<List<ShopMerchantVo>> getShopMerchantNoInfo(Long shopId,String merchantType) {
+        return R.ok(shopTourService.getShopMerchantNoInfo(shopId,merchantType));
     }
 }

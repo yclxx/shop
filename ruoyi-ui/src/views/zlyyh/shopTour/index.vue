@@ -55,10 +55,10 @@
     </el-form>
 
     <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
           v-hasPermi="['zlyyh:shopTour:add']">新增</el-button>
-      </el-col>
+      </el-col> -->
       <el-col :span="1.5">
         <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
           v-hasPermi="['zlyyh:shopTour:edit']">修改</el-button>
@@ -119,6 +119,20 @@
       <el-table-column label="门店照片" align="center" prop="shopImage" width="100">
         <template slot-scope="scope">
           <image-preview :src="scope.row.shopImage" :width="50" :height="50" />
+        </template>
+      </el-table-column>
+      <el-table-column label="商户信息" align="left" width="200" prop="shopTourLogVo">
+        <template slot-scope="scope">
+          <div
+            v-if="scope.row.shopTourLogVo && scope.row.shopTourLogVo.shopName && scope.row.status != 0 && scope.row.status != 1">
+            名称:{{scope.row.shopTourLogVo.shopName}}</div>
+          <div
+            v-if="scope.row.shopTourLogVo && scope.row.shopTourLogVo.address && scope.row.status != 0 && scope.row.status != 1"
+            style="display: flex;">
+            地址:{{scope.row.shopTourLogVo.address}}</div>
+          <div
+            v-if="scope.row.shopTourLogVo && scope.row.shopTourLogVo.adminMobile && scope.row.status != 0 && scope.row.status != 1">
+            负责人电话:{{scope.row.shopTourLogVo.adminMobile}}</div>
         </template>
       </el-table-column>
       <el-table-column label="巡检备注" align="center" prop="tourRemark" width="180" />
@@ -873,6 +887,7 @@
         this.refuseOpen = true;
         this.refuseForm.id = row.id;
         this.refuseForm.status = '4';
+        this.refuseForm.tourType = '6';
       },
       //审核拒绝提交
       refuseSubmitForm() {

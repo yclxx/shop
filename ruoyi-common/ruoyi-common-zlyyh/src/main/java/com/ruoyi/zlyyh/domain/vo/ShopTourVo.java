@@ -167,4 +167,6 @@ public class ShopTourVo {
 
     private String tourActivityName;
 
+    private ShopTourLogVo shopTourLogVo;
+
 }
