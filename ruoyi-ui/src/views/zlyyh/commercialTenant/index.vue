@@ -2,7 +2,11 @@
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="商户名称" prop="commercialTenantName">
-        <el-input v-model="queryParams.commercialTenantName" placeholder="请输入商户名称" clearable
+        <el-input v-model="queryParams.commercialTenantName" placeholder="请输入商户名称 / 品牌名称" clearable
+          @keyup.enter.native="handleQuery" />
+      </el-form-item>
+      <el-form-item label="管理员" prop="adminMobile">
+        <el-input v-model="queryParams.adminMobile" placeholder="请输入管理员手机号" clearable
           @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="平台" prop="platformKey">
@@ -21,16 +25,6 @@
           <el-option v-for="dict in dict.type.t_commercial_tenant_index_show" :key="dict.value" :label="dict.label"
             :value="dict.value" />
         </el-select>
-      </el-form-item>
-      <el-form-item label="生效时间" prop="startTime">
-        <el-date-picker clearable v-model="startTime" size="small" :picker-options="pickerOptions"
-          value-format="yyyy-MM-dd HH:mm:ss" type="datetimerange" range-separator="-" start-placeholder="开始日期"
-          end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']"></el-date-picker>
-      </el-form-item>
-      <el-form-item label="失效时间" prop="endTime">
-        <el-date-picker clearable v-model="endTime" size="small" :picker-options="pickerOptions"
-          value-format="yyyy-MM-dd HH:mm:ss" type="datetimerange" range-separator="-" start-placeholder="开始日期"
-          end-placeholder="结束日期" :default-time="['00:00:00', '23:59:59']"></el-date-picker>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -60,7 +54,7 @@
 
     <el-table v-loading="loading" :data="commercialTenantList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="商户ID" align="center" prop="commercialTenantId" v-if="true" />
+      <el-table-column label="商户ID" align="center" width="190" prop="commercialTenantId" v-if="true" />
       <el-table-column label="品牌名称" align="center" prop="commercialTenantName">
         <template slot-scope="scope">
           <span v-if="scope.row.source == 0 && scope.row.brandId">
@@ -78,13 +72,14 @@
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="logo" align="center" prop="commercialTenantImg">
+      <el-table-column label="管理员" align="center" prop="adminMobile" width="110" />
+      <el-table-column label="logo" align="center" prop="commercialTenantImg" width="88">
         <template slot-scope="scope">
           <image-preview :src="scope.row.commercialTenantImg" :width="50" :height="50" />
         </template>
       </el-table-column>
       <!-- <el-table-column label="标签" align="center" prop="tags" show-overflow-tooltip /> -->
-      <el-table-column label="生效时间" align="center" prop="startTime" width="180">
+      <!-- <el-table-column label="生效时间" align="center" prop="startTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.startTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
@@ -93,13 +88,13 @@
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.endTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
-      </el-table-column>
-      <el-table-column label="首页显示" align="center" prop="indexShow">
+      </el-table-column> -->
+      <el-table-column label="首页显示" width="88" align="center" prop="indexShow">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.t_commercial_tenant_index_show" :value="scope.row.indexShow" />
         </template>
       </el-table-column>
-      <el-table-column label="排序" align="center" prop="sort" />
+      <el-table-column label="排序" width="68" align="center" prop="sort" />
       <el-table-column label="平台" align="center" prop="platformKey" :formatter="platformFormatter" />
       <el-table-column label="状态" align="center" prop="status" width="78">
         <template slot-scope="scope">
@@ -124,6 +119,11 @@
       <el-form ref="form" :model="form" :rules="rules" label-width="90px">
         <el-row>
           <el-col :span="8">
+            <el-form-item label="商户名称" prop="commercialTenantTitle">
+              <el-input v-model="form.commercialTenantTitle" placeholder="请输入商户名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
             <el-form-item label="平台" prop="platformKey">
               <el-select v-model="form.platformKey" placeholder="请选择平台" clearable>
                 <el-option v-for="item in platformList" :key="item.id" :label="item.label" :value="item.id" />
@@ -131,11 +131,17 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="商户名称" prop="commercialTenantName">
-              <el-input v-model="form.commercialTenantName" placeholder="请输入商户名称" />
+            <el-form-item label="品牌" prop="brandId">
+              <el-select v-model="form.brandId" placeholder="请选择品牌" clearable>
+                <el-option v-for="item in brandList" :key="item.id" :label="item.label" :value="item.id" />
+              </el-select>
             </el-form-item>
           </el-col>
-
+          <el-col :span="8">
+            <el-form-item label="管理员" prop="adminMobile">
+              <el-input v-model="form.adminMobile" placeholder="请输入管理员手机号" />
+            </el-form-item>
+          </el-col>
           <el-col :span="8">
             <el-form-item label="状态" prop="status">
               <el-radio-group v-model="form.status">
@@ -162,15 +168,6 @@
           <el-col :span="8">
             <el-form-item label="排序" prop="sort">
               <el-input v-model="form.sort" placeholder="请输入排序" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="商品" prop="productIds">
-              <el-select v-model="form.productIds" placeholder="请选择商品" multiple clearable>
-                <el-option v-for="item in productList" :key="item.id" :label="item.label" :value="item.id">
-                  <span style="float: left">{{ item.label }}</span>
-                </el-option>
-              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -205,7 +202,7 @@
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="8">
+          <!-- <el-col :span="8">
             <el-form-item label="收款账户" prop="account" label-width="95px">
               <el-input v-model="form.account" placeholder="请输入收款账户" />
             </el-form-item>
@@ -233,8 +230,8 @@
                   :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
-          </el-col>
-          <el-col :span="24">
+          </el-col> -->
+          <el-col :span="8">
             <el-form-item label="标签" prop="tags">
               <el-select v-model="form.tags" multiple placeholder="请选择标签">
                 <el-option v-for="item in tagsList" :key="item.tagsId" :label="item.tagsName" :value="item.tagsName">
@@ -249,11 +246,11 @@
               <image-upload :limit="1" v-model="form.commercialTenantImg" />
             </el-form-item>
           </el-col>
-          <el-col :span="10">
+          <!-- <el-col :span="10">
             <el-form-item label="营业执照" prop="license">
               <image-upload :limit="1" v-model="form.license" />
             </el-form-item>
-          </el-col>
+          </el-col> -->
         </el-row>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -287,6 +284,9 @@
   import {
     selectSupplier
   } from "@/api/zlyyh/supplier";
+  import {
+    selectListBrand
+  } from "@/api/zlyyh/brand";
 
   export default {
     name: "CommercialTenant",
@@ -302,6 +302,7 @@
         },
         //商品下拉列表
         productList: [],
+        brandList: [],
         // 供应商
         supplierList: [],
         //生效时间范围
@@ -339,7 +340,7 @@
           orderByColumn: "commercial_tenant_id",
           isAsc: 'desc',
           commercialTenantName: undefined,
-          commercialTenantImg: undefined,
+          adminMobile: undefined,
           tags: undefined,
           startTime: undefined,
           endTime: undefined,
@@ -357,7 +358,7 @@
             message: "商户ID不能为空",
             trigger: "blur"
           }],
-          commercialTenantName: [{
+          commercialTenantTitle: [{
             required: true,
             message: "商户名称不能为空",
             trigger: "blur"
@@ -400,6 +401,7 @@
       this.getCategorySelectList();
       this.getTagsList();
       this.selectSupplierList();
+      this.selectBrandList();
     },
     methods: {
       /** 查询商户列表 */
@@ -418,6 +420,14 @@
           this.commercialTenantList = response.rows;
           this.total = response.total;
           this.loading = false;
+        });
+      },
+      // 品牌下拉列表
+      selectBrandList() {
+        selectListBrand({
+          status: '0'
+        }).then(response => {
+          this.brandList = response.data;
         });
       },
       //栏目下拉列表
@@ -475,6 +485,7 @@
           updateBy: undefined,
           updateTime: undefined,
           platformKey: undefined,
+          brandId: undefined,
           isShare: undefined,
           supplier: undefined,
           license: undefined,

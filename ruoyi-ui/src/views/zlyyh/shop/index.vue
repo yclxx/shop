@@ -2,8 +2,14 @@
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="商户" prop="commercialTenantId">
-        <el-select v-model="queryParams.commercialTenantId" placeholder="请选择商户" clearable>
-          <el-option v-for="item in commercialTenantList" :key="item.id" :label="item.label" :value="item.id" />
+        <el-select v-model="queryParams.commercialTenantId" placeholder="请输入商户名称" clearable remote reserve-keyword
+          :remote-method="getMerSelectList" :loading="commercialTenantIdLoading">
+          <el-option v-for="item in commercialTenantList" :key="item.id" :label="item.label" :value="item.id">
+            <span style="float: left">{{ item.label ? item.label : item.rightLabel}}</span>
+            <span style="float: right; color: #8492a6; font-size: 13px" v-if="item.label && item.label.length>0">
+              {{ item.rightLabel }}
+            </span>
+          </el-option>
         </el-select>
       </el-form-item>
       <el-form-item label="门店信息" prop="shopName">
@@ -61,7 +67,7 @@
 
     <el-table v-loading="loading" :data="shopList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="商户" align="center" prop="commercialTenantId" :formatter="merFormatter" />
+      <el-table-column label="商户" align="center" prop="commercialTenantName" />
       <el-table-column label="门店名称" align="center" prop="shopName" />
       <el-table-column label="平台" align="center" prop="platformKey" :formatter="platformFormatter" />
       <el-table-column label="门店地址" width="150" align="center" prop="address" show-overflow-tooltip />
@@ -134,14 +140,25 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="商户" prop="commercialTenantId">
-              <el-select v-model="form.commercialTenantId" placeholder="请选择商户" clearable>
-                <el-option v-for="item in commercialTenantList" :key="item.id" :label="item.label" :value="item.id" />
+              <el-select v-model="form.commercialTenantId" placeholder="请输入商户名称" clearable remote reserve-keyword
+                :remote-method="getMerSelectList" :loading="commercialTenantIdLoading">
+                <el-option v-for="item in commercialTenantList" :key="item.id" :label="item.label" :value="item.id">
+                  <span style="float: left">{{ item.label ? item.label : item.rightLabel}}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px" v-if="item.label && item.label.length>0">
+                    {{ item.rightLabel }}
+                  </span>
+                </el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="门店名称" prop="shopName" style="width: 92%;">
               <el-input v-model="form.shopName" placeholder="请输入门店名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="门店电话" prop="shopTel" style="width: 92%;">
+              <el-input v-model="form.shopTel" placeholder="请输入门店电话" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -154,12 +171,6 @@
               <image-upload v-model="form.shopLogo" :limit="1" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
-            <el-form-item label="门店电话" prop="shopTel" style="width: 92%;">
-              <el-input v-model="form.shopTel" placeholder="请输入门店电话" />
-            </el-form-item>
-          </el-col>
-
           <el-col :span="12">
             <el-form-item label="营业时间" prop="businessHours" style="width: 92%;">
               <el-input v-model="form.businessHours" placeholder="请输入营业时间" />
@@ -517,6 +528,7 @@
         platformList: [],
         //商户下拉列表
         commercialTenantList: [],
+        commercialTenantIdLoading: false,
         //商品下拉列表
         productList: [],
         // 商品展示页面
@@ -737,7 +749,7 @@
     created() {
       this.getList();
       this.getPlatformSelectList();
-      this.getMerSelectList();
+      // this.getMerSelectList();
       this.getBusinessDistrictList();
       this.getProductSelectList();
       this.getTagsList();
@@ -833,10 +845,19 @@
         return row.platformKey;
       },
       //商户下拉列表
-      getMerSelectList() {
-        selectListMerchant({}).then(response => {
-          this.commercialTenantList = response.data;
-        });
+      getMerSelectList(query) {
+        if (query !== '') {
+          this.commercialTenantIdLoading = true;
+          selectListMerchant({
+            commercialTenantName: query,
+            status: '0'
+          }).then(response => {
+            this.commercialTenantIdLoading = false;
+            this.commercialTenantList = response.data;
+          });
+        } else {
+          this.commercialTenantList = [];
+        }
       },
       getBusinessDistrictList() {
         selectListBusinessDistrict({}).then(response => {
@@ -928,6 +949,7 @@
         getShop(shopId).then(response => {
           this.loading = false;
           this.form = response.data;
+          this.getMerSelectList(this.form.commercialTenantName);
           this.open = true;
           this.title = "修改门店";
           if (this.form && this.form.businessDistrictId) {
