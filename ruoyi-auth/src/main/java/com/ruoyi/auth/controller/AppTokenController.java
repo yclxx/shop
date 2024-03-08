@@ -57,8 +57,8 @@ public class AppTokenController {
      * @return
      */
     @PostMapping("/jumpWxGroup")
-    public R<String> jumpWxGroup(String pages){
-        return R.ok(appLoginService.jumpWxGroup(pages));
+    public R<String> jumpWxGroup(String pages,String type,String parameter){
+        return R.ok(appLoginService.jumpWxGroup(pages,type,parameter));
     }
 
     /**

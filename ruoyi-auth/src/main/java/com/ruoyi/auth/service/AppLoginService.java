@@ -21,6 +21,7 @@ import com.ruoyi.system.api.model.LoginUser;
 import com.ruoyi.system.api.model.WxEntity;
 import com.ruoyi.system.api.model.XcxLoginUser;
 import com.ruoyi.system.api.model.YsfEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -40,6 +41,7 @@ import java.util.Map;
  * @author ruoyi
  */
 @Service
+@Slf4j
 public class AppLoginService {
 
     @DubboReference(retries = 0)
@@ -85,7 +87,8 @@ public class AppLoginService {
     /**
      * 跳转小程序页面
      */
-    public String jumpWxGroup(String pages){
+    public String jumpWxGroup(String pages,String type,String parameter){
+        log.info("跳转云美食小程序参数：页面：{}，类型：{}，参数：{}",pages,type,parameter);
         String accessToken = remoteAppUserService.getAccessToken("wxe7c323382a74e41d", "40eb4ef26612ddae48b98081fcd5d55b");
         if(StringUtils.isEmpty(accessToken)){
             return null;
@@ -95,6 +98,11 @@ public class AppLoginService {
             HttpPost httpPost = new HttpPost(url);
             Map<String,Object> map = new HashMap<>();
             map.put("path",pages);
+            if(StringUtils.isNotEmpty(type)){
+                if("1".equals(type)){
+                    map.put("query","parameter=" + parameter);
+                }
+            }
             Map<String,Object> map1 = new HashMap<>();
             map1.put("jump_wxa",map);
             JSONObject jsonObjects = new JSONObject(map1);
