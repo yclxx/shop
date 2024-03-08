@@ -2,14 +2,18 @@ package com.ruoyi.zlyyhadmin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.core.utils.ip.AddressUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.system.api.domain.User;
 import com.ruoyi.zlyyh.domain.*;
+import com.ruoyi.zlyyh.domain.bo.ShopBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.*;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +21,8 @@ import org.springframework.stereotype.Service;
 import com.ruoyi.zlyyh.domain.bo.ShopTourBo;
 import com.ruoyi.zlyyhadmin.service.IShopTourService;
 
+import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,6 +41,8 @@ public class ShopTourServiceImpl implements IShopTourService {
     private final VerifierMapper verifierMapper;
     private final ShopTourRewardMapper shopTourRewardMapper;
     private final ShopMerchantMapper shopMerchantMapper;
+    private final ShopTourLogMapper shopTourLogMapper;
+    private final CommercialTenantMapper commercialTenantMapper;
 
     /**
      * 查询巡检商户
@@ -62,8 +70,12 @@ public class ShopTourServiceImpl implements IShopTourService {
         TableDataInfo<ShopTourVo> dataInfo = TableDataInfo.build(result);
         for (ShopTourVo row : dataInfo.getRows()) {
             ShopVo shopVo = shopMapper.selectVoById(row.getShopId());
+            List<ShopTourLogVo> shopTourLogVos = shopTourLogMapper.selectVoList(new LambdaQueryWrapper<ShopTourLog>().eq(ShopTourLog::getTourId, row.getId()).eq(ShopTourLog::getVerifierId, row.getVerifierId()).eq(ShopTourLog::getOperType, "2").orderByDesc(ShopTourLog::getCreateTime));
             if (ObjectUtil.isNotEmpty(shopVo)) {
                 row.setShopName(shopVo.getShopName());
+            }
+            if (ObjectUtil.isNotEmpty(shopTourLogVos)) {
+                row.setShopTourLogVo(shopTourLogVos.get(0));
             }
         }
         return dataInfo;
@@ -121,7 +133,22 @@ public class ShopTourServiceImpl implements IShopTourService {
     public Boolean updateByBo(ShopTourBo bo) {
         ShopTour update = BeanUtil.toBean(bo, ShopTour.class);
         validEntityBeforeSave(update);
-        return baseMapper.updateById(update) > 0;
+        boolean b = baseMapper.updateById(update) > 0;
+        if (b) {
+            if (StringUtils.isNotEmpty(bo.getTourType()) && bo.getTourType().equals("6")) {
+                ShopTourVo shopTourVo = baseMapper.selectVoById(bo.getId());
+                if (ObjectUtil.isNotEmpty(shopTourVo)) {
+                    ShopTourLog tourLog = new ShopTourLog();
+                    tourLog.setTourId(shopTourVo.getId());
+                    tourLog.setVerifierId(shopTourVo.getVerifierId());
+                    tourLog.setOperType("6");
+                    tourLog.setShopId(shopTourVo.getShopId());
+                    tourLog.setCheckFailReason(bo.getCheckRemark());
+                    shopTourLogMapper.insert(tourLog);
+                }
+            }
+        }
+        return b;
     }
 
     /**
@@ -176,14 +203,16 @@ public class ShopTourServiceImpl implements IShopTourService {
         shopTourBo.setStatus("3");
         Boolean aBoolean = updateByBo(shopTourBo);
         if (aBoolean) {
-            if (bo.getIsClose().equals("0")) {
-                Shop shop = new Shop();
-                shop.setShopId(bo.getShopId());
-                shop.setStatus("1");
-                shopMapper.updateById(shop);
-            }
+            ShopTourLog tourLog = new ShopTourLog();
+            tourLog.setTourId(bo.getId());
+            tourLog.setVerifierId(bo.getVerifierId());
+            tourLog.setOperType("5");
+            tourLog.setShopId(bo.getShopId());
+            shopTourLogMapper.insert(tourLog);
+
             if (StringUtils.isNotEmpty(bo.getMerchantNo())) {
                 if (StringUtils.isNotEmpty(bo.getOldMerchantNo())) {
+                    //修改商户号
                     List<ShopMerchantVo> merchantVos = shopMerchantMapper.selectVoList(new LambdaQueryWrapper<ShopMerchant>().eq(ShopMerchant::getShopId, bo.getShopId()).eq(ShopMerchant::getMerchantNo, bo.getOldMerchantNo()).eq(ShopMerchant::getMerchantType, bo.getMerchantType()));
                     if (ObjectUtil.isNotEmpty(merchantVos)) {
                         for (ShopMerchantVo merchantVo : merchantVos) {
@@ -191,6 +220,45 @@ public class ShopTourServiceImpl implements IShopTourService {
                             shopMerchant.setId(merchantVo.getId());
                             shopMerchant.setMerchantNo(bo.getMerchantNo());
                             shopMerchantMapper.updateById(shopMerchant);
+                        }
+                    }
+                } else {
+                    //新增商户号
+                    ShopMerchant shopMerchant = new ShopMerchant();
+                    shopMerchant.setShopId(bo.getShopId());
+                    shopMerchant.setMerchantType(bo.getMerchantType());
+                    shopMerchant.setMerchantNo(bo.getMerchantNo());
+                    shopMerchantMapper.insert(shopMerchant);
+                }
+            }
+            List<ShopTourLogVo> shopTourLogVos = shopTourLogMapper.selectVoList(new LambdaQueryWrapper<ShopTourLog>().eq(ShopTourLog::getTourId, bo.getId()).eq(ShopTourLog::getVerifierId, bo.getVerifierId()).eq(ShopTourLog::getOperType, "2").orderByDesc(ShopTourLog::getCreateTime));
+            if (ObjectUtil.isNotEmpty(shopTourLogVos)) {
+                ShopTourLogVo tourLogVo = shopTourLogVos.get(0);
+                Shop shop = new Shop();
+                shop.setShopId(tourLogVo.getShopId());
+                if (tourLogVo.getIsClose().equals("0")) {
+                    shop.setStatus("1");
+                }
+                if (StringUtils.isNotEmpty(tourLogVo.getShopName())) {
+                    shop.setShopName(tourLogVo.getShopName());
+                }
+                if (StringUtils.isNotEmpty(tourLogVo.getAddress())) {
+                    shop.setAddress(tourLogVo.getAddress());
+                    getAddressCode(tourLogVo,shop);
+                }
+                shopMapper.updateById(shop);
+
+                if (StringUtils.isNotEmpty(tourLogVo.getAdminMobile())) {
+                    ShopVo shopVo = shopMapper.selectVoById(tourLogVo.getShopId());
+                    if (ObjectUtil.isNotEmpty(shopVo)) {
+                        if (ObjectUtil.isNotEmpty(shopVo.getCommercialTenantId())) {
+                            CommercialTenantVo commercialTenantVo = commercialTenantMapper.selectVoById(shopVo.getCommercialTenantId());
+                            if (ObjectUtil.isNotEmpty(commercialTenantVo)) {
+                                CommercialTenant commercialTenant = new CommercialTenant();
+                                commercialTenant.setCommercialTenantId(shopVo.getCommercialTenantId());
+                                commercialTenant.setAdminMobile(tourLogVo.getAdminMobile());
+                                commercialTenantMapper.updateById(commercialTenant);
+                            }
                         }
                     }
                 }
@@ -206,6 +274,42 @@ public class ShopTourServiceImpl implements IShopTourService {
                 reward.setAmount(bo.getRewardAmount());
                 reward.setCount(1L);
                 shopTourRewardMapper.insert(reward);
+            }
+        }
+    }
+
+    private void getAddressCode(ShopTourLogVo vo, Shop shop) {
+        JSONObject addressInfo;
+        String key;
+        if (StringUtils.isBlank(vo.getAddress())) {
+            return;
+        }
+        key = "updateTourShop:" + vo.getAddress();
+        addressInfo = RedisUtils.getCacheObject(key);
+        if (ObjectUtil.isEmpty(addressInfo)) {
+            addressInfo = AddressUtils.getAddressInfo(vo.getAddress(), null);
+        }
+        if (ObjectUtil.isNotEmpty(addressInfo)) {
+            shop.setFormattedAddress(addressInfo.getString("formatted_address"));
+            shop.setProvince(addressInfo.getString("province"));
+            shop.setCity(addressInfo.getString("city"));
+            shop.setDistrict(addressInfo.getString("district"));
+            String adcode = addressInfo.getString("adcode");
+            String procode = adcode.substring(0, 2) + "0000";
+            String citycode = adcode.substring(0, 4) + "00";
+            shop.setProcode(procode);
+            shop.setCitycode(citycode);
+            shop.setAdcode(adcode);
+
+            String location = addressInfo.getString("location");
+            String[] split = location.split(",");
+            String longitude = split[0];
+            String latitude = split[1];
+            shop.setLongitude(new BigDecimal(longitude));
+            shop.setLatitude(new BigDecimal(latitude));
+
+            if (StringUtils.isNotBlank(key)) {
+                RedisUtils.setCacheObject(key, addressInfo, Duration.ofDays(5));
             }
         }
     }

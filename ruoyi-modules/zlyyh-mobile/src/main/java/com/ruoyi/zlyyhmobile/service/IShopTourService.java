@@ -85,7 +85,7 @@ public interface IShopTourService {
      * 取消预约
      * @param tourShopId
      */
-    void cancelReserveTourShop(Long tourShopId);
+    void cancelReserveTourShop(Long tourShopId, String tourType);
 
     /**
      * 获取预约商户
@@ -100,7 +100,7 @@ public interface IShopTourService {
      * @param tourId
      * @return
      */
-    ShopTourVo getTourShopInfo(Long tourId);
+    ShopTourVo getTourShopInfo(Long tourId,String type);
 
     /**
      * 暂存
@@ -130,4 +130,10 @@ public interface IShopTourService {
      * 获取商户号
      */
     List<ShopMerchantVo> getShopMerchantNoList(Long shopId);
+
+    /**
+     * 获取商户号信息
+     */
+    List<ShopMerchantVo> getShopMerchantNoInfo(Long shopId, String merchantType);
+
 }
