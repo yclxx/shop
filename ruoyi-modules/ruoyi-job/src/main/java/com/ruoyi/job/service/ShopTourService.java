@@ -1,6 +1,5 @@
 package com.ruoyi.job.service;
 
-import com.ruoyi.system.api.RemoteMissionService;
 import com.ruoyi.system.api.model.RemoteShopTourService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -10,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * 银联任务相关定时任务
+ * @author 25487
  */
 @Slf4j
 @Service

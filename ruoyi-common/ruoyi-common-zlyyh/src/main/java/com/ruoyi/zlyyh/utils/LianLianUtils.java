@@ -121,8 +121,14 @@ public class LianLianUtils {
                                            String productId, String itemId, String customerPhoneNumber) {
         LianLianParam.CheckOrderParam checkOrderParam = new LianLianParam.CheckOrderParam();
         checkOrderParam.setThirdPartyOrderNo(number);
-        checkOrderParam.setProductId(Integer.valueOf(productId));
-        checkOrderParam.setItemId(itemId);//套餐id
+        if (productId.contains(":")) {
+            String[] split = productId.split(":");
+            checkOrderParam.setProductId(Integer.valueOf(split[0]));
+        } else {
+            checkOrderParam.setProductId(Integer.valueOf(productId));
+        }
+        // 套餐id
+        checkOrderParam.setItemId(itemId);
         checkOrderParam.setCustomerPhoneNumber(customerPhoneNumber);
         checkOrderParam.setQuantity(1);
         checkOrderParam.setPayType(1);
