@@ -85,4 +85,8 @@ public class ShopMerchantBo extends BaseEntity {
      * 是否邮储商编
      */
     private String ycMerchant;
+
+    private String isUpdate;
+
+    private String oldMerchantNo;
 }

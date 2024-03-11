@@ -298,4 +298,6 @@ public class ShopVo implements Serializable {
      * 商户是否审核
      */
     private String examineVerifier;
+
+    private String adminMobile;
 }

@@ -59,14 +59,14 @@
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
           v-hasPermi="['zlyyh:shopTour:add']">新增</el-button>
       </el-col> -->
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
           v-hasPermi="['zlyyh:shopTour:edit']">修改</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete"
           v-hasPermi="['zlyyh:shopTour:remove']">删除</el-button>
-      </el-col>
+      </el-col> -->
       <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport"
           v-hasPermi="['zlyyh:shopTour:export']">导出</el-button>
@@ -82,11 +82,11 @@
       <!-- <el-table-column type="selection" width="55" align="center" /> -->
       <!-- <el-table-column label="id" align="center" prop="id" v-if="true" /> -->
       <!-- <el-table-column label="门店id" align="center" prop="shopId" /> -->
-      <el-table-column label="巡检门店" align="center" width="130" prop="shopName" />
-      <el-table-column label="巡检活动" align="center" width="130" prop="tourActivityId"
+      <el-table-column label="巡检门店" align="center" width="160" prop="shopName" />
+      <el-table-column label="巡检活动" align="center" width="160" prop="tourActivityId"
         :formatter="tourActivityFormatter" />
-      <el-table-column label="巡检人员" align="center" width="106" prop="verifierId" :formatter="verifierIdFormatter" />
-      <el-table-column label="奖励金额(元)" align="center" width="100" prop="rewardAmount" />
+      <el-table-column label="巡检人员" align="center" width="115" prop="verifierId" :formatter="verifierIdFormatter" />
+      <el-table-column label="奖励金额(元)" align="center" width="115" prop="rewardAmount" />
       <el-table-column label="预约信息" align="left" width="210" prop="isReserve">
         <template slot-scope="scope">
           <div style="display: flex;">是否预约:
@@ -96,17 +96,17 @@
           <div v-if="scope.row.isReserve == '1'">有效期至:{{scope.row.reserveValidity}}</div>
         </template>
       </el-table-column>
-      <el-table-column label="门店状态" align="center" prop="shopStatus">
+      <!-- <el-table-column label="门店状态" align="center" prop="shopStatus">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.t_tour_shop_status" :value="scope.row.shopStatus" />
         </template>
-      </el-table-column>
+      </el-table-column> -->
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.t_tour_status" :value="scope.row.status" />
         </template>
       </el-table-column>
-      <el-table-column label="巡检人员和门店合影" align="center" prop="verifierImage" width="100">
+      <!-- <el-table-column label="巡检人员和门店合影" align="center" prop="verifierImage" width="100">
         <template slot-scope="scope">
           <image-preview :src="scope.row.verifierImage" :width="50" :height="50" />
         </template>
@@ -120,8 +120,8 @@
         <template slot-scope="scope">
           <image-preview :src="scope.row.shopImage" :width="50" :height="50" />
         </template>
-      </el-table-column>
-      <el-table-column label="商户信息" align="left" width="200" prop="shopTourLogVo">
+      </el-table-column> -->
+      <!-- <el-table-column label="商户信息" align="left" width="200" prop="shopTourLogVo">
         <template slot-scope="scope">
           <div
             v-if="scope.row.shopTourLogVo && scope.row.shopTourLogVo.shopName && scope.row.status != 0 && scope.row.status != 1">
@@ -134,36 +134,32 @@
             v-if="scope.row.shopTourLogVo && scope.row.shopTourLogVo.adminMobile && scope.row.status != 0 && scope.row.status != 1">
             负责人电话:{{scope.row.shopTourLogVo.adminMobile}}</div>
         </template>
-      </el-table-column>
-      <el-table-column label="巡检备注" align="center" prop="tourRemark" width="180" />
-      <el-table-column label="商户号信息" align="left" width="180" prop="merchantNo">
+      </el-table-column> -->
+      <!-- <el-table-column label="巡检备注" align="center" prop="tourRemark" width="180" /> -->
+      <!-- <el-table-column label="是否参加活动" align="center" width="100" prop="isActivity">
         <template slot-scope="scope">
-          <div v-if="scope.row.oldMerchantNo">原始商户号:{{scope.row.oldMerchantNo}}</div>
-          <div v-if="scope.row.merchantType" style="display: flex;">商户类型:
-            <dict-tag :options="dict.type.t_shop_merchant_type" :value="scope.row.merchantType" />
-          </div>
-          <div v-if="scope.row.merchantNo">变更商户号:{{scope.row.merchantNo}}</div>
-        </template>
-      </el-table-column>
-      <el-table-column label="是否参加活动" align="center" width="100" prop="isActivity">
+          <dict-tag :options="dict.type.t_tour_is_activity" :value="scope.row.isActivity" /> -->
+      <!-- <div v-if="scope.row.isActivity == '0'">处理方式:{{scope.row.noActivityRemark}}</div> -->
+      <!-- </template>
+      </el-table-column> -->
+      <!-- <el-table-column label="门店是否关闭" align="center" width="100" prop="isClose">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.t_tour_is_activity" :value="scope.row.isActivity" />
-          <!-- <div v-if="scope.row.isActivity == '0'">处理方式:{{scope.row.noActivityRemark}}</div> -->
-        </template>
-      </el-table-column>
-      <el-table-column label="门店是否关闭" align="center" width="100" prop="isClose">
-        <template slot-scope="scope">
-          <dict-tag :options="dict.type.t_tour_is_close" :value="scope.row.isClose" />
-          <!-- <div v-if="scope.row.isClose == '0'">处理方式:{{scope.row.closeRemark}}</div> -->
-        </template>
-      </el-table-column>
-      <el-table-column label="审核意见" align="center" prop="checkRemark" />
+          <dict-tag :options="dict.type.t_tour_is_close" :value="scope.row.isClose" /> -->
+      <!-- <div v-if="scope.row.isClose == '0'">处理方式:{{scope.row.closeRemark}}</div> -->
+      <!-- </template>
+      </el-table-column> -->
+      <el-table-column label="审核意见" width="200" align="center" prop="checkRemark" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" fixed="right">
         <template slot-scope="scope">
-          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleCheckPass(scope.row)"
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleTourCheck(scope.row)"
+            v-show="scope.row.status == 2" v-hasPermi="['zlyyh:shopTour:tourCheck']">去审核</el-button>
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleTourCheck(scope.row)"
+            v-show="scope.row.status == 3 || scope.row.status == 4"
+            v-hasPermi="['zlyyh:shopTour:checkInfo']">审核信息</el-button>
+          <!-- <el-button size="mini" type="text" icon="el-icon-edit" @click="handleCheckPass(scope.row)"
             v-show="scope.row.status == 2" v-hasPermi="['zlyyh:shopTour:checkPass']">审核通过</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleCheckRefuse(scope.row)"
-            v-show="scope.row.status == 2" v-hasPermi="['zlyyh:shopTour:checkRefuse']">审核拒绝</el-button>
+            v-show="scope.row.status == 2" v-hasPermi="['zlyyh:shopTour:checkRefuse']">审核拒绝</el-button> -->
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['zlyyh:shopTour:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
@@ -360,6 +356,85 @@
         <el-button @click="rewardOpen = false">取 消</el-button>
       </div>
     </el-dialog>
+
+    <!-- 商户号维护弹出框 -->
+    <el-dialog title="审核信息" :visible.sync="merchantNoOpen" width="1200px" append-to-body>
+      <el-descriptions title="原商户信息" border>
+        <el-descriptions-item label="门店名称">{{oldShopInfo.shopName}}</el-descriptions-item>
+        <el-descriptions-item label="地址">{{oldShopInfo.address}}</el-descriptions-item>
+        <el-descriptions-item label="负责人电话">{{oldShopInfo.adminMobile}}</el-descriptions-item>
+        <el-descriptions-item label="门店状态"><dict-tag :options="dict.type.t_shop_status"
+            :value="oldShopInfo.status" /></el-descriptions-item>
+      </el-descriptions>
+      <el-descriptions title="更改商户信息" border>
+        <el-descriptions-item label="门店名称">{{merchantNoInfo.shopMerchant.shopTourLogVo.shopName}}</el-descriptions-item>
+        <el-descriptions-item label="地址">{{merchantNoInfo.shopMerchant.shopTourLogVo.address}}</el-descriptions-item>
+        <el-descriptions-item
+          label="负责人电话">{{merchantNoInfo.shopMerchant.shopTourLogVo.adminMobile}}</el-descriptions-item>
+        <!-- <el-descriptions-item label="是否参加活动"><dict-tag :options="dict.type.t_tour_is_activity"
+            :value="merchantNoInfo.shopMerchant.isActivity" /></el-descriptions-item> -->
+        <el-descriptions-item label="门店状态"><dict-tag :options="dict.type.t_tour_shop_status"
+            :value="merchantNoInfo.shopMerchant.shopStatus" /></el-descriptions-item>
+        <el-descriptions-item label="巡检备注">{{merchantNoInfo.shopMerchant.tourRemark}}</el-descriptions-item>
+        <el-descriptions-item label="巡检人员和门店合影"><image-preview :src="merchantNoInfo.shopMerchant.verifierImage"
+            :width="50" :height="50" /></el-descriptions-item>
+        <el-descriptions-item label="物料照片"><image-preview :src="merchantNoInfo.shopMerchant.goodsImage" :width="50"
+            :height="50" /></el-descriptions-item>
+        <el-descriptions-item label="门店照片"><image-preview :src="merchantNoInfo.shopMerchant.shopImage" :width="50"
+            :height="50" /></el-descriptions-item>
+      </el-descriptions>
+
+
+      <div style="font-size: 16px;font-weight: bold;margin: 10px 0;">商户号维护</div>
+      <el-table v-loading="merchantNoInfo.loading" :data="merchantNoInfo.shopTourLsMerchantList">
+        <el-table-column label="门店" align="center" prop="shopName" />
+        <el-table-column label="原始商户号" align="center" prop="oldMerchantNo" />
+        <el-table-column label="商户号" align="center" prop="merchantNo" />
+        <el-table-column label="商户号类型" align="center" prop="merchantType">
+          <template slot-scope="scope">
+            <dict-tag :options="dict.type.t_shop_merchant_type" :value="scope.row.merchantType" />
+          </template>
+        </el-table-column>
+        <el-table-column label="收款方式" align="center" prop="paymentMethod" :formatter="paymentMethodFormatter" />
+        <el-table-column label="收单机构" align="center" prop="acquirer" />
+        <el-table-column label="终端编号" align="center" prop="terminalNo" />
+        <el-table-column label="商编截图" align="center" prop="merchantImg">
+          <template slot-scope="scope">
+            <image-preview :src="scope.row.merchantImg" :width="50" :height="50" />
+          </template>
+        </el-table-column>
+        <el-table-column label="是否邮储商编" align="center" prop="ycMerchant">
+          <template slot-scope="scope">
+            <dict-tag :options="dict.type.t_is_yc_merchant" :value="scope.row.ycMerchant" />
+          </template>
+        </el-table-column>
+        <el-table-column label="维护类型" align="center" prop="isUpdate">
+          <template slot-scope="scope">
+            <dict-tag :options="dict.type.t_is_update" :value="scope.row.isUpdate" />
+          </template>
+        </el-table-column>
+        <!-- <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+          <template slot-scope="scope">
+            <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)"
+              v-hasPermi="['zlyyh:shopTourLsMerchant:edit']">修改</el-button>
+            <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)"
+              v-hasPermi="['zlyyh:shopTourLsMerchant:remove']">删除</el-button>
+          </template>
+        </el-table-column> -->
+      </el-table>
+
+      <pagination v-show="merchantNoInfo.total>0" :total="merchantNoInfo.total"
+        :page.sync="merchantNoInfo.queryParams.pageNum" :limit.sync="merchantNoInfo.queryParams.pageSize"
+        @pagination="getList" />
+
+      <div slot="footer" class="dialog-footer" v-if="merchantNoInfo.shopMerchant.status == '2'">
+        <el-button :loading="merchantNoInfo.buttonLoading" type="primary"
+          @click="handleCheckPass(merchantNoInfo.shopMerchant)">审核通过</el-button>
+        <el-button :loading="merchantNoInfo.buttonLoading" type="primary"
+          @click="handleCheckRefuse(merchantNoInfo.shopMerchant)">审核拒绝</el-button>
+        <el-button @click="merchantNoOpen = false">取 消</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -371,7 +446,8 @@
     addShopTour,
     updateShopTour,
     changeTourShop,
-    tourCheckPass
+    tourCheckPass,
+    getShopInfo
   } from "@/api/zlyyh/shopTour";
   import {
     getPageList,
@@ -389,12 +465,16 @@
   import {
     selectListTourActivity
   } from "@/api/zlyyh/shopTourActivity";
+  import {
+    listShopTourLsMerchant
+  } from "@/api/zlyyh/shopTourLsMerchant";
+
 
 
   export default {
     name: "ShopTour",
     dicts: ['t_tour_is_close', 't_tour_is_activity', 't_tour_shop_status', 't_tour_status', 't_tour_is_reserve',
-      't_shop_status', 't_examine_verifier', 't_shop_merchant_type'
+      't_shop_status', 't_examine_verifier', 't_shop_merchant_type', 't_is_yc_merchant', 't_is_update'
     ],
     data() {
       return {
@@ -575,6 +655,43 @@
           // }],
         },
         tourActivityList: [],
+        merchantNoOpen: false,
+        //商户号信息
+        merchantNoInfo: {
+          // 按钮loading
+          buttonLoading: false,
+          // 遮罩层
+          loading: true,
+          // 总条数
+          total: 0,
+          // 巡检商户号临时表格数据
+          shopTourLsMerchantList: [],
+          // 弹出层标题
+          title: "",
+          // 是否显示弹出层
+          open: false,
+          // 查询参数
+          queryParams: {
+            pageNum: 1,
+            pageSize: 10,
+            tourId: undefined,
+            tourLogId: undefined,
+            verifierId: undefined,
+            shopId: undefined,
+            merchantNo: undefined,
+            merchantType: undefined,
+            paymentMethod: undefined,
+            acquirer: undefined,
+            terminalNo: undefined,
+            merchantImg: undefined,
+            ycMerchant: undefined,
+            isUpdate: undefined,
+          },
+          shopMerchant: {
+            shopTourLogVo: {}
+          },
+        },
+        oldShopInfo: {},
       };
     },
     created() {
@@ -875,10 +992,12 @@
           return tourCheckPass(row);
         }).then(() => {
           this.loading = false;
+          this.merchantNoOpen = false;
           this.getList();
           this.$modal.msgSuccess("操作成功");
         }).catch(() => {}).finally(() => {
           this.loading = false;
+          // this.merchantNoOpen = false;
         });
       },
       //审核拒绝
@@ -897,12 +1016,48 @@
             updateShopTour(this.refuseForm).then(response => {
               this.$modal.msgSuccess("操作成功");
               this.refuseOpen = false;
+              this.merchantNoOpen = false;
               this.getList();
             }).finally(() => {
               this.buttonLoading = false;
             });
           }
         });
+      },
+      //商户号维护
+      handleTourCheck(row) {
+        this.merchantNoOpen = true;
+        this.merchantNoInfo.shopMerchant = row;
+        console.log(row)
+        this.merchantNoInfo.queryParams.tourId = row.id;
+        this.merchantNoInfo.queryParams.verifierId = row.verifierId;
+        this.merchantNoInfo.queryParams.isUpdateList = ['1', '2'];
+        this.getMerchantNoList();
+        this.getShopInfo(row.shopId);
+      },
+      getShopInfo(shopId) {
+        getShopInfo(shopId).then(response => {
+          this.oldShopInfo = response.data;
+        })
+      },
+      getMerchantNoList() {
+        this.merchantNoInfo.loading = true;
+        listShopTourLsMerchant(this.merchantNoInfo.queryParams).then(response => {
+          this.merchantNoInfo.shopTourLsMerchantList = response.rows;
+          this.merchantNoInfo.total = response.total;
+          this.merchantNoInfo.loading = false;
+        });
+      },
+      paymentMethodFormatter(row) {
+        if (row.paymentMethod == '1') {
+          return '主扫';
+        } else if (row.paymentMethod == '2') {
+          return '被扫';
+        } else if (row.paymentMethod == '1,2') {
+          return '主扫，被扫';
+        } else {
+          return row.paymentMethod;
+        }
       }
     }
   };

@@ -43,6 +43,7 @@ public class ShopTourServiceImpl implements IShopTourService {
     private final ShopMerchantMapper shopMerchantMapper;
     private final ShopTourLogMapper shopTourLogMapper;
     private final CommercialTenantMapper commercialTenantMapper;
+    private final ShopTourLsMerchantMapper shopTourLsMerchantMapper;
 
     /**
      * 查询巡检商户
@@ -210,25 +211,42 @@ public class ShopTourServiceImpl implements IShopTourService {
             tourLog.setShopId(bo.getShopId());
             shopTourLogMapper.insert(tourLog);
 
-            if (StringUtils.isNotEmpty(bo.getMerchantNo())) {
-                if (StringUtils.isNotEmpty(bo.getOldMerchantNo())) {
-                    //修改商户号
-                    List<ShopMerchantVo> merchantVos = shopMerchantMapper.selectVoList(new LambdaQueryWrapper<ShopMerchant>().eq(ShopMerchant::getShopId, bo.getShopId()).eq(ShopMerchant::getMerchantNo, bo.getOldMerchantNo()).eq(ShopMerchant::getMerchantType, bo.getMerchantType()));
-                    if (ObjectUtil.isNotEmpty(merchantVos)) {
-                        for (ShopMerchantVo merchantVo : merchantVos) {
-                            ShopMerchant shopMerchant = new ShopMerchant();
-                            shopMerchant.setId(merchantVo.getId());
-                            shopMerchant.setMerchantNo(bo.getMerchantNo());
-                            shopMerchantMapper.updateById(shopMerchant);
+            LambdaQueryWrapper<ShopTourLsMerchant> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(ShopTourLsMerchant::getTourId,bo.getId());
+            wrapper.eq(ShopTourLsMerchant::getVerifierId,bo.getVerifierId());
+            wrapper.in(ShopTourLsMerchant::getIsUpdate,"1","2");
+            List<ShopTourLsMerchantVo> lsMerchantVos = shopTourLsMerchantMapper.selectVoList(wrapper);
+            if (ObjectUtil.isNotEmpty(lsMerchantVos)) {
+                for (ShopTourLsMerchantVo lsMerchantVo : lsMerchantVos) {
+                    if (lsMerchantVo.getIsUpdate().equals("1")) {
+                        //修改商户号
+                        List<ShopMerchantVo> merchantVos = shopMerchantMapper.selectVoList(new LambdaQueryWrapper<ShopMerchant>().eq(ShopMerchant::getShopId, lsMerchantVo.getShopId()).eq(ShopMerchant::getMerchantNo, lsMerchantVo.getOldMerchantNo()).eq(ShopMerchant::getMerchantType, lsMerchantVo.getMerchantType()));
+                        if (ObjectUtil.isNotEmpty(merchantVos)) {
+                            for (ShopMerchantVo merchantVo : merchantVos) {
+                                ShopMerchant shopMerchant = new ShopMerchant();
+                                shopMerchant.setId(merchantVo.getId());
+                                shopMerchant.setMerchantNo(lsMerchantVo.getMerchantNo());
+                                shopMerchant.setPaymentMethod(lsMerchantVo.getPaymentMethod());
+                                shopMerchant.setAcquirer(lsMerchantVo.getAcquirer());
+                                shopMerchant.setTerminalNo(lsMerchantVo.getTerminalNo());
+                                shopMerchant.setMerchantImg(lsMerchantVo.getMerchantImg());
+                                shopMerchant.setYcMerchant(lsMerchantVo.getYcMerchant());
+                                shopMerchantMapper.updateById(shopMerchant);
+                            }
                         }
+                    } else if (lsMerchantVo.getIsUpdate().equals("2")){
+                        //新增商户号
+                        ShopMerchant shopMerchant = new ShopMerchant();
+                        shopMerchant.setShopId(lsMerchantVo.getShopId());
+                        shopMerchant.setMerchantType(lsMerchantVo.getMerchantType());
+                        shopMerchant.setMerchantNo(lsMerchantVo.getMerchantNo());
+                        shopMerchant.setPaymentMethod(lsMerchantVo.getPaymentMethod());
+                        shopMerchant.setAcquirer(lsMerchantVo.getAcquirer());
+                        shopMerchant.setTerminalNo(lsMerchantVo.getTerminalNo());
+                        shopMerchant.setMerchantImg(lsMerchantVo.getMerchantImg());
+                        shopMerchant.setYcMerchant(lsMerchantVo.getYcMerchant());
+                        shopMerchantMapper.insert(shopMerchant);
                     }
-                } else {
-                    //新增商户号
-                    ShopMerchant shopMerchant = new ShopMerchant();
-                    shopMerchant.setShopId(bo.getShopId());
-                    shopMerchant.setMerchantType(bo.getMerchantType());
-                    shopMerchant.setMerchantNo(bo.getMerchantNo());
-                    shopMerchantMapper.insert(shopMerchant);
                 }
             }
             List<ShopTourLogVo> shopTourLogVos = shopTourLogMapper.selectVoList(new LambdaQueryWrapper<ShopTourLog>().eq(ShopTourLog::getTourId, bo.getId()).eq(ShopTourLog::getVerifierId, bo.getVerifierId()).eq(ShopTourLog::getOperType, "2").orderByDesc(ShopTourLog::getCreateTime));
@@ -236,7 +254,7 @@ public class ShopTourServiceImpl implements IShopTourService {
                 ShopTourLogVo tourLogVo = shopTourLogVos.get(0);
                 Shop shop = new Shop();
                 shop.setShopId(tourLogVo.getShopId());
-                if (tourLogVo.getIsClose().equals("0")) {
+                if (tourLogVo.getShopStatus().equals("2")) {
                     shop.setStatus("1");
                 }
                 if (StringUtils.isNotEmpty(tourLogVo.getShopName())) {
@@ -276,6 +294,20 @@ public class ShopTourServiceImpl implements IShopTourService {
                 shopTourRewardMapper.insert(reward);
             }
         }
+    }
+
+    @Override
+    public ShopVo queryByShopId(Long shopId) {
+        ShopVo shopVo = shopMapper.selectVoById(shopId);
+        if (ObjectUtil.isNotEmpty(shopVo)) {
+            if (ObjectUtil.isNotEmpty(shopVo.getCommercialTenantId())) {
+                CommercialTenantVo commercialTenantVo = commercialTenantMapper.selectVoById(shopVo.getCommercialTenantId());
+                if (ObjectUtil.isNotEmpty(commercialTenantVo)) {
+                    shopVo.setAdminMobile(commercialTenantVo.getAdminMobile());
+                }
+            }
+        }
+        return shopVo;
     }
 
     private void getAddressCode(ShopTourLogVo vo, Shop shop) {

@@ -169,4 +169,6 @@ public class ShopTourVo {
 
     private ShopTourLogVo shopTourLogVo;
 
+    private String redisFlag;
+
 }

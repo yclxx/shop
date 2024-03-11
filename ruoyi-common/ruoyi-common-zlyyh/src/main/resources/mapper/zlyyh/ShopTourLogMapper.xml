@@ -30,6 +30,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <result property="updateBy" column="update_by"/>
     <result property="updateTime" column="update_time"/>
     </resultMap>
+    <select id="getInvalidTourList" resultType="com.ruoyi.zlyyh.domain.vo.ShopTourLogVo">
+        select s.shop_name shopName,ta.tour_activity_name tourActivityName,log.oper_type operType,log.create_time createTime
+        from t_shop_tour_log log left join t_shop_tour tour on log.tour_id = tour.id
+            left join t_shop s on log.shop_id = s.shop_id
+            left join t_shop_tour_activity ta on ta.tour_activity_id = tour.tour_activity_id
+        <where>
+            log.del_flag = '0'
+            and log.oper_type in(1,3,4,7)
+            <if test="bo.verifierId != null and bo.verifierId != ''">
+                and log.verifier_id = #{bo.verifierId}
+            </if>
+        </where>
+        order by log.create_time desc
+    </select>
 
 
 </mapper>

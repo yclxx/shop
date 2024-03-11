@@ -49,10 +49,10 @@
     </el-form>
 
     <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAdd"
           v-hasPermi="['zlyyh:shopTourLog:add']">新增</el-button>
-      </el-col>
+      </el-col> -->
       <el-col :span="1.5">
         <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate"
           v-hasPermi="['zlyyh:shopTourLog:edit']">修改</el-button>
@@ -107,7 +107,7 @@
         </template>
       </el-table-column>
       <el-table-column label="巡检备注" align="center" prop="tourRemark" />
-      <el-table-column label="商户号信息" align="left" prop="merchantType" width="200">
+      <!-- <el-table-column label="商户号信息" align="left" prop="merchantType" width="200">
         <template slot-scope="scope">
           <div v-if="scope.row.oldMerchantNo">原始商户号:{{scope.row.oldMerchantNo}}</div>
           <div v-if="scope.row.merchantType" style="display: flex;">商户类型:
@@ -115,7 +115,7 @@
           </div>
           <div v-if="scope.row.merchantNo">变更商户号:{{scope.row.merchantNo}}</div>
         </template>
-      </el-table-column>
+      </el-table-column> -->
       <el-table-column label="是否参加活动" align="center" prop="isActivity">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.t_tour_is_activity" :value="scope.row.isActivity" />

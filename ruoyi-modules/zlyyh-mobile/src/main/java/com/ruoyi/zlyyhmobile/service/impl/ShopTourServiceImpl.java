@@ -14,7 +14,10 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.zlyyh.domain.*;
+import com.ruoyi.zlyyh.domain.bo.ShopMerchantBo;
 import com.ruoyi.zlyyh.domain.bo.ShopTourBo;
+import com.ruoyi.zlyyh.domain.bo.ShopTourLogBo;
+import com.ruoyi.zlyyh.domain.bo.ShopTourLsMerchantBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.mapper.*;
 import com.ruoyi.zlyyhmobile.service.IShopTourService;
@@ -47,6 +50,7 @@ public class ShopTourServiceImpl implements IShopTourService {
     private final ShopTourActivityMapper shopTourActivityMapper;
     private final ShopMerchantMapper shopMerchantMapper;
     private final ShopTourLogMapper shopTourLogMapper;
+    private final ShopTourLsMerchantMapper shopTourLsMerchantMapper;
 
     /**
      * 查询巡检商户
@@ -328,6 +332,11 @@ public class ShopTourServiceImpl implements IShopTourService {
         wrapper.set(ShopTour::getCloseRemark,null);
         baseMapper.update(shopTour, wrapper);
 
+        LambdaQueryWrapper<ShopTourLsMerchant> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ShopTourLsMerchant::getTourId,tourShopId);
+        queryWrapper.eq(ShopTourLsMerchant::getVerifierId,shopTourVo.getVerifierId());
+        shopTourLsMerchantMapper.delete(queryWrapper);
+
         RedisUtils.deleteObject("tourShop" + tourShopId + "user" + shopTourVo.getVerifierId());
     }
 
@@ -353,7 +362,9 @@ public class ShopTourServiceImpl implements IShopTourService {
         Long userId = LoginHelper.getUserId();
         ShopTourBo bo = RedisUtils.getCacheObject("tourShop" + tourId + "user" + userId);
         if (ObjectUtil.isNotEmpty(bo)) {
-            return BeanUtil.toBean(bo,ShopTourVo.class);
+            ShopTourVo shopTourVo = BeanUtil.toBean(bo, ShopTourVo.class);
+            shopTourVo.setRedisFlag("1");
+            return shopTourVo;
         }
         ShopTourVo shopTourVo = baseMapper.selectVoById(tourId);
         if (ObjectUtil.isNotEmpty(shopTourVo)) {
@@ -486,5 +497,56 @@ public class ShopTourServiceImpl implements IShopTourService {
     @Override
     public List<ShopMerchantVo> getShopMerchantNoInfo(Long shopId, String merchantType) {
         return shopMerchantMapper.selectVoList(new LambdaQueryWrapper<ShopMerchant>().eq(ShopMerchant::getShopId, shopId).eq(ShopMerchant::getMerchantType,merchantType));
+    }
+
+    /**
+     * 巡检商户号变更提交
+     */
+    @Override
+    public void updateMerchantNo(ShopTourLsMerchantBo bo) {
+        Long userId = LoginHelper.getUserId();
+        if (ObjectUtil.isNotEmpty(bo.getShopMerchantBos())) {
+            shopTourLsMerchantMapper.delete(new LambdaQueryWrapper<ShopTourLsMerchant>().eq(ShopTourLsMerchant::getTourId,bo.getTourId()).eq(ShopTourLsMerchant::getVerifierId,userId));
+            for (ShopMerchantBo shopMerchantBo : bo.getShopMerchantBos()) {
+                ShopTourLsMerchant lsMerchant = new ShopTourLsMerchant();
+                lsMerchant.setTourId(bo.getTourId());
+                lsMerchant.setVerifierId(userId);
+                lsMerchant.setShopId(bo.getShopId());
+                lsMerchant.setMerchantNo(shopMerchantBo.getMerchantNo());
+                lsMerchant.setMerchantType(shopMerchantBo.getMerchantType());
+                lsMerchant.setPaymentMethod(shopMerchantBo.getPaymentMethod());
+                lsMerchant.setAcquirer(shopMerchantBo.getAcquirer());
+                lsMerchant.setTerminalNo(shopMerchantBo.getTerminalNo());
+                lsMerchant.setMerchantImg(shopMerchantBo.getMerchantImg());
+                lsMerchant.setYcMerchant(shopMerchantBo.getYcMerchant());
+                if (StringUtils.isNotEmpty(shopMerchantBo.getOldMerchantNo())) {
+                    lsMerchant.setOldMerchantNo(shopMerchantBo.getOldMerchantNo());
+                }
+                if (StringUtils.isNotEmpty(shopMerchantBo.getIsUpdate())) {
+                    lsMerchant.setIsUpdate(shopMerchantBo.getIsUpdate());
+                }
+                shopTourLsMerchantMapper.insert(lsMerchant);
+            }
+        }
+    }
+
+    /**
+     * 获取临时商户号信息
+     */
+    @Override
+    public List<ShopTourLsMerchantVo> getLsShopMerchantNoList(Long tourId, Long shopId) {
+        Long userId = LoginHelper.getUserId();
+        return shopTourLsMerchantMapper.selectVoList(new LambdaQueryWrapper<ShopTourLsMerchant>().eq(ShopTourLsMerchant::getTourId,tourId).eq(ShopTourLsMerchant::getShopId,shopId).eq(ShopTourLsMerchant::getVerifierId,userId));
+    }
+
+    /**
+     * 获取失效预约记录列表
+     */
+    @Override
+    public TableDataInfo<ShopTourLogVo> getInvalidTourList(ShopTourLogBo bo, PageQuery pageQuery) {
+        Long userId = LoginHelper.getUserId();
+        bo.setVerifierId(userId);
+        Page<ShopTourLogVo> result = shopTourLogMapper.getInvalidTourList(bo, pageQuery.build());
+        return TableDataInfo.build(result);
     }
 }
