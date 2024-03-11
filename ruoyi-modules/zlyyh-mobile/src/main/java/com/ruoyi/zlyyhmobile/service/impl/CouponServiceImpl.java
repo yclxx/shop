@@ -28,6 +28,7 @@ import com.ruoyi.zlyyhmobile.service.ICouponService;
 import com.ruoyi.zlyyhmobile.service.IOrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -86,6 +87,7 @@ public class CouponServiceImpl implements ICouponService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String conversion(Coupon coupon) {
         // 查询兑换码
         LambdaQueryWrapper<Coupon> lqw = Wrappers.lambdaQuery();
