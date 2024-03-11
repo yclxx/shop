@@ -8,7 +8,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.util.Date;
-
+import java.util.List;
 
 
 /**
@@ -160,5 +160,11 @@ public class ShopTourVo {
      * 巡检活动id
      */
     private Long tourActivityId;
+
+    private String oldMerchantNo;
+
+    private String merchantType;
+
+    private String tourActivityName;
 
 }

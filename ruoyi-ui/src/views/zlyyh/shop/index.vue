@@ -2,8 +2,14 @@
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="商户" prop="commercialTenantId">
-        <el-select v-model="queryParams.commercialTenantId" placeholder="请选择商户" clearable>
-          <el-option v-for="item in commercialTenantList" :key="item.id" :label="item.label" :value="item.id" />
+        <el-select v-model="queryParams.commercialTenantId" placeholder="请输入商户名称" clearable remote reserve-keyword
+          :remote-method="getMerSelectList" :loading="commercialTenantIdLoading">
+          <el-option v-for="item in commercialTenantList" :key="item.id" :label="item.label" :value="item.id">
+            <span style="float: left">{{ item.label ? item.label : item.rightLabel}}</span>
+            <span style="float: right; color: #8492a6; font-size: 13px" v-if="item.label && item.label.length>0">
+              {{ item.rightLabel }}
+            </span>
+          </el-option>
         </el-select>
       </el-form-item>
       <el-form-item label="门店信息" prop="shopName">
@@ -26,7 +32,7 @@
       <el-form-item label="商户审核" prop="examineVerifier">
         <el-select v-model="queryParams.examineVerifier" placeholder="请选择商户审核状态" clearable>
           <el-option v-for="dict in dict.type.t_examine_verifier" :key="dict.value" :label="dict.label"
-                     :value="dict.value" />
+            :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -61,7 +67,7 @@
 
     <el-table v-loading="loading" :data="shopList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="商户" align="center" prop="commercialTenantId" :formatter="merFormatter" />
+      <el-table-column label="商户" align="center" prop="commercialTenantName" />
       <el-table-column label="门店名称" align="center" prop="shopName" />
       <el-table-column label="平台" align="center" prop="platformKey" :formatter="platformFormatter" />
       <el-table-column label="门店地址" width="150" align="center" prop="address" show-overflow-tooltip />
@@ -134,14 +140,25 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="商户" prop="commercialTenantId">
-              <el-select v-model="form.commercialTenantId" placeholder="请选择商户" clearable>
-                <el-option v-for="item in commercialTenantList" :key="item.id" :label="item.label" :value="item.id" />
+              <el-select v-model="form.commercialTenantId" placeholder="请输入商户名称" clearable remote reserve-keyword
+                :remote-method="getMerSelectList" :loading="commercialTenantIdLoading">
+                <el-option v-for="item in commercialTenantList" :key="item.id" :label="item.label" :value="item.id">
+                  <span style="float: left">{{ item.label ? item.label : item.rightLabel}}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px" v-if="item.label && item.label.length>0">
+                    {{ item.rightLabel }}
+                  </span>
+                </el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="门店名称" prop="shopName" style="width: 92%;">
               <el-input v-model="form.shopName" placeholder="请输入门店名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="门店电话" prop="shopTel" style="width: 92%;">
+              <el-input v-model="form.shopTel" placeholder="请输入门店电话" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -154,12 +171,6 @@
               <image-upload v-model="form.shopLogo" :limit="1" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
-            <el-form-item label="门店电话" prop="shopTel" style="width: 92%;">
-              <el-input v-model="form.shopTel" placeholder="请输入门店电话" />
-            </el-form-item>
-          </el-col>
-
           <el-col :span="12">
             <el-form-item label="营业时间" prop="businessHours" style="width: 92%;">
               <el-input v-model="form.businessHours" placeholder="请输入营业时间" />
@@ -235,15 +246,14 @@
             <el-form-item label="共享" prop="isShare">
               <el-select v-model="form.isShare" placeholder="请选择是否共享" style="width: 90%;">
                 <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label"
-                           :value="dict.value"></el-option>
+                  :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="供应商" prop="supplier" style="width: 92%;">
               <el-select v-model="form.supplier" placeholder="请选择供应商" style="width: 100%;">
-                <el-option v-for="dict in supplierList" :key="dict.id" :label="dict.label"
-                           :value="dict.id"></el-option>
+                <el-option v-for="dict in supplierList" :key="dict.id" :label="dict.label" :value="dict.id"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -256,7 +266,7 @@
             <el-form-item label="性质" prop="nature">
               <el-select v-model="form.nature" placeholder="请选择性质" style="width: 90%;">
                 <el-option v-for="dict in dict.type.nature_type" :key="dict.value" :label="dict.label"
-                           :value="dict.value"></el-option>
+                  :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -264,7 +274,7 @@
             <el-form-item label="活动类型" prop="activity">
               <el-select v-model="form.activity" multiple placeholder="请选择活动类型" style="width: 90%;">
                 <el-option v-for="dict in dict.type.activity_type" :key="dict.value" :label="dict.label"
-                           :value="dict.value"></el-option>
+                  :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -272,7 +282,7 @@
             <el-form-item label="发票类型" prop="invoice">
               <el-select v-model="form.invoice" placeholder="请选择发票类型" style="width: 90%;">
                 <el-option v-for="dict in dict.type.invoice_type" :key="dict.value" :label="dict.label"
-                           :value="dict.value"></el-option>
+                  :value="dict.value"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -287,8 +297,7 @@
           <el-col :span="12">
             <el-form-item label="支持端" prop="supportChannel">
               <el-checkbox-group v-model="form.supportChannel">
-                <el-checkbox
-                  v-for="item in dict.type.channel_type" :key="item.value" :label="item.value">
+                <el-checkbox v-for="item in dict.type.channel_type" :key="item.value" :label="item.value">
                   {{ item.label }}
                 </el-checkbox>
               </el-checkbox-group>
@@ -473,21 +482,36 @@
     addShopMerchant,
     updateShopMerchant
   } from "@/api/zlyyh/shopMerchant";
-  import { selectListMerchant } from "@/api/zlyyh/commercialTenant";
-  import { selectListBusinessDistrict } from "@/api/zlyyh/businessDistrict";
-  import { selectListPlatform } from "@/api/zlyyh/platform";
-  import { selectListProduct } from "@/api/zlyyh/product";
-  import { getToken } from "@/utils/auth";
+  import {
+    selectListMerchant
+  } from "@/api/zlyyh/commercialTenant";
+  import {
+    selectListBusinessDistrict
+  } from "@/api/zlyyh/businessDistrict";
+  import {
+    selectListPlatform
+  } from "@/api/zlyyh/platform";
+  import {
+    selectListProduct
+  } from "@/api/zlyyh/product";
+  import {
+    getToken
+  } from "@/utils/auth";
   import "@riophae/vue-treeselect/dist/vue-treeselect.css";
   import Treeselect from "@riophae/vue-treeselect";
-  import { exportTags } from "@/api/zlyyh/tags";
+  import {
+    exportTags
+  } from "@/api/zlyyh/tags";
   import Product from "@/views/zlyyh/product/info.vue";
-  import {selectSupplier} from "@/api/zlyyh/supplier";
+  import {
+    selectSupplier
+  } from "@/api/zlyyh/supplier";
 
   export default {
     name: "Shop",
     dicts: ['t_shop_status', 't_shop_merchant_type', 't_shop_merchant_status', 't_product_assign_date',
-      't_grad_period_date_list', 'nature_type', 'invoice_type', 'activity_type', 'sys_yes_no','channel_type','t_examine_verifier'
+      't_grad_period_date_list', 'nature_type', 'invoice_type', 'activity_type', 'sys_yes_no', 'channel_type',
+      't_examine_verifier'
     ],
     components: {
       Treeselect,
@@ -504,6 +528,7 @@
         platformList: [],
         //商户下拉列表
         commercialTenantList: [],
+        commercialTenantIdLoading: false,
         //商品下拉列表
         productList: [],
         // 商品展示页面
@@ -724,7 +749,7 @@
     created() {
       this.getList();
       this.getPlatformSelectList();
-      this.getMerSelectList();
+      // this.getMerSelectList();
       this.getBusinessDistrictList();
       this.getProductSelectList();
       this.getTagsList();
@@ -820,10 +845,19 @@
         return row.platformKey;
       },
       //商户下拉列表
-      getMerSelectList() {
-        selectListMerchant({}).then(response => {
-          this.commercialTenantList = response.data;
-        });
+      getMerSelectList(query) {
+        if (query !== '') {
+          this.commercialTenantIdLoading = true;
+          selectListMerchant({
+            commercialTenantName: query,
+            status: '0'
+          }).then(response => {
+            this.commercialTenantIdLoading = false;
+            this.commercialTenantList = response.data;
+          });
+        } else {
+          this.commercialTenantList = [];
+        }
       },
       getBusinessDistrictList() {
         selectListBusinessDistrict({}).then(response => {
@@ -915,6 +949,7 @@
         getShop(shopId).then(response => {
           this.loading = false;
           this.form = response.data;
+          this.getMerSelectList(this.form.commercialTenantName);
           this.open = true;
           this.title = "修改门店";
           if (this.form && this.form.businessDistrictId) {
@@ -1018,7 +1053,7 @@
       },
       // 商品维护
       handleProductByShop(row) {
-        this.shopId =  row.shopId;
+        this.shopId = row.shopId;
         this.isProduct = true;
       },
       //商户号配置按钮
@@ -1116,8 +1151,7 @@
       selectSupplierList() {
         selectSupplier(this.form).then(response => {
           this.supplierList = response.data;
-        }).finally(() => {
-        });
+        }).finally(() => {});
       },
       /** 删除按钮操作 */
       handleShopMerchantDelete(row) {

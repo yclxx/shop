@@ -10,7 +10,6 @@ import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
-
 import cn.hutool.extra.mail.MailUtil;
 import cn.hutool.http.HttpStatus;
 import cn.hutool.http.HttpUtil;
@@ -28,7 +27,6 @@ import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.exception.user.UserException;
 import com.ruoyi.common.core.utils.*;
-import com.ruoyi.common.core.utils.reflect.ReflectUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.RedisUtils;
@@ -38,7 +36,6 @@ import com.ruoyi.zlyyh.constant.YsfUpConstants;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.AppWxPayCallbackParams;
-import com.ruoyi.zlyyh.domain.bo.OrderBackTransBo;
 import com.ruoyi.zlyyh.domain.bo.OrderBo;
 import com.ruoyi.zlyyh.domain.bo.ProductAmountBo;
 import com.ruoyi.zlyyh.domain.vo.*;
@@ -68,13 +65,10 @@ import com.ruoyi.zlyyhmobile.event.SendCouponEvent;
 import com.ruoyi.zlyyhmobile.event.ShareOrderEvent;
 import com.ruoyi.zlyyhmobile.service.*;
 import com.ruoyi.zlyyhmobile.utils.AliasMethod;
-import com.ruoyi.zlyyh.utils.redis.ProductUtils;
-import com.ruoyi.zlyyh.utils.redis.OrderCacheUtils;
 import com.wechat.pay.contrib.apache.httpclient.auth.AutoUpdateCertificatesVerifier;
 import com.wechat.pay.contrib.apache.httpclient.auth.PrivateKeySigner;
 import com.wechat.pay.contrib.apache.httpclient.auth.WechatPay2Credentials;
 import com.wechat.pay.contrib.apache.httpclient.util.PemUtil;
-import jodd.util.CollectionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -86,7 +80,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.Email;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -96,7 +89,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -459,7 +451,7 @@ public class OrderServiceImpl implements IOrderService {
                 }
             } else if ("22".equals(order.getOrderType())) {
                 // 银联开放平台发券
-                R<JSONObject> result = YsfUtils.pntAcquire(orderPushInfo.getPushNumber(),order.getAccount(),order.getExternalProductSendValue().multiply(new BigDecimal(100)).setScale(0,BigDecimal.ROUND_DOWN).toString(),"银联红包发放",productVo.getInstitutionAccountId(), productVo.getInstitutionProductId(), order.getPlatformKey());
+                R<JSONObject> result = YsfUtils.pntAcquire(orderPushInfo.getPushNumber(), order.getAccount(), order.getExternalProductSendValue().multiply(new BigDecimal(100)).setScale(0, BigDecimal.ROUND_DOWN).toString(), "银联红包发放", productVo.getInstitutionAccountId(), productVo.getInstitutionProductId(), order.getPlatformKey());
                 // 处理结果
                 sendResult(result, orderPushInfo, order, cache, true);
             } else if ("23".equals(order.getOrderType())){
@@ -814,9 +806,9 @@ public class OrderServiceImpl implements IOrderService {
                     long count = RedisUtils.getAtomicValue(countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
                     Long totalCount = productVo.getTotalCount();
                     Long warnCount = productVo.getWarnCount();
-                    if (ObjectUtil.isNotEmpty(warnCount) && ObjectUtil.isNotEmpty(totalCount) && totalCount>warnCount){
+                    if (ObjectUtil.isNotEmpty(warnCount) && ObjectUtil.isNotEmpty(totalCount) && totalCount > warnCount) {
                         long twCount = totalCount - warnCount;
-                        if (ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && count >= twCount){
+                        if (ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && count >= twCount) {
                             //达成以上条件发送邮件
                             String title = "商品数量预警";
                             String text = productVo.getProductName() + ":数量不足" + productVo.getWarnCount() + "请及时处理";
@@ -824,8 +816,6 @@ public class OrderServiceImpl implements IOrderService {
                         }
 
                     }
-
-
 
                 }
             } catch (Exception e) {
@@ -998,6 +988,7 @@ public class OrderServiceImpl implements IOrderService {
             lockTemplate.releaseLock(lockInfo);
         }
     }
+
     public static String countByProductIdRedisKey(Long platformKey, Long productId, DateType dateType) {
         return "orderLimitCache:product:" + platformKey + ":" + productId + ":" + ZlyyhUtils.getDateCacheKey(dateType);
     }
@@ -1024,11 +1015,9 @@ public class OrderServiceImpl implements IOrderService {
         } catch (Exception e) {
             log.error("邮件发送异常", e);
         }
-        MailUtil.sendText(emails,title,text);
+        MailUtil.sendText(emails, title, text);
 
     }
-
-
 
     /**
      * 购物车创建订单
@@ -1296,9 +1285,9 @@ public class OrderServiceImpl implements IOrderService {
                     long totalCount = RedisUtils.getAtomicValue(countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
                     Long productVoTotalCount = productVo.getTotalCount();
                     Long warnCount = productVo.getWarnCount();
-                    if (ObjectUtil.isNotEmpty(warnCount) && ObjectUtil.isNotEmpty(productVoTotalCount) && productVoTotalCount>warnCount){
+                    if (ObjectUtil.isNotEmpty(warnCount) && ObjectUtil.isNotEmpty(productVoTotalCount) && productVoTotalCount > warnCount) {
                         long twCount = productVoTotalCount - warnCount;
-                        if (ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && totalCount >= twCount){
+                        if (ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && totalCount >= twCount) {
                             //达成以上条件发送邮件
                             String title = "商品数量预警";
                             String text = productVo.getProductName() + ":数量不足" + productVo.getWarnCount() + "请及时处理";
@@ -1306,7 +1295,6 @@ public class OrderServiceImpl implements IOrderService {
                         }
 
                     }
-
 
                 }
             } catch (Exception e) {
@@ -2128,7 +2116,6 @@ public class OrderServiceImpl implements IOrderService {
         log.info("结束设置商品购买数量缓存，流水号：{}", snowflakeNextIdStr);
     }
 
-
     /**
      * 设置商品组购买数量缓存
      *
@@ -2491,7 +2478,6 @@ public class OrderServiceImpl implements IOrderService {
         orderBackTransMapper.insert(orderBackTrans);
 
     }
-
 
     /**
      * 校验订单退款状态
@@ -2901,8 +2887,11 @@ public class OrderServiceImpl implements IOrderService {
         if (orders.size() == 1) {
             // 查询商品信息
             ProductVo productVo = productService.queryById(orders.get(0).getProductId());
-            if (null == productVo || !"0".equals(productVo.getStatus())) {
-                throw new ServiceException(productVo.getProductName() + "不存在或已下架[pay]");
+            if (null == productVo) {
+                throw new ServiceException("商品不存在[pay]");
+            }
+            if (!"0".equals(productVo.getStatus())) {
+                throw new ServiceException(productVo.getProductName() + "已下架[pay]");
             }
             if (null != productVo.getMerchantId()) {
                 merchantVo = merchantService.queryById(productVo.getMerchantId());
@@ -2939,8 +2928,11 @@ public class OrderServiceImpl implements IOrderService {
                 }
                 // 查询商品信息
                 ProductVo productVo = productService.queryById(order.getProductId());
-                if (null == productVo || !"0".equals(productVo.getStatus())) {
-                    throw new ServiceException(productVo.getProductName() + "不存在或已下架[pay]");
+                if (null == productVo) {
+                    throw new ServiceException("商品不存在[pay]");
+                }
+                if (!"0".equals(productVo.getStatus())) {
+                    throw new ServiceException(productVo.getProductName() + "已下架[pay]");
                 }
                 payResultVo.setIsPoup(productVo.getIsPoup());
                 payResultVo.setPoupText(productVo.getPoupText());

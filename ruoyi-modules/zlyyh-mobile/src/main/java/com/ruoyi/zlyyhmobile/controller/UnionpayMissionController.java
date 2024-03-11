@@ -13,10 +13,7 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.system.api.model.LoginUser;
 import com.ruoyi.zlyyh.domain.bo.*;
-import com.ruoyi.zlyyh.domain.vo.UnionpayMissionProgressVo;
-import com.ruoyi.zlyyh.domain.vo.UnionpayMissionUserLogVo;
-import com.ruoyi.zlyyh.domain.vo.UnionpayMissionVo;
-import com.ruoyi.zlyyh.domain.vo.UserVo;
+import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.service.IUnionpayMissionService;
@@ -154,9 +151,14 @@ public class UnionpayMissionController extends BaseController {
     /**
      * 查询银联任务奖励列表
      */
-    @PostMapping("/rewardList")
-    public R<List<UnionpayMissionUserLogVo>> rewardList(@RequestBody UnionpayMissionUserLogBo bo) {
-        return R.ok(iUnionpayMissionService.rewardList(bo));
+    //@PostMapping("/rewardList")
+    //public R<List<UnionpayMissionUserLogVo>> rewardList(@RequestBody UnionpayMissionUserLogBo bo) {
+    //    return R.ok(iUnionpayMissionService.rewardList(bo));
+    //}
+
+    @GetMapping("/rewardList")
+    public TableDataInfo<UnionpayMissionUserLogVo> rewardList(UnionpayMissionUserLogBo bo, PageQuery pageQuery) {
+        return iUnionpayMissionService.queryPageRewardList(bo, pageQuery);
     }
 
     /**
@@ -165,5 +167,17 @@ public class UnionpayMissionController extends BaseController {
     @PostMapping("/getProgressList")
     public R<List<UnionpayMissionProgressVo>> getProgressList(@RequestBody UnionpayMissionProgressBo bo) {
         return R.ok(iUnionpayMissionService.getProgressList(bo));
+    }
+
+    /**
+     * 查询任务组背景
+     */
+    @PostMapping("/getUpMissionGroupBg")
+    public R<List<UnionpayMissionGroupBgVo>> getUpMissionGroupBg(@RequestBody UnionpayMissionUserBo bo) {
+        if (null == bo.getUpMissionGroupId()) {
+            return R.fail("缺少任务组编号");
+        }
+        bo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        return R.ok(iUnionpayMissionService.getUpMissionGroupBg(bo));
     }
 }

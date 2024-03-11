@@ -5,6 +5,7 @@ import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.*;
+import com.ruoyi.zlyyh.domain.vo.UnionpayMissionGroupBgVo;
 import com.ruoyi.zlyyh.domain.vo.UnionpayMissionProgressVo;
 import com.ruoyi.zlyyh.domain.vo.UnionpayMissionUserLogVo;
 import com.ruoyi.zlyyh.domain.vo.UnionpayMissionVo;
@@ -84,4 +85,11 @@ public interface IUnionpayMissionService {
      * 查询银联任务进度列表
      */
     List<UnionpayMissionProgressVo> getProgressList(UnionpayMissionProgressBo bo);
+
+    /**
+     * 查询任务组背景
+     */
+    List<UnionpayMissionGroupBgVo> getUpMissionGroupBg(UnionpayMissionUserBo bo);
+
+    TableDataInfo<UnionpayMissionUserLogVo> queryPageRewardList(UnionpayMissionUserLogBo bo, PageQuery pageQuery);
 }

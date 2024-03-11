@@ -9,27 +9,15 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.ruoyi.system.api.domain.User;
-import com.ruoyi.zlyyh.domain.Shop;
-import com.ruoyi.zlyyh.domain.ShopTourReward;
-import com.ruoyi.zlyyh.domain.Verifier;
-import com.ruoyi.zlyyh.domain.vo.ShopTourRewardVo;
-import com.ruoyi.zlyyh.domain.vo.ShopVo;
-import com.ruoyi.zlyyh.domain.vo.VerifierVo;
-import com.ruoyi.zlyyh.mapper.ShopMapper;
-import com.ruoyi.zlyyh.mapper.ShopTourRewardMapper;
-import com.ruoyi.zlyyh.mapper.VerifierMapper;
+import com.ruoyi.zlyyh.domain.*;
+import com.ruoyi.zlyyh.domain.vo.*;
+import com.ruoyi.zlyyh.mapper.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.ruoyi.zlyyh.domain.bo.ShopTourBo;
-import com.ruoyi.zlyyh.domain.vo.ShopTourVo;
-import com.ruoyi.zlyyh.domain.ShopTour;
-import com.ruoyi.zlyyh.mapper.ShopTourMapper;
 import com.ruoyi.zlyyhadmin.service.IShopTourService;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Collection;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -46,6 +34,7 @@ public class ShopTourServiceImpl implements IShopTourService {
     private final ShopMapper shopMapper;
     private final VerifierMapper verifierMapper;
     private final ShopTourRewardMapper shopTourRewardMapper;
+    private final ShopMerchantMapper shopMerchantMapper;
 
     /**
      * 查询巡检商户
@@ -60,9 +49,23 @@ public class ShopTourServiceImpl implements IShopTourService {
      */
     @Override
     public TableDataInfo<ShopTourVo> queryPageList(ShopTourBo bo, PageQuery pageQuery) {
+        if (StringUtils.isNotEmpty(bo.getShopName())) {
+            List<ShopVo> shopVos = shopMapper.selectVoList(new LambdaQueryWrapper<Shop>().like(Shop::getShopName, bo.getShopName()));
+            if (ObjectUtil.isNotEmpty(shopVos)) {
+                bo.setShopsIds(shopVos.stream().map(ShopVo::getShopId).collect(Collectors.toList()));
+            } else {
+                return TableDataInfo.build(new ArrayList<>());
+            }
+        }
         LambdaQueryWrapper<ShopTour> lqw = buildQueryWrapper(bo);
         Page<ShopTourVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
         TableDataInfo<ShopTourVo> dataInfo = TableDataInfo.build(result);
+        for (ShopTourVo row : dataInfo.getRows()) {
+            ShopVo shopVo = shopMapper.selectVoById(row.getShopId());
+            if (ObjectUtil.isNotEmpty(shopVo)) {
+                row.setShopName(shopVo.getShopName());
+            }
+        }
         return dataInfo;
     }
 
@@ -78,8 +81,9 @@ public class ShopTourServiceImpl implements IShopTourService {
     private LambdaQueryWrapper<ShopTour> buildQueryWrapper(ShopTourBo bo) {
         Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<ShopTour> lqw = Wrappers.lambdaQuery();
-        lqw.eq(bo.getShopId() != null, ShopTour::getShopId, bo.getShopId());
+        //lqw.eq(bo.getShopId() != null, ShopTour::getShopId, bo.getShopId());
         lqw.eq(bo.getVerifierId() != null, ShopTour::getVerifierId, bo.getVerifierId());
+        lqw.eq(bo.getTourActivityId() != null, ShopTour::getTourActivityId, bo.getTourActivityId());
         lqw.eq(bo.getRewardAmount() != null, ShopTour::getRewardAmount, bo.getRewardAmount());
         lqw.eq(StringUtils.isNotBlank(bo.getIsReserve()), ShopTour::getIsReserve, bo.getIsReserve());
         lqw.eq(StringUtils.isNotBlank(bo.getShopStatus()), ShopTour::getShopStatus, bo.getShopStatus());
@@ -92,6 +96,7 @@ public class ShopTourServiceImpl implements IShopTourService {
         lqw.eq(StringUtils.isNotBlank(bo.getMerchantNo()), ShopTour::getMerchantNo, bo.getMerchantNo());
         lqw.eq(StringUtils.isNotBlank(bo.getIsActivity()), ShopTour::getIsActivity, bo.getIsActivity());
         lqw.eq(StringUtils.isNotBlank(bo.getIsClose()), ShopTour::getIsClose, bo.getIsClose());
+        lqw.in(ObjectUtil.isNotEmpty(bo.getShopsIds()), ShopTour::getShopId, bo.getShopsIds());
         return lqw;
     }
 
@@ -142,19 +147,21 @@ public class ShopTourServiceImpl implements IShopTourService {
      */
     @Override
     public void changeTourShop(ShopTourBo bo) {
-        if (ObjectUtil.isNotEmpty(bo.getShopIds())) {
-            for (Long shopId : bo.getShopIds()) {
-                List<ShopTourVo> shopTourVos = baseMapper.selectVoList(new LambdaQueryWrapper<ShopTour>().eq(ShopTour::getShopId, shopId));
-                if (ObjectUtil.isNotEmpty(shopTourVos)) {
-                    continue;
-                } else {
-                    ShopTour shopTour = new ShopTour();
-                    shopTour.setShopId(shopId);
-                    if (ObjectUtil.isNotEmpty(bo.getRewardAmount())) {
-                        shopTour.setRewardAmount(bo.getRewardAmount());
-                    }
-                    baseMapper.insert(shopTour);
+        if (ObjectUtil.isEmpty(bo.getShopIds())) {
+            return;
+        }
+        for (Long shopId : bo.getShopIds()) {
+            List<ShopTourVo> shopTourVos = baseMapper.selectVoList(new LambdaQueryWrapper<ShopTour>().eq(ShopTour::getShopId, shopId).eq(ShopTour::getTourActivityId,bo.getTourActivityId()));
+            if (ObjectUtil.isNotEmpty(shopTourVos)) {
+                continue;
+            } else {
+                ShopTour shopTour = new ShopTour();
+                shopTour.setShopId(shopId);
+                shopTour.setTourActivityId(bo.getTourActivityId());
+                if (ObjectUtil.isNotEmpty(bo.getRewardAmount())) {
+                    shopTour.setRewardAmount(bo.getRewardAmount());
                 }
+                baseMapper.insert(shopTour);
             }
         }
     }
@@ -174,6 +181,19 @@ public class ShopTourServiceImpl implements IShopTourService {
                 shop.setShopId(bo.getShopId());
                 shop.setStatus("1");
                 shopMapper.updateById(shop);
+            }
+            if (StringUtils.isNotEmpty(bo.getMerchantNo())) {
+                if (StringUtils.isNotEmpty(bo.getOldMerchantNo())) {
+                    List<ShopMerchantVo> merchantVos = shopMerchantMapper.selectVoList(new LambdaQueryWrapper<ShopMerchant>().eq(ShopMerchant::getShopId, bo.getShopId()).eq(ShopMerchant::getMerchantNo, bo.getOldMerchantNo()).eq(ShopMerchant::getMerchantType, bo.getMerchantType()));
+                    if (ObjectUtil.isNotEmpty(merchantVos)) {
+                        for (ShopMerchantVo merchantVo : merchantVos) {
+                            ShopMerchant shopMerchant = new ShopMerchant();
+                            shopMerchant.setId(merchantVo.getId());
+                            shopMerchant.setMerchantNo(bo.getMerchantNo());
+                            shopMerchantMapper.updateById(shopMerchant);
+                        }
+                    }
+                }
             }
             ShopTourRewardVo rewardVo = shopTourRewardMapper.selectVoOne(new LambdaQueryWrapper<ShopTourReward>().eq(ShopTourReward::getVerifierId, bo.getVerifierId()).last("limit 1"));
             if (ObjectUtil.isNotEmpty(rewardVo)) {

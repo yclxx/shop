@@ -6,10 +6,8 @@
           <el-option v-for="item in tourActivityList" :key="item.id" :label="item.label" :value="item.id" />
         </el-select>
       </el-form-item>
-      <el-form-item label="门店" prop="shopId">
-        <el-select v-model="queryParams.shopId" placeholder="请选择门店" clearable>
-          <el-option v-for="item in shopSelectList" :key="item.id" :label="item.label" :value="item.id" />
-        </el-select>
+      <el-form-item label="门店名称" prop="shopName">
+        <el-input v-model="queryParams.shopName" placeholder="请输入门店名称" clearable @keyup.enter.native="handleQuery" />
       </el-form-item>
       <el-form-item label="巡检人员" prop="verifierId">
         <el-select v-model="queryParams.verifierId" placeholder="请选择巡检人员" clearable>
@@ -84,7 +82,7 @@
       <!-- <el-table-column type="selection" width="55" align="center" /> -->
       <!-- <el-table-column label="id" align="center" prop="id" v-if="true" /> -->
       <!-- <el-table-column label="门店id" align="center" prop="shopId" /> -->
-      <el-table-column label="巡检门店" align="center" width="130" prop="shopId" :formatter="shopIdFormatter" />
+      <el-table-column label="巡检门店" align="center" width="130" prop="shopName" />
       <el-table-column label="巡检活动" align="center" width="130" prop="tourActivityId"
         :formatter="tourActivityFormatter" />
       <el-table-column label="巡检人员" align="center" width="106" prop="verifierId" :formatter="verifierIdFormatter" />
@@ -123,22 +121,26 @@
           <image-preview :src="scope.row.shopImage" :width="50" :height="50" />
         </template>
       </el-table-column>
-      <el-table-column label="巡检备注" align="center" prop="tourRemark" />
-      <el-table-column label="变更商户号" align="center" width="100" prop="merchantNo" />
-      <el-table-column label="参与活动信息" align="left" width="180" prop="isActivity">
+      <el-table-column label="巡检备注" align="center" prop="tourRemark" width="180" />
+      <el-table-column label="商户号信息" align="left" width="180" prop="merchantNo">
         <template slot-scope="scope">
-          <div style="display: flex;">是否参与:
-            <dict-tag :options="dict.type.t_tour_is_activity" :value="scope.row.isActivity" />
+          <div v-if="scope.row.oldMerchantNo">原始商户号:{{scope.row.oldMerchantNo}}</div>
+          <div v-if="scope.row.merchantType" style="display: flex;">商户类型:
+            <dict-tag :options="dict.type.t_shop_merchant_type" :value="scope.row.merchantType" />
           </div>
-          <div v-if="scope.row.isActivity == '0'">处理方式:{{scope.row.noActivityRemark}}</div>
+          <div v-if="scope.row.merchantNo">变更商户号:{{scope.row.merchantNo}}</div>
         </template>
       </el-table-column>
-      <el-table-column label="门店关闭信息" align="left" width="180" prop="isClose">
+      <el-table-column label="是否参加活动" align="center" width="100" prop="isActivity">
         <template slot-scope="scope">
-          <div style="display: flex;">是否关闭:
-            <dict-tag :options="dict.type.t_tour_is_close" :value="scope.row.isClose" />
-          </div>
-          <div v-if="scope.row.isClose == '0'">处理方式:{{scope.row.closeRemark}}</div>
+          <dict-tag :options="dict.type.t_tour_is_activity" :value="scope.row.isActivity" />
+          <!-- <div v-if="scope.row.isActivity == '0'">处理方式:{{scope.row.noActivityRemark}}</div> -->
+        </template>
+      </el-table-column>
+      <el-table-column label="门店是否关闭" align="center" width="100" prop="isClose">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.t_tour_is_close" :value="scope.row.isClose" />
+          <!-- <div v-if="scope.row.isClose == '0'">处理方式:{{scope.row.closeRemark}}</div> -->
         </template>
       </el-table-column>
       <el-table-column label="审核意见" align="center" prop="checkRemark" />
@@ -329,7 +331,7 @@
     <el-dialog title="巡检奖励" :visible.sync="rewardOpen" width="500px" append-to-body>
       <el-form ref="rewardForm" :model="rewardForm" :rules="rewardRules" label-width="80px">
         <el-form-item label="巡检活动" prop="tourActivityId">
-          <el-select v-model="form.tourActivityId" placeholder="请选择巡检活动" clearable>
+          <el-select v-model="rewardForm.tourActivityId" placeholder="请选择巡检活动" clearable>
             <el-option v-for="item in tourActivityList" :key="item.id" :label="item.label" :value="item.id" />
           </el-select>
         </el-form-item>
@@ -378,7 +380,7 @@
   export default {
     name: "ShopTour",
     dicts: ['t_tour_is_close', 't_tour_is_activity', 't_tour_shop_status', 't_tour_status', 't_tour_is_reserve',
-      't_shop_status', 't_examine_verifier'
+      't_shop_status', 't_examine_verifier', 't_shop_merchant_type'
     ],
     data() {
       return {
@@ -565,7 +567,7 @@
       this.getList();
       this.getMerSelectList();
       this.getVerifiereSelectList();
-      this.getShopSelectList();
+      // this.getShopSelectList();
       this.getBusinessDistrictSelectList();
       this.getTourActivityList();
     },
@@ -584,7 +586,10 @@
       },
       //巡检活动下拉列表查询
       getTourActivityList() {
-        selectListTourActivity({}).then(res => {
+        let param = {
+          status: '0'
+        }
+        selectListTourActivity(param).then(res => {
           this.tourActivityList = res.data;
         })
       },
@@ -599,10 +604,10 @@
       },
       //门店下拉列表
       getShopSelectList() {
-        let param = {
-          platformKey: '1718900262780600322'
-        }
-        selectShopList(param).then(response => {
+        // let param = {
+        //   platformKey: '1718900262780600322'
+        // }
+        selectShopList({}).then(response => {
           this.shopSelectList = response.data;
         });
       },
@@ -712,6 +717,7 @@
             if (this.form.rewardAmount) {
               this.form.rewardAmount = (this.form.rewardAmount * 100).toFixed(0);
             }
+            console.log(this.form)
             if (this.form.id != null) {
               updateShopTour(this.form).then(response => {
                 this.$modal.msgSuccess("修改成功");
@@ -761,7 +767,7 @@
       /** 查询门店列表 */
       getShopList() {
         this.tourShop.loading = true;
-        this.tourShop.queryParams.platformKey = '1718900262780600322';
+        // this.tourShop.queryParams.platformKey = '1718900262780600322';
         getPageList(this.tourShop.queryParams).then(response => {
           this.tourShop.shopList = response.rows;
           this.tourShop.total = response.total;
@@ -786,7 +792,10 @@
       },
       //商户下拉列表
       getMerSelectList() {
-        selectListMerchant({}).then(response => {
+        let param = {
+          status: '0'
+        }
+        selectListMerchant(param).then(response => {
           this.commercialTenantList = response.data;
         });
       },
@@ -860,6 +869,7 @@
       },
       //审核拒绝
       handleCheckRefuse(row) {
+        this.resetForm("refuseForm");
         this.refuseOpen = true;
         this.refuseForm.id = row.id;
         this.refuseForm.status = '4';

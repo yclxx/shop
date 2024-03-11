@@ -61,6 +61,7 @@ public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
     private final UnionpayMissionUserLogMapper unionpayMissionUserLogMapper;
     private final IOrderService orderService;
     private final ProductMapper productMapper;
+    private final UnionpayMissionGroupBgMapper unionpayMissionGroupBgMapper;
 
     /**
      * 查询银联任务配置
@@ -512,5 +513,31 @@ public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
             }
         }
         return progressVoList;
+    }
+
+    /**
+     * 查询任务组背景
+     */
+    @Override
+    public List<UnionpayMissionGroupBgVo> getUpMissionGroupBg(UnionpayMissionUserBo bo) {
+        LambdaQueryWrapper<UnionpayMissionGroupBg> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(UnionpayMissionGroupBg::getMissionGroupId,bo.getUpMissionGroupId());
+        wrapper.eq(UnionpayMissionGroupBg::getPlatformKey,bo.getPlatformKey());
+        wrapper.eq(UnionpayMissionGroupBg::getStatus,"0");
+        return unionpayMissionGroupBgMapper.selectVoList(wrapper);
+
+    }
+
+    @Override
+    public TableDataInfo<UnionpayMissionUserLogVo> queryPageRewardList(UnionpayMissionUserLogBo bo, PageQuery pageQuery) {
+        Long userId = LoginHelper.getUserId();
+        Long platformId = ZlyyhUtils.getPlatformId();
+        UnionpayMissionUserVo missionUserVo = unionpayMissionUserMapper.selectVoOne(new LambdaQueryWrapper<UnionpayMissionUser>().eq(UnionpayMissionUser::getUserId, userId).eq(UnionpayMissionUser::getPlatformKey, platformId).last("limit 1"));
+        if (ObjectUtil.isEmpty(missionUserVo)) {
+            return TableDataInfo.build(new ArrayList<>());
+        }
+        bo.setUpMissionUserId(missionUserVo.getUpMissionUserId());
+        Page<UnionpayMissionUserLogVo> result = baseMapper.queryPageRewardList(bo, pageQuery.build());
+        return TableDataInfo.build(result);
     }
 }
