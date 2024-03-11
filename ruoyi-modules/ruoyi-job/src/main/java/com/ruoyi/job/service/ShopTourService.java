@@ -1,6 +1,5 @@
 package com.ruoyi.job.service;
 
-import com.ruoyi.system.api.RemoteMissionService;
 import com.ruoyi.system.api.model.RemoteShopTourService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
