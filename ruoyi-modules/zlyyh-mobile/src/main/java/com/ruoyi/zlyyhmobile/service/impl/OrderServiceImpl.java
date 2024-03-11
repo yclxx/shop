@@ -1434,6 +1434,8 @@ public class OrderServiceImpl implements IOrderService {
             }
             OrderFoodInfo orderFoodInfo = new OrderFoodInfo();
             orderFoodInfo.setNumber(order.getNumber());
+            //如果是享库类型商品productName字段存放预约url
+            orderFoodInfo.setProductName(productInfoVo.getReserveDesc());
             //调用美食商城预下单接口获取三方number
             xKCreateOrder(order, orderFoodInfo, userVo.getMobile(), productVo.getExternalProductId());
             // 保存订单 后续如需改动成缓存订单，需注释

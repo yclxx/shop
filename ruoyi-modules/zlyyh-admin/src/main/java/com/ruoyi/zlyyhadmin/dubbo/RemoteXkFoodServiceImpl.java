@@ -267,6 +267,8 @@ public class RemoteXkFoodServiceImpl implements RemoteXkFoodService {
         JSONObject distribution = data.getJSONObject("distribution");
         //结算价
         BigDecimal supply_price = distribution.getBigDecimal("supply_price");
+        //预约链接存储在额外信息里
+        String appointment_url = distribution.getString("appointment_url");
         JSONArray goods_sku = data.getJSONArray("goods_sku");
         if (ObjectUtil.isEmpty(goods_sku)){
             throw new ServiceException("商品id"+goodsId+"未获取到价格");
@@ -313,8 +315,9 @@ public class RemoteXkFoodServiceImpl implements RemoteXkFoodService {
                 }
             }
         }
-
-
+        if (ObjectUtil.isNotEmpty(appointment_url)){
+            productInfoBo.setReserveDesc(appointment_url);
+        }
         productInfoBo.setItemPrice(supply_price);
         //折扣计算
         productInfoBo.setDiscount(divide.toString());
