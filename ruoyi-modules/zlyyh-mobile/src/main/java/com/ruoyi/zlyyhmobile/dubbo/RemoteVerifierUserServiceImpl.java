@@ -80,11 +80,11 @@ public class RemoteVerifierUserServiceImpl implements RemoteVerifierUserService 
         }
         String appId = platformVo.getAppId();
         String secret = platformVo.getSecret();
-        String accessToken = WxUtils.getAccessToken(appId, secret, wxProperties.getAccessTokenUrl());
+        String accessToken = WxUtils.getAccessToken(appId, secret, wxProperties.getAccessTokenUrl(),false);
         if (StringUtils.isBlank(accessToken)) {
             // 休眠300毫秒再次获取
             ThreadUtil.sleep(300);
-            accessToken = WxUtils.getAccessToken(appId, secret, wxProperties.getAccessTokenUrl());
+            accessToken = WxUtils.getAccessToken(appId, secret, wxProperties.getAccessTokenUrl(),false);
             if (StringUtils.isBlank(accessToken)) {
                 log.error("微信基础访问令牌没有获取到");
                 throw new ServiceException("系统繁忙，请稍后重试!");

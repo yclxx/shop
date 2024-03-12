@@ -22,6 +22,16 @@ public interface RemoteAppUserService {
     String getAccessToken(String appId,String secret);
 
     /**
+     * 获取微信accessToken
+     */
+    String getWxAccessToken(String appId,Boolean flag);
+
+    /**
+     * 获取云闪付accessToken
+     */
+    String getYsfAccessToken(String appId,Boolean flag);
+
+    /**
      * 获取用户授权信息
      *
      * @param code        授权code

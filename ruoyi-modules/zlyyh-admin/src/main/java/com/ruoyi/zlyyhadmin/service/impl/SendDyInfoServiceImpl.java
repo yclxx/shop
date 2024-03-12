@@ -151,7 +151,7 @@ public class SendDyInfoServiceImpl implements ISendDyInfoService {
                         if (null == platformChannelVo || StringUtils.isBlank(platformChannelVo.getAppId()) || StringUtils.isBlank(platformChannelVo.getSecret())) {
                             return;
                         }
-                        String accessToken = WxUtils.getAccessToken(platformChannelVo.getAppId(), platformChannelVo.getSecret(), wxProperties.getAccessTokenUrl());
+                        String accessToken = WxUtils.getAccessToken(platformChannelVo.getAppId(), platformChannelVo.getSecret(), wxProperties.getAccessTokenUrl(),false);
 
                         // 组装消息数据
                         Map<String, Object> msgData = new HashMap<>();
@@ -185,7 +185,7 @@ public class SendDyInfoServiceImpl implements ISendDyInfoService {
             return;
         }
         try {
-            String accessToken = WxUtils.getAccessToken("wxc89878a20aed9821", "18d18d7fd8d7226fadce016cd9759ad3", wxProperties.getAccessTokenUrl());
+            String accessToken = WxUtils.getAccessToken("wxc89878a20aed9821", "18d18d7fd8d7226fadce016cd9759ad3", wxProperties.getAccessTokenUrl(),false);
             boolean flag = sendInfo(accessToken, sendDyInfoVo.getTmplId(), sendDyInfoVo.getOpenId(), sendDyInfoVo.getPlatformKey());
             if (flag) {
                 sendDyInfoVo.setDyCount(sendDyInfoVo.getDyCount() - 1);

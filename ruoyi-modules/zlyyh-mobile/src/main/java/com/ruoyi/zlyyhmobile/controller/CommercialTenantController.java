@@ -112,7 +112,7 @@ public class CommercialTenantController {
     public R<OcrBizLicenseVo> ocrBizLicense(@Validated(AppEditGroup.class) @RequestBody OcrBizLicenseBo bo) {
         Long platformId = ZlyyhUtils.getPlatformId();
         PlatformVo platformVo = platformService.queryById(platformId, PlatformEnumd.MP_WX.getChannel());
-        String accessToken = WxUtils.getAccessToken(platformVo.getAppId(), platformVo.getSecret());
+        String accessToken = WxUtils.getAccessToken(platformVo.getAppId(), platformVo.getSecret(),false);
         return R.ok(WxUtils.ocrBizLicense(bo.getImgUrl(), accessToken));
     }
 
