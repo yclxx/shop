@@ -1,5 +1,6 @@
 package com.ruoyi.auth.controller;
 
+import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.auth.form.AppLoginBody;
 import com.ruoyi.auth.form.WxMobileLoginBody;
 import com.ruoyi.auth.service.AppLoginService;
@@ -106,4 +107,14 @@ public class AppTokenController {
         appLoginService.logout(request);
         return R.ok();
     }
+
+    /**
+     * 统一获取微信Token
+     */
+    @PostMapping("/getWxAndYsfAccessToken")
+    public R<String> getWxAndYsfAccessToken(@RequestBody JSONObject json){
+        String wxAndYsfAccessToken = appLoginService.getWxAndYsfAccessToken(json);
+        return R.ok("操作成功",wxAndYsfAccessToken);
+    }
+
 }
