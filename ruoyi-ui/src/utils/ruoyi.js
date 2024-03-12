@@ -231,3 +231,43 @@ export function tansParams(params) {
 export function blobValidate(data) {
     return data.type !== 'application/json'
 }
+
+/** 数组转字符串
+ * @param {Object} datas 数组
+ * @param {Object} separator 分隔符
+ */
+export function arrToStr(datas, separator) {
+  var str = '';
+  var currentSeparator = undefined === separator ? "," : separator;
+  datas.forEach(item => {
+    str = str + item + currentSeparator;
+  })
+  if (str.length == 0) {
+    return str;
+  }
+  return str.substring(0, str.length - 1);
+}
+
+/** 字符串转数组
+ * @param {Object} str 字符串
+ * @param {Object} separator 分隔符
+ * @param {Object} type 类型，number 或 string
+ */
+export function strToArr(str, type, separator) {
+  var datas = [];
+  if (null == str || undefined == str || '' == str) {
+    return datas;
+  }
+  var currentSeparator = undefined === separator ? "," : separator;
+  var temp = str.split(currentSeparator);
+  temp.forEach(item => {
+    if (item && item.length > 0) {
+      if (type == 'number') {
+        datas.push(parseInt(item));
+      } else {
+        datas.push(item);
+      }
+    }
+  })
+  return datas;
+}

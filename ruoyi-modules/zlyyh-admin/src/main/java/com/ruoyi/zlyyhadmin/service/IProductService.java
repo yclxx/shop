@@ -37,6 +37,8 @@ public interface IProductService {
 
     TableDataInfo<ProductVo> queryPagecategoryProductList(ProductBo bo, PageQuery pageQuery);
 
+    TableDataInfo<ProductVo> queryPagecategoryPlatformProductList(ProductBo bo, PageQuery pageQuery);
+
     TableDataInfo<ProductVo> queryPageGroupProductList(ProductBo bo, PageQuery pageQuery);
 
     /**

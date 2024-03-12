@@ -1,19 +1,29 @@
 package com.ruoyi.zlyyhadmin.service;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.DesensitizedUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.builder.ExcelWriterBuilder;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.excel.convert.ExcelBigNumberConvert;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.zlyyh.domain.CategoryPlatformProduct;
+import com.ruoyi.zlyyh.domain.CategoryProduct;
+import com.ruoyi.zlyyh.domain.Order;
 import com.ruoyi.zlyyh.domain.bo.OrderBo;
 import com.ruoyi.zlyyh.domain.bo.OrderDownloadLogBo;
+import com.ruoyi.zlyyh.domain.vo.CategoryProductVo;
 import com.ruoyi.zlyyh.domain.vo.OrderVo;
+import com.ruoyi.zlyyh.mapper.CategoryPlatformProductMapper;
+import com.ruoyi.zlyyh.mapper.CategoryProductMapper;
 import com.ruoyi.zlyyhadmin.config.FileConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +39,8 @@ import java.io.File;
 public class AsyncService {
     private final IOrderService orderService;
     private final IOrderDownloadLogService orderDownloadLogService;
+    private final CategoryPlatformProductMapper categoryPlatformProductMapper;
+    private final CategoryProductMapper categoryProductMapper;
 
     /**
      * 查询订单生成Excel
@@ -89,4 +101,53 @@ public class AsyncService {
         }
         orderDownloadLogService.updateByBo(logBo);
     }
+
+    /**
+     * 多平台类别新增修改时 将多平台类别关联的商品 跟平台做关联
+     */
+    public void categoryPlatformToCategory(Long categoryPlatformId,String categoryIds){
+        //先查多平台类别下的商品(还是分页查好了)
+        long totalCount = categoryPlatformProductMapper.selectCount(new LambdaQueryWrapper<CategoryPlatformProduct>().eq(CategoryPlatformProduct::getCategoryPlatformId, categoryPlatformId));
+        Integer pageNum = 1;
+        Integer pageSize = 100;
+        log.info("添加大订单数据开始：{}", DateUtil.now());
+        while (true) {
+            PageQuery pageQuery = new PageQuery();
+            pageQuery.setPageNum(pageNum);
+            pageQuery.setPageSize(pageSize);
+            Page<CategoryPlatformProduct> result = categoryPlatformProductMapper.selectPage(pageQuery.build(), new LambdaQueryWrapper<CategoryPlatformProduct>().eq(CategoryPlatformProduct::getCategoryPlatformId, categoryPlatformId));
+            TableDataInfo<CategoryPlatformProduct> tableDataInfo = TableDataInfo.build(result);
+
+            for (CategoryPlatformProduct row : tableDataInfo.getRows()) {
+                //事务 一起成功一起失败
+                try {
+                    setCategoryProduct(row,categoryIds);
+                } catch (Exception e) {
+                    log.error("类别关联商品失败：", e);
+                }
+            }
+
+            if (Integer.valueOf(pageNum * pageSize).longValue() >= totalCount) {
+                break;
+            }
+            pageNum++;
+        }
+
+    }
+
+    private void setCategoryProduct(CategoryPlatformProduct categoryPlatformProduct,String categoryIds){
+        String[] categorySplit = categoryIds.split(",");
+        for (String s : categorySplit) {
+            Long categoryId = Long.valueOf(s);
+            CategoryProductVo categoryProductVo = categoryProductMapper.selectVoOne(new LambdaQueryWrapper<CategoryProduct>().eq(CategoryProduct::getCategoryId, categoryId).eq(CategoryProduct::getProductId, categoryPlatformProduct.getProductId()));
+            if (ObjectUtil.isEmpty(categoryProductVo)){
+                //未关联分类商品
+                CategoryProduct categoryProduct = new CategoryProduct();
+                categoryProduct.setProductId(categoryPlatformProduct.getProductId());
+                categoryProduct.setCategoryId(categoryId);
+                categoryProductMapper.insert(categoryProduct);
+            }
+        }
+    }
+
 }
