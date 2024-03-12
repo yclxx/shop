@@ -1,5 +1,6 @@
 package com.ruoyi.zlyyhmobile.controller;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.utils.ServletUtils;
@@ -9,16 +10,23 @@ import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.bo.MerchantApprovalBo;
+import com.ruoyi.zlyyh.domain.bo.QueryShopProductBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
+import com.ruoyi.zlyyh.domain.vo.ProductVo;
+import com.ruoyi.zlyyh.domain.vo.ShopProductListVo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
+import com.ruoyi.zlyyhmobile.service.IProductService;
 import com.ruoyi.zlyyhmobile.service.IShopService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 商户门店控制器
@@ -33,6 +41,30 @@ import java.util.ArrayList;
 @RequestMapping("/shop/ignore")
 public class ShopController {
     private final IShopService shopService;
+    private final IProductService productService;
+
+    /**
+     * 获取门店商品列表
+     *
+     * @return 门店商品列表
+     */
+    @GetMapping("/getShopProductList")
+    public TableDataInfo<ShopProductListVo> getShopProductList(QueryShopProductBo bo, PageQuery pageQuery) {
+        bo.setPlatformKey(ZlyyhUtils.getPlatformId());
+        bo.setCityCode(ZlyyhUtils.getUserCheckCityCode());
+        bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
+        TableDataInfo<ShopProductListVo> result = shopService.queryShopProductPageList(bo, pageQuery);
+        for (ShopProductListVo record : result.getRows()) {
+            BigDecimal distance = record.getDistance().setScale(2, RoundingMode.DOWN);
+            record.setDistanceString(distance.toString());
+            // 查询商品
+            List<ProductVo> list = productService.queryListByShopId(bo.getPlatformKey(), record.getShopId(), null, bo.getCityCode());
+            if (ObjectUtil.isNotEmpty(list)) {
+                record.setProductVo(list.get(0));
+            }
+        }
+        return result;
+    }
 
     /**
      * 获取门店列表

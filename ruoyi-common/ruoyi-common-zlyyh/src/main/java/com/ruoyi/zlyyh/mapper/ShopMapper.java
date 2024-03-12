@@ -5,7 +5,9 @@ import com.ruoyi.common.mybatis.annotation.DataColumn;
 import com.ruoyi.common.mybatis.annotation.DataPermission;
 import com.ruoyi.common.mybatis.core.mapper.BaseMapperPlus;
 import com.ruoyi.zlyyh.domain.Shop;
+import com.ruoyi.zlyyh.domain.bo.QueryShopProductBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
+import com.ruoyi.zlyyh.domain.vo.ShopProductListVo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
 import org.apache.ibatis.annotations.Param;
 
@@ -20,6 +22,11 @@ import org.apache.ibatis.annotations.Param;
     @DataColumn(key = "userName", value = "sys_user_id")
 })
 public interface ShopMapper extends BaseMapperPlus<ShopMapper, Shop, ShopVo> {
+
+    /**
+     * 查询列表（按照地址排序）
+     */
+    Page<ShopProductListVo> selectShopProductList(Page<ShopProductListVo> page, @Param("bo") QueryShopProductBo bo);
 
     /**
      * 查询列表（按照地址排序）
