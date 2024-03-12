@@ -392,6 +392,8 @@ public class RemoteFoodServicelmpl implements RemoteFoodService {
             shopBo.setDistrict(district);
             shopBo.setProvince(province);
             shopBo.setCommercialTenantId(commercialTenantId);
+            //供应商商户默认为已审核商户
+            shopBo.setExamineVerifier("1");
             ShopVo shopVo = shopService.queryByNameAndCommercialTenantId(shopName, commercialTenantId);
             if (ObjectUtil.isEmpty(shopVo)) {
                 shopService.insertShop(shopBo);

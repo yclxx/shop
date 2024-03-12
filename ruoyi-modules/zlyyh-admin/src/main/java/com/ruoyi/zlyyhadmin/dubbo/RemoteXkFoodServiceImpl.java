@@ -418,6 +418,7 @@ public class RemoteXkFoodServiceImpl implements RemoteXkFoodService {
                 shopBo.setLongitude(lng);
                 shopBo.setLatitude(lat);
                 shopBo.setAddress(address);
+                shopBo.setExamineVerifier("1");
                 shopBo.setCommercialTenantId(commercialTenantId);
                 ShopVo shopVo = shopService.queryByNameAndSupplierId(name,poi_id);
                 if (ObjectUtil.isEmpty(shopVo)) {

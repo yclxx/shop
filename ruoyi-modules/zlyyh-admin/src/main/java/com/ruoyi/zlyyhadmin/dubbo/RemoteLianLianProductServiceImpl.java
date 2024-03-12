@@ -385,6 +385,8 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 shopBo.setLongitude(longitude);
                 shopBo.setLatitude(latitude);
                 shopBo.setCommercialTenantId(commercialTenantId);
+                //供应商商户默认为已审核商户
+                shopBo.setExamineVerifier("1");
                 shopService.insertByBo(shopBo);
                 shopId = shopBo.getShopId();
             }
