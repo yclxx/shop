@@ -3,6 +3,8 @@ package com.ruoyi.zlyyhmobile.service;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.ShopTourBo;
+import com.ruoyi.zlyyh.domain.bo.ShopTourLogBo;
+import com.ruoyi.zlyyh.domain.bo.ShopTourLsMerchantBo;
 import com.ruoyi.zlyyh.domain.vo.*;
 
 import java.util.Collection;
@@ -136,4 +138,18 @@ public interface IShopTourService {
      */
     List<ShopMerchantVo> getShopMerchantNoInfo(Long shopId, String merchantType);
 
+    /**
+     * 巡检商户号变更提交
+     */
+    void updateMerchantNo(ShopTourLsMerchantBo bo);
+
+    /**
+     * 获取临时商户号信息
+     */
+    List<ShopTourLsMerchantVo> getLsShopMerchantNoList(Long tourId, Long shopId);
+
+    /**
+     * 获取失效预约记录列表
+     */
+    TableDataInfo<ShopTourLogVo> getInvalidTourList(ShopTourLogBo bo, PageQuery pageQuery);
 }
