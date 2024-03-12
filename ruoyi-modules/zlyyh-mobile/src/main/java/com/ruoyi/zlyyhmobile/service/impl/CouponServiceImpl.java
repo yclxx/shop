@@ -124,7 +124,7 @@ public class CouponServiceImpl implements ICouponService {
             createOrderBo.setPlatformKey(coupon.getPlatformKey());
             createOrderBo.setChannel(ZlyyhUtils.getPlatformChannel());
             //商品兑换券查询商品
-            ProductCoupon productCoupon = productCouponMapper.selectOne(new LambdaQueryWrapper<ProductCoupon>().eq(ProductCoupon::getCouponId, code.getCouponId()));
+            ProductCoupon productCoupon = productCouponMapper.selectOne(new LambdaQueryWrapper<ProductCoupon>().eq(ProductCoupon::getCouponId, code.getCouponId()).last("limit 1"));
             if (ObjectUtil.isEmpty(productCoupon)){
                 throw new ServiceException("优惠券发放异常");
             }
