@@ -1,5 +1,7 @@
 package com.ruoyi.zlyyhmobile.controller;
 
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.TimeInterval;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.domain.R;
@@ -8,6 +10,7 @@ import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.core.utils.ip.AddressUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.bo.MerchantApprovalBo;
 import com.ruoyi.zlyyh.domain.bo.QueryShopProductBo;
@@ -15,16 +18,17 @@ import com.ruoyi.zlyyh.domain.bo.ShopBo;
 import com.ruoyi.zlyyh.domain.vo.ProductVo;
 import com.ruoyi.zlyyh.domain.vo.ShopProductListVo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
+import com.ruoyi.zlyyh.utils.Md5Utils;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.service.IProductService;
 import com.ruoyi.zlyyhmobile.service.IShopService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotNull;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +39,7 @@ import java.util.List;
  * @author ruoyi
  * @date 2023-03-21
  */
+@Slf4j
 @Validated
 @RequiredArgsConstructor
 @RestController
@@ -50,19 +55,41 @@ public class ShopController {
      */
     @GetMapping("/getShopProductList")
     public TableDataInfo<ShopProductListVo> getShopProductList(QueryShopProductBo bo, PageQuery pageQuery) {
+        TimeInterval timer = DateUtil.timer();
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
         bo.setCityCode(ZlyyhUtils.getUserCheckCityCode());
         bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
+        // 忽略前端传的分页
+        pageQuery.setIsAsc(null);
+        pageQuery.setOrderByColumn(null);
+        JSONObject boObj = JSONObject.parseObject(JSONObject.toJSONString(bo));
+        if (StringUtils.isBlank(bo.getOrderByType()) || !"1".equals(bo.getOrderByType())) {
+            boObj.remove("latitude");
+            boObj.remove("longitude");
+        }
+        String cacheKey = boObj.toJSONString() + ":pageNum_" + pageQuery.getPageNum() + "_pageSize_" + pageQuery.getPageSize();
+        cacheKey = Md5Utils.hash(cacheKey);
+        TableDataInfo<ShopProductListVo> cacheData = RedisUtils.getCacheObject(cacheKey);
+        if (null != cacheData) {
+            log.info("查询商户门店缓存耗时：{}毫秒", timer.interval());
+            return cacheData;
+        }
         TableDataInfo<ShopProductListVo> result = shopService.queryShopProductPageList(bo, pageQuery);
         for (ShopProductListVo record : result.getRows()) {
-            BigDecimal distance = record.getDistance().setScale(2, RoundingMode.DOWN);
-            record.setDistanceString(distance.toString());
+            // 计算距离
+            record.calculateDistance();
             // 查询商品
             List<ProductVo> list = productService.queryListByShopId(bo.getPlatformKey(), record.getShopId(), null, bo.getCityCode());
             if (ObjectUtil.isNotEmpty(list)) {
-                record.setProductVo(list.get(0));
+                ProductVo productVo = list.get(0);
+                // 计算折扣
+                productVo.calculateDiscount();
+                record.setProductVo(productVo);
             }
         }
+        // 缓存5分钟
+        RedisUtils.setCacheObject(cacheKey, result, Duration.ofMinutes(5));
+        log.info("查询商户门店耗时：{}毫秒", timer.interval());
         return result;
     }
 

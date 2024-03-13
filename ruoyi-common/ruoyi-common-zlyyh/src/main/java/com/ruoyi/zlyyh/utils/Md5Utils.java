@@ -6,7 +6,6 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
@@ -156,8 +155,6 @@ public class Md5Utils {
             return s;
         }
     }
-
-
 
     public static String encrypt(String md5) {
         return org.springframework.util.DigestUtils.md5DigestAsHex(md5.getBytes(Charset.forName("UTF-8")));

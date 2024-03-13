@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * 门店视图对象
@@ -96,4 +97,11 @@ public class ShopProductListVo implements Serializable {
      * 产品信息
      */
     private ProductVo productVo;
+
+    public void calculateDistance() {
+        if (null != this.distance && this.distance.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal distance = this.distance.setScale(2, RoundingMode.DOWN);
+            this.distanceString = distance.stripTrailingZeros().toPlainString();
+        }
+    }
 }
