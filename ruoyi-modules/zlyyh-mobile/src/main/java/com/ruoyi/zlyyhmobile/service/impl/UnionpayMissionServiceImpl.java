@@ -172,14 +172,14 @@ public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
         }
         UnionpayMissionUserVo unionpayMissionUserVo = unionpayMissionUserMapper.selectVoOne(new LambdaQueryWrapper<UnionpayMissionUser>().eq(UnionpayMissionUser::getUserId, bo.getUserId()).eq(UnionpayMissionUser::getUpMissionGroupId, bo.getUpMissionGroupId()).eq(UnionpayMissionUser::getPlatformKey, bo.getPlatformKey()).last("limit 1"));
         if (ObjectUtil.isEmpty(unionpayMissionUserVo)) {
-            boolean flag = unionpayMissionUserMapper.insert(add) > 0;
-            if (flag) {
-                bo.setUpMissionUserId(add.getUpMissionUserId());
-            }
             JSONObject r = YsfUtils.userSingUp(platformVo.getAppId(), platformVo.getSecret(), userVo.getOpenId(), missionGroupVo.getUpMissionGroupUpid(), IdUtil.createSnowflake(2, 2).nextIdStr(), platformVo.getPlatformKey());
             if (ObjectUtil.isEmpty(r)) {
                 throw new ServiceException("报名失败");
             } else {
+                boolean flag = unionpayMissionUserMapper.insert(add) > 0;
+                if (flag) {
+                    bo.setUpMissionUserId(add.getUpMissionUserId());
+                }
                 List<UnionpayMissionVo> missionVos = unionpayMissionMapper.selectVoList(new LambdaQueryWrapper<UnionpayMission>().eq(UnionpayMission::getUpMissionGroupId, bo.getUpMissionGroupId()).eq(UnionpayMission::getStatus,"0"));
                 if (ObjectUtil.isNotEmpty(missionVos)) {
                     for (UnionpayMissionVo missionVo : missionVos) {
