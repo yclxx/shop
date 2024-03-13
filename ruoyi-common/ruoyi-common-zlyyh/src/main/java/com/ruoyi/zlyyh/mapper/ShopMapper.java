@@ -24,7 +24,7 @@ import org.apache.ibatis.annotations.Param;
 public interface ShopMapper extends BaseMapperPlus<ShopMapper, Shop, ShopVo> {
 
     /**
-     * 查询列表（按照地址排序）
+     * 查询列表 根据商户 展示
      */
     Page<ShopProductListVo> selectShopProductList(Page<ShopProductListVo> page, @Param("bo") QueryShopProductBo bo);
 
