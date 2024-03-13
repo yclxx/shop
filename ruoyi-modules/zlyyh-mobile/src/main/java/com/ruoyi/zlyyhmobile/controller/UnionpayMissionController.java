@@ -6,6 +6,7 @@ import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
 import com.ruoyi.common.core.web.controller.BaseController;
 import com.ruoyi.common.excel.utils.ExcelUtil;
+import com.ruoyi.common.idempotent.annotation.RepeatSubmit;
 import com.ruoyi.common.log.annotation.Log;
 import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
@@ -110,6 +111,8 @@ public class UnionpayMissionController extends BaseController {
     /**
      * 用户报名
      */
+
+    @RepeatSubmit(message = "操作频繁,请稍后重试")
     @PostMapping("/userSingUp")
     public R<Void> userSingUp(@RequestBody UnionpayMissionUserBo bo) {
         if (null == bo.getUpMissionGroupId()) {
