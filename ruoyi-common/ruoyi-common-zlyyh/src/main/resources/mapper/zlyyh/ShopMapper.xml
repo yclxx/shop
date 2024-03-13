@@ -198,84 +198,168 @@
         order by a.create_time desc
     </select>
 
-    <sql id="selectShopProductListWhere">
-        WHERE s.citycode = #{bo.cityCode}
-        AND s.STATUS = '0'
-        AND (s.show_start_date IS NULL OR s.show_start_date &lt; NOW())
-        AND (s.show_end_date IS NULL OR s.show_end_date &gt; NOW())
-        AND p.product_id IS NOT NULL
-        AND p.`status` = '0'
-        AND p.search_status = '0'
-        AND p.search = '0'
-        AND p.show_index = '1'
-        AND (p.show_start_date IS NULL OR p.show_start_date &lt; NOW())
-        AND (p.show_end_date IS NULL OR p.show_end_date &gt; NOW())
-    </sql>
 
-    <sql id="selectShopProductListLocation">
-        ACOS
-        ( COS(
-            RADIANS(#{bo.latitude})) * COS(
-            RADIANS(latitude)) * COS(
-            RADIANS(longitude) - RADIANS(#{bo.longitude})) +
-            SIN(RADIANS(#{bo.latitude})) * SIN(RADIANS(latitude)))
-        * 6378 AS distance
-    </sql>
+        <select id="selectShopProductList" resultMap="ShopProductResult">
+            WITH cte_product AS (
+            SELECT
+            p.*
+            FROM
+            t_product p
+            <if test="bo.categoryIds != null and bo.categoryIds.size > 0">
+                LEFT JOIN t_category_product cp ON p.product_id = cp.product_id
+            </if>
+            WHERE
+            p.`status` = '0'
+            AND p.search_status = '0'
+            AND p.search = '0'
+            AND p.show_index = '1'
+            AND ( p.show_start_date IS NULL OR p.show_start_date &lt; NOW() )
+            AND ( p.show_end_date IS NULL OR p.show_end_date &gt; NOW() )
+            AND ( p.platform_key IS NULL OR p.platform_key = #{bo.platformKey} )
+            AND ( p.show_city = 'ALL' OR p.show_city LIKE concat('%', #{bo.cityCode}, '%') )
+            <if test="bo.categoryIds != null and bo.categoryIds.size > 0">
+                AND cp.category_id IN
+                <foreach collection="bo.categoryIds" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            ),
+            cte_shop AS (
+            SELECT
+            s.*,
+            ACOS(
+            COS(
+            RADIANS( #{bo.latitude} )) * COS(
+            RADIANS( latitude )) * COS(
+            RADIANS( longitude ) - RADIANS( #{bo.longitude} )) + SIN(
+            RADIANS( #{bo.latitude} )) * SIN(
+            RADIANS( latitude ))
+            ) * 6378 AS distance,
+            ct.STATUS AS commercial_tenant_status
+            FROM
+            t_shop s
+            LEFT JOIN t_shop_product sp ON s.shop_id = sp.shop_id
+            LEFT JOIN cte_product cp ON sp.product_id = cp.product_id
+            LEFT JOIN t_commercial_tenant ct ON s.commercial_tenant_id = ct.commercial_tenant_id
+            WHERE
+            s.citycode = #{bo.cityCode}
+            AND s.STATUS = '0'
+            AND (s.show_start_date IS NULL OR s.show_start_date &lt; NOW())
+            AND (s.show_end_date IS NULL OR s.show_end_date &gt; NOW())
+            AND cp.product_id IS NOT NULL
+            )
+            SELECT * FROM (
+            SELECT d.* FROM (
+            SELECT b.commercial_tenant_id,
+            min( b.distance ) distance
+            FROM
+            ( SELECT * FROM cte_shop WHERE commercial_tenant_id IS NOT NULL AND `commercial_tenant_status` = '0' ) b
+            GROUP BY
+            b.commercial_tenant_id
+            ) c
+            LEFT JOIN ( SELECT * FROM cte_shop WHERE commercial_tenant_id IS NOT NULL AND `commercial_tenant_status` =
+            '0' ) d ON c.commercial_tenant_id = d.commercial_tenant_id
+            AND c.distance = d.distance
+            GROUP BY
+            d.shop_id UNION ALL
+            SELECT
+            *
+            FROM
+            cte_shop
+            WHERE
+            commercial_tenant_id IS NULL
+            GROUP BY
+            shop_id
+            ) a
+            <if test="bo.orderByType != null and bo.orderByType == '0'">
+                ORDER BY
+                a.sort,
+                a.shop_id DESC
+            </if>
+            <if test="bo.orderByType != null and bo.orderByType == '1'">
+                ORDER BY
+                a.distance
+            </if>
+        </select>
 
-    <select id="selectShopProductList" resultMap="ShopProductResult">
-        select * from (
-        SELECT
-        d.*
-        FROM
-        (
-        SELECT
-        b.commercial_tenant_id,
-        min( b.distance ) distance
-        FROM
-        (
-        SELECT DISTINCT
-        s.commercial_tenant_id,
-        s.shop_id,
-        <include refid="selectShopProductListLocation" />
-        FROM
-        t_shop s
-        LEFT JOIN t_shop_product sp ON s.shop_id = sp.shop_id
-        LEFT JOIN t_product p ON sp.product_id = p.product_id
-        LEFT JOIN t_commercial_tenant ct on s.commercial_tenant_id = ct.commercial_tenant_id
-        <include refid="selectShopProductListWhere" />
-        AND s.commercial_tenant_id IS NOT NULL AND ct.`status` = '0'
-        ) b
-        GROUP BY
-        b.commercial_tenant_id
-        ) c
-        LEFT JOIN (
-        SELECT
-        s.*,
-        <include refid="selectShopProductListLocation" />
-        FROM
-        t_shop s
-        LEFT JOIN t_shop_product sp ON s.shop_id = sp.shop_id
-        LEFT JOIN t_product p ON sp.product_id = p.product_id
-        LEFT JOIN t_commercial_tenant ct on s.commercial_tenant_id = ct.commercial_tenant_id
-        <include refid="selectShopProductListWhere" />
-        AND s.commercial_tenant_id IS NOT NULL AND ct.`status` = '0'
-        ) d ON c.commercial_tenant_id = d.commercial_tenant_id
-        AND c.distance = d.distance
-        GROUP BY
-        d.shop_id UNION ALL
-        SELECT
-        s.*,
-        <include refid="selectShopProductListLocation" />
-        FROM
-        t_shop s
-        LEFT JOIN t_shop_product sp ON s.shop_id = sp.shop_id
-        LEFT JOIN t_product p ON sp.product_id = p.product_id
-        <include refid="selectShopProductListWhere" />
-        AND s.commercial_tenant_id IS NULL
-        GROUP BY
-        s.shop_id
-        ) a order by a.sort,a.distance
-    </select>
+<!--    <sql id="selectShopProductListWhere">-->
+<!--        WHERE s.citycode = #{bo.cityCode}-->
+<!--        AND s.STATUS = '0'-->
+<!--        AND (s.show_start_date IS NULL OR s.show_start_date &lt; NOW())-->
+<!--        AND (s.show_end_date IS NULL OR s.show_end_date &gt; NOW())-->
+<!--        AND p.product_id IS NOT NULL-->
+<!--        AND p.`status` = '0'-->
+<!--        AND p.search_status = '0'-->
+<!--        AND p.search = '0'-->
+<!--        AND p.show_index = '1'-->
+<!--        AND (p.show_start_date IS NULL OR p.show_start_date &lt; NOW())-->
+<!--        AND (p.show_end_date IS NULL OR p.show_end_date &gt; NOW())-->
+<!--    </sql>-->
+
+<!--    <sql id="selectShopProductListLocation">-->
+<!--        ACOS-->
+<!--        ( COS(-->
+<!--            RADIANS(#{bo.latitude})) * COS(-->
+<!--            RADIANS(latitude)) * COS(-->
+<!--            RADIANS(longitude) - RADIANS(#{bo.longitude})) +-->
+<!--            SIN(RADIANS(#{bo.latitude})) * SIN(RADIANS(latitude)))-->
+<!--        * 6378 AS distance-->
+<!--    </sql>-->
+
+<!--    <select id="selectShopProductList" resultMap="ShopProductResult">-->
+<!--        select * from (-->
+<!--        SELECT-->
+<!--        d.*-->
+<!--        FROM-->
+<!--        (-->
+<!--        SELECT-->
+<!--        b.commercial_tenant_id,-->
+<!--        min( b.distance ) distance-->
+<!--        FROM-->
+<!--        (-->
+<!--        SELECT DISTINCT-->
+<!--        s.commercial_tenant_id,-->
+<!--        s.shop_id,-->
+<!--        <include refid="selectShopProductListLocation" />-->
+<!--        FROM-->
+<!--        t_shop s-->
+<!--        LEFT JOIN t_shop_product sp ON s.shop_id = sp.shop_id-->
+<!--        LEFT JOIN t_product p ON sp.product_id = p.product_id-->
+<!--        LEFT JOIN t_commercial_tenant ct on s.commercial_tenant_id = ct.commercial_tenant_id-->
+<!--        <include refid="selectShopProductListWhere" />-->
+<!--        AND s.commercial_tenant_id IS NOT NULL AND ct.`status` = '0'-->
+<!--        ) b-->
+<!--        GROUP BY-->
+<!--        b.commercial_tenant_id-->
+<!--        ) c-->
+<!--        LEFT JOIN (-->
+<!--        SELECT-->
+<!--        s.*,-->
+<!--        <include refid="selectShopProductListLocation" />-->
+<!--        FROM-->
+<!--        t_shop s-->
+<!--        LEFT JOIN t_shop_product sp ON s.shop_id = sp.shop_id-->
+<!--        LEFT JOIN t_product p ON sp.product_id = p.product_id-->
+<!--        LEFT JOIN t_commercial_tenant ct on s.commercial_tenant_id = ct.commercial_tenant_id-->
+<!--        <include refid="selectShopProductListWhere" />-->
+<!--        AND s.commercial_tenant_id IS NOT NULL AND ct.`status` = '0'-->
+<!--        ) d ON c.commercial_tenant_id = d.commercial_tenant_id-->
+<!--        AND c.distance = d.distance-->
+<!--        GROUP BY-->
+<!--        d.shop_id UNION ALL-->
+<!--        SELECT-->
+<!--        s.*,-->
+<!--        <include refid="selectShopProductListLocation" />-->
+<!--        FROM-->
+<!--        t_shop s-->
+<!--        LEFT JOIN t_shop_product sp ON s.shop_id = sp.shop_id-->
+<!--        LEFT JOIN t_product p ON sp.product_id = p.product_id-->
+<!--        <include refid="selectShopProductListWhere" />-->
+<!--        AND s.commercial_tenant_id IS NULL-->
+<!--        GROUP BY-->
+<!--        s.shop_id-->
+<!--        ) a order by a.sort,a.distance-->
+<!--    </select>-->
 
 <!--    <select id="selectShopProductList" resultMap="ShopProductResult">-->
 <!--        SELECT s.shop_id,-->
