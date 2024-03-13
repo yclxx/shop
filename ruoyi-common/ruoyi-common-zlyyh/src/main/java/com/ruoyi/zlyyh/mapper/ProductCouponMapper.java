@@ -1,6 +1,5 @@
 package com.ruoyi.zlyyh.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.ruoyi.common.mybatis.core.mapper.BaseMapperPlus;
 import com.ruoyi.zlyyh.domain.ProductCoupon;
 import com.ruoyi.zlyyh.domain.vo.ProductCouponVo;
