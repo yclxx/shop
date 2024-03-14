@@ -31,7 +31,7 @@ public class ThirdPlatform extends BaseEntity {
     /**
      * appId
      */
-    private Long appId;
+    private String appId;
     /**
      * 密钥
      */
