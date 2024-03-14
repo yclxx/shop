@@ -151,7 +151,8 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
         //第一步查找密钥
         ThirdPlatformVo thirdPlatformVo = thirdPlatformService.selectByAppId(appId, "1");
         if(ObjectUtil.isNull(thirdPlatformVo)){
-            return "appId不存在";
+            log.info("appId不存在");
+            return null;
         }
         return WxUtils.getAccessToken(appId,thirdPlatformVo.getSecret(),flag);
     }
@@ -162,9 +163,10 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
     @Override
     public String getYsfAccessToken(String appId, Boolean flag) {
         //第一步查找密钥
-        ThirdPlatformVo thirdPlatformVo = thirdPlatformService.selectByAppId(appId, "1");
+        ThirdPlatformVo thirdPlatformVo = thirdPlatformService.selectByAppId(appId, "2");
         if(ObjectUtil.isNull(thirdPlatformVo)){
-            return "appId不存在";
+            log.info("appId不存在");
+            return null;
         }
         return YsfUtils.getBackendToken(appId,thirdPlatformVo.getSecret(),flag,null);
     }
