@@ -23,6 +23,40 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <result property="updateTime" column="update_time"/>
     <result property="number" column="number"/>
     </resultMap>
+    <select id="selectListByWeek" resultType="java.lang.Long">
+        select count(*)
+        from t_unionpay_mission_user_log
+        <where>
+            del_flag = '0'
+            <if test="bo.upMissionUserId != null and bo.upMissionUserId != ''">
+                and up_mission_user_id = #{bo.upMissionUserId}
+            </if>
+            <if test="bo.upMissionGroupId != null and bo.upMissionGroupId != ''">
+                and up_mission_group_id = #{bo.upMissionGroupId}
+            </if>
+            <if test="bo.upMissionId != null and bo.upMissionId != ''">
+                and up_mission_id = #{bo.upMissionId}
+            </if>
+            and YEARWEEK(create_time, 1) = YEARWEEK(CURDATE(), 1)
+        </where>
+    </select>
+    <select id="selectListByToday" resultType="java.lang.Long">
+        select count(*)
+        from t_unionpay_mission_user_log
+        <where>
+            del_flag = '0'
+            <if test="bo.upMissionUserId != null and bo.upMissionUserId != ''">
+                and up_mission_user_id = #{bo.upMissionUserId}
+            </if>
+            <if test="bo.upMissionGroupId != null and bo.upMissionGroupId != ''">
+                and up_mission_group_id = #{bo.upMissionGroupId}
+            </if>
+            <if test="bo.upMissionId != null and bo.upMissionId != ''">
+                and up_mission_id = #{bo.upMissionId}
+            </if>
+            and DATE(create_time) = CURDATE()
+        </where>
+    </select>
 
 
 </mapper>

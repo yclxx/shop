@@ -169,6 +169,9 @@ public class UnionpayMissionController extends BaseController {
      */
     @PostMapping("/getProgressList")
     public R<List<UnionpayMissionProgressVo>> getProgressList(@RequestBody UnionpayMissionProgressBo bo) {
+        if (null == bo.getUpMissionGroupId()) {
+            return R.fail("缺少任务组编号");
+        }
         return R.ok(iUnionpayMissionService.getProgressList(bo));
     }
 
