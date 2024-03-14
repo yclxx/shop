@@ -10,14 +10,13 @@ import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.IdUtils;
 import com.ruoyi.common.core.utils.JsonUtils;
 import com.ruoyi.common.core.utils.SpringUtils;
+import com.ruoyi.zlyyh.domain.HistoryOrder;
 import com.ruoyi.zlyyh.domain.Order;
 import com.ruoyi.zlyyh.domain.OrderBackTrans;
 import com.ruoyi.zlyyh.domain.bo.AppWxPayCallbackParams;
 import com.ruoyi.zlyyh.domain.bo.OrderBackTransBo;
 import com.ruoyi.zlyyh.domain.vo.*;
-import com.ruoyi.zlyyh.mapper.OrderBackTransMapper;
-import com.ruoyi.zlyyh.mapper.OrderInfoMapper;
-import com.ruoyi.zlyyh.mapper.OrderMapper;
+import com.ruoyi.zlyyh.mapper.*;
 import com.ruoyi.zlyyh.utils.BigDecimalUtils;
 import com.ruoyi.zlyyh.utils.PermissionUtils;
 import com.ruoyi.zlyyh.utils.WxUtils;
@@ -65,6 +64,8 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
     private final IMerchantService merchantService;
     private final IProductService productService;
     private final IUserService userService;
+    private final HistoryOrderMapper historyOrderMapper;
+    private final HistoryOrderInfoMapper historyOrderInfoMapper;
 
     /**
      * 查询退款订单
@@ -113,13 +114,28 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
         // 修改订单信息
         OrderVo orderVo = orderMapper.selectVoById(orderBackTrans.getNumber());
         if (ObjectUtil.isEmpty(orderVo)) {
-            throw new ServiceException("订单不存在");
+            //如果订单不存在 则查询历史订单
+            HistoryOrderVo historyOrderVo = historyOrderMapper.selectVoById(orderBackTrans.getNumber());
+            if (ObjectUtil.isEmpty(historyOrderVo)){
+                throw new ServiceException("订单不存在");
+            }
+            //操作历史订单
+            HistoryOrder historyOrder = new HistoryOrder();
+            historyOrder.setNumber(orderBackTrans.getNumber());
+            historyOrder.setStatus("5");
+            historyOrderMapper.updateById(historyOrder);
+            if ("9".equals(historyOrderVo.getOrderType())) {
+                HistoryOrder ob = new HistoryOrder();
+                ob.setStatus(historyOrder.getStatus());
+                historyOrderMapper.update(ob, new LambdaQueryWrapper<HistoryOrder>().eq(HistoryOrder::getParentNumber, historyOrderVo.getNumber()));
+            }
+            return;
         }
         Order order = new Order();
         order.setNumber(orderVo.getNumber());
         order.setStatus("5");
         orderMapper.updateById(order);
-        if ("9".equals(order.getOrderType())) {
+        if ("9".equals(orderVo.getOrderType())) {
             Order ob = new Order();
             ob.setStatus(order.getStatus());
             orderMapper.update(ob, new LambdaQueryWrapper<Order>().eq(Order::getParentNumber, order.getNumber()));
@@ -287,8 +303,38 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
         }
         OrderVo orderVo = orderMapper.selectVoById(orderBackTransVo.getNumber());
         if (null == orderVo) {
-            log.info("微信退款回调订单【" + out_refund_no + "】不存在，请核实");
+            //如果订单不存在 则查询历史订单
+            HistoryOrderVo historyOrderVo = historyOrderMapper.selectVoById(orderBackTransVo.getNumber());
+            if (ObjectUtil.isEmpty(historyOrderVo)){
+                log.info("微信退款回调订单【" + out_refund_no + "】不存在，请核实");
+                return;
+            }
+            //操作历史订单
+            HistoryOrder historyOrder = new HistoryOrder();
+            historyOrder.setNumber(orderBackTransVo.getNumber());
+            OrderBackTrans backTrans = new OrderBackTrans();
+            backTrans.setThNumber(orderBackTransVo.getThNumber());
+            backTrans.setSuccessTime(new Date());
+
+            if (("SUCCESS").equals(refund_status)) {
+                backTrans.setOrderBackTransState("2");
+                historyOrder.setStatus("5");
+            } else {
+                backTrans.setOrderBackTransState("1");
+                historyOrder.setStatus("6");
+            }
+
+            baseMapper.updateById(backTrans);
+            historyOrderMapper.updateById(historyOrder);
+            if ("9".equals(historyOrderVo.getOrderType())) {
+                HistoryOrder ob = new HistoryOrder();
+                ob.setStatus(historyOrder.getStatus());
+                historyOrderMapper.update(ob, new LambdaQueryWrapper<HistoryOrder>().eq(HistoryOrder::getParentNumber, historyOrder.getNumber()));
+            }
+            SpringUtils.context().publishEvent(new ShareOrderEvent(null, historyOrder.getNumber()));
+
             return;
+
         }
         Order order = new Order();
         order.setNumber(orderBackTransVo.getNumber());
@@ -307,7 +353,7 @@ public class OrderBackTransServiceImpl implements IOrderBackTransService {
 
         baseMapper.updateById(backTrans);
         orderMapper.updateById(order);
-        if ("9".equals(order.getOrderType())) {
+        if ("9".equals(orderVo.getOrderType())) {
             Order ob = new Order();
             ob.setStatus(order.getStatus());
             orderMapper.update(ob, new LambdaQueryWrapper<Order>().eq(Order::getParentNumber, order.getNumber()));

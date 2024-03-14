@@ -231,6 +231,35 @@ public class ProductServiceImpl implements IProductService {
         return TableDataInfo.build(result);
     }
 
+
+
+    @Override
+    public TableDataInfo<ProductVo> queryPagecategoryPlatformProductList(ProductBo bo, PageQuery pageQuery) {
+        Map<String, Object> params = bo.getParams();
+        LambdaQueryWrapper<Product> lqw = Wrappers.lambdaQuery();
+        lqw.eq(null != bo.getProductId(), Product::getProductId, bo.getProductId());
+        lqw.eq(StringUtils.isNotBlank(bo.getExternalProductId()), Product::getExternalProductId, bo.getExternalProductId());
+        lqw.like(StringUtils.isNotBlank(bo.getProductName()), Product::getProductName, bo.getProductName());
+        lqw.eq(StringUtils.isNotBlank(bo.getProductAffiliation()), Product::getProductAffiliation, bo.getProductAffiliation());
+        lqw.eq(StringUtils.isNotBlank(bo.getProductType()), Product::getProductType, bo.getProductType());
+        lqw.eq(StringUtils.isNotBlank(bo.getPickupMethod()), Product::getPickupMethod, bo.getPickupMethod());
+        lqw.eq(StringUtils.isNotBlank(bo.getStatus()), Product::getStatus, bo.getStatus());
+        lqw.between(params.get("beginStartDate") != null && params.get("endStartDate") != null, Product::getShowStartDate, params.get("beginStartDate"), params.get("endStartDate"));
+        lqw.between(params.get("beginEndDate") != null && params.get("endEndDate") != null, Product::getShowEndDate, params.get("beginEndDate"), params.get("endEndDate"));
+        lqw.eq(StringUtils.isNotBlank(bo.getShowIndex()), Product::getShowIndex, bo.getShowIndex());
+        lqw.eq(bo.getPlatformKey() != null, Product::getPlatformKey, bo.getPlatformKey());
+        if (ObjectUtil.isNotEmpty(bo.getCategoryPlatformId()) && ObjectUtil.isNotEmpty(bo.getSort()) && bo.getSort().equals(0L)) {
+            lqw.apply("product_id IN (select product_id from t_category_platform_product where category_platform_id = " + bo.getCategoryPlatformId() + ")");
+        }
+        if (ObjectUtil.isNotEmpty(bo.getCategoryPlatformId()) && ObjectUtil.isNotEmpty(bo.getSort()) && bo.getSort().equals(1L)) {
+            lqw.apply("product_id NOT IN (select product_id from t_category_platform_product where category_platform_id = " + bo.getCategoryPlatformId() + ")");
+        }
+
+        Page<ProductVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
+        return TableDataInfo.build(result);
+    }
+
+
     /**
      * 查询商品列表
      */

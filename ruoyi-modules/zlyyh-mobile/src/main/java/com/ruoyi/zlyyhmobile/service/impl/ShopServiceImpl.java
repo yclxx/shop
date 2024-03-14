@@ -20,7 +20,9 @@ import com.ruoyi.zlyyh.domain.MerchantApproval;
 import com.ruoyi.zlyyh.domain.Shop;
 import com.ruoyi.zlyyh.domain.ShopMerchant;
 import com.ruoyi.zlyyh.domain.bo.MerchantApprovalBo;
+import com.ruoyi.zlyyh.domain.bo.QueryShopProductBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
+import com.ruoyi.zlyyh.domain.vo.ShopProductListVo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
 import com.ruoyi.zlyyh.mapper.ExtensionServiceProviderMapper;
 import com.ruoyi.zlyyh.mapper.MerchantApprovalMapper;
@@ -100,6 +102,17 @@ public class ShopServiceImpl implements IShopService {
         } else {
             throw new ServiceException("门店商编异常");
         }
+    }
+
+    /**
+     * 查询门店商品列表
+     * @param bo 查询条件
+     * @param pageQuery 分页条件
+     */
+    @Override
+    public TableDataInfo<ShopProductListVo> queryShopProductPageList(QueryShopProductBo bo, PageQuery pageQuery){
+        Page<ShopProductListVo> result = baseMapper.selectShopProductList(pageQuery.build(), bo);
+        return TableDataInfo.build(result);
     }
 
     /**

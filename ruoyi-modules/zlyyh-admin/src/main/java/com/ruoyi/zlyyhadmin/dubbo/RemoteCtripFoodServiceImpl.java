@@ -391,6 +391,8 @@ public class RemoteCtripFoodServiceImpl implements RemoteCtripFoodService {
             shopBo.setLongitude(lon);
             shopBo.setLatitude(lat);
             shopBo.setAddress(address);
+            //供应商商户默认为已审核商户
+            shopBo.setExamineVerifier("1");
             ShopVo shopVo = shopService.queryByNameAndSupplierId(shopName,poiId);
             if (ObjectUtil.isEmpty(shopVo)) {
                 shopService.insertByBo(shopBo);

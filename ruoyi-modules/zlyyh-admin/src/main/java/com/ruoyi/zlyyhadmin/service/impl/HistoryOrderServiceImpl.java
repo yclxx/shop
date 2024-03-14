@@ -8,6 +8,7 @@ import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.ruoyi.zlyyh.domain.Order;
 import com.ruoyi.zlyyh.domain.bo.UserBo;
 import com.ruoyi.zlyyh.domain.vo.MerchantVo;
 import com.ruoyi.zlyyh.domain.vo.UserVo;
@@ -102,7 +103,6 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
             bo.setProductName("");
         }
         lqw.eq(bo.getProductId() != null, HistoryOrder::getProductId, bo.getProductId());
-        lqw.eq(bo.getUserId() != null, HistoryOrder::getUserId, bo.getUserId());
         lqw.eq(StringUtils.isNotBlank(bo.getPickupMethod()), HistoryOrder::getPickupMethod, bo.getPickupMethod());
         lqw.eq(StringUtils.isNotBlank(bo.getOrderType()), HistoryOrder::getOrderType, bo.getOrderType());
         lqw.eq(bo.getTotalAmount() != null, HistoryOrder::getTotalAmount, bo.getTotalAmount());

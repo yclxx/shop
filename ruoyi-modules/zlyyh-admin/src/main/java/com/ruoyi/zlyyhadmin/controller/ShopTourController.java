@@ -10,6 +10,7 @@ import com.ruoyi.common.excel.utils.ExcelUtil;
 import com.ruoyi.common.log.annotation.Log;
 import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
+import com.ruoyi.zlyyh.domain.vo.ShopVo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -120,5 +121,15 @@ public class ShopTourController extends BaseController {
     public R<Void> tourCheckPass(@RequestBody ShopTourBo bo) {
         iShopTourService.tourCheckPass(bo);
         return R.ok();
+    }
+
+    /**
+     * 获取商户门店信息
+     * @param shopId
+     * @return
+     */
+    @GetMapping("/getShopInfo/{shopId}")
+    public R<ShopVo> getShopInfo(@PathVariable Long shopId) {
+        return R.ok(iShopTourService.queryByShopId(shopId));
     }
 }

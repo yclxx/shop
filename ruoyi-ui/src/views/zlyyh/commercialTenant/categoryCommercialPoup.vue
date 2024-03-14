@@ -86,7 +86,7 @@
         </template>
       </el-table-column>
       <el-table-column label="排序" align="center" prop="sort" />
-      <el-table-column label="平台" align="center" prop="platformKey" :formatter="platformFormatter" />
+<!--      <el-table-column label="平台" align="center" prop="platformKey" :formatter="platformFormatter" />-->
       <el-table-column label="状态" align="center" prop="status">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.t_commercial_tenant_status" :value="scope.row.status" />
@@ -122,7 +122,7 @@ export default {
   },
   props: {
     categoryId: {
-      type: Object,
+      type: String,
       default: undefined
     }
   },

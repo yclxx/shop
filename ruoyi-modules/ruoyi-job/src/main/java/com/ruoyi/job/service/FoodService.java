@@ -2,6 +2,7 @@ package com.ruoyi.job.service;
 
 import com.ruoyi.system.api.RemoteCtripFoodService;
 import com.ruoyi.system.api.RemoteFoodService;
+import com.ruoyi.system.api.RemoteXkFoodService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,8 @@ public class FoodService {
     private RemoteFoodService remoteFoodService;
     @DubboReference(retries = 0)
     private RemoteCtripFoodService remoteCtripFoodService;
-
+    @DubboReference(retries = 0)
+    private RemoteXkFoodService remoteXkFoodService;
 
     /**
      * 定时获取美食套餐
@@ -37,6 +39,15 @@ public class FoodService {
     public void getCtripFoodList(){
         String jobParam = XxlJobHelper.getJobParam();
         remoteCtripFoodService.getCtripFoodList(Long.valueOf(jobParam));
+    }
+
+    /**
+     * 定时获取美食套餐
+     */
+    @XxlJob("getXkFoodList")
+    public void getXkFoodList(){
+        String jobParam = XxlJobHelper.getJobParam();
+        remoteXkFoodService.getXkFoodList(Long.valueOf(jobParam));
     }
 
 }

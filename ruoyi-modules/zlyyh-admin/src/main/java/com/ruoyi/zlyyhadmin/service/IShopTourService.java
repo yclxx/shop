@@ -5,6 +5,7 @@ import com.ruoyi.zlyyh.domain.vo.ShopTourVo;
 import com.ruoyi.zlyyh.domain.bo.ShopTourBo;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
+import com.ruoyi.zlyyh.domain.vo.ShopVo;
 
 import java.util.Collection;
 import java.util.List;
@@ -56,4 +57,6 @@ public interface IShopTourService {
      * 巡检审核通过
      */
     void tourCheckPass(ShopTourBo bo);
+
+    ShopVo queryByShopId(Long shopId);
 }

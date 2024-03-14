@@ -174,6 +174,8 @@ public interface IOrderService {
 
     void unionPayBack(JSONObject data);
 
+    String xKFoodCancelCallBack(JSONObject data);
+
     void foodCancelCallBack(JSONObject data);
 
     /**
@@ -296,4 +298,12 @@ public interface IOrderService {
     void upCouponStatusChange(String operTp, String transTp, String couponCd, String couponNum);
 
     TableDataInfo<OrderVo> getUnUseOrderList(OrderBo bo, PageQuery pageQuery);
+
+    String xKOutTicketSuccess(JSONObject jsonObject);
+
+    String xKFoodPath(JSONObject jsonObject);
+
+    String xKVerCodeSuccess(JSONObject jsonObject);
+
+    String xKPaySuccessUrl(JSONObject jsonObject);
 }

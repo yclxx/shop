@@ -8,6 +8,7 @@ import cn.hutool.core.util.ObjectUtil;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.time.DateFormatUtils;
+import org.springframework.util.StringUtils;
 
 import java.lang.management.ManagementFactory;
 import java.text.ParseException;
@@ -428,5 +429,20 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
         Date secondTime = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
         Date secondEndTime = DateUtil.endOfDay(secondTime).offset(DateField.MILLISECOND, -999);
         return secondEndTime;
+    }
+
+    /**
+     * 时间戳转时间字符串
+     *
+     * @param times 时间戳
+     * @return 格式化字符串
+     */
+    public static String TimesToDateString(String times) {
+        if (ObjectUtil.isEmpty(times)) {
+            return null;
+        }
+        Long timestamp = Long.valueOf(times);
+        Date date = new Date(timestamp);
+        return parseDateToStr("yyyy-MM-dd HH:mm:ss", date);
     }
 }

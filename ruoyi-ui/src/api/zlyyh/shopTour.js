@@ -60,3 +60,11 @@ export function tourCheckPass(data) {
     data: data
   })
 }
+
+// 查询商户详细
+export function getShopInfo(shopId) {
+  return request({
+    url: '/zlyyh-admin/shopTour/getShopInfo/' + shopId,
+    method: 'get'
+  })
+}

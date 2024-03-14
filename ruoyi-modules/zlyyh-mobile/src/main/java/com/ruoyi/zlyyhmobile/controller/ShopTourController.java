@@ -10,10 +10,7 @@ import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.satoken.utils.LoginHelper;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
-import com.ruoyi.zlyyh.domain.bo.ActivityFileShopBo;
-import com.ruoyi.zlyyh.domain.bo.MerchantApprovalBo;
-import com.ruoyi.zlyyh.domain.bo.ShopBo;
-import com.ruoyi.zlyyh.domain.bo.ShopTourBo;
+import com.ruoyi.zlyyh.domain.bo.*;
 import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.service.IShopService;
@@ -164,5 +161,30 @@ public class ShopTourController {
     @GetMapping("/getShopMerchantNoInfo")
     public R<List<ShopMerchantVo>> getShopMerchantNoInfo(Long shopId,String merchantType) {
         return R.ok(shopTourService.getShopMerchantNoInfo(shopId,merchantType));
+    }
+
+    /**
+     * 获取临时商户号信息
+     */
+    @GetMapping("/getLsShopMerchantNoList")
+    public R<List<ShopTourLsMerchantVo>> getLsShopMerchantNoList(Long tourId,Long shopId) {
+        return R.ok(shopTourService.getLsShopMerchantNoList(tourId,shopId));
+    }
+
+    /**
+     * 巡检商户号变更提交
+     */
+    @PostMapping("/updateMerchantNo")
+    public R<Void> updateMerchantNo(@RequestBody ShopTourLsMerchantBo bo) {
+        shopTourService.updateMerchantNo(bo);
+        return R.ok();
+    }
+
+    /**
+     * 获取失效预约记录列表
+     */
+    @GetMapping("/getInvalidTourList")
+    public TableDataInfo<ShopTourLogVo> getInvalidTourList(ShopTourLogBo bo, PageQuery pageQuery) {
+        return shopTourService.getInvalidTourList(bo, pageQuery);
     }
 }
