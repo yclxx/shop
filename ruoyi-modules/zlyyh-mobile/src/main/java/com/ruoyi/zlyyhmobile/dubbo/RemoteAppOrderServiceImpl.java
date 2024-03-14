@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.lock.LockInfo;
 import com.baomidou.lock.LockTemplate;
 import com.baomidou.lock.executor.RedissonLockExecutor;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.common.core.constant.CacheNames;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
@@ -18,18 +19,19 @@ import com.ruoyi.common.redis.utils.RedisUtils;
 import com.ruoyi.system.api.RemoteAppOrderService;
 import com.ruoyi.zlyyh.domain.HistoryOrder;
 import com.ruoyi.zlyyh.domain.Order;
+import com.ruoyi.zlyyh.domain.OrderFoodInfo;
 import com.ruoyi.zlyyh.domain.OrderUnionSend;
 import com.ruoyi.zlyyh.domain.bo.ShareUserRecordBo;
-import com.ruoyi.zlyyh.domain.vo.HistoryOrderVo;
-import com.ruoyi.zlyyh.domain.vo.OrderUnionPayVo;
-import com.ruoyi.zlyyh.domain.vo.OrderVo;
-import com.ruoyi.zlyyh.domain.vo.ShareUserRecordVo;
+import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.enumd.UnionPay.UnionPayParams;
+import com.ruoyi.zlyyh.mapper.OrderFoodInfoMapper;
 import com.ruoyi.zlyyh.mapper.OrderUnionSendMapper;
 import com.ruoyi.zlyyh.properties.CtripConfig;
+import com.ruoyi.zlyyh.properties.XKConfig;
 import com.ruoyi.zlyyh.properties.YsfFoodProperties;
 import com.ruoyi.zlyyh.properties.utils.YsfDistributionPropertiesUtils;
 import com.ruoyi.zlyyh.utils.CtripUtils;
+import com.ruoyi.zlyyh.utils.XkUtils;
 import com.ruoyi.zlyyh.utils.YsfFoodUtils;
 import com.ruoyi.zlyyh.utils.redis.OrderCacheUtils;
 import com.ruoyi.zlyyh.utils.sdk.UnionPayDistributionUtil;
@@ -56,6 +58,7 @@ import java.util.*;
 public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
     private static final YsfFoodProperties YSF_FOOD_PROPERTIES = SpringUtils.getBean(YsfFoodProperties.class);
     private static final CtripConfig ctripConfig = SpringUtils.getBean(CtripConfig.class);
+    private static final XKConfig xkConfig = SpringUtils.getBean(XKConfig.class);
     private final LockTemplate lockTemplate;
     private final IOrderService orderService;
     private final IHistoryOrderService historyOrderService;
@@ -64,6 +67,7 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
     private final ICollectiveOrderService collectiveOrderService;
     private final OrderUnionSendMapper orderUnionSendMapper;
     private final IShareUserRecordService userRecordService;
+    private final OrderFoodInfoMapper orderFoodInfoMapper;
 
     @Async
     @Override
@@ -121,7 +125,7 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
     }
 
     private String refundOrder(String orderType, String cancelOrderStatus, String externalOrderNumber) {
-        if (!"1".equals(orderType) && !"5".equals(orderType) && !"15".equals(orderType)) {
+        if (!"1".equals(orderType) && !"5".equals(orderType) && !"15".equals(orderType) && !"23".equals(orderType)) {
             log.info("美食订单申请退款：{}", orderType);
             throw new ServiceException("非美食订单，无法向供应商申请退款");
         }
@@ -137,6 +141,10 @@ public class RemoteAppOrderServiceImpl implements RemoteAppOrderService {
             String refundCtripUrl = ctripConfig.getUrl() + "?AID=" + ctripConfig.getAid() + "&SID=" + ctripConfig.getSid() +
                 "&ICODE=" + ctripConfig.getCancelOrderCode() + "&Token=" + accessToken;
             return CtripUtils.cancelOrder(externalOrderNumber, ctripConfig.getPartnerType(), refundCtripUrl);
+        } else if ("23".equals(orderType)) {
+            OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoOne(new LambdaQueryWrapper<OrderFoodInfo>().eq(OrderFoodInfo::getBizOrderId, externalOrderNumber));
+            XkUtils.refundOrder(xkConfig.getUrl(), xkConfig.getAppId(), xkConfig.getAppSecret(), xkConfig.getSourceType(), externalOrderNumber, orderFoodInfoVo.getTicketCode(), "申请退款");
+            return "0";
         }
         return null;
     }

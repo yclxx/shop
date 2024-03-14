@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="120px">
       <el-form-item label="供应商编号" prop="supplierId">
         <el-input
           v-model="queryParams.supplierId"
@@ -25,14 +25,7 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="分类Id(逗号隔开)" prop="categoryId">
-        <el-input
-          v-model="queryParams.categoryId"
-          placeholder="请输入分类Id(逗号隔开)"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
+
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -88,10 +81,10 @@
     <el-table v-loading="loading" :data="categorySupplierList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="ID" align="center" prop="id" v-if="true"/>
-      <el-table-column label="供应商编号" align="center" prop="supplierId" />
+      <el-table-column width="100" label="供应商编号" align="center" prop="supplierId" />
       <el-table-column label="供应商名称" align="center" prop="supplierName" />
       <el-table-column label="供应商多级分类" align="center" prop="fullName" />
-      <el-table-column label="分类Id(逗号隔开)" align="center" prop="categoryId" />
+<!--      <el-table-column label="分类Id" align="center" prop="categoryId" />-->
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
@@ -121,8 +114,8 @@
     />
 
     <!-- 添加或修改供应商产品分类对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+    <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
+      <el-form ref="form" :model="form" :rules="rules" label-width="120px">
         <el-form-item label="供应商编号" prop="supplierId">
           <el-input v-model="form.supplierId" placeholder="请输入供应商编号" />
         </el-form-item>
@@ -132,8 +125,20 @@
         <el-form-item label="供应商多级分类" prop="fullName">
           <el-input v-model="form.fullName" placeholder="请输入供应商多级分类" />
         </el-form-item>
-        <el-form-item label="分类Id(逗号隔开)" prop="categoryId">
-          <el-input v-model="form.categoryId" type="textarea" placeholder="请输入内容" />
+        <el-form-item label="包含类别" prop="categoryId">
+          <treeselect v-model="form.categoryId" multiple :options="categoryList" :normalizer="normalizer" size="small"
+                      :flat="true" :default-expand-level="1" :disable-branch-nodes="false" :show-count="true" placeholder="请选择分类" />
+        </el-form-item>
+        <el-form-item label="统一分类" prop="accountNumberType">
+              <span slot="label">
+                统一分类
+                <el-tooltip content="统一分类,一个分类对应多个平台类别,具体对应类别请前往多平台分类中配置" placement="top">
+                  <i class="el-icon-question"></i>
+                </el-tooltip>
+              </span>
+          <el-checkbox-group @change="platformCategoryChange" v-model="form.platformCategory">
+            <el-checkbox v-for="(item, index) in platformCategoryList" :key="index" :label="index">{{item.name}}</el-checkbox>
+          </el-checkbox-group>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -146,11 +151,23 @@
 
 <script>
 import { listCategorySupplier, getCategorySupplier, delCategorySupplier, addCategorySupplier, updateCategorySupplier } from "@/api/zlyyh/categorySupplier";
-
+import { listCategoryPlatformAll } from "@/api/zlyyh/categoryPlatform";
+import Treeselect from "@riophae/vue-treeselect";
+import "@riophae/vue-treeselect/dist/vue-treeselect.css";
+import {
+  listCategory
+} from "@/api/zlyyh/category";
 export default {
   name: "CategorySupplier",
+  components: {
+    Treeselect
+  },
   data() {
     return {
+      // 类别下拉列表
+      categoryList: [],
+      //多平台分类下拉列表
+      platformCategoryList: [],
       // 按钮loading
       buttonLoading: false,
       // 遮罩层
@@ -196,16 +213,51 @@ export default {
         fullName: [
           { required: true, message: "供应商多级分类不能为空", trigger: "blur" }
         ],
-        categoryId: [
-          { required: true, message: "分类Id(逗号隔开)不能为空", trigger: "blur" }
-        ],
+
       }
     };
   },
   created() {
     this.getList();
+    this.getCategoryList();
+    this.getCategoryPlatform();
   },
   methods: {
+    getCategoryPlatform(){
+      listCategoryPlatformAll({
+        status: '0',
+      }).then(response => {
+        this.platformCategoryList = response.data;
+      });
+    },
+    /** 获取类别下拉列表 */
+    getCategoryList() {
+      listCategory({
+        status: '0',
+        categoryListType: '0'
+      }).then(response => {
+        this.categoryList = this.handleTree(response.data, "categoryId", "parentId");
+      });
+    },
+    /** 转换数据结构 */
+    normalizer(node) {
+      if (node.children && !node.children.length) {
+        delete node.children;
+      }
+      return {
+        id: node.categoryId,
+        label: node.categoryName,
+        children: node.children
+      };
+    },
+    platformCategoryChange(vu) {
+      let se = "";
+      this.form.platformCategory.forEach(idx => {
+        se = se + this.platformCategoryList[idx].categoryIds + ",";
+      })
+      let ar = this.strToArr(se);
+      this.form.categoryId = [...new Set(ar)];
+    },
     /** 查询供应商产品分类列表 */
     getList() {
       this.loading = true;
@@ -231,7 +283,9 @@ export default {
         createBy: undefined,
         createTime: undefined,
         updateBy: undefined,
-        updateTime: undefined
+        updateTime: undefined,
+        accountNumberType: null,
+        platformCategory: []
       };
       this.resetForm("form");
     },
@@ -259,12 +313,16 @@ export default {
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
+
       this.loading = true;
       this.reset();
+
       const id = row.id || this.ids
       getCategorySupplier(id).then(response => {
         this.loading = false;
         this.form = response.data;
+        this.form.platformCategory = [];
+        this.form.categoryId = this.strToArr(this.form.categoryId);
         this.open = true;
         this.title = "修改供应商产品分类";
       });
@@ -274,8 +332,10 @@ export default {
       this.$refs["form"].validate(valid => {
         if (valid) {
           this.buttonLoading = true;
+          let form = JSON.parse(JSON.stringify(this.form));
+          form.categoryId = this.arrToStr(form.categoryId);
           if (this.form.id != null) {
-            updateCategorySupplier(this.form).then(response => {
+            updateCategorySupplier(form).then(response => {
               this.$modal.msgSuccess("修改成功");
               this.open = false;
               this.getList();

@@ -22,6 +22,7 @@ import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.mapper.*;
 import com.ruoyi.zlyyh.properties.CtripConfig;
+import com.ruoyi.zlyyh.properties.XKConfig;
 import com.ruoyi.zlyyh.properties.YsfFoodProperties;
 import com.ruoyi.zlyyh.utils.*;
 import com.ruoyi.zlyyh.utils.sdk.LogUtil;
@@ -48,6 +49,7 @@ import java.util.Map;
 public class HistoryOrderServiceImpl implements IHistoryOrderService {
     private static final YsfFoodProperties YSF_FOOD_PROPERTIES = SpringUtils.getBean(YsfFoodProperties.class);
     private static final com.ruoyi.zlyyh.properties.CtripConfig CtripConfig = SpringUtils.getBean(CtripConfig.class);
+    private static final com.ruoyi.zlyyh.properties.XKConfig xkConfig = SpringUtils.getBean(XKConfig.class);
     private final HistoryOrderMapper baseMapper;
     private final IUserService userService;
     private final IMerchantService merchantService;
@@ -71,7 +73,9 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
     @Override
     public HistoryOrderVo queryById(Long number) {
         HistoryOrderVo orderVo = baseMapper.selectVoById(number);
-
+        if (null == orderVo) {
+            return null;
+        }
         //订单为美食订单加上info
         if ("1".equals(orderVo.getOrderType()) || "5".equals(orderVo.getOrderType())) {
             //调用接口查询美食订单
@@ -257,6 +261,27 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
             }
             refundMapper.insert(refund);
             return;
+        } else if (orderType.equals("23")) {
+            //如果是享库订单
+            OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(orderVo.getNumber());
+            if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && !orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
+                throw new ServiceException("该订单无法申请退款");
+            }
+            order.setCancelStatus("0");
+            order.setStatus("4");
+            baseMapper.updateById(order);
+            //如果电子券为未使用状态 在这里先走退款接口
+            if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
+
+                //请求美食退款订单接口
+                if ("1".equals(orderVo.getCancelStatus())) {
+                    throw new ServiceException("退款已提交,不可重复申请");
+                }
+                XkUtils.refundOrder(xkConfig.getUrl(), xkConfig.getAppId(), xkConfig.getAppSecret(), xkConfig.getSourceType(), orderVo.getExternalOrderNumber(), orderFoodInfoVo.getTicketCode(), "申请退款");
+
+            }
+            refundMapper.insert(refund);
+            return;
         } else {
             //其他订单 只在失败的情况下才能申请退款
             if (!orderVo.getSendStatus().equals("3")) {
@@ -396,7 +421,7 @@ public class HistoryOrderServiceImpl implements IHistoryOrderService {
         }
         //存入大订单
         HistoryCollectiveOrder historyCollectiveOrder = historyCollectiveOrderMapper.selectById(order.getCollectiveNumber());
-        if (ObjectUtil.isEmpty(historyCollectiveOrder)){
+        if (ObjectUtil.isEmpty(historyCollectiveOrder)) {
             //如果历史大订单为空 说明没添加过 进行添加
             CollectiveOrder collectiveOrder = collectiveOrderMapper.selectById(order.getCollectiveNumber());
             if (ObjectUtil.isNotEmpty(collectiveOrder)) {

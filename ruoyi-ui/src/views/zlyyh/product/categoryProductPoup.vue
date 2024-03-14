@@ -176,7 +176,7 @@ export default {
   },
   props: {
     categoryId: {
-      type: Object,
+      type: String,
       default: undefined
     }
   },
@@ -354,8 +354,8 @@ export default {
     }).then(res => {
       this.distributorList = res.data;
     })
-    this.getTagsList();
-    this.selectSupplierList();
+    // this.getTagsList();
+    // this.selectSupplierList();
   },
   methods: {
     // 多选框选中数据

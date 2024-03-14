@@ -9,6 +9,15 @@ export function listBrand(query) {
   })
 }
 
+// 查询栏目下拉列表
+export function selectListBrand(query) {
+  return request({
+    url: '/zlyyh-admin/brand/selectList',
+    method: 'get',
+    params: query
+  })
+}
+
 // 查询品牌管理详细
 export function getBrand(brandId) {
   return request({

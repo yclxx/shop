@@ -5,6 +5,7 @@ import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.utils.BeanCopyUtils;
 import com.ruoyi.common.core.utils.ColumnUtil;
+import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.core.validate.AddGroup;
 import com.ruoyi.common.core.validate.EditGroup;
 import com.ruoyi.common.core.web.controller.BaseController;
@@ -16,10 +17,10 @@ import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
 import com.ruoyi.zlyyh.domain.bo.ShopImportBo;
-import com.ruoyi.zlyyh.domain.bo.ShopTourBo;
-import com.ruoyi.zlyyh.domain.vo.ShopTourVo;
+import com.ruoyi.zlyyh.domain.vo.CommercialTenantVo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
 import com.ruoyi.zlyyhadmin.domain.bo.ShopImportDataBo;
+import com.ruoyi.zlyyhadmin.service.ICommercialTenantService;
 import com.ruoyi.zlyyhadmin.service.IShopService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -48,6 +49,7 @@ import java.util.List;
 public class ShopController extends BaseController {
 
     private final IShopService iShopService;
+    private final ICommercialTenantService iCommercialTenantService;
 
     /**
      * 特殊查询条件
@@ -63,7 +65,11 @@ public class ShopController extends BaseController {
     @SaCheckPermission("zlyyh:shop:list")
     @GetMapping("/list")
     public TableDataInfo<ShopVo> list(ShopBo bo, PageQuery pageQuery) {
-        return iShopService.queryPageList(bo, pageQuery);
+        TableDataInfo<ShopVo> shopVoTableDataInfo = iShopService.queryPageList(bo, pageQuery);
+        for (ShopVo row : shopVoTableDataInfo.getRows()) {
+            setCommercialTenantName(row, true);
+        }
+        return shopVoTableDataInfo;
     }
 
     /**
@@ -109,6 +115,9 @@ public class ShopController extends BaseController {
     @PostMapping("/export")
     public void export(ShopBo bo, HttpServletResponse response) {
         List<ShopVo> list = iShopService.queryList(bo);
+        for (ShopVo row : list) {
+            setCommercialTenantName(row, true);
+        }
         ExcelUtil.exportExcel(list, "门店", ShopVo.class, response);
     }
 
@@ -143,7 +152,9 @@ public class ShopController extends BaseController {
     @SaCheckPermission("zlyyh:shop:query")
     @GetMapping("/{shopId}")
     public R<ShopVo> getInfo(@NotNull(message = "主键不能为空") @PathVariable Long shopId) {
-        return R.ok(iShopService.queryById(shopId));
+        ShopVo shopVo = iShopService.queryById(shopId);
+        setCommercialTenantName(shopVo, false);
+        return R.ok(shopVo);
     }
 
     /**
@@ -176,5 +187,18 @@ public class ShopController extends BaseController {
     @DeleteMapping("/{shopIds}")
     public R<Void> remove(@NotEmpty(message = "主键不能为空") @PathVariable Long[] shopIds) {
         return toAjax(iShopService.deleteWithValidByIds(Arrays.asList(shopIds), true));
+    }
+
+    private void setCommercialTenantName(ShopVo row, boolean all) {
+        if (null != row.getCommercialTenantId()) {
+            CommercialTenantVo commercialTenantVo = iCommercialTenantService.queryById(row.getCommercialTenantId());
+            if (null != commercialTenantVo) {
+                if (all) {
+                    row.setCommercialTenantName(StringUtils.isNotBlank(commercialTenantVo.getCommercialTenantTitle()) ? commercialTenantVo.getCommercialTenantTitle() + " (" + commercialTenantVo.getCommercialTenantName() + ")" : commercialTenantVo.getCommercialTenantName());
+                } else {
+                    row.setCommercialTenantName(StringUtils.isNotBlank(commercialTenantVo.getCommercialTenantTitle()) ? commercialTenantVo.getCommercialTenantTitle() : commercialTenantVo.getCommercialTenantName());
+                }
+            }
+        }
     }
 }

@@ -28,6 +28,7 @@ import com.ruoyi.zlyyhmobile.service.ICouponService;
 import com.ruoyi.zlyyhmobile.service.IOrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -86,6 +87,7 @@ public class CouponServiceImpl implements ICouponService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String conversion(Coupon coupon) {
         // 查询兑换码
         LambdaQueryWrapper<Coupon> lqw = Wrappers.lambdaQuery();
@@ -122,7 +124,7 @@ public class CouponServiceImpl implements ICouponService {
             createOrderBo.setPlatformKey(coupon.getPlatformKey());
             createOrderBo.setChannel(ZlyyhUtils.getPlatformChannel());
             //商品兑换券查询商品
-            ProductCoupon productCoupon = productCouponMapper.selectOne(new LambdaQueryWrapper<ProductCoupon>().eq(ProductCoupon::getCouponId, code.getCouponId()));
+            ProductCoupon productCoupon = productCouponMapper.selectOne(new LambdaQueryWrapper<ProductCoupon>().eq(ProductCoupon::getCouponId, code.getCouponId()).last("limit 1"));
             if (ObjectUtil.isEmpty(productCoupon)){
                 throw new ServiceException("优惠券发放异常");
             }

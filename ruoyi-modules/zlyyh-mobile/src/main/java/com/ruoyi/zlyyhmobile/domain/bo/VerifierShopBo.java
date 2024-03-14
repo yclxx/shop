@@ -82,4 +82,6 @@ public class VerifierShopBo {
      * 门店商编
      */
     private List<ShopMerchantBo> shopMerchantBos;
+
+    private String idType;
 }

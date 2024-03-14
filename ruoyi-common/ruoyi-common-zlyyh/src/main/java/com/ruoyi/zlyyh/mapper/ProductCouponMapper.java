@@ -1,7 +1,8 @@
 package com.ruoyi.zlyyh.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.ruoyi.common.mybatis.core.mapper.BaseMapperPlus;
 import com.ruoyi.zlyyh.domain.ProductCoupon;
+import com.ruoyi.zlyyh.domain.vo.ProductCouponVo;
 
 import java.util.List;
 
@@ -11,6 +12,6 @@ import java.util.List;
  * @author yzg
  * @date 2023-10-16
  */
-public interface ProductCouponMapper extends BaseMapper<ProductCoupon> {
+public interface ProductCouponMapper extends BaseMapperPlus<ProductCouponMapper,ProductCoupon, ProductCouponVo> {
     int insertAll(List<ProductCoupon> productActionsList);
 }

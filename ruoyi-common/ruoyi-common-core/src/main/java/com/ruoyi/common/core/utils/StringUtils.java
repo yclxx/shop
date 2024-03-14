@@ -352,5 +352,25 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
         });
         return sb.substring(0, sb.length() - 1);
     }
+    /**
+     * 截取替换订单查询那一行
+     *
+     * @param str HTML代码
+     * @return
+     */
+    public static String replaceHtml(String str) {
+        String rg = "<p.*?><span.*?>.*?</span></p>";
+        Pattern compile = Pattern.compile(rg);
+        Matcher matcher = compile.matcher(str);
+        while (matcher.find()) {
+            String img = matcher.group();
+            if (img.contains("【订单查询】")) {
+                str = str.replace(img, "");
+            }
+        }
+        return str;
+    }
+
+
 
 }

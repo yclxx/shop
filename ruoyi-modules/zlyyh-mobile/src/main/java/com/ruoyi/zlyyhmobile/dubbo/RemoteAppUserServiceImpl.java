@@ -31,10 +31,7 @@ import com.ruoyi.system.api.model.XcxLoginUser;
 import com.ruoyi.system.api.model.YsfEntity;
 import com.ruoyi.zlyyh.domain.RecordLog;
 import com.ruoyi.zlyyh.domain.bo.UserChannelBo;
-import com.ruoyi.zlyyh.domain.vo.BackendTokenEntity;
-import com.ruoyi.zlyyh.domain.vo.PlatformVo;
-import com.ruoyi.zlyyh.domain.vo.UserChannelVo;
-import com.ruoyi.zlyyh.domain.vo.UserVo;
+import com.ruoyi.zlyyh.domain.vo.*;
 import com.ruoyi.zlyyh.enumd.PlatformEnumd;
 import com.ruoyi.zlyyh.mapper.RecordLogMapper;
 import com.ruoyi.zlyyh.mapper.UserMapper;
@@ -47,6 +44,7 @@ import com.ruoyi.zlyyh.utils.ZlyyhUtils;
 import com.ruoyi.zlyyhmobile.domain.bo.UserRecordLog;
 import com.ruoyi.zlyyhmobile.service.IOrderService;
 import com.ruoyi.zlyyhmobile.service.IPlatformService;
+import com.ruoyi.zlyyhmobile.service.IThirdPlatformService;
 import com.ruoyi.zlyyhmobile.service.IUserChannelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -76,6 +74,7 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
     private final RecordLogMapper recordLogMapper;
     private final IPlatformService platformService;
     private final IOrderService orderService;
+    private final IThirdPlatformService thirdPlatformService;
     private final WxProperties wxProperties;
     @Autowired
     private LockTemplate lockTemplate;
@@ -91,11 +90,11 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
         }
         String appId = platformVo.getAppId();
         String secret = platformVo.getSecret();
-        String accessToken = WxUtils.getAccessToken(appId, secret, wxProperties.getAccessTokenUrl());
+        String accessToken = WxUtils.getAccessToken(appId, secret, wxProperties.getAccessTokenUrl(),false);
         if (StringUtils.isBlank(accessToken)) {
             // 休眠300毫秒再次获取
             ThreadUtil.sleep(300);
-            accessToken = WxUtils.getAccessToken(appId, secret, wxProperties.getAccessTokenUrl());
+            accessToken = WxUtils.getAccessToken(appId, secret, wxProperties.getAccessTokenUrl(),false);
             if (StringUtils.isBlank(accessToken)) {
                 log.error("微信基础访问令牌没有获取到");
                 throw new ServiceException("系统繁忙，请稍后重试!");
@@ -134,6 +133,40 @@ public class RemoteAppUserServiceImpl implements RemoteAppUserService {
             RedisUtils.setCacheObject(key, fail, Duration.ofMinutes(30));
         }
         return null;
+    }
+
+    /**
+     * 获取accessToken
+     */
+    @Override
+    public String getAccessToken(String appId, String secret) {
+        return WxUtils.getAccessToken(appId,secret,false);
+    }
+
+    /**
+     * 获取微信accessToken
+     */
+    @Override
+    public String getWxAccessToken(String appId, Boolean flag) {
+        //第一步查找密钥
+        ThirdPlatformVo thirdPlatformVo = thirdPlatformService.selectByAppId(appId, "1");
+        if(ObjectUtil.isNull(thirdPlatformVo)){
+            return "appId不存在";
+        }
+        return WxUtils.getAccessToken(appId,thirdPlatformVo.getSecret(),flag);
+    }
+
+    /**
+     * 获取云闪付accessToken
+     */
+    @Override
+    public String getYsfAccessToken(String appId, Boolean flag) {
+        //第一步查找密钥
+        ThirdPlatformVo thirdPlatformVo = thirdPlatformService.selectByAppId(appId, "1");
+        if(ObjectUtil.isNull(thirdPlatformVo)){
+            return "appId不存在";
+        }
+        return YsfUtils.getBackendToken(appId,thirdPlatformVo.getSecret(),flag,null);
     }
 
     /**

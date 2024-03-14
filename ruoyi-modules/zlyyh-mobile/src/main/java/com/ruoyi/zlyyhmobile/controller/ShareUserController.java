@@ -168,7 +168,7 @@ public class ShareUserController extends BaseController {
         if (null == platformVo) {
             return R.fail("访问错误[platform]");
         }
-        String accessToken = WxUtils.getAccessToken(platformVo.getAppId(), platformVo.getSecret(), wxProperties.getAccessTokenUrl());
+        String accessToken = WxUtils.getAccessToken(platformVo.getAppId(), platformVo.getSecret(), wxProperties.getAccessTokenUrl(),false);
         if (StringUtils.isBlank(accessToken)) {
             return R.fail("系统繁忙，请稍后重试");
         }

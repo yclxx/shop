@@ -296,23 +296,32 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                         i = this.saveShop(shops, product.getProductId(), lianProductVo.getOnlyName());
                     }
                 }
-                if (ObjectUtil.isNotNull(categorySupplier) && ObjectUtil.isNotNull(categorySupplier.getCategoryId()) && i == 0) {
-                    String categoryId = categorySupplier.getCategoryId();
-                    String[] categorySplit = categoryId.split(",");
-                    for (int n = 0; n < categorySplit.length; n++) {
-                        Long l = Long.valueOf(categorySplit[n]);
-                        Long categoryProduct = categoryProductService.queryByCategoryAndProduct(l, product.getProductId());
-                        if (ObjectUtil.isNull(categoryProduct) || categoryProduct == 0) {
-                            CategoryProductBo categoryProductBo = new CategoryProductBo();
-                            categoryProductBo.setProductId(productInfo.getProductId());
-                            categoryProductBo.setCategoryId(l);
-                            categoryProductService.insertByBo(categoryProductBo);
-                        }
+
+                //自动分类
+                try {
+                    if (ObjectUtil.isNotNull(categorySupplier) && ObjectUtil.isNotNull(categorySupplier.getCategoryId())) {
+                      categoryProductLink(categorySupplier.getCategoryId(),product.getProductId());
                     }
+                }catch (Exception e){
+                    log.error("商品Id：{}自动分类失败",product.getProductId());
                 }
-                //if (ObjectUtil.isNotEmpty(product.getProductId())) {
-                //    productService.setProductCity(product.getProductId());
-                //}
+
+
+            }
+        }
+    }
+
+    private void categoryProductLink(String categoryIds,Long productId){
+        //此处自动关联商品栏目
+        String[] categorySplit = categoryIds.split(",");
+        for (int n = 0; n < categorySplit.length; n++) {
+            Long l = Long.valueOf(categorySplit[n]);
+            Long categoryProduct = categoryProductService.queryByCategoryAndProduct(l, productId);
+            if (ObjectUtil.isNull(categoryProduct) || categoryProduct == 0) {
+                CategoryProductBo categoryProductBo = new CategoryProductBo();
+                categoryProductBo.setProductId(productId);
+                categoryProductBo.setCategoryId(l);
+                categoryProductService.insertByBo(categoryProductBo);
             }
         }
     }
@@ -376,6 +385,8 @@ public class RemoteLianLianProductServiceImpl implements RemoteLianLianProductSe
                 shopBo.setLongitude(longitude);
                 shopBo.setLatitude(latitude);
                 shopBo.setCommercialTenantId(commercialTenantId);
+                //供应商商户默认为已审核商户
+                shopBo.setExamineVerifier("1");
                 shopService.insertByBo(shopBo);
                 shopId = shopBo.getShopId();
             }

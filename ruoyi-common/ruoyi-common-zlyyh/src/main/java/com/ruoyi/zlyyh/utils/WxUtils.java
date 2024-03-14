@@ -112,11 +112,11 @@ public class WxUtils {
      * @param secret 密钥
      * @return 基础访问令牌
      */
-    public static String getAccessToken(String appId, String secret, String url) {
+    public static String getAccessToken(String appId, String secret, String url,Boolean flag) {
         // 获取基础访问令牌
         String accessTokenRedisKey = "accessToken:" + appId;
         String accessToken = RedisUtils.getCacheObject(accessTokenRedisKey);
-        if (StringUtils.isNotEmpty(accessToken)) {
+        if (StringUtils.isNotEmpty(accessToken) && !flag) {
             return accessToken;
         }
         LockTemplate lockTemplate = SpringUtils.getBean(LockTemplate.class);
@@ -163,8 +163,8 @@ public class WxUtils {
      * @param secret 密钥
      * @return 基础访问令牌
      */
-    public static String getAccessToken(String appId, String secret) {
-        return getAccessToken(appId, secret, "https://api.weixin.qq.com/cgi-bin/token");
+    public static String getAccessToken(String appId, String secret,Boolean flag) {
+        return getAccessToken(appId, secret, "https://api.weixin.qq.com/cgi-bin/token",flag);
     }
 
     /**

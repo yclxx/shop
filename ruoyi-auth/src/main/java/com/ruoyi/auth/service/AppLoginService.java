@@ -4,6 +4,9 @@ import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.auth.form.AppLoginBody;
 import com.ruoyi.auth.form.WxMobileLoginBody;
 import com.ruoyi.common.core.constant.CacheNames;
@@ -19,10 +22,18 @@ import com.ruoyi.system.api.model.LoginUser;
 import com.ruoyi.system.api.model.WxEntity;
 import com.ruoyi.system.api.model.XcxLoginUser;
 import com.ruoyi.system.api.model.YsfEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -31,6 +42,7 @@ import java.util.Map;
  * @author ruoyi
  */
 @Service
+@Slf4j
 public class AppLoginService {
 
     @DubboReference(retries = 0)
@@ -71,6 +83,73 @@ public class AppLoginService {
         // 缓存基本信息
         CacheUtils.put(CacheNames.WX_ENTITY, wxEntity.getOpenid(), wxEntity);
         return loginByOpenId(wxEntity.getOpenid(), platformKey, loginBody.getCityName(), loginBody.getCityCode(), channel);
+    }
+
+    /**
+     * 获取accessToken
+     */
+    public String getWxAndYsfAccessToken(JSONObject json){
+        //第一步验证sign
+        String privateKey = "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBALpjHCNnOs1klUjppcqe0lwV+Qrjvgn37rhil9EwkrNDgjxCGUekWdMdw3xB8ethjFZiGYhxs79v/SCKSOLdf+YnWYnPdYuv7HvCnKRoS4d+SHgHZH8KxtFSk86pu1KIyk4WlJSN5br7/Jkvbqw5FuW07TgpZctZ2bTmnmXho4BpAgMBAAECgYAza8FpEQM7hArdfTxUnKF7b0JwWylkNacB7o1k1Io8c5z8A95WkgSIBneWkdjsr9JYSKMzre7Bm2NRtWTrVeGBREQ5UiWWAhIi9H2zgvg3A6Svtj2RwNQgmDzdy+wg1xyph3rzKO6xw8RgHTUHp3EHsLCt1FZ3VneWV1F7SFH86wJBAOkjLYt1KLMoozhnmzKtZ/AyHjs7PMVrQ+/ZnNvgbcxuL711CxeNPvIL4F5biV5Cub5v6JzBXsMz6vZjlIq/v5cCQQDMqkkBGE5R+nMEzL+hW0shjKaC7zbsjDBvM61r4GP4qZ2DqCWqOdW1K0N7EIEq6n+aes+4+9iHoEbSPJQ/Hr//AkEA1gCiiAbtazd8TAReo/AlHokC0yAXMqi53esFX5ftceAbFm/f1KilBQ390N95gvsBAVw8S9f8onZ/0deqvIoy1QJAF7vnm2jmLDuO+w+DaYLcw5c7+BMlm2jmdP7ZLZln/n4s9geZ1pO+ZLQPr0XKtN9czN1RGXKbOZ8sl1TPHELEoQJALFnGbUx43v+qTLl3ZTPOcHjvkmsFly1CPOf+Jb31UkOwb43rvVCKo8WXWkeh9DEI3xCOfHooIUO6Nh41eYmEGw==";
+        String sign = json.getString("sign");
+        String s = RSAUtils.decryptByPrivateKey(sign, privateKey);
+        if(StringUtils.isEmpty(s)){
+            return "解密失败";
+        }
+        JSONObject jsonObject = JSONObject.parseObject(s);
+        String appId = jsonObject.getString("appId");
+        boolean flag = jsonObject.getBooleanValue("flag");
+        long timeStamp = jsonObject.getLongValue("timeStamp");
+        String type = jsonObject.getString("type");
+        if(ObjectUtil.isEmpty(appId) || ObjectUtil.isEmpty(flag) || ObjectUtil.isEmpty(sign) || ObjectUtil.isEmpty(type) || ObjectUtil.isEmpty(timeStamp)){
+            return "缺少必要参数";
+        }
+        if("1".equals(type)){
+            return remoteAppUserService.getWxAccessToken(appId ,flag);
+        }else if("2".equals(type)){
+            return remoteAppUserService.getYsfAccessToken(appId,flag);
+        }
+        return null;
+    }
+
+    /**
+     * 跳转小程序页面
+     */
+    public String jumpWxGroup(String pages,String type,String parameter){
+        log.info("跳转云美食小程序参数：页面：{}，类型：{}，参数：{}",pages,type,parameter);
+        String accessToken = remoteAppUserService.getAccessToken("wxe7c323382a74e41d", "40eb4ef26612ddae48b98081fcd5d55b");
+        if(StringUtils.isEmpty(accessToken)){
+            return null;
+        }
+        try{
+            String url = "https://api.weixin.qq.com/wxa/generatescheme?access_token=" + accessToken ;
+            HttpPost httpPost = new HttpPost(url);
+            Map<String,Object> map = new HashMap<>();
+            map.put("path",pages);
+            if(StringUtils.isNotEmpty(type)){
+                if("1".equals(type)){
+                    map.put("query","parameter=" + parameter);
+                }
+            }
+            Map<String,Object> map1 = new HashMap<>();
+            map1.put("jump_wxa",map);
+            JSONObject jsonObjects = new JSONObject(map1);
+            StringEntity entities = new StringEntity(jsonObjects.toJSONString(), "UTF-8");
+            httpPost.setEntity(entities);
+            DefaultHttpClient client = new DefaultHttpClient();
+            HttpResponse response = client.execute(httpPost);
+            HttpEntity entity = response.getEntity();
+            JSONObject jsonObject = null;
+            if (entity != null) {
+                //{"errcode":0,"openlink":"weixin://dl/business/?t=BBh8j0jvFLa","errmsg":"ok"}
+                String result = EntityUtils.toString(entity, "UTF-8");
+                jsonObject = JSON.parseObject(result);
+                return jsonObject.getString("openlink");
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**

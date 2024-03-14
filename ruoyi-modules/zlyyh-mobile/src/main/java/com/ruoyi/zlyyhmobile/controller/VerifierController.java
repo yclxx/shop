@@ -60,7 +60,7 @@ public class VerifierController extends BaseController {
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
         bo.setId(LoginHelper.getUserId());
         VerifierVo info =verifierMapper.selectVoOne(new LambdaQueryWrapper<Verifier>().eq(Verifier::getId, bo.getId()).eq(Verifier::getPlatformKey, bo.getPlatformKey()));
-        CommercialTenantVo commercialTenantVo = commercialTenantMapper.selectVoOne(new LambdaQueryWrapper<CommercialTenant>().eq(CommercialTenant::getAdminMobile, info.getMobile()).eq(CommercialTenant::getStatus, "0"));
+        CommercialTenantVo commercialTenantVo = commercialTenantMapper.selectVoOne(new LambdaQueryWrapper<CommercialTenant>().eq(CommercialTenant::getAdminMobile, info.getMobile()).eq(CommercialTenant::getStatus, "0").last("limit 1"));
         if (ObjectUtil.isEmpty(commercialTenantVo)){
             info.setIsAdmin(false);
             info.setIsVerifier(false);
@@ -136,6 +136,25 @@ public class VerifierController extends BaseController {
      */
     @GetMapping("/shopPage")
     public TableDataInfo<ShopVo> shopPage(VerifierBo bo, PageQuery pageQuery) {
+        bo.setId(LoginHelper.getUserId());
+        return verifierService.queryShopPageList(bo, pageQuery);
+    }
+
+
+    /**
+     * 查询商户下门店未审核数量
+     */
+    @GetMapping("/unExShopCount")
+    public R<Long> unExShopCount(VerifierBo bo) {
+        bo.setId(LoginHelper.getUserId());
+        return R.ok(verifierService.queryUnExShopCount(bo));
+    }
+
+    /**
+     * 查询未审核门店数量以及信息
+     */
+    @GetMapping("/shopUnVerifierPage")
+    public TableDataInfo<ShopVo> shopUnVerifierPage(VerifierBo bo, PageQuery pageQuery) {
         bo.setId(LoginHelper.getUserId());
         return verifierService.queryShopPageList(bo, pageQuery);
     }
@@ -254,6 +273,11 @@ public class VerifierController extends BaseController {
         if (null == shopBo) {
             return R.fail("系统繁忙，请稍后重试");
         }
+        if (bo.getIdType().equals("0")){
+            //商户进入审核页面修改 把核销状态修改为已审核
+            shopBo.setExamineVerifier("1");
+        }
+
         if (null == shopBo.getShopId()) {
             shopService.insertByBo(shopBo);
         } else {

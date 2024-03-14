@@ -88,4 +88,15 @@ public class RSAUtils {
     public static boolean verifySign(String key, String value, String sign) {
         return SecureUtil.sign(SignAlgorithm.SHA256withRSA, null, key).verify(value.getBytes(StandardCharsets.UTF_8), Base64.decode(sign));
     }
+
+    public static void main(String[] args) throws Exception {
+        String PIK = "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBALpjHCNnOs1klUjppcqe0lwV+Qrjvgn37rhil9EwkrNDgjxCGUekWdMdw3xB8ethjFZiGYhxs79v/SCKSOLdf+YnWYnPdYuv7HvCnKRoS4d+SHgHZH8KxtFSk86pu1KIyk4WlJSN5br7/Jkvbqw5FuW07TgpZctZ2bTmnmXho4BpAgMBAAECgYAza8FpEQM7hArdfTxUnKF7b0JwWylkNacB7o1k1Io8c5z8A95WkgSIBneWkdjsr9JYSKMzre7Bm2NRtWTrVeGBREQ5UiWWAhIi9H2zgvg3A6Svtj2RwNQgmDzdy+wg1xyph3rzKO6xw8RgHTUHp3EHsLCt1FZ3VneWV1F7SFH86wJBAOkjLYt1KLMoozhnmzKtZ/AyHjs7PMVrQ+/ZnNvgbcxuL711CxeNPvIL4F5biV5Cub5v6JzBXsMz6vZjlIq/v5cCQQDMqkkBGE5R+nMEzL+hW0shjKaC7zbsjDBvM61r4GP4qZ2DqCWqOdW1K0N7EIEq6n+aes+4+9iHoEbSPJQ/Hr//AkEA1gCiiAbtazd8TAReo/AlHokC0yAXMqi53esFX5ftceAbFm/f1KilBQ390N95gvsBAVw8S9f8onZ/0deqvIoy1QJAF7vnm2jmLDuO+w+DaYLcw5c7+BMlm2jmdP7ZLZln/n4s9geZ1pO+ZLQPr0XKtN9czN1RGXKbOZ8sl1TPHELEoQJALFnGbUx43v+qTLl3ZTPOcHjvkmsFly1CPOf+Jb31UkOwb43rvVCKo8WXWkeh9DEI3xCOfHooIUO6Nh41eYmEGw==";
+        String PUK = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC6YxwjZzrNZJVI6aXKntJcFfkK474J9+64YpfRMJKzQ4I8QhlHpFnTHcN8QfHrYYxWYhmIcbO/b/0gikji3X/mJ1mJz3WLr+x7wpykaEuHfkh4B2R/CsbRUpPOqbtSiMpOFpSUjeW6+/yZL26sORbltO04KWXLWdm05p5l4aOAaQIDAQAB";
+        String str = "appId=";
+        String sign = encryptByPublicKey(str, PUK);
+        System.out.println(sign);
+        String s = decryptByPrivateKey(sign, PIK);
+        System.out.println(s);
+
+    }
 }

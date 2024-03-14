@@ -10,7 +10,6 @@ import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
-
 import cn.hutool.extra.mail.MailUtil;
 import cn.hutool.http.HttpStatus;
 import cn.hutool.http.HttpUtil;
@@ -28,16 +27,15 @@ import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.exception.ServiceException;
 import com.ruoyi.common.core.exception.user.UserException;
 import com.ruoyi.common.core.utils.*;
-import com.ruoyi.common.core.utils.reflect.ReflectUtils;
 import com.ruoyi.common.mybatis.core.page.PageQuery;
 import com.ruoyi.common.mybatis.core.page.TableDataInfo;
 import com.ruoyi.common.redis.utils.RedisUtils;
+import com.ruoyi.resource.api.RemoteMailService;
 import com.ruoyi.system.api.RemoteOrderService;
 import com.ruoyi.zlyyh.constant.YsfUpConstants;
 import com.ruoyi.zlyyh.constant.ZlyyhConstants;
 import com.ruoyi.zlyyh.domain.*;
 import com.ruoyi.zlyyh.domain.bo.AppWxPayCallbackParams;
-import com.ruoyi.zlyyh.domain.bo.OrderBackTransBo;
 import com.ruoyi.zlyyh.domain.bo.OrderBo;
 import com.ruoyi.zlyyh.domain.bo.ProductAmountBo;
 import com.ruoyi.zlyyh.domain.vo.*;
@@ -49,10 +47,13 @@ import com.ruoyi.zlyyh.mapper.*;
 import com.ruoyi.zlyyh.param.LianLianParam;
 import com.ruoyi.zlyyh.properties.CtripConfig;
 import com.ruoyi.zlyyh.properties.WxProperties;
+import com.ruoyi.zlyyh.properties.XKConfig;
 import com.ruoyi.zlyyh.properties.YsfFoodProperties;
 import com.ruoyi.zlyyh.properties.utils.YsfDistributionPropertiesUtils;
 import com.ruoyi.zlyyh.service.YsfConfigService;
 import com.ruoyi.zlyyh.utils.*;
+import com.ruoyi.zlyyh.utils.redis.OrderCacheUtils;
+import com.ruoyi.zlyyh.utils.redis.ProductUtils;
 import com.ruoyi.zlyyh.utils.sdk.LogUtil;
 import com.ruoyi.zlyyh.utils.sdk.PayUtils;
 import com.ruoyi.zlyyh.utils.sdk.UnionPayDistributionUtil;
@@ -64,13 +65,10 @@ import com.ruoyi.zlyyhmobile.event.SendCouponEvent;
 import com.ruoyi.zlyyhmobile.event.ShareOrderEvent;
 import com.ruoyi.zlyyhmobile.service.*;
 import com.ruoyi.zlyyhmobile.utils.AliasMethod;
-import com.ruoyi.zlyyh.utils.redis.ProductUtils;
-import com.ruoyi.zlyyh.utils.redis.OrderCacheUtils;
 import com.wechat.pay.contrib.apache.httpclient.auth.AutoUpdateCertificatesVerifier;
 import com.wechat.pay.contrib.apache.httpclient.auth.PrivateKeySigner;
 import com.wechat.pay.contrib.apache.httpclient.auth.WechatPay2Credentials;
 import com.wechat.pay.contrib.apache.httpclient.util.PemUtil;
-import jodd.util.CollectionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -82,7 +80,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.Email;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -92,7 +89,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -107,6 +103,7 @@ import java.util.stream.Collectors;
 public class OrderServiceImpl implements IOrderService {
     private static final YsfFoodProperties YSF_FOOD_PROPERTIES = SpringUtils.getBean(YsfFoodProperties.class);
     private static final CtripConfig CtripConfig = SpringUtils.getBean(CtripConfig.class);
+    private static final XKConfig xkConfig = SpringUtils.getBean(XKConfig.class);
     private final YsfConfigService ysfConfigService;
     private final OrderMapper baseMapper;
     private final IPlatformService platformService;
@@ -138,6 +135,8 @@ public class OrderServiceImpl implements IOrderService {
     private final IMissionUserDrawService missionUserDrawService;
     private final ProductGroupConnectMapper productGroupConnectMapper;
     private final ProductGroupMapper productGroupMapper;
+    @DubboReference(retries = 0)
+    private RemoteMailService remoteMailService;
     @DubboReference(retries = 0, timeout = 5000)
     private RemoteOrderService remoteOrderService;
     @Autowired
@@ -344,7 +343,7 @@ public class OrderServiceImpl implements IOrderService {
                 order = updateOrder(order);
             }
             if (!"16".equals(order.getOrderType())) {
-                if (!"21".equals(order.getOrderType())){
+                if (!"21".equals(order.getOrderType())) {
                     if (StringUtils.isBlank(order.getExternalProductId()) || (("3".equals(order.getOrderType()) || "10".equals(order.getOrderType()) || "4".equals(order.getOrderType())) && null == order.getExternalProductSendValue())) {
                         if (null == productVo || (!"9".equals(productVo.getProductType()) && StringUtils.isBlank(productVo.getExternalProductId()))) {
                             log.error("订单发券错误，缺少供应商产品ID：{}", number);
@@ -452,9 +451,11 @@ public class OrderServiceImpl implements IOrderService {
                 }
             } else if ("22".equals(order.getOrderType())) {
                 // 银联开放平台发券
-                R<JSONObject> result = YsfUtils.pntAcquire(orderPushInfo.getPushNumber(),order.getAccount(),order.getExternalProductSendValue().multiply(new BigDecimal(100)).setScale(0,BigDecimal.ROUND_DOWN).toString(),"银联红包发放",productVo.getInstitutionAccountId(), productVo.getInstitutionProductId(), order.getPlatformKey());
+                R<JSONObject> result = YsfUtils.pntAcquire(orderPushInfo.getPushNumber(), order.getAccount(), order.getExternalProductSendValue().multiply(new BigDecimal(100)).setScale(0, BigDecimal.ROUND_DOWN).toString(), "银联红包发放", productVo.getInstitutionAccountId(), productVo.getInstitutionProductId(), order.getPlatformKey());
                 // 处理结果
                 sendResult(result, orderPushInfo, order, cache, true);
+            } else if ("23".equals(order.getOrderType())){
+                payXkFoodOrder(order.getExternalOrderNumber());
             } else {
                 sendResult(R.fail("订单类型无处理方式，请联系技术人员"), orderPushInfo, order, cache, false);
             }
@@ -694,12 +695,11 @@ public class OrderServiceImpl implements IOrderService {
             ProductGroupVo productGroupVo = null;
             //查询商品是否存在商品组
             ProductGroupConnectVo productGroupConnectVo = productGroupConnectMapper.selectVoOne(new LambdaQueryWrapper<ProductGroupConnect>().eq(ProductGroupConnect::getProductId, productVo.getProductId()));
-            if (ObjectUtil.isNotEmpty(productGroupConnectVo)){
+            if (ObjectUtil.isNotEmpty(productGroupConnectVo)) {
                 //如果商品存在商品组 校验商品组名额
-                productGroupVo = productGroupMapper.selectVoOne(new LambdaQueryWrapper<ProductGroup>().eq(ProductGroup::getProductGroupId,productGroupConnectVo.getProductGroupId()).eq(ProductGroup::getStatus,"0"));
-                ProductUtils.checkProductGroupUserCount(productGroupVo,platformVo.getPlatformKey(),userVo.getUserId());
+                productGroupVo = productGroupMapper.selectVoOne(new LambdaQueryWrapper<ProductGroup>().eq(ProductGroup::getProductGroupId, productGroupConnectVo.getProductGroupId()).eq(ProductGroup::getStatus, "0"));
+                ProductUtils.checkProductGroupUserCount(productGroupVo, platformVo.getPlatformKey(), userVo.getUserId());
             }
-
 
             // 校验产品状态 名额
             R<ProductVo> checkProductCountResult = ProductUtils.checkProduct(productVo, bo.getCityCode());
@@ -794,26 +794,32 @@ public class OrderServiceImpl implements IOrderService {
             addFoodOrder(productVo, order, userVo, platformVo);
 
             //如果商品组规则存在设置商品组缓存
-            if (null != productGroupVo){
-                this.setProductGroupOrderCountCache(platformVo.getPlatformKey(),userVo.getUserId(),productGroupVo.getProductGroupId(),productVo.getSellEndDate(),order.getCount());
+            if (null != productGroupVo) {
+                this.setProductGroupOrderCountCache(platformVo.getPlatformKey(), userVo.getUserId(), productGroupVo.getProductGroupId(), productVo.getSellEndDate(), order.getCount());
             }
             // 设置领取缓存
-            this.setOrderCountCache(platformVo.getPlatformKey(), bo.getUserId(), productVo.getProductId(), productVo.getSellEndDate(), order.getCount());
-            try{
+            this.setOrderCountCache(order.getNumber(), platformVo.getPlatformKey(), bo.getUserId(), productVo.getProductId(), productVo.getSellEndDate(), order.getCount());
+            try {
                 //开启预警判断
-                if (ObjectUtil.isNotEmpty(productVo.getWarnMessage()) && productVo.getWarnMessage().equals("1")){
+                if (ObjectUtil.isNotEmpty(productVo.getWarnMessage()) && productVo.getWarnMessage().equals("1")) {
                     //查询已发送数量
                     long count = RedisUtils.getAtomicValue(countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
-                    if (ObjectUtil.isNotEmpty(productVo.getWarnCount()) && ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && count >= productVo.getWarnCount()){
-                        //达成以上条件发送邮件
-                        String title ="商品数量预警";
-                        String text = productVo.getProductName()+":数量不足"+productVo.getWarnCount()+"请及时处理";
-                        sendWarnEmail(productVo.getWarnEmail(),title,text,true);
+                    Long totalCount = productVo.getTotalCount();
+                    Long warnCount = productVo.getWarnCount();
+                    if (ObjectUtil.isNotEmpty(warnCount) && ObjectUtil.isNotEmpty(totalCount) && totalCount > warnCount) {
+                        long twCount = totalCount - warnCount;
+                        if (ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && count >= twCount) {
+                            //达成以上条件发送邮件
+                            String title = "商品数量预警";
+                            String text = productVo.getProductName() + ":数量不足" + productVo.getWarnCount() + "请及时处理";
+                            sendWarnEmail(productVo.getWarnEmail(), title, text, true);
+                        }
+
                     }
 
                 }
-            }catch (Exception e){
-                log.error("预警邮件发送失败{}",e);
+            } catch (Exception e) {
+                log.error("预警邮件发送失败", e);
             }
 
             try {
@@ -880,13 +886,13 @@ public class OrderServiceImpl implements IOrderService {
                         throw new ServiceException("优惠券需订单金额超过" + coupon.getMinAmount() + "元才可用！");
                     }
                     //判断是否为专属商品|优惠券判断购买商品id是否存在于优惠券商品关联表中
-                    List<ProductCoupon> productCoupons = productCouponMapper.selectList(new LambdaQueryWrapper<ProductCoupon>().eq(ProductCoupon::getCouponId, bo.getCouponId()));
+                    List<ProductCouponVo> productCoupons = productCouponMapper.selectVoList(new LambdaQueryWrapper<ProductCoupon>().eq(ProductCoupon::getCouponId, bo.getCouponId()));
                     if ((coupon.getCouponType().equals("1") || coupon.getCouponType().equals("3")) && ObjectUtil.isEmpty(productCoupons)) {
                         throw new ServiceException("该优惠券指定商品可用！");
                     }
                     if (ObjectUtil.isNotEmpty(productCoupons)) {
                         //关联表不为空判断购买的商品id是否存在 不存在抛异常
-                        List<Long> productIds = productCoupons.stream().map(ProductCoupon::getProductId).collect(Collectors.toList());
+                        List<Long> productIds = productCoupons.stream().map(ProductCouponVo::getProductId).collect(Collectors.toList());
                         boolean couponProduct = productIds.contains(bo.getProductId());
                         if (!couponProduct) {
                             throw new ServiceException("优惠券指定商品可用！");
@@ -982,31 +988,36 @@ public class OrderServiceImpl implements IOrderService {
             lockTemplate.releaseLock(lockInfo);
         }
     }
+
     public static String countByProductIdRedisKey(Long platformKey, Long productId, DateType dateType) {
         return "orderLimitCache:product:" + platformKey + ":" + productId + ":" + ZlyyhUtils.getDateCacheKey(dateType);
     }
-    private void sendWarnEmail(String emails, String title, String text,boolean checkEmail){
-        log.info("发送邮件参数，emails={},title={},text={}", emails, title, text);
-        if (StringUtils.isBlank(emails)) {
-            return;
-        }
-        if(checkEmail){
-            String data = emails + title + text;
-            // 签名
-            String sign = DigestUtils.md5DigestAsHex(data.getBytes(StandardCharsets.UTF_8)).toLowerCase();
-            // 查询签名是否存在，存在则说明已发送了，不再发送
-            String redisKey = "emailLog:"+sign;
-            String cache = RedisUtils.getCacheObject(redisKey);
-            if(StringUtils.isNotBlank(cache)){
-                return ;
+
+    private void sendWarnEmail(String emails, String title, String text, boolean checkEmail) {
+        try {
+            log.info("发送邮件参数，emails={},title={},text={}", emails, title, text);
+            if (StringUtils.isBlank(emails)) {
+                return;
             }
-            RedisUtils.setCacheObject(redisKey, DateUtil.now(),Duration.ofHours(1));
+            if (checkEmail) {
+                String data = emails + title + text;
+                // 签名
+                String sign = DigestUtils.md5DigestAsHex(data.getBytes(StandardCharsets.UTF_8)).toLowerCase();
+                // 查询签名是否存在，存在则说明已发送了，不再发送
+                String redisKey = "emailLog:" + sign;
+                String cache = RedisUtils.getCacheObject(redisKey);
+                if (StringUtils.isNotBlank(cache)) {
+                    return;
+                }
+                RedisUtils.setCacheObject(redisKey, DateUtil.now(), Duration.ofHours(1));
+            }
+            remoteMailService.send(emails, title, text);
+        } catch (Exception e) {
+            log.error("邮件发送异常", e);
         }
-        MailUtil.sendText(emails,title,text);
+        MailUtil.sendText(emails, title, text);
 
     }
-
-
 
     /**
      * 购物车创建订单
@@ -1077,10 +1088,10 @@ public class OrderServiceImpl implements IOrderService {
             ProductGroupVo productGroupVo = null;
             //查询商品是否存在商品组
             ProductGroupConnectVo productGroupConnectVo = productGroupConnectMapper.selectVoOne(new LambdaQueryWrapper<ProductGroupConnect>().eq(ProductGroupConnect::getProductId, productVo.getProductId()));
-            if (ObjectUtil.isNotEmpty(productGroupConnectVo)){
+            if (ObjectUtil.isNotEmpty(productGroupConnectVo)) {
                 //如果商品存在商品组 校验商品组名额
-                productGroupVo = productGroupMapper.selectVoOne(new LambdaQueryWrapper<ProductGroup>().eq(ProductGroup::getProductGroupId,productGroupConnectVo.getProductGroupId()).eq(ProductGroup::getStatus,"0"));
-                ProductUtils.checkProductGroupUserCount(productGroupVo,platformVo.getPlatformKey(),userVo.getUserId());
+                productGroupVo = productGroupMapper.selectVoOne(new LambdaQueryWrapper<ProductGroup>().eq(ProductGroup::getProductGroupId, productGroupConnectVo.getProductGroupId()).eq(ProductGroup::getStatus, "0"));
+                ProductUtils.checkProductGroupUserCount(productGroupVo, platformVo.getPlatformKey(), userVo.getUserId());
             }
             // 校验产品状态 名额
             R<ProductVo> checkProductCountResult = ProductUtils.checkProduct(productVo, bo.getCityCode());
@@ -1257,31 +1268,37 @@ public class OrderServiceImpl implements IOrderService {
             ProductGroupVo productGroupVo = null;
             //查询商品是否存在商品组
             ProductGroupConnectVo productGroupConnectVo = productGroupConnectMapper.selectVoOne(new LambdaQueryWrapper<ProductGroupConnect>().eq(ProductGroupConnect::getProductId, productVo.getProductId()));
-            if (ObjectUtil.isNotEmpty(productGroupConnectVo)){
+            if (ObjectUtil.isNotEmpty(productGroupConnectVo)) {
                 //如果商品存在商品组 校验商品组名额
-                productGroupVo = productGroupMapper.selectVoOne(new LambdaQueryWrapper<ProductGroup>().eq(ProductGroup::getProductGroupId,productGroupConnectVo.getProductGroupId()).eq(ProductGroup::getStatus,"0"));
-                ProductUtils.checkProductGroupUserCount(productGroupVo,platformVo.getPlatformKey(),userVo.getUserId());
+                productGroupVo = productGroupMapper.selectVoOne(new LambdaQueryWrapper<ProductGroup>().eq(ProductGroup::getProductGroupId, productGroupConnectVo.getProductGroupId()).eq(ProductGroup::getStatus, "0"));
+                ProductUtils.checkProductGroupUserCount(productGroupVo, platformVo.getPlatformKey(), userVo.getUserId());
             }
-            if (null != productGroupVo){
-                this.setProductGroupOrderCountCache(platformVo.getPlatformKey(),userVo.getUserId(),productGroupVo.getProductGroupId(),productVo.getSellEndDate(),order.getCount());
+            if (null != productGroupVo) {
+                this.setProductGroupOrderCountCache(platformVo.getPlatformKey(), userVo.getUserId(), productGroupVo.getProductGroupId(), productVo.getSellEndDate(), order.getCount());
             }
             // 设置领取缓存
-            this.setOrderCountCache(platformVo.getPlatformKey(), bo.getUserId(), productVo.getProductId(), productVo.getSellEndDate(), order.getCount());
-            try{
+            this.setOrderCountCache(order.getNumber(), platformVo.getPlatformKey(), bo.getUserId(), productVo.getProductId(), productVo.getSellEndDate(), order.getCount());
+            try {
                 //开启预警判断
-                if (ObjectUtil.isNotEmpty(productVo.getWarnMessage()) && productVo.getWarnMessage().equals("1")){
+                if (ObjectUtil.isNotEmpty(productVo.getWarnMessage()) && productVo.getWarnMessage().equals("1")) {
                     //查询已发送数量
                     long totalCount = RedisUtils.getAtomicValue(countByProductIdRedisKey(productVo.getPlatformKey(), productVo.getProductId(), DateType.TOTAL));
-                    if (ObjectUtil.isNotEmpty(productVo.getWarnCount()) && ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && totalCount >= productVo.getWarnCount()){
-                        //达成以上条件发送邮件
-                        String title ="商品数量预警";
-                        String text = productVo.getProductName()+":数量不足"+productVo.getWarnCount()+"请及时处理";
-                        sendWarnEmail(productVo.getWarnEmail(),title,text,true);
+                    Long productVoTotalCount = productVo.getTotalCount();
+                    Long warnCount = productVo.getWarnCount();
+                    if (ObjectUtil.isNotEmpty(warnCount) && ObjectUtil.isNotEmpty(productVoTotalCount) && productVoTotalCount > warnCount) {
+                        long twCount = productVoTotalCount - warnCount;
+                        if (ObjectUtil.isNotEmpty(productVo.getWarnEmail()) && productVo.getWarnCount() > 0 && totalCount >= twCount) {
+                            //达成以上条件发送邮件
+                            String title = "商品数量预警";
+                            String text = productVo.getProductName() + ":数量不足" + productVo.getWarnCount() + "请及时处理";
+                            sendWarnEmail(productVo.getWarnEmail(), title, text, true);
+                        }
+
                     }
 
                 }
-            }catch (Exception e){
-                log.error("预警邮件发送失败{}",e);
+            } catch (Exception e) {
+                log.error("预警邮件发送失败", e);
             }
 
             // 小订单金额，单个商品销售价
@@ -1408,6 +1425,24 @@ public class OrderServiceImpl implements IOrderService {
             orderFoodInfo.setUserName("匿名");
             orderFoodInfoMapper.insert(orderFoodInfo);
         }
+        //新享库订单
+        if ("23".equals(productVo.getProductType())){
+            //先查出美食商品详情
+            ProductInfoVo productInfoVo = productInfoService.queryById(productVo.getProductId());
+            if (ObjectUtil.isEmpty(productInfoVo)) {
+                throw new ServiceException("商品异常");
+            }
+            OrderFoodInfo orderFoodInfo = new OrderFoodInfo();
+            orderFoodInfo.setNumber(order.getNumber());
+            //如果是享库类型商品productName字段存放预约url
+            orderFoodInfo.setProductName(productInfoVo.getReserveDesc());
+            //调用美食商城预下单接口获取三方number
+            xKCreateOrder(order, orderFoodInfo, userVo.getMobile(), productVo.getExternalProductId());
+            // 保存订单 后续如需改动成缓存订单，需注释
+            orderFoodInfo.setItemId(productVo.getExternalProductId());
+            orderFoodInfo.setUserName("匿名");
+            orderFoodInfoMapper.insert(orderFoodInfo);
+        }
 
     }
 
@@ -1485,6 +1520,31 @@ public class OrderServiceImpl implements IOrderService {
         }
     }
 
+
+    /**
+     * 请求享库下单接口
+     */
+    private void xKCreateOrder(Order order, OrderFoodInfo orderFoodInfo, String mobile, String goodsId) {
+        String url = xkConfig.getUrl();
+        String appId = xkConfig.getAppId();
+        String appSecret = xkConfig.getAppSecret();
+        String sourceType = xkConfig.getSourceType();
+        JSONObject xkOrder = XkUtils.createXkOrder(url, appId, appSecret, goodsId, sourceType, mobile, order.getCount());
+        JSONObject data = xkOrder.getJSONObject("data");
+        if (ObjectUtil.isNotEmpty(data)) {
+            //请求成功
+            String orderNo = data.getString("order_no");
+            if (ObjectUtil.isNotEmpty(orderNo)) {
+                //保存三方订单号
+                order.setExternalOrderNumber(orderNo);
+                orderFoodInfo.setBizOrderId(orderNo);
+            } else {
+                throw new ServiceException("创建订单失败");
+            }
+
+        }
+    }
+
     /**
      * 口碑 订单进行处理
      *
@@ -1504,6 +1564,90 @@ public class OrderServiceImpl implements IOrderService {
         order.setOrderFoodInfoVo(orderFoodInfoVo);
     }
 
+
+    /**
+     * 新享库 订单进行处理
+     *
+     * @param order 订单信息
+     */
+    private void orderXkFoodProcessed(OrderVo order) {
+        OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(order.getNumber());
+        if (ObjectUtil.isNotEmpty(orderFoodInfoVo)) {
+            //如果没有电子码
+            if (("2".equals(order.getStatus()) || "4".equals(order.getStatus()) || "5".equals(order.getStatus())) && StringUtils.isEmpty(orderFoodInfoVo.getTicketCode()) && order.getOrderType().equals("5")) {
+                // 查询享库订单
+                queryXkFoodOrder(order.getExternalOrderNumber());
+                //防止重复加密再查询一遍
+                orderFoodInfoVo = orderFoodInfoMapper.selectVoById(order.getNumber());
+            }
+        }
+        order.setOrderFoodInfoVo(orderFoodInfoVo);
+    }
+
+    /**
+     * 查询美食订单接口
+     */
+    private void queryXkFoodOrder(String externalOrderNumber) {
+        Order order = baseMapper.selectOne(new LambdaQueryWrapper<Order>().eq(Order::getExternalOrderNumber, externalOrderNumber));
+        if (ObjectUtil.isEmpty(order)) {
+            return;
+        }
+        OrderPushInfo orderPushInfo = orderPushInfoMapper.selectOne(new LambdaQueryWrapper<OrderPushInfo>().eq(OrderPushInfo::getNumber, order.getNumber()));
+        OrderFoodInfo orderFoodInfo = orderFoodInfoMapper.selectById(order.getNumber());
+        String url = xkConfig.getUrl();
+        String appId = xkConfig.getAppId();
+        String appSecret = xkConfig.getAppSecret();
+        String sourceType = xkConfig.getSourceType();
+        JSONObject queryOrderState = XkUtils.queryOrderState(url, appId, appSecret, sourceType, externalOrderNumber);
+        if (ObjectUtil.isNotEmpty(queryOrderState)) {
+            if (queryOrderState.getIntValue("code") == 0) {
+                return;
+            }
+            JSONObject data = queryOrderState.getJSONObject("data");
+            JSONObject orderJson = data.getJSONObject("order");
+            if (orderJson.getIntValue("pay_status") == 10) {
+                return;
+            }
+            String isRefund = orderJson.getString("is_refund");
+            JSONArray dataJSONArray = data.getJSONArray("order_vercode");
+            JSONObject jsonObject1 = dataJSONArray.getJSONObject(0);
+            String code = jsonObject1.getString("code");
+            String state = jsonObject1.getString("check_status");
+
+            if (ObjectUtil.isNotEmpty(code)) {
+                order.setSendStatus("2");
+                if (ObjectUtil.isNotEmpty(orderPushInfo)) {
+                    orderPushInfo.setStatus("1");
+                    orderPushInfoMapper.updateById(orderPushInfo);
+                }
+            }
+            orderFoodInfo.setVoucherId(code);
+            orderFoodInfo.setTicketCode(code);
+
+            //根据票券状态更新订单的核销状态
+            if (StringUtils.isNotEmpty(state)) {
+                //核销状态：0=未核销，1=已核销，2=已退款
+                if (state.equals("0")) {
+                    orderFoodInfo.setVoucherStatus("EFFECTIVE");
+                    order.setVerificationStatus("0");
+                } else if (state.equals("1")) {
+                    orderFoodInfo.setVoucherStatus("USED");
+                    order.setVerificationStatus("1");
+                    orderFoodInfo.setUsedAmount(1);
+                } else {
+                    orderFoodInfo.setRefundAmount(1);
+                    orderFoodInfo.setVoucherStatus("CANCELED");
+                    order.setVerificationStatus("2");
+                }
+            }
+            orderFoodInfo.setOrderStatus(isRefund);
+            orderFoodInfo.setTotalAmount(1);
+
+            order = updateOrder(order);
+            orderFoodInfoMapper.updateById(orderFoodInfo);
+        }
+
+    }
     /**
      * 查询美食订单接口
      */
@@ -1846,6 +1990,69 @@ public class OrderServiceImpl implements IOrderService {
         }
     }
 
+
+    /**
+     * 支付享库订单接口
+     * *
+     */
+    private void payXkFoodOrder(String externalOrderNumber) {
+        Order order = baseMapper.selectOne(new LambdaQueryWrapper<Order>().eq(Order::getExternalOrderNumber, externalOrderNumber));
+        if (ObjectUtil.isEmpty(order)) {
+            return;
+        }
+        OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(order.getNumber());
+        if (ObjectUtil.isEmpty(orderFoodInfoVo)) {
+            return;
+        }
+        String url = xkConfig.getUrl();
+        String appId = xkConfig.getAppId();
+        String appSecret = xkConfig.getAppSecret();
+        String sourceType = xkConfig.getSourceType();
+        JSONObject payXkOrder = XkUtils.payXkOrder(url, appId, appSecret, sourceType, externalOrderNumber);
+        if (payXkOrder.getIntValue("code") == 0) {
+            String msg = payXkOrder.getString("msg");
+            if (msg.contains("商品没有上架")) {
+                //将商品进行下架
+                //下架商品
+                Product product = new Product();
+                product.setProductId(order.getProductId());
+                product.setStatus("1");
+                productMapper.updateById(product);
+                throw new ServiceException("商品已售罄！");
+            }
+            throw new ServiceException(payXkOrder.getString("msg"));
+        }
+        JSONObject data = payXkOrder.getJSONObject("data");
+        //支付完成后接入核销数据
+        if (ObjectUtil.isNotEmpty(data)) {
+            JSONArray codes = data.getJSONArray("code");
+            if (org.springframework.util.CollectionUtils.isEmpty(codes)) {
+                throw new ServiceException("享库订单缺失核销码，返回结果：" +payXkOrder);
+            }
+            OrderFoodInfo orderFoodInfo = new OrderFoodInfo();
+            orderFoodInfo.setNumber(order.getNumber());
+            //请求查询票券的接口
+            JSONObject jsonObject = XkUtils.queryOrderCode(url, appId, appSecret, sourceType, externalOrderNumber);
+            JSONArray data1 = jsonObject.getJSONArray("data");
+            JSONObject jsonObject2 = data1.getJSONObject(0);
+            String code = jsonObject2.getString("code");
+            String state = jsonObject2.getString("check_status");
+            String startTime = jsonObject2.getString("start_time");
+            String endTime = jsonObject2.getString("end_time");
+            orderFoodInfo.setTicketCode(code);
+            orderFoodInfo.setVoucherId(code);
+            orderFoodInfo.setVoucherStatus("EFFECTIVE");
+            orderFoodInfo.setExpireTime(DateUtils.TimesToDateString(startTime + "000"));
+            orderFoodInfo.setEffectTime(DateUtils.TimesToDateString(endTime + "000"));
+
+            if (ObjectUtil.isNotEmpty(orderFoodInfo.getTicketCode()) || ObjectUtil.isNotEmpty(orderFoodInfo.getVoucherId()) || StringUtils.isNotEmpty(orderFoodInfo.getProductName())) {
+                orderFoodInfoMapper.updateById(orderFoodInfo);
+            }
+
+        }
+
+    }
+
     /**
      * 缓存用户未支付订单
      *
@@ -1881,7 +2088,9 @@ public class OrderServiceImpl implements IOrderService {
      * @param userId      用户ID
      * @param productId   产品ID
      */
-    private void setOrderCountCache(Long platformKey, Long userId, Long productId, Date cacheTime, Long count) {
+    private void setOrderCountCache(Long number, Long platformKey, Long userId, Long productId, Date cacheTime, Long count) {
+        String snowflakeNextIdStr = IdUtil.getSnowflakeNextIdStr();
+        log.info("订单：{}，开始设置商品购买数量缓存，流水号：{},userId:{},productId:{},count:{}", number, snowflakeNextIdStr, userId, productId, count);
         if (null == count || count < 1) {
             count = 1L;
         }
@@ -1906,15 +2115,15 @@ public class OrderServiceImpl implements IOrderService {
             RedisUtils.expire(productCacheKey, duration);
             RedisUtils.expire(userCacheKey, duration);
         }
+        log.info("结束设置商品购买数量缓存，流水号：{}", snowflakeNextIdStr);
     }
-
 
     /**
      * 设置商品组购买数量缓存
      *
-     * @param platformKey 平台标识
-     * @param userId      用户ID
-     * @param productGroupId   产品ID
+     * @param platformKey    平台标识
+     * @param userId         用户ID
+     * @param productGroupId 产品ID
      */
     private void setProductGroupOrderCountCache(Long platformKey, Long userId, Long productGroupId, Date cacheTime, Long count) {
         if (null == count || count < 1) {
@@ -1994,11 +2203,11 @@ public class OrderServiceImpl implements IOrderService {
             String userProductGroupCacheKey = "";
             //查询商品是否存在商品组
             ProductGroupConnectVo productGroupConnectVo = productGroupConnectMapper.selectVoOne(new LambdaQueryWrapper<ProductGroupConnect>().eq(ProductGroupConnect::getProductId, productId));
-            if (ObjectUtil.isNotEmpty(productGroupConnectVo)){
+            if (ObjectUtil.isNotEmpty(productGroupConnectVo)) {
                 //如果商品存在商品组 校验商品组名额
-                productGroupVo = productGroupMapper.selectVoOne(new LambdaQueryWrapper<ProductGroup>().eq(ProductGroup::getProductGroupId,productGroupConnectVo.getProductGroupId()).eq(ProductGroup::getStatus,"0"));
-                if (null != productGroupVo){
-                    userProductGroupCacheKey = ProductUtils.countByUserIdAndProductGroupIdRedisKey(platformKey,userId,productGroupVo.getProductGroupId(),value);
+                productGroupVo = productGroupMapper.selectVoOne(new LambdaQueryWrapper<ProductGroup>().eq(ProductGroup::getProductGroupId, productGroupConnectVo.getProductGroupId()).eq(ProductGroup::getStatus, "0"));
+                if (null != productGroupVo) {
+                    userProductGroupCacheKey = ProductUtils.countByUserIdAndProductGroupIdRedisKey(platformKey, userId, productGroupVo.getProductGroupId(), value);
                 }
             }
 
@@ -2006,7 +2215,7 @@ public class OrderServiceImpl implements IOrderService {
             for (int i = 0; i < count; i++) {
                 RedisUtils.decrAtomicValue(productCacheKey);
                 RedisUtils.decrAtomicValue(userCacheKey);
-                if (ObjectUtil.isNotEmpty(userProductGroupCacheKey)){
+                if (ObjectUtil.isNotEmpty(userProductGroupCacheKey)) {
                     RedisUtils.decrAtomicValue(userProductGroupCacheKey);
                 }
             }
@@ -2020,6 +2229,9 @@ public class OrderServiceImpl implements IOrderService {
     @Override
     public OrderVo queryById(Long number) {
         OrderVo orderVo = baseMapper.selectVoById(number);
+        if (null == orderVo) {
+            return null;
+        }
         try {
             if ("2".equals(orderVo.getStatus()) && "1".equals(orderVo.getSendStatus()) && null != orderVo.getPayTime() && DateUtils.getDatePoorMinutes(new Date(), orderVo.getPayTime()) > 30) {
                 queryOrderSendStatus(orderVo.getPushNumber());
@@ -2054,6 +2266,9 @@ public class OrderServiceImpl implements IOrderService {
             // 携程商品
             OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(orderVo.getNumber());
             orderVo.setOrderFoodInfoVo(orderFoodInfoVo);
+        } else if ("23".equals(orderVo.getOrderType())) {
+            // 新享库商品
+            orderXkFoodProcessed(orderVo);
         }
         return orderVo;
     }
@@ -2131,24 +2346,24 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     /**
-     *订单自动退款
+     * 订单自动退款
      * *
      */
     @Async
     @Override
-    public void autoRefundOrder(String job){
+    public void autoRefundOrder(String job) {
         //通过商品自动退款字段 以及时间等条件查询可以自动退款的订单
         LambdaQueryWrapper<Order> lqw = new LambdaQueryWrapper<>();
         lqw.eq(Order::getAutoRefund, "1");
         lqw.eq(Order::getStatus, "2");
         //自动退款目前只支持银联票券的退款  其他暂时不考虑
-        lqw.eq(Order::getOrderType,"18");
-        lqw.in(Order::getVerificationStatus,"0", "2");
+        lqw.eq(Order::getOrderType, "18");
+        lqw.in(Order::getVerificationStatus, "0", "2");
         lqw.le(Order::getUsedEndTime, new Date());
-        lqw.ge(Order::getCreateTime,DateUtils.parseDate("2023-12-29"));
+        lqw.ge(Order::getCreateTime, DateUtils.parseDate("2023-12-29"));
         Long orderCount = baseMapper.selectCount(lqw);
-        if ("123".equals(job)){
-            log.info("需要退款数量：{}",orderCount);
+        if ("123".equals(job)) {
+            log.info("需要退款数量：{}", orderCount);
             return;
         }
         //分页查询
@@ -2157,24 +2372,24 @@ public class OrderServiceImpl implements IOrderService {
         PageQuery pageQuery = new PageQuery();
         pageQuery.setPageSize(pageSize);
         //循环退款
-        while (true){
+        while (true) {
             pageQuery.setPageNum(pageIndex);
             pageQuery.setPageSize(pageSize);
             Page<OrderVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
             List<OrderVo> orderVos = result.getRecords();
-            if (CollectionUtils.isNotEmpty(orderVos)){
+            if (CollectionUtils.isNotEmpty(orderVos)) {
                 //进行退款
                 for (OrderVo orderVo : orderVos) {
                     try {
                         orderAutoRefund(orderVo);
-                    }catch (Exception e){
-                        log.error("订单自动退款失败，订单号：{}，错误：{}",orderVo.getNumber(),e);
+                    } catch (Exception e) {
+                        log.error("订单自动退款失败，订单号：{}，错误：{}", orderVo.getNumber(), e);
                     }
 
                 }
             }
             int sum = pageIndex * pageSize;
-            if (sum >= orderCount || sum >=1000) {
+            if (sum >= orderCount || sum >= 1000) {
                 break;
             }
             pageIndex++;
@@ -2184,14 +2399,13 @@ public class OrderServiceImpl implements IOrderService {
 
     /**
      * @param orderVo 订单
-     *
      */
-    private void orderAutoRefund(OrderVo orderVo){
+    private void orderAutoRefund(OrderVo orderVo) {
         Order order = baseMapper.selectById(orderVo.getNumber());
         //查询大订单
         CollectiveOrder collectiveOrder = getCollectiveOrder(orderVo.getCollectiveNumber());
         String orderType = orderVo.getOrderType();
-        if (!orderType.equals("18")){
+        if (!orderType.equals("18")) {
             return;
         }
         MerchantVo merchantVo = null;
@@ -2267,7 +2481,6 @@ public class OrderServiceImpl implements IOrderService {
 
     }
 
-
     /**
      * 校验订单退款状态
      *
@@ -2285,9 +2498,9 @@ public class OrderServiceImpl implements IOrderService {
     /**
      * 微信订单退款
      *
-     * @param orderBackTrans         退款信息
-     * @param order        订单信息
-     * @param merchantVo 商户号信息
+     * @param orderBackTrans 退款信息
+     * @param order          订单信息
+     * @param merchantVo     商户号信息
      */
     private void wxRefund(OrderBackTrans orderBackTrans, Order order, MerchantVo merchantVo) {
         String refundCallbackUrl = merchantVo.getRefundCallbackUrl();
@@ -2354,7 +2567,7 @@ public class OrderServiceImpl implements IOrderService {
 
     /**
      * 云闪付订单退款
-     ** @param merchantVo 商户号信息
+     * * @param merchantVo 商户号信息
      */
     private void ysfRefund(OrderBackTrans orderBackTrans, Order order, MerchantVo merchantVo) {
         OrderInfoVo orderInfoVo = orderInfoMapper.selectVoById(orderBackTrans.getNumber());
@@ -2381,7 +2594,6 @@ public class OrderServiceImpl implements IOrderService {
             order.setStatus("6");
         }
     }
-
 
     @Override
     public void orderRefund(Long number, Long userId) {
@@ -2496,6 +2708,35 @@ public class OrderServiceImpl implements IOrderService {
                     throw new ServiceException("退款已提交,不可重复申请");
                 }
                 CtripUtils.cancelOrder(order.getExternalOrderNumber(), CtripConfig.getPartnerType(), refundUrl);
+            }
+            refundMapper.insert(refund);
+            return;
+        } else if (orderType.equals("23")) {
+            String url = xkConfig.getUrl();
+            String appId = xkConfig.getAppId();
+            String appSecret = xkConfig.getAppSecret();
+            String sourceType = xkConfig.getSourceType();
+            //如果是美食订单 先查询订单
+            OrderFoodInfoVo orderFoodInfoVo = orderFoodInfoMapper.selectVoById(orderVo.getNumber());
+            if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && !orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
+                throw new ServiceException("该订单无法申请退款");
+            }
+            //大订单跟小订单状态一致
+            collectiveOrder.setStatus("4");
+            collectiveOrder.setCancelStatus("0");
+            collectiveOrderMapper.updateById(collectiveOrder);
+            order.setCancelStatus("0");
+            order.setStatus("4");
+            baseMapper.updateById(order);
+            SpringUtils.context().publishEvent(new ShareOrderEvent(null, order.getNumber()));
+            //如果电子券为未使用状态 在这里先走退款接口
+            if (ObjectUtil.isNotEmpty(orderFoodInfoVo.getVoucherStatus()) && orderFoodInfoVo.getVoucherStatus().equals("EFFECTIVE")) {
+
+                //请求美食退款订单接口
+                if ("1".equals(orderVo.getCancelStatus())) {
+                    throw new ServiceException("退款已提交,不可重复申请");
+                }
+                XkUtils.refundOrder(url,appId,appSecret,sourceType,orderVo.getExternalOrderNumber(),orderFoodInfoVo.getTicketCode(),"请求退款");
             }
             refundMapper.insert(refund);
             return;
@@ -2648,8 +2889,11 @@ public class OrderServiceImpl implements IOrderService {
         if (orders.size() == 1) {
             // 查询商品信息
             ProductVo productVo = productService.queryById(orders.get(0).getProductId());
-            if (null == productVo || !"0".equals(productVo.getStatus())) {
-                throw new ServiceException(productVo.getProductName() + "不存在或已下架[pay]");
+            if (null == productVo) {
+                throw new ServiceException("商品不存在[pay]");
+            }
+            if (!"0".equals(productVo.getStatus())) {
+                throw new ServiceException(productVo.getProductName() + "已下架[pay]");
             }
             if (null != productVo.getMerchantId()) {
                 merchantVo = merchantService.queryById(productVo.getMerchantId());
@@ -2686,8 +2930,11 @@ public class OrderServiceImpl implements IOrderService {
                 }
                 // 查询商品信息
                 ProductVo productVo = productService.queryById(order.getProductId());
-                if (null == productVo || !"0".equals(productVo.getStatus())) {
-                    throw new ServiceException(productVo.getProductName() + "不存在或已下架[pay]");
+                if (null == productVo) {
+                    throw new ServiceException("商品不存在[pay]");
+                }
+                if (!"0".equals(productVo.getStatus())) {
+                    throw new ServiceException(productVo.getProductName() + "已下架[pay]");
                 }
                 payResultVo.setIsPoup(productVo.getIsPoup());
                 payResultVo.setPoupText(productVo.getPoupText());
@@ -3425,6 +3672,58 @@ public class OrderServiceImpl implements IOrderService {
             order.setSendStatus("3");
         }
     }
+    /**
+     * 新享库订单退款回调
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public String xKFoodCancelCallBack(JSONObject data) {
+        log.info("享库订单支付回调信息：{}", data);
+        // 美食订单号
+        String orderNo = data.getString("order_no");
+        //退款状态
+        String audiState = data.getString("audi_state");
+        //退款单号
+        String refundNo = data.getString("refund_no");
+        if (ObjectUtil.isEmpty(orderNo)) {
+            log.info("美食订单不存在,通知内容：{}", data);
+            return "error";
+        }
+        Order order = baseMapper.selectOne(new LambdaQueryWrapper<Order>().eq(Order::getExternalOrderNumber, orderNo));
+        if (ObjectUtil.isEmpty(order)) {
+            //如果通知订单不存在 先查一下历史订单 都不存在才返回失败
+            HistoryOrder historyOrder = historyOrderMapper.selectOne(new LambdaQueryWrapper<HistoryOrder>().eq(HistoryOrder::getExternalOrderNumber, orderNo));
+            if (ObjectUtil.isEmpty(historyOrder)) {
+                log.error("享库订单【{}】不存在,通知内容：{}", orderNo, data);
+                return "error";
+            }
+            OrderFoodInfo orderFoodInfo = orderFoodInfoMapper.selectById(historyOrder.getNumber());
+            if (ObjectUtil.isEmpty(orderFoodInfo)) {
+                log.error("享库订单【{}】不存在,通知内容：{}", orderNo, data);
+                return "error";
+            }
+            if ("10".equals(audiState)) {
+                //退款成功
+                historyOrder.setCancelStatus("1");
+                historyOrder.setVerificationStatus("2");
+                historyOrderMapper.updateById(historyOrder);
+            }
+            return "error";
+        }
+        OrderFoodInfo orderFoodInfo = orderFoodInfoMapper.selectById(order.getNumber());
+        if (ObjectUtil.isEmpty(orderFoodInfo)) {
+            log.error("享库订单【{}】不存在,通知内容：{}", orderNo, data);
+            return "error";
+        }
+        if ("10".equals(audiState)) {
+            //退款成功
+            order.setCancelStatus("1");
+            order.setVerificationStatus("2");
+            order = updateOrder(order);
+        }
+        return "success";
+    }
+
 
     /**
      * 美食订单退款回调
@@ -4150,5 +4449,111 @@ public class OrderServiceImpl implements IOrderService {
         lqw.eq(StringUtils.isNotBlank(bo.getSendStatus()), Order::getSendStatus, bo.getSendStatus());
         Page<OrderVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
         return TableDataInfo.build(result);
+    }
+    /**
+     * 出券回调 享库套餐
+     */
+    @Override
+    public String xKOutTicketSuccess(JSONObject jsonObject) {
+        String orderNo = jsonObject.getString("order_no");
+        Order order = baseMapper.selectOne(new LambdaQueryWrapper<Order>().eq(Order::getExternalOrderNumber, orderNo));
+        if (ObjectUtil.isEmpty(order)) {
+            return "error";
+        }
+        OrderPushInfo orderPushInfo = orderPushInfoMapper.selectOne(new LambdaQueryWrapper<OrderPushInfo>().eq(OrderPushInfo::getNumber, order.getNumber()));
+        OrderFoodInfo orderFoodInfo = orderFoodInfoMapper.selectById(order.getNumber());
+        String code = jsonObject.getString("code");
+        String codeUrl = jsonObject.getString("codeUrl");
+
+        if (ObjectUtil.isNotEmpty(code)) {
+            order.setSendStatus("2");
+            if (ObjectUtil.isNotEmpty(orderPushInfo)) {
+                orderPushInfo.setStatus("1");
+                orderPushInfoMapper.updateById(orderPushInfo);
+            }
+        }
+        orderFoodInfo.setVoucherId(code);
+        orderFoodInfo.setTicketCode(code);
+        orderFoodInfo.setVoucherStatus("EFFECTIVE");
+        order.setVerificationStatus("0");
+        orderFoodInfo.setTotalAmount(1);
+        orderFoodInfo.setTicketCodeUrl(codeUrl);
+        order = updateOrder(order);
+        orderFoodInfoMapper.updateById(orderFoodInfo);
+
+        return "success";
+    }
+    /**
+     * 商品通知 享库套餐
+     */
+    @Override
+    public String xKFoodPath(JSONObject jsonObject) {
+        String goods_id = jsonObject.getString("goods_id");
+        String uppertime = jsonObject.getString("uppertime");
+        String under_time = jsonObject.getString("under_time");
+        Long stock_num = jsonObject.getLongValue("stock_num");
+        String goodsStatus = jsonObject.getString("goodsStatus");
+        ProductVo productVo = productMapper.selectVoOne(new LambdaQueryWrapper<Product>().eq(Product::getExternalProductId, goods_id).eq(Product::getProductType, "23"));
+        if (ObjectUtil.isEmpty(productVo)){
+            return "success";
+        }
+        Product product = new Product();
+        product.setProductId(productVo.getProductId());
+        product.setTotalCount(stock_num);
+        if ("1".equals(goodsStatus)){
+            //上架
+            product.setStatus("0");
+        }else if ("2".equals(goodsStatus)){
+            //下架
+            product.setStatus("1");
+        }
+        product.setSellStartDate(DateUtils.TimesToDate(uppertime));
+        product.setShowStartDate(DateUtils.TimesToDate(uppertime));
+        product.setSellEndDate(DateUtils.TimesToDate(under_time));
+        product.setShowEndDate(DateUtils.TimesToDate(under_time));
+        productMapper.updateById(product);
+        return "success";
+    }
+    /**
+     * 核销成功 享库套餐
+     */
+    @Override
+    public String xKVerCodeSuccess(JSONObject jsonObject) {
+        String orderNo = jsonObject.getString("order_no");
+        Order order = baseMapper.selectOne(new LambdaQueryWrapper<Order>().eq(Order::getExternalOrderNumber, orderNo));
+        if (ObjectUtil.isEmpty(order)) {
+            return "error";
+        }
+        OrderPushInfo orderPushInfo = orderPushInfoMapper.selectOne(new LambdaQueryWrapper<OrderPushInfo>().eq(OrderPushInfo::getNumber, order.getNumber()));
+        OrderFoodInfo orderFoodInfo = orderFoodInfoMapper.selectById(order.getNumber());
+
+        String code = jsonObject.getString("code");
+        String codeUrl = jsonObject.getString("codeUrl");
+
+        if (ObjectUtil.isNotEmpty(code)) {
+            order.setSendStatus("2");
+            if (ObjectUtil.isNotEmpty(orderPushInfo)) {
+                orderPushInfo.setStatus("1");
+                orderPushInfoMapper.updateById(orderPushInfo);
+            }
+        }
+        orderFoodInfo.setVoucherId(code);
+        orderFoodInfo.setTicketCode(code);
+        orderFoodInfo.setVoucherStatus("USED");
+        orderFoodInfo.setUsedAmount(1);
+        order.setVerificationStatus("1");
+        orderFoodInfo.setTicketCodeUrl(codeUrl);
+        order = updateOrder(order);
+        orderFoodInfoMapper.updateById(orderFoodInfo);
+        return "success";
+    }
+    /**
+     * 支付成功 享库套餐
+     */
+    @Override
+    public String xKPaySuccessUrl(JSONObject jsonObject) {
+        String orderNo = jsonObject.getString("order_no");
+        queryXkFoodOrder(orderNo);
+        return "success";
     }
 }

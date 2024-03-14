@@ -23,8 +23,8 @@ public class MybatisExceptionHandler {
      */
     @ExceptionHandler(DuplicateKeyException.class)
     public R<Void> handleDuplicateKeyException(DuplicateKeyException e, HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
-        log.error("请求地址'{}',数据库中已存在记录'{}'", requestURI, e.getMessage());
+        String requestUrl = request.getRequestURI();
+        log.error("请求地址'{}',数据库中已存在记录'{}'", requestUrl, e.getMessage());
         return R.fail("数据已存在，不可重复添加");
     }
 
@@ -33,14 +33,14 @@ public class MybatisExceptionHandler {
      */
     @ExceptionHandler(MyBatisSystemException.class)
     public R<Void> handleCannotFindDataSourceException(MyBatisSystemException e, HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
+        String requestUrl = request.getRequestURI();
         String message = e.getMessage();
-        if (message.contains("CannotFindDataSourceException")) {
-            log.error("请求地址'{}', 未找到数据源", requestURI);
+        if (null != message && message.contains("CannotFindDataSourceException")) {
+            log.error("请求地址'{}', 未找到数据源", requestUrl);
             return R.fail("未找到数据源，请联系管理员确认");
         }
-        log.error("请求地址'{}', Mybatis系统异常", requestURI, e);
-        return R.fail(message);
+        log.error("请求地址'{}', Mybatis系统异常", requestUrl, e);
+        return R.fail("系统处理异常");
     }
 
 }

@@ -83,7 +83,9 @@ public class OrderController {
         bo.setPlatformKey(ZlyyhUtils.getPlatformId());
         bo.setChannel(ZlyyhUtils.getPlatformChannel());
         bo.setShareUserId(ZlyyhUtils.getShareUserId());
-        return R.ok(orderService.createOrder(bo, false));
+        CreateOrderResult order = orderService.createOrder(bo, false);
+        log.info("创建订单：{}，返回结果：{}", bo, order);
+        return R.ok(order);
     }
 
     /**
@@ -243,6 +245,75 @@ public class OrderController {
     }
 
     /**
+     * 退款成功回调 享库套餐
+     */
+    @RequestMapping("/ignore/refund_success")
+    public String xKCancelCallBack(@RequestBody JSONObject jsonObject) {
+        log.info("享库订单退款回调接收开始");
+        if (ObjectUtil.isEmpty(jsonObject)) {
+            log.info("享库订单退款回调结果[失败].");
+            return "error";
+        } else {
+            return orderService.xKFoodCancelCallBack(jsonObject);
+        }
+    }
+
+    /**
+     * 出券回调 享库套餐
+     */
+    @RequestMapping("/ignore/out_ticket_sucess")
+    public String xKOutTicketSucess(@RequestBody JSONObject jsonObject) {
+        log.info("享库订单出券回调接收开始");
+        if (ObjectUtil.isEmpty(jsonObject)) {
+            log.info("享库订单出券回调结果[失败].");
+            return "error";
+        } else {
+            return orderService.xKOutTicketSuccess(jsonObject);
+        }
+    }
+
+    /**
+     * 支付完成回调 享库套餐
+     */
+    @RequestMapping("/ignore/pay_sucess_url")
+    public String xKPaySuccessUrl(@RequestBody JSONObject jsonObject) {
+        log.info("享库支付完成回调接收开始");
+        if (ObjectUtil.isEmpty(jsonObject)) {
+            log.info("享库支付完成回调结果[失败].");
+            return "error";
+        } else {
+            return orderService.xKPaySuccessUrl(jsonObject);
+        }
+    }
+
+    /**
+     * 核销成功回调 享库套餐
+     */
+    @RequestMapping("/ignore/vercode_success")
+    public String xKVerCodeSuccess(@RequestBody JSONObject jsonObject) {
+        log.info("享库订单核销成功回调接收开始");
+        if (ObjectUtil.isEmpty(jsonObject)) {
+            log.info("享库订单核销成功回调结果[失败].");
+            return "error";
+        } else {
+            return orderService.xKVerCodeSuccess(jsonObject);
+        }
+    }
+
+    /**
+     * 商品通知 享库套餐
+     */
+    @RequestMapping("/ignore/path")
+    public String xKFoodPath(@RequestBody JSONObject jsonObject) {
+        log.info("享库订单退款回调接收开始");
+        if (ObjectUtil.isEmpty(jsonObject)) {
+            log.info("享库订单退款回调结果[失败].");
+            return "error";
+        } else {
+            return orderService.xKFoodPath(jsonObject);
+        }
+    }
+    /**
      * 获取订单详情
      *
      * @return 订单信息
@@ -278,7 +349,6 @@ public class OrderController {
         //bo.setSupportChannel(ZlyyhUtils.getPlatformChannel());
         return orderService.queryPageList(bo, pageQuery);
     }
-
 
     /**
      * 获取未使用订单列表 5，12，13，14，15，18

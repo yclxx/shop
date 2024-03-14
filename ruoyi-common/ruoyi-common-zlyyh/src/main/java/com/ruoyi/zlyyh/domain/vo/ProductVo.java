@@ -8,6 +8,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 import java.util.List;
 
@@ -317,7 +318,6 @@ public class ProductVo implements Serializable {
 
     private String commercialTenantId;
 
-
     private ProductInfoVo productInfoVo;
 
     /**
@@ -446,4 +446,17 @@ public class ProductVo implements Serializable {
      * 第三方机构产品编号
      */
     private String institutionProductId;
+
+    /**
+     * 折扣
+     */
+    private String discount;
+
+    public void calculateDiscount() {
+        if (null != this.sellAmount && null != this.originalAmount && this.originalAmount.compareTo(BigDecimal.ZERO) > 0 && this.sellAmount.compareTo(BigDecimal.ZERO) > 0 && this.originalAmount.compareTo(this.sellAmount) > 0) {
+            BigDecimal divide = this.sellAmount.divide(this.originalAmount, 2, RoundingMode.HALF_UP);
+            divide = divide.multiply(new BigDecimal("10")).setScale(1, RoundingMode.HALF_UP);
+            this.discount = divide.stripTrailingZeros().toPlainString();
+        }
+    }
 }

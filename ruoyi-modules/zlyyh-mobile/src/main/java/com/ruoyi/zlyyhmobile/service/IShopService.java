@@ -6,7 +6,9 @@ import com.ruoyi.zlyyh.domain.Shop;
 import com.ruoyi.zlyyh.domain.ShopMerchant;
 import com.ruoyi.zlyyh.domain.bo.MerchantApprovalBo;
 import com.ruoyi.zlyyh.domain.bo.ShopBo;
+import com.ruoyi.zlyyh.domain.vo.ShopProductListVo;
 import com.ruoyi.zlyyh.domain.vo.ShopVo;
+import com.ruoyi.zlyyh.domain.bo.QueryShopProductBo;
 
 import java.util.List;
 
@@ -24,6 +26,13 @@ public interface IShopService {
     ShopVo queryById(Long shopId);
 
     Boolean updateShopById(ShopBo bo);
+
+    /**
+     * 查询门店商品列表
+     * @param bo 查询条件
+     * @param pageQuery 分页条件
+     */
+    TableDataInfo<ShopProductListVo> queryShopProductPageList(QueryShopProductBo bo, PageQuery pageQuery);
 
     /**
      * 查询门店列表
@@ -64,6 +73,8 @@ public interface IShopService {
      * @return 门店数量
      */
     Long selectCountByCommercialTenantId(Long commercialTenantId);
+
+    Long selectUnExamineCountByCommercialTenantId(Long commercialTenantId);
 
     /**
      * 修改门店

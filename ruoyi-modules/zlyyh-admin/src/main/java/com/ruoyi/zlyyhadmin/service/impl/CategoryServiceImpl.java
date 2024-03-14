@@ -109,6 +109,22 @@ public class CategoryServiceImpl implements ICategoryService {
      * 保存前的数据校验
      */
     private void validEntityBeforeSave(Category entity) {
+        //在这进行母子同步（同时停用）
+        if (entity.getParentId().equals(0L) && entity.getStatus().equals("1")){
+            //最外层类别
+            CategoryBo categoryBo = new CategoryBo();
+            categoryBo.setParentId(entity.getCategoryId());
+            List<CategoryVo> categoryVos = queryList(categoryBo);
+            if (ObjectUtil.isNotEmpty(categoryVos)){
+                for (CategoryVo categoryVo : categoryVos) {
+                    Category category = new Category();
+                    category.setCategoryId(categoryVo.getCategoryId());
+                    category.setStatus("1");
+                    baseMapper.updateById(category);
+                }
+
+            }
+        }
         PermissionUtils.setPlatformDeptIdAndUserId(entity, entity.getPlatformKey(), null == entity.getCategoryId(), true);
     }
 

@@ -32,7 +32,6 @@ public class CommercialTenantBo extends BaseEntity {
     /**
      * 商户名称
      */
-    @NotBlank(message = "商户名称不能为空", groups = {AddGroup.class, EditGroup.class})
     private String commercialTenantName;
 
     /**
@@ -42,7 +41,7 @@ public class CommercialTenantBo extends BaseEntity {
     /**
      * 商户简称
      */
-    @NotBlank(message = "商户名称不能为空", groups = {AppEditGroup.class})
+    @NotBlank(message = "商户名称不能为空", groups = {AppEditGroup.class, AddGroup.class, EditGroup.class})
     private String commercialTenantTitle;
     /**
      * 核销员id
