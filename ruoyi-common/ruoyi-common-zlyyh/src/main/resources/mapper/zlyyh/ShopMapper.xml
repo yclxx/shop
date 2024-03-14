@@ -200,16 +200,30 @@
 
 
         <select id="selectShopProductList" resultMap="ShopProductResult">
-            WITH cte_product AS (
+            WITH
+            <if test="bo.categoryId != null and bo.categoryId > 0" >
+                RECURSIVE category_tree AS (
+                SELECT category_id, parent_id
+                FROM t_category
+                WHERE parent_id = #{bo.categoryId} and platform_key = #{bo.platformKey} and status = '0' and del_flag = '0'
+                UNION ALL
+                SELECT c.category_id, c.parent_id
+                FROM t_category c
+                INNER JOIN category_tree ct ON c.parent_id = ct.category_id
+                WHERE c.platform_key = #{bo.platformKey} and c.status = '0' and c.del_flag = '0'
+                ),
+            </if>
+            cte_product AS (
             SELECT
             p.*
             FROM
             t_product p
-            <if test="bo.categoryIds != null and bo.categoryIds.size > 0">
+            <if test="bo.categoryId != null and bo.categoryId > 0">
                 LEFT JOIN t_category_product cp ON p.product_id = cp.product_id
             </if>
             WHERE
             p.`status` = '0'
+            AND p.del_flag = '0'
             AND p.search_status = '0'
             AND p.search = '0'
             AND p.show_index = '1'
@@ -219,11 +233,15 @@
             <if test="bo.cityCode != null and bo.cityCode != ''">
                 AND ( p.show_city = 'ALL' OR p.show_city LIKE concat('%', #{bo.cityCode}, '%') )
             </if>
-            <if test="bo.categoryIds != null and bo.categoryIds.size > 0">
-                AND cp.category_id IN
-                <foreach collection="bo.categoryIds" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
+            <if test="bo.categoryId != null and bo.categoryId > 0">
+                AND cp.category_id IN (
+                SELECT category_id
+                FROM category_tree
+                UNION ALL
+                SELECT category_id
+                FROM t_category
+                WHERE category_id = #{bo.categoryId}
+                )
             </if>
             ),
             cte_shop AS (
