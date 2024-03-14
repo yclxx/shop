@@ -31,7 +31,7 @@ public class ThirdPlatformVo {
      * appId
      */
     @ExcelProperty(value = "appId")
-    private Long appId;
+    private String appId;
 
     /**
      * 密钥

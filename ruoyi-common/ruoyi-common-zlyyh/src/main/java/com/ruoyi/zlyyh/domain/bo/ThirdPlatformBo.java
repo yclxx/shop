@@ -31,7 +31,7 @@ public class ThirdPlatformBo extends BaseEntity {
      * appId
      */
     @NotNull(message = "appId不能为空", groups = { AddGroup.class, EditGroup.class })
-    private Long appId;
+    private String appId;
 
     /**
      * 密钥
