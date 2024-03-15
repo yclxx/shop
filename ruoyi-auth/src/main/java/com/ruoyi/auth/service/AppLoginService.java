@@ -94,7 +94,8 @@ public class AppLoginService {
         String sign = json.getString("sign");
         String s = RSAUtils.decryptByPrivateKey(sign, privateKey);
         if(StringUtils.isEmpty(s)){
-            return "解密失败";
+            log.error("解密失败");
+            return null;
         }
         JSONObject jsonObject = JSONObject.parseObject(s);
         String appId = jsonObject.getString("appId");
@@ -102,7 +103,8 @@ public class AppLoginService {
         long timeStamp = jsonObject.getLongValue("timeStamp");
         String type = jsonObject.getString("type");
         if(ObjectUtil.isEmpty(appId) || ObjectUtil.isEmpty(flag) || ObjectUtil.isEmpty(sign) || ObjectUtil.isEmpty(type) || ObjectUtil.isEmpty(timeStamp)){
-            return "缺少必要参数";
+            log.info("缺少必要参数");
+            return null;
         }
         if("1".equals(type)){
             return remoteAppUserService.getWxAccessToken(appId ,flag);
