@@ -471,7 +471,8 @@ public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
                 }
             }
         } else {
-            Long count = unionpayMissionUserLogMapper.selectCount(new LambdaQueryWrapper<UnionpayMissionUserLog>().eq(UnionpayMissionUserLog::getUpMissionUserId, missionUserVo.getUpMissionUserId()).eq(UnionpayMissionUserLog::getUpMissionId, missionVo.getUpMissionId()));
+            //活动期间限参与次数
+            Long count = unionpayMissionUserLogMapper.selectCount(new LambdaQueryWrapper<UnionpayMissionUserLog>().eq(UnionpayMissionUserLog::getUpMissionUserId, missionUserVo.getUpMissionUserId()).eq(UnionpayMissionUserLog::getUpMissionId, missionVo.getUpMissionId()).eq(UnionpayMissionUserLog::getUpMissionGroupId,missionUserVo.getUpMissionGroupId()));
             if (count >= missionVo.getUserCountActivity()) {
                 return;
             }
@@ -483,22 +484,43 @@ public class UnionpayMissionServiceImpl implements IUnionpayMissionService {
             if (sendCount <= 0) {
                 return;
             }
-            for (long l = 0; l < sendCount; l++) {
-                UnionpayMissionUserLog missionUserLog = new UnionpayMissionUserLog();
-                missionUserLog.setUpMissionUserId(missionUserVo.getUpMissionUserId());
-                missionUserLog.setUpMissionGroupId(missionVo.getUpMissionGroupId());
-                missionUserLog.setUpMissionId(missionVo.getUpMissionId());
-                // 生成订单发放奖励
-                CreateOrderBo createOrderBo = new CreateOrderBo();
-                createOrderBo.setProductId(missionVo.getProductId());
-                //createOrderBo.setProductId(1760905911856824320L);
-                createOrderBo.setUserId(missionUserVo.getUserId());
-                createOrderBo.setPlatformKey(missionVo.getPlatformKey());
-                createOrderBo.setChannel(PlatformEnumd.MP_YSF.getChannel());
-                CreateOrderResult order = orderService.createOrder(createOrderBo, true);
+            long syCount = 0;
+            long canCount = 0;
+            if (missionVo.getUserCountDay() > 0) {
+                //限每天次数
+                syCount = sendCount - missionVo.getUserCountDay();
+                if (syCount >= 0) {
+                    canCount = missionVo.getUserCountDay();
+                } else {
+                    canCount = sendCount;
+                }
+            } else if (missionVo.getUserCountWeek() > 0) {
+                //限每周次数
+                syCount = sendCount - missionVo.getUserCountWeek();
+                if (syCount >= 0) {
+                    canCount = missionVo.getUserCountWeek();
+                } else {
+                    canCount = sendCount;
+                }
+            }
+            if (canCount > 0) {
+                for (long l = 0; l < canCount; l++) {
+                    UnionpayMissionUserLog missionUserLog = new UnionpayMissionUserLog();
+                    missionUserLog.setUpMissionUserId(missionUserVo.getUpMissionUserId());
+                    missionUserLog.setUpMissionGroupId(missionVo.getUpMissionGroupId());
+                    missionUserLog.setUpMissionId(missionVo.getUpMissionId());
+                    // 生成订单发放奖励
+                    CreateOrderBo createOrderBo = new CreateOrderBo();
+                    createOrderBo.setProductId(missionVo.getProductId());
+                    //createOrderBo.setProductId(1760905911856824320L);
+                    createOrderBo.setUserId(missionUserVo.getUserId());
+                    createOrderBo.setPlatformKey(missionVo.getPlatformKey());
+                    createOrderBo.setChannel(PlatformEnumd.MP_YSF.getChannel());
+                    CreateOrderResult order = orderService.createOrder(createOrderBo, true);
 
-                missionUserLog.setNumber(order.getNumber());
-                unionpayMissionUserLogMapper.insert(missionUserLog);
+                    missionUserLog.setNumber(order.getNumber());
+                    unionpayMissionUserLogMapper.insert(missionUserLog);
+                }
             }
         }
     }

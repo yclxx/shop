@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 /**
  * 银联任务用户Service业务层处理
@@ -54,9 +55,10 @@ public class UnionpayMissionUserServiceImpl implements IUnionpayMissionUserServi
         if (ObjectUtil.isNotEmpty(bo.getUserId())) {
             UserBo userBo = new UserBo();
             userBo.setMobile(bo.getUserId().toString());
+            bo.setUserId(null);
             List<UserVo> userVos = userService.queryList(userBo);
             if (ObjectUtil.isNotEmpty(userVos)) {
-                bo.setUserId(userVos.get(0).getUserId());
+                bo.setUserIds(userVos.stream().map(UserVo::getUserId).collect(Collectors.toList()));
             } else {
                 return TableDataInfo.build(new ArrayList<>());
             }
@@ -87,6 +89,7 @@ public class UnionpayMissionUserServiceImpl implements IUnionpayMissionUserServi
         lqw.eq(bo.getUserId() != null, UnionpayMissionUser::getUserId, bo.getUserId());
         lqw.eq(bo.getPlatformKey() != null, UnionpayMissionUser::getPlatformKey, bo.getPlatformKey());
         lqw.eq(StringUtils.isNotBlank(bo.getStatus()), UnionpayMissionUser::getStatus, bo.getStatus());
+        lqw.in(ObjectUtil.isNotEmpty(bo.getUserIds()), UnionpayMissionUser::getUserId, bo.getUserIds());
         return lqw;
     }
 

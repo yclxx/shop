@@ -145,6 +145,6 @@ public class ShopTourLogVo {
 
     private String tourActivityName;
 
-    private String createTime;
+    private Date createTime;
 
 }

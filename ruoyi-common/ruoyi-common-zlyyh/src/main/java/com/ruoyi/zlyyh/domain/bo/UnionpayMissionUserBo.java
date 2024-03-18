@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import javax.validation.constraints.*;
 
 import java.util.Date;
+import java.util.List;
 
 import com.ruoyi.common.core.web.domain.BaseEntity;
 
@@ -51,5 +52,6 @@ public class UnionpayMissionUserBo extends BaseEntity {
     //@NotBlank(message = "状态  0-正常  1-停用不能为空", groups = { AddGroup.class, EditGroup.class })
     private String status;
 
+    private List<Long> userIds;
 
 }

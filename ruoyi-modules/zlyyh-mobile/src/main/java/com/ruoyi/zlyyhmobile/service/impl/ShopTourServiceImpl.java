@@ -349,7 +349,23 @@ public class ShopTourServiceImpl implements IShopTourService {
         Long userId = LoginHelper.getUserId();
         bo.setVerifierId(userId);
         Page<ShopTourVo> result = baseMapper.queryReserveShopList(bo, pageQuery.build());
-        return TableDataInfo.build(result);
+        TableDataInfo<ShopTourVo> dataInfo = TableDataInfo.build(result);
+        for (ShopTourVo row : dataInfo.getRows()) {
+            List<ShopTourLogVo> logVos = shopTourLogMapper.selectVoList(new LambdaQueryWrapper<ShopTourLog>().eq(ShopTourLog::getTourId, row.getId()).eq(ShopTourLog::getVerifierId, userId).in(ShopTourLog::getOperType, "2", "5", "6").orderByDesc(ShopTourLog::getCreateTime));
+            List<ShopTourLogVo> submitLogs = logVos.stream().filter(log -> log.getOperType().equals("2")).collect(Collectors.toList());
+            List<ShopTourLogVo> checkPassLogs = logVos.stream().filter(log -> log.getOperType().equals("5")).collect(Collectors.toList());
+            List<ShopTourLogVo> checkFailLogs = logVos.stream().filter(log -> log.getOperType().equals("6")).collect(Collectors.toList());
+            if (ObjectUtil.isNotEmpty(submitLogs)) {
+                row.setSubmitTime(submitLogs.get(0).getCreateTime());
+            }
+            if (ObjectUtil.isNotEmpty(checkFailLogs)) {
+                row.setCheckFailTime(checkFailLogs.get(0).getCreateTime());
+            }
+            if (ObjectUtil.isNotEmpty(checkPassLogs)) {
+                row.setCheckPassTime(checkPassLogs.get(0).getCreateTime());
+            }
+        }
+        return dataInfo;
     }
 
     /**
