@@ -99,8 +99,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="bo.status != null and bo.status != '' and bo.status == 1">
                 and tour.status = '1'
             </if>
+            <if test="bo.status != null and bo.status != '' and bo.status == 2">
+                and tour.status in('2','4')
+            </if>
             <if test="bo.status != null and bo.status != '' and bo.status == 0">
-                and tour.status in('2','3','4')
+                and tour.status = '3'
             </if>
             <if test="bo.status != null and bo.status != '' and bo.status == 4">
                 and tour.status = #{bo.status}

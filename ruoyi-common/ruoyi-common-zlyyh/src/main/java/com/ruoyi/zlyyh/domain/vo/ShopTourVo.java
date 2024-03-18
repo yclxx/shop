@@ -171,4 +171,10 @@ public class ShopTourVo {
 
     private String redisFlag;
 
+    private Date checkPassTime;
+
+    private Date checkFailTime;
+
+    private Date submitTime;
+
 }
